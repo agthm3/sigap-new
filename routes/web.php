@@ -34,3 +34,4 @@ Route::get('/sigap-dokumen', [SigapDokumenController::class, 'index'])->name('si
 Route::post('/sigap-dokumen', [SigapDokumenController::class, 'store'])->name('sigap-dokumen.store');
 Route::get('/sigap-dokumen/{id}', [SigapDokumenController::class, 'show'])->name('sigap-dokumen.show');
 Route::get('/sigap-dokumen/{id}/download', [SigapDokumenController::class, 'download'])->name('sigap-dokumen.download');
+Route::delete('/sigap-dokumen/{id}', [SigapDokumenController::class, 'destroy'])->name('sigap-dokumen.destroy');

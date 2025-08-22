@@ -171,7 +171,18 @@
                   <a href="{{ route('sigap-dokumen.show', $item->id) }}" class="px-3 py-1.5 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">View</a>
                   <a href="{{ route('sigap-dokumen.download', $item->id) }}" target="_blank" class="px-3 py-1.5 rounded-md bg-maroon text-white hover:bg-maroon-800 transition">Download</a>
                   <button class="px-3 py-1.5 rounded-md border hover:bg-gray-50">Edit</button>
-                  <button class="px-3 py-1.5 rounded-md border hover:bg-gray-50">Hapus</button>
+
+                  <button type="button"
+                          class="px-3 py-1.5 rounded-md border hover:bg-gray-50 text-red-600 border-red-300"
+                          onclick="confirmHapus({{ $item->id }}, @js($item->title))">
+                    Hapus
+                  </button>
+                  {{-- <button class="px-3 py-1.5 rounded-md border hover:bg-gray-50">Hapus</button> --}}
+                  <form id="form-delete-{{ $item->id }}" action="{{ route('sigap-dokumen.destroy', $item->id) }}" method="POST" >
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="px-3 py-1.5 rounded-md border hover:bg-gray-50">Hapus</button>
+                  </form>
                 </div>
               </td>
             </tr>
@@ -391,5 +402,21 @@
   </script>
   @endif
 
+<script>
+  function confirmHapus(id, title){
+    Swal.fire({
+      title: 'Hapus dokumen?',
+      html: 'Dokumen: <b>'+title+'</b>',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Ya, hapus',
+      cancelButtonText: 'Batal',
+    }).then((res) => {
+      if(res.isConfirmed){
+        document.getElementById('form-delete-'+id).submit();
+      }
+    });
+  }
+</script>
 </body>
 </html>

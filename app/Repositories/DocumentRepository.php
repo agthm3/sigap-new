@@ -6,6 +6,7 @@ use App\Models\Document;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class DocumentRepository
@@ -100,5 +101,24 @@ class DocumentRepository
     public function find(int $id): ?Document
     {
         return Document::findOrFail($id);
+    }
+
+    public function delete(int $id, bool $force = false): void
+    {
+        $doc = Document::findOrFail($id);
+
+        if ($force) {
+            // hapus file fisik
+            if ($doc->file_path && Storage::disk('public')->exists($doc->file_path)) {
+                Storage::disk('public')->delete($doc->file_path);
+            }
+            if ($doc->thumb_path && Storage::disk('public')->exists($doc->thumb_path)) {
+                Storage::disk('public')->delete($doc->thumb_path);
+            }
+
+            $doc->forceDelete();
+        } else {
+            $doc->delete(); // soft delete
+        }
     }
 }

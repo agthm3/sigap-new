@@ -86,4 +86,12 @@ class SigapDokumenController extends Controller
     $filename = ($doc->alias ?? $doc->title).'.'.$ext;
     return Storage::disk('public')->download($doc->file_path, $filename);
     }
+
+    public function destroy(int $id)
+    {
+        $this->repo->delete($id);
+        return redirect()
+            ->route('sigap-dokumen.index')
+            ->with('success', 'Dokumen berhasil dihapus!');
+    }
 }
