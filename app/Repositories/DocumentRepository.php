@@ -72,7 +72,8 @@ class DocumentRepository
                 $query->where('title', 'like', "%{$kw}%")
                       ->orWhere('alias', 'like', "%{$kw}%")
                       ->orWhere('number', 'like', "%{$kw}%")
-                      ->orWhere('stakeholder', 'like', "%{$kw}%");
+                      ->orWhere('stakeholder', 'like', "%{$kw}%")
+                      ->orWhere('description', 'like', "%{$kw}%");
             });
         }
 
