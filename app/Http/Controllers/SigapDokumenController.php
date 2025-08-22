@@ -13,9 +13,11 @@ class SigapDokumenController extends Controller
     public function __construct(private DocumentRepository $repo)
     {
     }
-    public function index()
+    public function index(Request $request)
     {
-        return view('dashboard.dokumen.index');
+        $filters = $request->only(['q', 'category', 'sensitivity', 'year']);
+        $docs = $this->repo->paginate($filters, perPage: 10);
+        return view('dashboard.dokumen.index', compact('docs'));
     }
 
     public function store(Request $request)

@@ -59,4 +59,34 @@ class DocumentRepository
             return Document::create($data);
         });
     }
+
+    public function paginate(array $filters = [], int $perPage = 10)
+    {
+        $q = Document::query();
+
+        if(!empty($filters['q'])){
+            $kw = trim($filters['q']);
+            $q->where(function($query) use ($kw) {
+                $query->where('title', 'like', "%{$kw}%")
+                      ->orWhere('alias', 'like', "%{$kw}%")
+                      ->orWhere('number', 'like', "%{$kw}%");
+            });
+        }
+
+        if(!empty($filters['category'])) {
+            $q->where('category', $filters['category']);
+        }
+
+        if(!empty($filters['sensitivity'])) {
+            $q->where('sensitivity', $filters['sensitivity']);
+        }
+
+        if(!empty($filters['year'])) {
+            $q->where('year', $filters['year']);
+        }
+
+        $q->latest('created_at');
+
+        return $q->paginate($perPage);
+    }
 }

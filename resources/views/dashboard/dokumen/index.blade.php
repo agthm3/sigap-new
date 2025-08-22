@@ -72,34 +72,44 @@
   <!-- Filter & Search -->
   <section class="max-w-7xl mx-auto px-4">
     <div class="bg-white border border-gray-200 rounded-2xl p-4 sm:p-5">
-      <form class="grid lg:grid-cols-5 gap-3" onsubmit="event.preventDefault();">
+      <form class="grid lg:grid-cols-5 gap-3" method="GET" action="{{ route('sigap-dokumen.index') }}">
         <div class="lg:col-span-2">
           <label class="text-sm font-semibold text-gray-700">Kata Kunci</label>
-          <input id="q" type="search" class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Judul / Alias / Kata kunci…">
+          <input id="q" name="q" type="search" class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Judul / Alias / Kata kunci…" value="{{ request('q') }}">
         </div>
         <div>
           <label class="text-sm font-semibold text-gray-700">Kategori</label>
           <select name="category" id="f_kat" class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
             <option value="">Semua</option>
-            <option value="surat_keputusan">Surat Keputusan</option>
-            <option value="laporan">Laporan</option>
-            <option value="formulir">Formulir</option>
-            <option value="privasi">Privasi</option>
+            @foreach (['Surat Keputusan', 'Laporan', 'Formulir', 'Privasi'] as $item)
+              <option value="{{ $item }}">{{ $item }}</option>
+            @endforeach
           </select>
         </div>
         <div>
           <label class="text-sm font-semibold text-gray-700">Tahun</label>
           <select id="f_th" class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
-            <option value="">Semua</option><option>2025</option><option>2024</option><option>2023</option>
+            <option value="">Semua</option>
+            @for ($y = now()->year; $y>= now()->year-5; $y--) 
+              <option value="{{ $y }}" @selected(request('year') == $y)>{{ $y }}</option>
+            @endfor
           </select>
         </div>
+        <div>
+          <label class="text-sm font-semibold text-gray-700">Akses</label>
+          <select name="sensitivity" class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
+            <option value="">Semua</option>
+            <option value="public"  @selected(request('sensitivity')==='public')>Publik</option>
+            <option value="private" @selected(request('sensitivity')==='private')>Akses Terkendali</option>
+          </select>
+      </div>
         <div>
           <label class="text-sm font-semibold text-gray-700">Pihak Terkait</label>
           <input id="f_pihak" type="text" class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Sekretariat A / Bidang X">
         </div>
         <div class="lg:col-span-5 flex gap-3 pt-1">
           <button id="btnCari" class="px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 transition">Cari</button>
-          <button type="reset" class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50" onclick="resetFilter()">Reset</button>
+          <button type="reset" href='{{ route('sigap-dokumen.index') }}' class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50" onclick="resetFilter()">Reset</button>
         </div>
       </form>
     </div>
@@ -134,21 +144,29 @@
           </thead>
           <tbody id="tbody" class="divide-y">
             <!-- Baris contoh (akan ditimpa JS saat tambah dokumen) -->
-            <tr>
+            @foreach ($docs as $item)
+                  <tr>
               <td class="px-4 py-3">
                 <div class="flex items-center gap-3">
                   <img class="w-12 h-12 rounded object-cover" src="https://images.unsplash.com/photo-1516387938699-a93567ec168e?q=80&w=200&auto=format&fit=crop" alt="">
                   <div>
-                    <p class="font-medium text-gray-900">SK Sekretariat A tentang Tim Kerja</p>
-                    <p class="text-xs text-gray-600 line-clamp-1">Penetapan tim kerja & lampiran tugas.</p>
+                    <p class="font-medium text-gray-900">{{ $item->title }}</p>
+                    <p class="text-xs text-gray-600 line-clamp-1">{{ Str::limit($item->description, 90) }}</p>
                   </div>
                 </div>
               </td>
-              <td class="px-4 py-3">SK-TimKerja-2025-01</td>
-              <td class="px-4 py-3">Surat Keputusan</td>
-              <td class="px-4 py-3">2025</td>
-              <td class="px-4 py-3">Sekretariat A</td>
-              <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-xs bg-emerald-50 text-emerald-700">Publik</span></td>
+              <td class="px-4 py-3">{{ $item->alias }}</td>
+              <td class="px-4 py-3">{{ $item->category }}</td>
+              <td class="px-4 py-3">{{ $item->year }}</td>
+              <td class="px-4 py-3">{{ $item->stakeholder ?? '-' }}</td>
+              <td>
+                @if($item->sensitivity === 'public')
+                  <span class="px-2 py-0.5 rounded text-xs bg-emerald-50 text-emerald-700">Publik</span>
+                @else
+                  <span class="px-2 py-0.5 rounded text-xs bg-red-50 text-red-700">Privat</span>
+                @endif
+              </td>
+              {{-- <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-xs bg-emerald-50 text-emerald-700">Publik</span></td> --}}
               <td class="px-4 py-3">
                 <div class="flex flex-wrap gap-2">
                   <a href="detail.html" class="px-3 py-1.5 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">View</a>
@@ -158,56 +176,7 @@
                 </div>
               </td>
             </tr>
-
-            <tr>
-              <td class="px-4 py-3">
-                <div class="flex items-center gap-3">
-                  <img class="w-12 h-12 rounded object-cover" src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=200&auto=format&fit=crop" alt="">
-                  <div>
-                    <p class="font-medium text-gray-900">Laporan Kinerja Penelitian 2024</p>
-                    <p class="text-xs text-gray-600 line-clamp-1">Capaian program, indikator, rekomendasi.</p>
-                  </div>
-                </div>
-              </td>
-              <td class="px-4 py-3">LKP-2024</td>
-              <td class="px-4 py-3">Laporan</td>
-              <td class="px-4 py-3">2024</td>
-              <td class="px-4 py-3">Bidang Riset</td>
-              <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-xs bg-emerald-50 text-emerald-700">Publik</span></td>
-              <td class="px-4 py-3">
-                <div class="flex flex-wrap gap-2">
-                  <a href="detail.html" class="px-3 py-1.5 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">View</a>
-                  <a href="#dl" class="px-3 py-1.5 rounded-md bg-maroon text-white hover:bg-maroon-800 transition">Download</a>
-                  <button class="px-3 py-1.5 rounded-md border hover:bg-gray-50">Edit</button>
-                  <button class="px-3 py-1.5 rounded-md border hover:bg-gray-50">Hapus</button>
-                </div>
-              </td>
-            </tr>
-
-            <tr>
-              <td class="px-4 py-3">
-                <div class="flex items-center gap-3">
-                  <img class="w-12 h-12 rounded object-cover" src="https://images.unsplash.com/photo-1516542076529-1ea3854896e1?q=80&w=200&auto=format&fit=crop" alt="">
-                  <div>
-                    <p class="font-medium text-gray-900">KTP Pegawai — (Contoh) Andi Rahman</p>
-                    <p class="text-xs text-gray-600 line-clamp-1">Identitas pegawai untuk administrasi internal.</p>
-                  </div>
-                </div>
-              </td>
-              <td class="px-4 py-3">KTP-AR-2024</td>
-              <td class="px-4 py-3">Privasi</td>
-              <td class="px-4 py-3">2024</td>
-              <td class="px-4 py-3">Kepegawaian</td>
-              <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-xs bg-amber-50 text-amber-700">Akses Terkendali</span></td>
-              <td class="px-4 py-3">
-                <div class="flex flex-wrap gap-2">
-                  <a href="detail.html" class="px-3 py-1.5 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">View</a>
-                  <button class="px-3 py-1.5 rounded-md bg-gray-200 text-gray-600 cursor-not-allowed">Download</button>
-                  <button class="px-3 py-1.5 rounded-md border hover:bg-gray-50">Edit</button>
-                  <button class="px-3 py-1.5 rounded-md border hover:bg-gray-50">Hapus</button>
-                </div>
-              </td>
-            </tr>
+            @endforeach
           </tbody>
         </table>
       </div>
