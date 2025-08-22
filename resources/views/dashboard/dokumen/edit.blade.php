@@ -53,16 +53,16 @@
       <div class="grid sm:grid-cols-2 gap-4">
         <label class="block">
           <span class="text-sm font-semibold">Judul</span>
-          <input type="text" name="title" value="{{ old('title',$doc->title) }}" required class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
+          <input type="text" name="title" value="{{ old('title',$doc->title) }}" required class="mt-1.5 w-full p-2 rounded-lg border border-red-900 text-red-900 focus:border-maroon focus:ring-maroon">
         </label>
         <label class="block">
           <span class="text-sm font-semibold">Alias</span>
-          <input type="text" name="alias" value="{{ old('alias',$doc->alias) }}" class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Opsional (unik)">
+          <input type="text" name="alias" value="{{ old('alias',$doc->alias) }}" class="mt-1.5 w-full rounded-lg p-2 border border-red-900 text-red-900 focus:border-maroon focus:ring-maroon" placeholder="Opsional (unik)">
         </label>
 
         <label class="block">
           <span class="text-sm font-semibold">Kategori</span>
-          <select name="category" required class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
+          <select name="category" required class="mt-1.5 w-full rounded-lg border p-2 border-red-900 text-red-900 focus:border-maroon focus:ring-maroon">
             @foreach (['Surat Keputusan','Laporan','Formulir','Privasi'] as $opt)
               <option value="{{ $opt }}" @selected(old('category',$doc->category)===$opt)>{{ $opt }}</option>
             @endforeach
@@ -71,7 +71,7 @@
 
         <label class="block">
           <span class="text-sm font-semibold">Tahun</span>
-          <select name="year" required class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
+          <select name="year" required class="mt-1.5 w-full rounded-lg p-2 border border-red-900 text-red-900 focus:border-maroon focus:ring-maroon">
             @for ($y = now()->year; $y>= now()->year-10; $y--)
               <option value="{{ $y }}" @selected(old('year',$doc->year)==$y)>{{ $y }}</option>
             @endfor
@@ -80,12 +80,12 @@
 
         <label class="block">
           <span class="text-sm font-semibold">Pihak Terkait</span>
-          <input type="text" name="stakeholder" value="{{ old('stakeholder',$doc->stakeholder) }}" class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
+          <input type="text" name="stakeholder" value="{{ old('stakeholder',$doc->stakeholder) }}" class="mt-1.5 w-full rounded p-2 border border-red-900 text-red-900 focus:border-maroon focus:ring-maroon">
         </label>
 
         <label class="block">
           <span class="text-sm font-semibold">Status Akses</span>
-          <select name="sensitivity" class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
+          <select name="sensitivity" class="mt-1.5 w-full rounded-lg p-2 border border-red-900 text-red-900focus:border-maroon focus:ring-maroon">
             <option value="public"  @selected(old('sensitivity',$doc->sensitivity)==='public')>Publik</option>
             <option value="private" @selected(old('sensitivity',$doc->sensitivity)==='private')>Akses Terkendali</option>
           </select>
@@ -94,7 +94,7 @@
 
       <label class="block">
         <span class="text-sm font-semibold">Deskripsi</span>
-        <textarea name="description" rows="4" class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">{{ old('description',$doc->description) }}</textarea>
+        <textarea name="description" rows="4" class="mt-1.5 w-full rounded-lg p-2 border border-red-900 text-red-900 focus:border-maroon focus:ring-maroon">{{ old('description',$doc->description) }}</textarea>
       </label>
 
       <div class="grid sm:grid-cols-2 gap-4">

@@ -179,7 +179,7 @@
                   {{-- <button class="px-3 py-1.5 rounded-md border hover:bg-gray-50">Edit</button> --}}
                   <a href="{{ route('sigap-dokumen.edit', $item->id) }}" class="px-3 py-1.5 rounded-md border hover:bg-gray-50">Edit</a>
                   <button type="button"
-                          class="px-3 py-1.5 rounded-md border hover:bg-gray-50 text-red-600 border-red-300"
+                          class="px-3 py-1.5 rounded-md border hover:bg-gray-50 text-red-900 border-red-900"
                           onclick="confirmHapus({{ $item->id }}, @js($item->title))">
                     Hapus
                   </button>
