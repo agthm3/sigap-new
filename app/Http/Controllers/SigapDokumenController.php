@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Repositories\DocumentRepository;
 use Illuminate\Container\Attributes\Auth;
 use Illuminate\Support\Facades\Auth as FacadesAuth;
+use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -31,7 +32,7 @@ class SigapDokumenController extends Controller
             'alias'           => ['nullable','string','max:255','unique:documents,alias'],
             'year'            => ['required','integer','between:1900,'.((int)date('Y')+1)],
             'category'        => ['required','string','max:100'],
-            // 'stakeholder'     => ['nullable','string','max:255'],
+            'stakeholder'     => ['nullable','string','max:255'],
             'description'     => ['nullable','string'],
             // 'tags'            => ['nullable'], // string "a,b,c" atau array
            'sensitivity' => ['required','in:public,private'],
@@ -93,5 +94,45 @@ class SigapDokumenController extends Controller
         return redirect()
             ->route('sigap-dokumen.index')
             ->with('success', 'Dokumen berhasil dihapus!');
+    }
+
+    public function edit(int $id)
+    {
+        $doc = $this->repo->find($id);
+
+        $fileUrl = $doc->file_path ? asset('storage/' . $doc->file_path) : null;
+        $thumbUrl = $doc->thumb_path ? asset('storage/' . $doc->thumb_path) : null;
+        return view('dashboard.dokumen.edit', compact('doc', 'fileUrl', 'thumbUrl'));
+    }
+
+    public function update(Request $request, int $id)
+    {
+        $doc= $this->repo->find($id);
+
+        $validated= $request->validate([
+            'number'=> ['nullable','string','max:255'],
+            'title'=> ['required','string','max:255'],
+            'alias'=> ['nullable','string','max:255','unique:documents,alias,'.$doc->id],
+            'year'=> ['required','integer','between:1900,'.((int)date('Y')+1)],
+            'category'=> ['required','string','max:100'],
+            'description'=> ['nullable','string'],
+            'sensitivity'=> ['required','in:public,private'],
+            'file'=> ['nullable','file','max:20480'],
+            'thumb'=> ['nullable','image','max:4096'],
+            'stakeholder'=> ['nullable','string','max:255'],
+        ]);
+
+        $validated['updated_by']= FacadesAuth::id() ?? 1; // fallback jika belum pakai auth
+
+        $updated= $this->repo->update(
+            $id,
+            $validated,
+            $request->file('file'),
+            $request->file('thumb')
+        );
+
+        return  redirect()
+        ->route('sigap-dokumen.edit', $updated->id)
+        ->with('success', "Dokumen '{$updated->title}' berhasil diperbarui!");
     }
 }

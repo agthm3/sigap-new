@@ -143,11 +143,17 @@
           </thead>
           <tbody id="tbody" class="divide-y">
             <!-- Baris contoh (akan ditimpa JS saat tambah dokumen) -->
-            @foreach ($docs as $item)
-                  <tr>
+            @forelse ($docs as $item)
+            {{-- @dd($item) --}}
+            <tr>
               <td class="px-4 py-3">
                 <div class="flex items-center gap-3">
-                  <img class="w-12 h-12 rounded object-cover" src="https://images.unsplash.com/photo-1516387938699-a93567ec168e?q=80&w=200&auto=format&fit=crop" alt="">
+                  <!-- ganti dummy image menjadi gambar dokumen -->
+                  @if (!empty($item->thumb_path))
+                    <img class="w-12 h-12 rounded object-cover" src="{{ asset('storage/'.$item->thumb_path) }}" alt="">
+                  @else
+                    <img class="w-12 h-12 rounded object-cover" src="{{ asset('images/thumb/document-icon.png') }}" alt="">
+                  @endif
                   <div>
                     <p class="font-medium text-gray-900">{{ $item->title }}</p>
                     <p class="text-xs text-gray-600 line-clamp-1">{{ Str::limit($item->description, 90) }}</p>
@@ -168,10 +174,10 @@
               {{-- <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-xs bg-emerald-50 text-emerald-700">Publik</span></td> --}}
               <td class="px-4 py-3">
                 <div class="flex flex-wrap gap-2">
-                  <a href="{{ route('sigap-dokumen.show', $item->id) }}" class="px-3 py-1.5 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">View</a>
+                  <a href="{{ route('sigap-dokumen.show', $item->id) }}" target="_blank" class="px-3 py-1.5 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">View</a>
                   <a href="{{ route('sigap-dokumen.download', $item->id) }}" target="_blank" class="px-3 py-1.5 rounded-md bg-maroon text-white hover:bg-maroon-800 transition">Download</a>
-                  <button class="px-3 py-1.5 rounded-md border hover:bg-gray-50">Edit</button>
-
+                  {{-- <button class="px-3 py-1.5 rounded-md border hover:bg-gray-50">Edit</button> --}}
+                  <a href="{{ route('sigap-dokumen.edit', $item->id) }}" class="px-3 py-1.5 rounded-md border hover:bg-gray-50">Edit</a>
                   <button type="button"
                           class="px-3 py-1.5 rounded-md border hover:bg-gray-50 text-red-600 border-red-300"
                           onclick="confirmHapus({{ $item->id }}, @js($item->title))">
@@ -181,12 +187,17 @@
                   <form id="form-delete-{{ $item->id }}" action="{{ route('sigap-dokumen.destroy', $item->id) }}" method="POST" >
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="px-3 py-1.5 rounded-md border hover:bg-gray-50">Hapus</button>
                   </form>
                 </div>
               </td>
             </tr>
-            @endforeach
+            @empty
+              <tr>
+                <td colspan="7" class="px-4 py-6 text-center text-gray-500">
+                  Tidak ada berkas, Ganteng 😔
+                </td>
+              </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
@@ -263,6 +274,12 @@
 
           <label class="block sm:col-span-2">
             <span class="text-sm font-semibold text-gray-700">Deskripsi</span>
+             <div class="sm:col-span-2 flex items-center justify-between text-xs text-gray-600">
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-amber-600" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+              <span>Ketik deskripsi atau latar belakang dari dokumen yang anda masukkan agar lebih mudah ditemukan.</span>
+            </div>
+          </div>
             <textarea id="d_desc" name="description" rows="3" class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Ringkasan singkat isi dokumen…"></textarea>
           </label>
 

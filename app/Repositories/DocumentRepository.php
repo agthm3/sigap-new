@@ -71,12 +71,13 @@ class DocumentRepository
             $q->where(function($query) use ($kw) {
                 $query->where('title', 'like', "%{$kw}%")
                       ->orWhere('alias', 'like', "%{$kw}%")
-                      ->orWhere('number', 'like', "%{$kw}%");
+                      ->orWhere('number', 'like', "%{$kw}%")
+                      ->orWhere('stakeholder', 'like', "%{$kw}%");
             });
         }
 
         if(!empty($filters['stakeholder'])) {
-            $q->where('stakeholder', $filters['stakeholder']);
+            $q->where('stakeholder', 'like', "%{$filters['stakeholder']}%");
         }
 
         if(!empty($filters['category'])) {
@@ -94,6 +95,8 @@ class DocumentRepository
         $q->latest('created_at');
 
         Log::channel('giga')->info('Document search filters applied', $filters);
+        //Log untuk menampilkan hasil filtering
+        Log::channel('giga')->info('Document search query', ['query' => $q->toSql(), 'bindings' => $q->getBindings()]);
 
         return $q->paginate($perPage);
     }
@@ -120,5 +123,42 @@ class DocumentRepository
         } else {
             $doc->delete(); // soft delete
         }
+    }
+
+    public function update(
+        int $id, 
+        array $data, 
+        ?UploadedFile $file = null,
+        ?UploadedFile $thumb = null
+    ):Document {
+        return DB::transaction(function()use($id, $data, $file, $thumb){
+            $doc = Document::findOrFail($id);
+
+
+            if(!empty($data['sensitivity'])) {
+                $data['sensitivity'] = $data['sensitivity'] === 'Akses Terkendali' ? 'private' : 'public';
+            }
+
+            if($thumb instanceof UploadedFile){
+                if($doc->thumb_path && Storage::disk('public')->exists($doc->thumb_path)) {
+                    Storage::disk('public')->delete($doc->thumb_path);
+                }
+                $data['thumb_path']= $thumb->store('thumbnails', 'public');
+            }
+
+            if(empty($data['alias'])) {
+                $base = strtoupper(Str::slug(($data['title'] ?? 'dokumen') . '-' . ($data['year'] ?? now()->year), '_'));
+                $alias = $base;
+                $i = 1;
+                while (Document::where('alias', $alias)->where('id', '!=', $id)->exists()) {
+                    $alias = $base . '_' . $i++;
+                }
+                $data['alias'] = $alias;
+            }   
+
+            $doc->fill($data)->save();
+
+            return $doc->refresh();
+        });
     }
 }

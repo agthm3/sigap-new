@@ -86,7 +86,7 @@
         <p><span class="font-semibold">Deskripsi:</span> {{ $doc->description }}</p>
       </div>
       <div class="px-5 pb-5">
-        <a href="{{ $fileUrl }}" target="_blank" class="w-full px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 transition">
+        <a href="{{ route('sigap-dokumen.download', $doc->id) }}"  class="w-full px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 transition">
             Download Dokumen
         </a>
         {{-- <button id="btnDownload" class="w-full px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 transition">Download Dokumen</button> --}}
