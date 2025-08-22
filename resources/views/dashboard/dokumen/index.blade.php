@@ -215,7 +215,7 @@
   </section>
 
   <!-- Modal Tambah Dokumen -->
-  <div id="modal" class="fixed inset-0 z-50 hidden">
+  <div id="modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
     <div class="absolute inset-0 bg-black/40" onclick="closeModal()"></div>
     <div class="relative z-10 mx-auto max-w-3xl px-4 py-8">
       <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
