@@ -7,6 +7,7 @@ use App\Repositories\DocumentRepository;
 use Illuminate\Container\Attributes\Auth;
 use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class SigapDokumenController extends Controller
 {
@@ -15,7 +16,7 @@ class SigapDokumenController extends Controller
     }
     public function index(Request $request)
     {
-        $filters = $request->only(['q', 'category', 'sensitivity', 'year']);
+        $filters = $request->only(['q', 'category', 'sensitivity', 'year', 'stakeholder']);
         $docs = $this->repo->paginate($filters, perPage: 10);
         return view('dashboard.dokumen.index', compact('docs'));
     }
@@ -53,5 +54,36 @@ class SigapDokumenController extends Controller
         return redirect()
                     ->route('sigap-dokumen.index')
                     ->with('success', "Dokumen '{$doc->title}' berhasil disimpan!");
+    }
+
+    public function show(int $id)
+    {
+        $doc = $this->repo->find($id);
+
+
+        $fileUrl = asset('storage/' . $doc->file_path);
+        $thumbUrl = $doc->thumb_path ? asset('storage/' . $doc->thumb_path) : null;
+
+        $ext = strtolower(pathinfo($doc->file_path, PATHINFO_EXTENSION));
+        $isPdf = $ext === 'pdf';
+        $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif']);
+
+        return view('dashboard.dokumen.show', compact('doc', 'fileUrl', 'thumbUrl', 'isPdf', 'isImage'));
+    }
+
+
+    public function download(int $id)
+    {
+    $doc = $this->repo->find($id);
+
+    // Pastikan file ada di storage
+    if (!Storage::disk('public')->exists($doc->file_path)) {
+        abort(404, 'File tidak ditemukan');
+    }
+
+    // Ambil nama asli file (misalnya dari judul + ekstensi)
+    $ext = pathinfo($doc->file_path, PATHINFO_EXTENSION);
+    $filename = ($doc->alias ?? $doc->title).'.'.$ext;
+    return Storage::disk('public')->download($doc->file_path, $filename);
     }
 }

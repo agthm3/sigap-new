@@ -51,6 +51,13 @@ return [
     */
 
     'channels' => [
+        'giga' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/giga.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => env('LOG_DAILY_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
 
         'stack' => [
             'driver' => 'stack',

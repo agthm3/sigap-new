@@ -32,3 +32,5 @@ Route::get('/sigap-pegawai', [SigapPegawaiController::class, 'index'])->name('si
 
 Route::get('/sigap-dokumen', [SigapDokumenController::class, 'index'])->name('sigap-dokumen.index');
 Route::post('/sigap-dokumen', [SigapDokumenController::class, 'store'])->name('sigap-dokumen.store');
+Route::get('/sigap-dokumen/{id}', [SigapDokumenController::class, 'show'])->name('sigap-dokumen.show');
+Route::get('/sigap-dokumen/{id}/download', [SigapDokumenController::class, 'download'])->name('sigap-dokumen.download');

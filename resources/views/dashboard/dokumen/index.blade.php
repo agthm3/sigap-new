@@ -88,7 +88,7 @@
         </div>
         <div>
           <label class="text-sm font-semibold text-gray-700">Tahun</label>
-          <select id="f_th" class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
+          <select name="year" id="f_th" class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
             <option value="">Semua</option>
             @for ($y = now()->year; $y>= now()->year-5; $y--) 
               <option value="{{ $y }}" @selected(request('year') == $y)>{{ $y }}</option>
@@ -105,11 +105,11 @@
       </div>
         <div>
           <label class="text-sm font-semibold text-gray-700">Pihak Terkait</label>
-          <input id="f_pihak" type="text" class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Sekretariat A / Bidang X">
+          <input name="stakeholder" id="f_pihak" type="text" class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Sekretariat A / Bidang X">
         </div>
         <div class="lg:col-span-5 flex gap-3 pt-1">
           <button id="btnCari" class="px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 transition">Cari</button>
-          <button type="reset" href='{{ route('sigap-dokumen.index') }}' class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50" onclick="resetFilter()">Reset</button>
+          <a href='{{ route('sigap-dokumen.index') }}' class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50" >Reset</a>
         </div>
       </form>
     </div>
@@ -119,7 +119,6 @@
   <section class="max-w-7xl mx-auto px-4 py-6">
     <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
       <div class="px-4 py-3 bg-gray-50 text-sm text-gray-700 flex items-center justify-between">
-        <span id="countInfo">Menampilkan 3 dokumen (contoh)</span>
         <div class="flex items-center gap-2">
           <label class="text-sm text-gray-600">Urutkan</label>
           <select id="sort" class="text-sm rounded-md border-gray-300 focus:border-maroon focus:ring-maroon">
@@ -169,8 +168,8 @@
               {{-- <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-xs bg-emerald-50 text-emerald-700">Publik</span></td> --}}
               <td class="px-4 py-3">
                 <div class="flex flex-wrap gap-2">
-                  <a href="detail.html" class="px-3 py-1.5 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">View</a>
-                  <a href="#dl" class="px-3 py-1.5 rounded-md bg-maroon text-white hover:bg-maroon-800 transition">Download</a>
+                  <a href="{{ route('sigap-dokumen.show', $item->id) }}" class="px-3 py-1.5 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">View</a>
+                  <a href="{{ route('sigap-dokumen.download', $item->id) }}" target="_blank" class="px-3 py-1.5 rounded-md bg-maroon text-white hover:bg-maroon-800 transition">Download</a>
                   <button class="px-3 py-1.5 rounded-md border hover:bg-gray-50">Edit</button>
                   <button class="px-3 py-1.5 rounded-md border hover:bg-gray-50">Hapus</button>
                 </div>

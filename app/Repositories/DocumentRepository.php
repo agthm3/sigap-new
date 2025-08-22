@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\Document;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class DocumentRepository
@@ -73,6 +74,10 @@ class DocumentRepository
             });
         }
 
+        if(!empty($filters['stakeholder'])) {
+            $q->where('stakeholder', $filters['stakeholder']);
+        }
+
         if(!empty($filters['category'])) {
             $q->where('category', $filters['category']);
         }
@@ -87,6 +92,13 @@ class DocumentRepository
 
         $q->latest('created_at');
 
+        Log::channel('giga')->info('Document search filters applied', $filters);
+
         return $q->paginate($perPage);
+    }
+
+    public function find(int $id): ?Document
+    {
+        return Document::findOrFail($id);
     }
 }
