@@ -119,7 +119,7 @@
                   @endif
                   <div>
                     <p class="font-medium text-gray-900">{{ $item->title }}</p>
-                    <p class="text-xs text-gray-600 line-clamp-1">{{ Str::limit($item->description, 90) }}</p>
+                    <p class="text-xs text-gray-600 line-clamp-1">{{ Str::limit($item->description, 30) }}</p>
                   </div>
                 </div>
               </td>
