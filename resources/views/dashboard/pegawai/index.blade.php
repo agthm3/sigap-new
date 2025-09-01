@@ -62,7 +62,7 @@
         </div>
         <div class="col-span-full flex items-end gap-2">
           <button class="px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800">Terapkan</button>
-          <button type="reset" class="px-4 py-2 rounded-lg  border border-gray-300 hover:bg-gray-50" onclick="resetFilters()">Reset</button>
+          <a href="{{ route('sigap-pegawai.index') }}" type="reset" class="px-4 py-2 rounded-lg  border border-gray-300 hover:bg-gray-50" >Reset</a>
         </div>
     </form>
     </div>
@@ -72,7 +72,7 @@
   <section class="max-w-7xl mx-auto px-4 py-6">
     <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
       <div class="px-4 py-3 bg-gray-50 text-sm text-gray-700 flex items-center justify-between">
-        <span id="countInfo">Menampilkan 0 pegawai</span>
+        <span id="countInfo">Menampilkan {{ $employees->count() }} pegawai</span>
         <div class="flex items-center gap-2">
           <label class="text-sm text-gray-600">Tampilkan</label>
           <select id="pageSize" class="text-sm rounded-md border-gray-300 focus:border-maroon focus:ring-maroon">
