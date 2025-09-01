@@ -8,21 +8,21 @@
         <form class="grid sm:grid-cols-5 gap-3" onsubmit="event.preventDefault()">
           <div class="sm:col-span-2">
             <label class="text-sm font-semibold text-gray-700">Kata Kunci</label>
-            <input type="search" class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Contoh: SK Sekretariat A, Laporan 2024, KTP…" />
+            <input type="search" class="mt-1.5 w-full rounded-lg p-2 border border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Contoh: SK Sekretariat A, Laporan 2024, KTP…" />
           </div>
           <div>
             <label class="text-sm font-semibold text-gray-700">Kategori</label>
-            <select class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
+            <select class="mt-1.5 w-full rounded-lg p-2 border border-gray-300 focus:border-maroon focus:ring-maroon">
               <option>Semua</option><option>Surat Keputusan</option><option>Laporan</option><option>Formulir</option><option>Privasi (KK/KTP)</option>
             </select>
           </div>
           <div>
             <label class="text-sm font-semibold text-gray-700">Pihak Terkait</label>
-            <input type="text" class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Sekretariat A, Bidang X…" />
+            <input type="text" class="mt-1.5 w-full rounded-lg p-2 border border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Sekretariat A, Bidang X…" />
           </div>
           <div>
             <label class="text-sm font-semibold text-gray-700">Tahun</label>
-            <select class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
+            <select class="mt-1.5 w-full rounded-lg p-2 border border-gray-300 focus:border-maroon focus:ring-maroon">
               <option>Semua</option><option>2025</option><option>2024</option><option>2023</option><option>2022</option>
             </select>
           </div>
@@ -31,7 +31,7 @@
               <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-width="2" d="M21 21l-4.3-4.3M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></svg>
               Cari Dokumen
             </button>
-            <button type="reset" class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">Reset</button>
+            <a href="{{ route('home.show') }}" class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">Reset</a>
           </div>
         </form>
       </div>
