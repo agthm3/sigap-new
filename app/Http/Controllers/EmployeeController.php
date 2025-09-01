@@ -7,15 +7,16 @@ use App\Repositories\EmployeeRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
-class SigapPegawaiController extends Controller
+class EmployeeController extends Controller
 {
- public function __construct(private EmployeeRepository $repo) {}
+    public function __construct(private EmployeeRepository $repo) {}
 
     public function index(Request $request)
     {
         $filters   = $request->only(['q','unit','role','status','sort']);
         $perPage   = (int) $request->input('per_page', 25);
         $employees = $this->repo->paginateWithFilters($filters, $perPage);
+
 
         return view('dashboard.pegawai.index', compact('employees', 'filters'));
     }

@@ -28,7 +28,12 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->name('home.inde
 
 
 Route::get('/sigap-pegawai', [SigapPegawaiController::class, 'index'])->name('sigap-pegawai.index');
-
+Route::get('/sigap-pegawai/create', [SigapPegawaiController::class, 'create'])->name('sigap-pegawai.create');
+Route::post('/sigap-pegawai', [SigapPegawaiController::class, 'store'])->name('sigap-pegawai.store');
+Route::get('/sigap-pegawai/{id}', [SigapPegawaiController::class, 'show'])->name('sigap-pegawai.show');
+Route::get('/sigap-pegawai/{id}/edit', [SigapPegawaiController::class, 'edit'])->name('sigap-pegawai.edit');
+Route::put('/sigap-pegawai/{id}', [SigapPegawaiController::class, 'update'])->name('sigap-pegawai.update');
+Route::delete('/sigap-pegawai/{id}', [SigapPegawaiController::class, 'destroy'])->name('sigap-pegawai.destroy');
 
 Route::get('/sigap-dokumen', [SigapDokumenController::class, 'index'])->name('sigap-dokumen.index');
 Route::post('/sigap-dokumen', [SigapDokumenController::class, 'store'])->name('sigap-dokumen.store');
