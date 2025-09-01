@@ -1,15 +1,17 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\page\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SigapDokumenController;
 use App\Http\Controllers\SigapPegawaiController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
+// Route::get('/', function () {
+//     return view('welcome');
+// });
+Route::get('/', [App\Http\Controllers\page\HomeController::class, 'index'])->name('home');
+Route::get('/hasil', [HomeController::class, 'show'])->name('home.show');
 // Route::get('/dashboard', function () {
 //     return view('dashboard');
 // })->middleware(['auth', 'verified'])->name('dashboard');
