@@ -179,7 +179,7 @@
 
   <!-- Modal Tambah Dokumen -->
   <div id="modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
-    <div class="absolute inset-0 bg-black/40" onclick="closeModal()"></div>
+    <div class="fixed inset-0 bg-black/40" onclick="closeModal()"></div>
     <div class="relative z-10 mx-auto max-w-3xl px-4 py-8">
       <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
         <div class="px-5 py-4 bg-gradient-to-r from-maroon via-maroon-800 to-maroon-900">
@@ -197,7 +197,7 @@
         @csrf
           <label class="block">
             <span class="text-sm font-semibold text-gray-700">Judul</span>
-            <input id="d_judul" name="title" type="text" required class="mt-1.5 w-full rounded border border-black-300 p-2 focus:border-maroon focus:ring-maroon" placeholder="Judul dokumen">
+            <input id="d_judul" name="title" type="text" required class="mt-1.5 w-full rounded border  border-black-300 p-2 focus:border-maroon focus:ring-maroon" placeholder="Judul dokumen">
           </label>
           <label class="block">
             <span class="text-sm font-semibold text-gray-700">Alias</span>

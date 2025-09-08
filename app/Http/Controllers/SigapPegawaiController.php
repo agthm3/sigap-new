@@ -52,13 +52,11 @@ class SigapPegawaiController extends Controller
         return redirect()->route('sigap-pegawai.index')->with('success', 'Pegawai berhasil ditambahkan.');
     }
 
-    public function edit(Employee $sigap_pegawai) // model binding dari resource (param name menyesuaikan route)
+    public function edit($id)
     {
-        // Jika route resource name-nya "sigap-pegawai", param default jadi $sigap_pegawai
-        $employee = $sigap_pegawai;
+        $employee = Employee::findOrFail($id);
         return view('dashboard.pegawai.edit', compact('employee'));
     }
-
     public function update(Request $request, Employee $sigap_pegawai)
     {
         $employee = $sigap_pegawai;

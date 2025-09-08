@@ -124,7 +124,7 @@
                 </td>
                 <td class="px-4 py-3">
                   <div class="flex flex-wrap gap-2">
-                    <a href="{{ route('sigap-pegawai.edit', $e) }}" class="px-3 py-1.5 rounded-md border hover:bg-gray-50">Edit</a>
+                    <a href="{{ route('sigap-pegawai.edit', $e->id) }}" class="px-3 py-1.5 rounded-md border hover:bg-gray-50">Edit</a>
                     <form action="{{ route('sigap-pegawai.destroy', $e) }}" method="POST"
                           onsubmit="return confirm('Hapus pegawai ini?')">
                       @csrf @method('DELETE')

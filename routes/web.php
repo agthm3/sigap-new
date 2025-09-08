@@ -4,6 +4,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\page\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SigapDokumenController;
+use App\Http\Controllers\SigapInovasiController;
 use App\Http\Controllers\SigapPegawaiController;
 use Illuminate\Support\Facades\Route;
 
@@ -44,3 +45,7 @@ Route::get('/sigap-dokumen/{id}/download', [SigapDokumenController::class, 'down
 Route::delete('/sigap-dokumen/{id}', [SigapDokumenController::class, 'destroy'])->name('sigap-dokumen.destroy');
 Route::get('/sigap-dokumen/{id}/edit', [SigapDokumenController::class, 'edit'])->name('sigap-dokumen.edit');
 Route::put('/sigap-dokumen/{id}', [SigapDokumenController::class, 'update'])->name('sigap-dokumen.update');
+
+Route::get('/sigap-inovasi', [SigapInovasiController::class, 'index'])->name('sigap-inovasi.index');
+Route::get('/sigap-inovasi/konfigurasi', [SigapInovasiController::class, 'konfigurasi'])->name('sigap-inovasi.konfigurasi');
+Route::get('/sigap-inovasi/dashboard', [SigapInovasiController::class, 'dashboard'])->name('sigap-inovasi.dashboard');

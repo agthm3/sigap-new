@@ -57,6 +57,7 @@ class EmployeeController extends Controller
     {
         // Jika route resource name-nya "sigap-pegawai", param default jadi $sigap_pegawai
         $employee = $sigap_pegawai;
+
         return view('dashboard.pegawai.edit', compact('employee'));
     }
 

@@ -80,6 +80,46 @@
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M10 17l5-5-5-5"/><path stroke-width="2" d="M4 12h11"/></svg>
           Keluar
         </a>
+        <!-- SIGAP INOVASI -->
+          <!-- SECTION BARU: SIGAP INOVASI -->
+        <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">SIGAP INOVASI</div>
+
+        <!-- Toggle -->
+        <button id="inovasiToggle"
+                class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-left">
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" d="M12 3l3.5 6 6.5 1-4.7 4.7 1.1 6.3L12 18l-6 3.9 1.1-6.3L2.4 10 9 9z"/>
+          </svg>
+          <span class="font-medium">SIGAP Inovasi</span>
+          <svg id="inovasiCaret" class="w-4 h-4 ml-auto transition-transform duration-200"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" d="M6 9l6 6 6-6"/>
+          </svg>
+        </button>
+
+        <!-- Dropdown Items -->
+        <div id="inovasiMenu" class="ml-3 mt-1 space-y-1 hidden">
+          <a href="{{ route('sigap-inovasi.dashboard') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M3 10l9-7 9 7v8a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V12H9v6a2 2 0 0 1-2 2H3z"/></svg>
+            Dashboard 
+          </a>
+          <a href="{{ route('sigap-inovasi.index') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" d="M3 21h18M9 21V9h6v12M4 10h16v11H4V10zM12 3l8 6H4l8-6z"/>
+          </svg>
+          Inovasi Daerah
+          </a>
+          <a href="{{ route('sigap-inovasi.konfigurasi') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-width="2" d="M10.325 4.317l.387-1.934a1 1 0 0 1 .976-.8h1.624a1 1 0 0 1 .976.8l.387 1.934a1 1 0 0 0 .725.725l1.934.387a1 1 0 0 1 .8.976v1.624a1 1 0 0 1-.8.976l-1.934.387a1 1 0 0 0-.725.725l-.387 1.934a1 1 0 0 1-.976.8h-1.624a1 1 0 0 1-.976-.8l-.387-1.934a1 1 0 0 0-.725-.725l-1.934-.387a1 1 0 0 1-.8-.976V6.005a1 1 0 0 1 .8-.976l1.934-.387a1 1 0 0 0 .725-.325z"/>
+              <circle cx="12" cy="12" r="3" stroke-width="2"/>
+            </svg>
+            Konfigurasi
+          </a>
+        </div>
       </nav>
     </aside>
 
@@ -113,6 +153,27 @@
   </main>
       </div>
   </div>
+  <script>
+    // Dropdown SIGAP INOVASI
+    const inovasiToggle = document.getElementById('inovasiToggle');
+    const inovasiMenu   = document.getElementById('inovasiMenu');
+    const inovasiCaret  = document.getElementById('inovasiCaret');
+
+    // (opsional) restore state dari localStorage
+    const INOVASI_KEY = 'sb_inovasi_open';
+    const isOpenSaved = localStorage.getItem(INOVASI_KEY) === '1';
+    if (isOpenSaved) {
+      inovasiMenu.classList.remove('hidden');
+      inovasiCaret.classList.add('rotate-180');
+    }
+
+    inovasiToggle.addEventListener('click', () => {
+      const willOpen = inovasiMenu.classList.contains('hidden');
+      inovasiMenu.classList.toggle('hidden');
+      inovasiCaret.classList.toggle('rotate-180', willOpen);
+      localStorage.setItem(INOVASI_KEY, willOpen ? '1' : '0');
+    });
+  </script>
 
   <script>
     // Sidebar toggle (mobile)
