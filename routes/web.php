@@ -49,3 +49,8 @@ Route::put('/sigap-dokumen/{id}', [SigapDokumenController::class, 'update'])->na
 Route::get('/sigap-inovasi', [SigapInovasiController::class, 'index'])->name('sigap-inovasi.index');
 Route::get('/sigap-inovasi/konfigurasi', [SigapInovasiController::class, 'konfigurasi'])->name('sigap-inovasi.konfigurasi');
 Route::get('/sigap-inovasi/dashboard', [SigapInovasiController::class, 'dashboard'])->name('sigap-inovasi.dashboard');
+Route::post('/sigap-inovasi', [SigapInovasiController::class, 'store'])->name('sigap-inovasi.store');
+Route::get('/sigap-inovasi/{id}', [SigapInovasiController::class, 'show'])->name('sigap-inovasi.show');
+Route::get('/sigap-inovasi/{id}/edit', [SigapInovasiController::class, 'edit'])->name('sigap-inovasi.edit');
+Route::put('/sigap-inovasi/{id}', [SigapInovasiController::class, 'update'])->name('sigap-inovasi.update');
+Route::delete('/sigap-inovasi/{id}', [SigapInovasiController::class, 'destroy'])->name('sigap-inovasi.destroy');

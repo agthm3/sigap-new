@@ -28,7 +28,7 @@
     .scrollbar-thin::-webkit-scrollbar{height:6px;width:6px}
     .scrollbar-thin::-webkit-scrollbar-thumb{background:#e5e7eb;border-radius:8px}
   </style>
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <!-- Chart.js -->
   {{-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> --}}
 @stack('head')
@@ -153,6 +153,7 @@
   </main>
       </div>
   </div>
+  @include('partials.flash')
   <script>
     // Dropdown SIGAP INOVASI
     const inovasiToggle = document.getElementById('inovasiToggle');
