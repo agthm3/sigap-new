@@ -83,4 +83,17 @@ class InovasiRepository
         return $q->paginate($perPage)->withQueryString();
     }
 
+    public function delete(int $id): void
+    {
+        $inovasi = Inovasi::findOrFail($id);
+        $judul = $inovasi->judul;
+        $inovasi->delete();
+
+        Log::channel('giga')->info('Inovasi deleted', ['id' => $id, 'judul' => $judul]);
+    }
+
+    public function find(int $id): Inovasi
+    {
+        return Inovasi::findOrFail($id);
+    }
 }

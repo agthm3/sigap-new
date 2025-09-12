@@ -75,4 +75,32 @@ class SigapInovasiController extends Controller
         return redirect()->route('sigap-inovasi.index')->with('success', 'Inovasi berhasil ditambahkan.');
 
     }
+
+    public function destroy($id)
+    {
+        $this->repo->delete($id);
+        return redirect()->route('sigap-inovasi.index')->with('success', 'Inovasi berhasil dihapus.');
+    }
+
+ public function show(int $id)
+    {
+        $inovasi = $this->repo->find($id);
+
+        // Ambil status tahapan dari kolom yang ada (fallback ke 'Belum' bila null)
+        $tInis  = $inovasi->t_inisiatif   ?? $inovasi->t_inisiatif_status   ?? 'Belum';
+        $tUji   = $inovasi->t_uji_coba    ?? $inovasi->t_uji_status         ?? 'Belum';
+        $tTerap = $inovasi->t_penerapan   ?? $inovasi->t_penerapan_status   ?? 'Belum';
+
+        // Hitung progres sederhana (tanpa evidence): setiap tahap != 'Belum' dihitung 1 langkah
+        $steps = collect([$tInis,$tUji,$tTerap])->filter(fn($s)=> strcasecmp((string)$s,'Belum') !== 0 && !empty($s))->count();
+        $progressPct = (int) round($steps / 3 * 100);
+
+        return view('dashboard.inovasi.show', [
+            'inovasi'     => $inovasi,
+            'tInis'       => $tInis,
+            'tUji'        => $tUji,
+            'tTerap'      => $tTerap,
+            'progressPct' => $progressPct,
+        ]);
+    }
 }

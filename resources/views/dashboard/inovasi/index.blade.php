@@ -120,6 +120,7 @@
               <th class="px-4 py-3">Inisiator</th>
               <th class="px-4 py-3">Tahap</th>
               <th class="px-4 py-3">OPD/Unit</th>
+              <th class="px-4 py-3">Review</th>
               <th class="px-4 py-3">Aksi</th>
             </tr>
           </thead>
@@ -155,6 +156,7 @@
                   </div>
                 </td>
                 <td class="px-4 py-3">{{ $inv->opd_unit ?? '-' }}</td>
+                <td class="px-4 py-3"><p class="p-2 bg-yellow-100 text-black">Belum Direview</p></td>
                 <td class="px-4 py-3">
                   <div class="flex flex-wrap gap-2">
                     <a href="{{ route('sigap-inovasi.show', $inv->id) }}" class="px-3 py-1.5 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">View</a>
