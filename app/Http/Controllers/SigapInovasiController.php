@@ -83,70 +83,118 @@ class SigapInovasiController extends Controller
     {
         $inovasi = $this->repo->find($id);
 
-        // status tahapan (yang sudah ada)
+        // Ambil status tahapan (fallback 'Belum')
         $tInis  = $inovasi->t_inisiatif   ?? $inovasi->t_inisiatif_status   ?? 'Belum';
         $tUji   = $inovasi->t_uji_coba    ?? $inovasi->t_uji_status         ?? 'Belum';
         $tTerap = $inovasi->t_penerapan   ?? $inovasi->t_penerapan_status   ?? 'Belum';
+
+        // Progress (versi tahapan, seperti sebelumnya)
         $steps = collect([$tInis,$tUji,$tTerap])->filter(fn($s)=> strcasecmp((string)$s,'Belum') !== 0 && !empty($s))->count();
         $progressPct = (int) round($steps / 3 * 100);
 
-        // ⬇️ AMBIL EVIDENCE DARI DB untuk ID ini
-        $evItems  = $evidenceRepo->listForInovasi($id);        // array 20 indikator
-        $evTotal  = $evidenceRepo->totalWeight($id);           // total bobot
-        $evFilled = collect($evItems)->where('selected_weight', '>', 0)->count();
-        $evFiles  = collect($evItems)->filter(fn($r)=> !empty($r['file_name']))->count();
+        // Evidence (langsung dari repo)
+        $evItems     = collect($evidenceRepo->listForInovasi($inovasi->id));   // array -> collect untuk gampang ngitung
+        $evTotal     = $evidenceRepo->totalWeight($inovasi->id);
+        $evFilled    = $evItems->where('selected_weight','>',0)->count();
+        $evFiles     = $evItems->filter(fn($r)=> !empty($r['file_name']))->count();
 
         return view('dashboard.inovasi.show', compact(
-            'inovasi',
-            'tInis','tUji','tTerap','progressPct',
+            'inovasi','tInis','tUji','tTerap','progressPct',
             'evItems','evTotal','evFilled','evFiles'
         ));
     }
-public function evidenceForm(Inovasi $inovasi, EvidenceRepository $evidenceRepo)
-{
-    $items       = $evidenceRepo->listForInovasi($inovasi->id);   // <- array murni
-    $totalWeight = $evidenceRepo->totalWeight($inovasi->id);
-    $doneCount   = collect($items)->filter(fn($i) =>
-                      !empty($i['selected_label']) || (($i['selected_weight'] ?? 0) > 0)
-                   )->count();
+    public function evidenceForm(Inovasi $inovasi, EvidenceRepository $evidenceRepo)
+    {
+        $items       = $evidenceRepo->listForInovasi($inovasi->id);   // <- array murni
+        $totalWeight = $evidenceRepo->totalWeight($inovasi->id);
+        $doneCount   = collect($items)->filter(fn($i) =>
+                        !empty($i['selected_label']) || (($i['selected_weight'] ?? 0) > 0)
+                    )->count();
 
-    return view('dashboard.inovasi.evidence', compact('inovasi','items','totalWeight','doneCount'));
-}
-
-public function evidenceSave(Request $r, Inovasi $inovasi, EvidenceRepository $evidenceRepo)
-{
-    // Ambil array input dari form (keyed by nomor indikator)
-    $paramIds   = $r->input('param_id', []);           // [no => param_id]
-    $labels     = $r->input('parameter_label', []);    // opsional (kalau mau manual)
-    $weights    = $r->input('parameter_weight', []);   // opsional (kalau mau manual)
-    $deskripsis = $r->input('deskripsi', []);          // [no => text]
-    $linkUrls   = $r->input('link_url', []);           // [no => url]
-
-    // Susun payload untuk repository
-    $rows = [];
-    for ($no = 1; $no <= 20; $no++) {
-        $rows[] = [
-            'no'                => $no,
-            'param_id'          => $paramIds[$no] ?? null,
-            'parameter_label'   => $labels[$no] ?? null,
-            'parameter_weight'  => $weights[$no] ?? null,
-            'deskripsi'         => $deskripsis[$no] ?? null,
-            'link_url'          => $linkUrls[$no] ?? null,
-        ];
+        return view('dashboard.inovasi.evidence', compact('inovasi','items','totalWeight','doneCount'));
     }
 
-    // Map file input: file_1..file_20
-    $files = [];
-    for ($no = 1; $no <= 20; $no++) {
-        if ($r->hasFile("file_{$no}")) {
-            $files[$no] = $r->file("file_{$no}");
+    public function evidenceSave(Request $r, Inovasi $inovasi, EvidenceRepository $evidenceRepo)
+    {
+        // Ambil array input dari form (keyed by nomor indikator)
+        $paramIds   = $r->input('param_id', []);           // [no => param_id]
+        $labels     = $r->input('parameter_label', []);    // opsional (kalau mau manual)
+        $weights    = $r->input('parameter_weight', []);   // opsional (kalau mau manual)
+        $deskripsis = $r->input('deskripsi', []);          // [no => text]
+        $linkUrls   = $r->input('link_url', []);           // [no => url]
+
+        // Susun payload untuk repository
+        $rows = [];
+        for ($no = 1; $no <= 20; $no++) {
+            $rows[] = [
+                'no'                => $no,
+                'param_id'          => $paramIds[$no] ?? null,
+                'parameter_label'   => $labels[$no] ?? null,
+                'parameter_weight'  => $weights[$no] ?? null,
+                'deskripsi'         => $deskripsis[$no] ?? null,
+                'link_url'          => $linkUrls[$no] ?? null,
+            ];
         }
+
+        // Map file input: file_1..file_20
+        $files = [];
+        for ($no = 1; $no <= 20; $no++) {
+            if ($r->hasFile("file_{$no}")) {
+                $files[$no] = $r->file("file_{$no}");
+            }
+        }
+
+        $evidenceRepo->upsertBulk($inovasi->id, $rows, $files);
+
+        return redirect()
+            ->route('evidence.form', $inovasi->id)
+            ->with('success','Evidence berhasil disimpan.');
     }
 
-    $evidenceRepo->upsertBulk($inovasi->id, $rows, $files);
+    public function edit(int $id)
+    {
+        $inovasi = $this->repo->find($id);
+        return view('dashboard.inovasi.edit', compact('inovasi'));
+    }
 
-    return redirect()
-        ->route('evidence.form', $inovasi->id)
-        ->with('success','Evidence berhasil disimpan.');
-}
+    public function update(Request $r, int $id)
+    {
+        $data = $r->validate([
+            'judul'                 => ['required','string','max:255'],
+            'opd_unit'              => ['nullable','string','max:255'],
+            'inisiator_daerah'      => ['nullable','string','max:255'],
+            'inisiator_nama'        => ['nullable','string','max:255'],
+            'koordinat'             => ['nullable','string','max:255'],
+            'klasifikasi'           => ['nullable','string','max:255'],
+            'jenis_inovasi'         => ['nullable','string','max:255'],
+            'bentuk_inovasi_daerah' => ['nullable','string','max:255'],
+            'asta_cipta'            => ['nullable','string','max:255'],
+            'program_prioritas'     => ['nullable','string','max:255'],
+            'urusan_pemerintah'     => ['nullable','string','max:255'],
+            'waktu_uji_coba'        => ['nullable','date'],
+            'waktu_penerapan'       => ['nullable','date'],
+
+            'rancang_bangun'        => ['nullable','string'],
+            'tujuan'                => ['nullable','string'],
+            'manfaat'               => ['nullable','string'],
+            'hasil_inovasi'         => ['nullable','string'],
+
+            'anggaran'              => ['nullable','file','mimes:pdf','max:10240'],
+            'profil_bisnis'         => ['nullable','file','mimes:ppt,pptx,pdf','max:20480'],
+            'haki'                  => ['nullable','file','mimes:pdf,jpg,jpeg,png','max:10240'],
+            'penghargaan'           => ['nullable','file','mimes:pdf,jpg,jpeg,png','max:10240'],
+        ]);
+
+        // lewat repository (konsisten dengan store())
+        $this->repo->update(
+            $id,
+            $data,
+            $r->file('anggaran'),
+            $r->file('profil_bisnis'),
+            $r->file('haki'),
+            $r->file('penghargaan')
+        );
+
+        return redirect()->route('sigap-inovasi.show',$id)->with('success','Metadata inovasi berhasil diperbarui.');
+    }
 }
