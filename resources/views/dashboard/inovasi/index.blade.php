@@ -22,11 +22,11 @@
     <div class="bg-white border border-gray-200 rounded-2xl p-4 sm:p-5">
       <form class="grid lg:grid-cols-6 gap-3" method="GET" action="{{ route('sigap-inovasi.index') }}">
         <div>
-          <label class="text-sm font-semibold text-gray-700">Bentuk Inovasi</label>
-          <select name="f_bentuk" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+          <label class="text-sm font-semibold text-gray-700">Tahapan Inovasi</label>
+          <select name="f_tahap" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
             <option value="">Semua</option>
-            @foreach(['Inovasi Tata Kelola','Inovasi Pelayanan Publik','Inovasi Daerah Lainnya'] as $opt)
-              <option value="{{ $opt }}" @selected(($filters['bentuk'] ?? '')==$opt)>{{ $opt }}</option>
+            @foreach(['Inisiatif','Uji Coba','Penerapan'] as $opt)
+              <option value="{{ $opt }}" @selected(($filters['tahap'] ?? '')==$opt)>{{ $opt }}</option>
             @endforeach
           </select>
         </div>
@@ -51,10 +51,10 @@
 
         <div>
           <label class="text-sm font-semibold text-gray-700">Tahap Inovasi</label>
-          <select name="f_tahap" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+          <select name="f_tahap_inovasi" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
             <option value="">Semua</option>
             @foreach(['Inisiatif','Uji Coba','Penerapan'] as $opt)
-              <option value="{{ $opt }}" @selected(($filters['tahap'] ?? '')==$opt)>{{ $opt }}</option>
+              <option value="{{ $opt }}" @selected(($filters['tahap_inovasi'] ?? '')==$opt)>{{ $opt }}</option>
             @endforeach
           </select>
         </div>
@@ -115,10 +115,9 @@
           <thead>
             <tr class="text-left border-b">
               <th class="px-4 py-3">Inovasi</th>
-              <th class="px-4 py-3">Bentuk</th>
               <th class="px-4 py-3">Jenis Urusan</th>
               <th class="px-4 py-3">Inisiator</th>
-              <th class="px-4 py-3">Tahap</th>
+              <th class="px-4 py-3">Tahap Inovasi</th>
               <th class="px-4 py-3">OPD/Unit</th>
               <th class="px-4 py-3">Review</th>
               <th class="px-4 py-3">Aksi</th>
@@ -142,17 +141,11 @@
                     </div>
                   </div>
                 </td>
-                <td class="px-4 py-3">{{ $inv->bentuk ?? '-' }}</td>
-                <td class="px-4 py-3">{{ $inv->urusan ?? '-' }}</td>
-                <td class="px-4 py-3">{{ $inv->inisiator ?? '-' }}</td>
+                <td class="px-4 py-3">{{ $inv->urusan_pemerintah ?? '-' }}</td>
+                <td class="px-4 py-3">{{ $inv->inisiator_nama ?? '-' }}</td>
                 <td class="px-4 py-3">
                   <div class="flex flex-wrap gap-1">
-                    @php
-                      $badge = fn($v) => $v==='Selesai' ? 'bg-emerald-50 text-emerald-700' : ($v==='Berjalan' ? 'bg-amber-50 text-amber-700' : 'bg-gray-100 text-gray-700');
-                    @endphp
-                    <span class="px-2 py-0.5 rounded text-xs {{ $badge($inv->tahap_inisiatif ?? 'Belum') }}">Inisiatif: {{ $inv->tahap_inisiatif ?? 'Belum' }}</span>
-                    <span class="px-2 py-0.5 rounded text-xs {{ $badge($inv->tahap_uji_coba ?? 'Belum') }}">Uji Coba: {{ $inv->tahap_uji_coba ?? 'Belum' }}</span>
-                    <span class="px-2 py-0.5 rounded text-xs {{ $badge($inv->tahap_penerapan ?? 'Belum') }}">Penerapan: {{ $inv->tahap_penerapan ?? 'Belum' }}</span>
+                  {{$inv->tahap_inovasi??'-'}}
                   </div>
                 </td>
                 <td class="px-4 py-3">{{ $inv->opd_unit ?? '-' }}</td>
@@ -165,6 +158,31 @@
                       @csrf @method('DELETE')
                       <button class="px-3 py-1.5 rounded-md border hover:bg-gray-50">Hapus</button>
                     </form>
+                    <div class="relative group inline-block">
+                      <a href="{{ route('evidence.form', $inv->id) }}">   <button
+                        class="px-3 py-1.5 rounded-md border hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-maroon/30"
+                        aria-describedby="tt-evidence-1"
+                        aria-label="Bukti Evidence"
+                    >
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-width="2" d="M3 7a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
+                        </svg>
+                    </button></a>
+
+                       <!-- Tooltip -->
+                    <div
+                        id="tt-evidence-1"
+                        role="tooltip"
+                        class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2
+                            whitespace-nowrap rounded-md bg-gray-900 text-white text-xs px-2.5 py-1
+                            opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0
+                            group-focus-within:opacity-100 group-focus-within:translate-y-0
+                            transition duration-150 z-20"
+                    >
+                        Bukti Evidence
+                        <!-- arrow -->
+                        <span class="absolute left-1/2 top-full -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></span>
+                    </div>
                   </div>
                 </td>
               </tr>
@@ -209,26 +227,23 @@
           </label>
 
           <label class="block">
-            <span class="text-sm font-semibold text-gray-700">Bentuk Inovasi</span>
-            <select name="bentuk" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+            <span class="text-sm font-semibold text-gray-700">Tahapan Inovasi</span>
+            <select name="tahap_inovasi" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
               <option value="">Pilih…</option>
-              <option>Inovasi Tata Kelola</option>
-              <option>Inovasi Pelayanan Publik</option>
-              <option>Inovasi Daerah Lainnya</option>
+              <option>Inisiatif</option>
+              <option>Uji Coba</option>
+              <option>Penerapan</option>
             </select>
           </label>
           <label class="block">
-            <span class="text-sm font-semibold text-gray-700">Jenis Urusan</span>
-            <select name="urusan" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+            <span class="text-sm font-semibold text-gray-700">Inisiator Inovasi Daerah</span>
+            <select name="inisiator_daerah" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
               <option value="">Pilih…</option>
-              <option>Kesehatan</option><option>Pendidikan</option><option>Air Bersih</option><option>Transportasi</option>
-            </select>
-          </label>
-
-          <label class="block">
-            <span class="text-sm font-semibold text-gray-700">Inisiator</span>
-            <select name="inisiator" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
-              <option>OPD</option><option>Unit Kerja</option><option>Kolaborasi</option>
+              <option>Kepala Daerah</option>
+              <option>Anggota DPRD</option>
+              <option>OPD</option>
+              <option>ASN</option>
+              <option>Masyrakat</option>
             </select>
           </label>
           <label class="block">
@@ -270,14 +285,27 @@
             <span class="text-sm font-semibold text-gray-700">Asta Cipta</span>
             <select name="asta_cipta" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
               <option value="">--</option>
-              <option>AC-1</option><option>AC-2</option><option>AC-3</option>
+              <option value="asta1">Memperkokoh ideologi Pancasila, demokrasi, dan hak asasi manusia (HAM).</option>
+              <option value="asta2">Memantapkan sistem pertahanan keamanan negara dan mendorong kemandirian bangsa melalui swasembada pangan, energi, air, ekonomi kreatif, ekonomi hijau, dan ekonomi biru.</option>
+              <option value="asta3">Meningkatkan lapangan kerja yang berkualitas, mendorong kewirausahaan, mengembangkan industri kreatif, dan melanjutkan pengembangan infrastruktur.</option>
+              <option value="asta4">Memperkuat pembangunan sumber daya manusia (SDM), sains, teknologi, pendidikan, kesehatan, prestasi olahraga, kesetaraan gender, serta penguatan peran perempuan, pemuda, dan penyandang disabilitas.</option>
+              <option value="asta5">Melanjutkan hilirisasi dan industrialisasi untuk meningkatkan nilai tambah di dalam negeri.</option>
+              <option value="asta6">Membangun dari desa dan dari bawah untuk pemerataan ekonomi dan pemberantasan kemiskinan.</option>
+              <option value="asta7">Memperkuat reformasi politik, hukum, dan birokrasi, serta memperkuat pencegahan dan pemberantasan korupsi dan narkoba.</option>
+              <option value="asta8">Memperkuat penyelarasan kehidupan yang harmonis dengan lingkungan, alam, dan budaya, serta peningkatan toleransi antarumat beragama untuk mencapai masyarakat yang adil dan Makmur</option>
             </select>
           </label>
           <label class="block sm:col-span-2">
             <span class="text-sm font-semibold text-gray-700">Program Prioritas Walikota Makassar</span>
             <select name="program_prioritas" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
               <option value="">--</option>
-              <option>Jagai Anakta’</option><option>Stunting</option><option>Smart City</option>
+              <option value="progwalkot_1">Makassar SuperApps: Platform digital terpadu yang menyatukan seluruh layanan publik dalam satu genggaman.</option>
+              <option value="progwalkot_2">Makassar Creative Hub (MCH): Fasilitas pengembangan keterampilan dan inovasi bagi warga, khususnya generasi muda.</option>
+              <option value="progwalkot_3">Penyediaan Air Bersih: Fasilitas air bersih berkualitas tinggi yang dijadwalkan diluncurkan bulan depan.</option>
+              <option value="progwalkot_4">Seragam Gratis: Bantuan seragam sekolah bagi siswa SD dan SMP dari keluarga kurang mampu.</option>
+              <option value="progwalkot_5">Iuran Sampah Gratis: Program pembebasan iuran kebersihan untuk sebagian masyarakat sebagai bentuk keadilan sosial.</option>
+              <option value="progwalkot_6">Makassar Social Assistant: Program bantuan sosial terintegrasi dalam platform SuperApps.</option>
+              <option value="progwalkot_7">Pembangunan Stadion Internasional: Infrastruktur olahraga modern guna mendukung budaya sepak bola lokal.</option>
             </select>
           </label>
 
@@ -285,7 +313,43 @@
             <span class="text-sm font-semibold text-gray-700">Urusan Pemerintah</span>
             <select name="urusan_pemerintah" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
               <option value="">--</option>
-              <option>Pendidikan</option><option>Kesehatan</option><option>PU</option>
+              <option value="urusan_pemerintah_1">Pendidikan</option>
+              <option value="urusan_pemerintah_2">Kesehatan</option>
+              <option value="urusan_pemerintah_3">Infrastruktur</option>
+              <option value="urusan_pemerintah_4">Lingkungan Hidup</option>
+              <option value="urusan_pemerintah_5">Sosial</option>
+              <option value="urusan_pemerintah_6">Ekonomi</option>
+              <option value="urusan_pemerintah_7">Budaya</option>
+              <option value="urusan_pemerintah_8">Pendidikan</option>
+              <option value="urusan_pemerintah_9">Pendidikan</option>
+              <option value="urusan_pemerintah_10">Pendidikan</option>
+              <option value="urusan_pemerintah_11">Pendidikan</option>
+              <option value="urusan_pemerintah_12">Pendidikan</option>
+              <option value="urusan_pemerintah_13">Pendidikan</option>
+              <option value="urusan_pemerintah_14">Pendidikan</option>
+              <option value="urusan_pemerintah_15">Pendidikan</option>
+              <option value="urusan_pemerintah_16">Pendidikan</option>
+              <option value="urusan_pemerintah_17">Pendidikan</option>
+              <option value="urusan_pemerintah_18">Pendidikan</option>
+              <option value="urusan_pemerintah_19">Pendidikan</option>
+              <option value="urusan_pemerintah_20">Pendidikan</option>
+              <option value="urusan_pemerintah_21">Pendidikan</option>
+              <option value="urusan_pemerintah_22">Pendidikan</option>
+              <option value="urusan_pemerintah_23">Pendidikan</option>
+              <option value="urusan_pemerintah_24">Pendidikan</option>
+              <option value="urusan_pemerintah_25">Pendidikan</option>
+              <option value="urusan_pemerintah_26">Pendidikan</option>
+              <option value="urusan_pemerintah_27">Pendidikan</option>
+              <option value="urusan_pemerintah_28">Pendidikan</option>
+              <option value="urusan_pemerintah_29">Pendidikan</option>
+              <option value="urusan_pemerintah_30">Pendidikan</option>
+              <option value="urusan_pemerintah_31">Pendidikan</option>
+              <option value="urusan_pemerintah_32">Pendidikan</option>
+              <option value="urusan_pemerintah_33">Pendidikan</option>
+              <option value="urusan_pemerintah_34">Pendidikan</option>
+              <option value="urusan_pemerintah_35">Pendidikan</option>
+              <option value="urusan_pemerintah_36">Pendidikan</option>
+              <option value="urusan_pemerintah_37">Pendidikan</option>
             </select>
           </label>
           <label class="block">
@@ -299,21 +363,11 @@
 
           <!-- Tahap (opsional) -->
           <label class="block">
-            <span class="text-sm font-semibold text-gray-700">Tahap Inisiatif</span>
-            <select name="tahap_inisiatif" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
-              @foreach(['Belum','Berjalan','Selesai'] as $opt)<option>{{ $opt }}</option>@endforeach
-            </select>
-          </label>
-          <label class="block">
-            <span class="text-sm font-semibold text-gray-700">Tahap Uji Coba</span>
-            <select name="tahap_uji_coba" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
-              @foreach(['Belum','Berjalan','Selesai'] as $opt)<option>{{ $opt }}</option>@endforeach
-            </select>
-          </label>
-          <label class="block">
-            <span class="text-sm font-semibold text-gray-700">Tahap Penerapan</span>
-            <select name="tahap_penerapan" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
-              @foreach(['Belum','Berjalan','Selesai'] as $opt)<option>{{ $opt }}</option>@endforeach
+            <span class="text-sm font-semibold text-gray-700">Apakah sudah ada perkembangan inovasi tersebut?</span>
+            <select name="perkembangan_inovasi" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+              <option value="">--</option>
+              <option>Tidak</option>
+              <option>Ya</option>
             </select>
           </label>
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Dashboard\EvidenceConfigController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\page\HomeController;
 use App\Http\Controllers\ProfileController;
@@ -7,6 +8,7 @@ use App\Http\Controllers\SigapDokumenController;
 use App\Http\Controllers\SigapInovasiController;
 use App\Http\Controllers\SigapPegawaiController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\EvidenceController;
 
 // Route::get('/', function () {
 //     return view('welcome');
@@ -54,3 +56,34 @@ Route::get('/sigap-inovasi/{id}', [SigapInovasiController::class, 'show'])->name
 Route::get('/sigap-inovasi/{id}/edit', [SigapInovasiController::class, 'edit'])->name('sigap-inovasi.edit');
 Route::put('/sigap-inovasi/{id}', [SigapInovasiController::class, 'update'])->name('sigap-inovasi.update');
 Route::delete('/sigap-inovasi/{id}', [SigapInovasiController::class, 'destroy'])->name('sigap-inovasi.destroy');
+Route::get('/sigap-inovasi/{inovasi}/evidence/form', [SigapInovasiController::class,'evidenceForm'])
+  ->name('evidence.form');
+// Route::get('/sigap-inovasi/{inovasi}/evidence/form', [SigapInovasiController::class,'evidenceForm'])
+//   ->name('evidence.form')
+//   ->middleware('auth');
+
+Route::prefix('admin/evidence-config')->name('evidence-config.')->middleware(['auth'])->group(function(){
+  Route::get('/', [EvidenceConfigController::class,'index'])->name('index');
+  Route::get('/indicators', [EvidenceConfigController::class,'listIndicators'])->name('indicators.index');
+  Route::post('/indicators', [EvidenceConfigController::class,'storeIndicator'])->name('indicators.store');
+  Route::put('/indicators/{id}', [EvidenceConfigController::class,'updateIndicator'])->name('indicators.update');
+  Route::delete('/indicators/{id}', [EvidenceConfigController::class,'destroyIndicator'])->name('indicators.destroy');
+  Route::post('/indicators/reorder', [EvidenceConfigController::class,'reorder'])->name('indicators.reorder');
+
+  Route::post('/indicators/{indicator}/params', [EvidenceConfigController::class,'storeParam'])->name('params.store');
+  Route::put('/params/{id}', [EvidenceConfigController::class,'updateParam'])->name('params.update');
+  Route::delete('/params/{id}', [EvidenceConfigController::class,'destroyParam'])->name('params.destroy');
+  Route::post('/indicators/{indicator}/params/copy', [EvidenceConfigController::class,'copyParams'])->name('params.copy');
+});
+
+
+Route::get   ('/sigap-inovasi/{inovasi}/evidence',        [EvidenceController::class,'index'])->name('evidence.index');
+Route::post  ('/sigap-inovasi/{inovasi}/evidence',        [EvidenceController::class,'store'])->name('evidence.store');
+Route::delete('/sigap-inovasi/{inovasi}/evidence/{no}/file', [EvidenceController::class,'destroyFile'])->name('evidence.file.destroy');
+
+// routes/web.php
+Route::get('/sigap-inovasi/{inovasi}/evidence/form', [SigapInovasiController::class,'evidenceForm'])
+  ->name('evidence.form');
+
+Route::post('/sigap-inovasi/{inovasi}/evidence/save', [SigapInovasiController::class,'evidenceSave'])
+  ->name('evidence.save');

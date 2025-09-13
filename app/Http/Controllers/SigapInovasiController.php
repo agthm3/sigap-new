@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Inovasi;
+use App\Repositories\EvidenceRepository;
 use App\Repositories\InovasiRepository;
 use Illuminate\Http\Request;
 
@@ -15,10 +17,8 @@ class SigapInovasiController extends Controller
     {
         $filters = [
                 'q'            => $request->get('q'),
-                'bentuk'       => $request->get('f_bentuk'),
-                'urusan'       => $request->get('f_urusan'),
                 'inisiator'    => $request->get('f_inisiator'),
-                'tahap'        => $request->get('f_tahap'),
+                'tahap'        => $request->get('f_tahap_inovasi'),
                 'tahap_status' => $request->get('f_tahap_status'),
                 'sort'         => $request->get('sort','terbaru'),
             ];
@@ -42,9 +42,7 @@ class SigapInovasiController extends Controller
         $data = $r->validate([
             'judul'                 => ['required','string','max:255'],
             'opd_unit'              => ['nullable','string','max:255'],
-            'bentuk'                => ['nullable','string','max:255'],
-            'urusan'                => ['nullable','string','max:255'],
-            'inisiator'             => ['nullable','string','max:255'],
+            'inisiator_daerah'      => ['nullable','string','max:255'],
             'inisiator_nama'        => ['nullable','string','max:255'],
             'koordinat'             => ['nullable','string','max:255'],
             'klasifikasi'           => ['nullable','string','max:255'],
@@ -55,13 +53,12 @@ class SigapInovasiController extends Controller
             'urusan_pemerintah'     => ['nullable','string','max:255'],
             'waktu_uji_coba'        => ['nullable','date'],
             'waktu_penerapan'       => ['nullable','date'],
-            'tahap_inisiatif'       => ['nullable','string','max:50'],
-            'tahap_uji_coba'        => ['nullable','string','max:50'],
-            'tahap_penerapan'       => ['nullable','string','max:50'],
+            'tahap_inovasi'       => ['nullable','string','max:50'],
             'rancang_bangun'        => ['nullable','string'],
             'tujuan'                => ['nullable','string'],
             'manfaat'               => ['nullable','string'],
             'hasil_inovasi'         => ['nullable','string'],
+            'perkembangan_inovasi'  => ['nullable','string','max:255'],
         ]);
 
         $this->repo->create(
@@ -82,25 +79,74 @@ class SigapInovasiController extends Controller
         return redirect()->route('sigap-inovasi.index')->with('success', 'Inovasi berhasil dihapus.');
     }
 
- public function show(int $id)
+    public function show(int $id, EvidenceRepository $evidenceRepo)
     {
         $inovasi = $this->repo->find($id);
 
-        // Ambil status tahapan dari kolom yang ada (fallback ke 'Belum' bila null)
+        // status tahapan (yang sudah ada)
         $tInis  = $inovasi->t_inisiatif   ?? $inovasi->t_inisiatif_status   ?? 'Belum';
         $tUji   = $inovasi->t_uji_coba    ?? $inovasi->t_uji_status         ?? 'Belum';
         $tTerap = $inovasi->t_penerapan   ?? $inovasi->t_penerapan_status   ?? 'Belum';
-
-        // Hitung progres sederhana (tanpa evidence): setiap tahap != 'Belum' dihitung 1 langkah
         $steps = collect([$tInis,$tUji,$tTerap])->filter(fn($s)=> strcasecmp((string)$s,'Belum') !== 0 && !empty($s))->count();
         $progressPct = (int) round($steps / 3 * 100);
 
-        return view('dashboard.inovasi.show', [
-            'inovasi'     => $inovasi,
-            'tInis'       => $tInis,
-            'tUji'        => $tUji,
-            'tTerap'      => $tTerap,
-            'progressPct' => $progressPct,
-        ]);
+        // ⬇️ AMBIL EVIDENCE DARI DB untuk ID ini
+        $evItems  = $evidenceRepo->listForInovasi($id);        // array 20 indikator
+        $evTotal  = $evidenceRepo->totalWeight($id);           // total bobot
+        $evFilled = collect($evItems)->where('selected_weight', '>', 0)->count();
+        $evFiles  = collect($evItems)->filter(fn($r)=> !empty($r['file_name']))->count();
+
+        return view('dashboard.inovasi.show', compact(
+            'inovasi',
+            'tInis','tUji','tTerap','progressPct',
+            'evItems','evTotal','evFilled','evFiles'
+        ));
     }
+public function evidenceForm(Inovasi $inovasi, EvidenceRepository $evidenceRepo)
+{
+    $items       = $evidenceRepo->listForInovasi($inovasi->id);   // <- array murni
+    $totalWeight = $evidenceRepo->totalWeight($inovasi->id);
+    $doneCount   = collect($items)->filter(fn($i) =>
+                      !empty($i['selected_label']) || (($i['selected_weight'] ?? 0) > 0)
+                   )->count();
+
+    return view('dashboard.inovasi.evidence', compact('inovasi','items','totalWeight','doneCount'));
+}
+
+public function evidenceSave(Request $r, Inovasi $inovasi, EvidenceRepository $evidenceRepo)
+{
+    // Ambil array input dari form (keyed by nomor indikator)
+    $paramIds   = $r->input('param_id', []);           // [no => param_id]
+    $labels     = $r->input('parameter_label', []);    // opsional (kalau mau manual)
+    $weights    = $r->input('parameter_weight', []);   // opsional (kalau mau manual)
+    $deskripsis = $r->input('deskripsi', []);          // [no => text]
+    $linkUrls   = $r->input('link_url', []);           // [no => url]
+
+    // Susun payload untuk repository
+    $rows = [];
+    for ($no = 1; $no <= 20; $no++) {
+        $rows[] = [
+            'no'                => $no,
+            'param_id'          => $paramIds[$no] ?? null,
+            'parameter_label'   => $labels[$no] ?? null,
+            'parameter_weight'  => $weights[$no] ?? null,
+            'deskripsi'         => $deskripsis[$no] ?? null,
+            'link_url'          => $linkUrls[$no] ?? null,
+        ];
+    }
+
+    // Map file input: file_1..file_20
+    $files = [];
+    for ($no = 1; $no <= 20; $no++) {
+        if ($r->hasFile("file_{$no}")) {
+            $files[$no] = $r->file("file_{$no}");
+        }
+    }
+
+    $evidenceRepo->upsertBulk($inovasi->id, $rows, $files);
+
+    return redirect()
+        ->route('evidence.form', $inovasi->id)
+        ->with('success','Evidence berhasil disimpan.');
+}
 }

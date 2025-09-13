@@ -15,7 +15,8 @@
     @media print{ .no-print{display:none!important} }
     .role-pill{display:inline-flex;align-items:center;gap:.5rem;padding:.25rem .5rem;border-radius:9999px;background:#f3f4f6;border:1px solid #e5e7eb}
   </style>
-     <!-- Page header -->
+
+  <!-- Page header -->
   <section class="max-w-7xl mx-auto px-4 py-6">
     <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
       <div>
@@ -39,7 +40,6 @@
       <div class="p-3 border-b flex flex-wrap gap-2">
         <button class="tab-btn px-3 py-2 rounded-md border text-sm" data-tab="opd" aria-selected="true">OPD & Unit</button>
         <button class="tab-btn px-3 py-2 rounded-md border text-sm" data-tab="master">Master Data Inovasi</button>
-        <button class="tab-btn px-3 py-2 rounded-md border text-sm" data-tab="param">Parameter Evidence (20)</button>
         <button class="tab-btn px-3 py-2 rounded-md border text-sm" data-tab="users">Pengguna & Akses</button>
       </div>
 
@@ -165,45 +165,6 @@
         </div>
       </div>
 
-      <!-- Panel: Parameter Evidence -->
-      <div id="tab-param" class="tab-panel p-4">
-        <div class="grid lg:grid-cols-3 gap-4">
-          <!-- Indikator list -->
-          <aside class="rounded-xl border p-3 lg:sticky lg:top-24 h-fit">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="font-semibold text-gray-800">Indikator (20)</h3>
-              <button id="btnCopyParams" class="text-xs px-3 py-1.5 rounded-md border hover:bg-gray-50">Copy dari…</button>
-            </div>
-            <ul id="indikatorList" class="space-y-1 text-sm max-h-[60vh] overflow-auto scrollbar-thin"></ul>
-          </aside>
-
-          <!-- Editor parameter -->
-          <div class="lg:col-span-2 rounded-xl border p-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-xs text-gray-500">Indikator terpilih</p>
-                <h3 id="indikatorTitle" class="font-semibold text-gray-800">—</h3>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="text-sm text-gray-600">Total Bobot:</span>
-                <span id="totalBobot" class="text-base font-extrabold text-maroon">0</span>
-              </div>
-            </div>
-
-            <div class="mt-3">
-              <label class="text-sm font-semibold text-gray-700">Tambah Parameter</label>
-              <div class="mt-1.5 grid sm:grid-cols-5 gap-2">
-                <input id="paramLabel" class="sm:col-span-3 px-3 py-2 rounded-lg border border-gray-300 focus:border-maroon focus:ring-maroon text-sm" placeholder="cth: SK Kepala Daerah">
-                <input id="paramBobot" type="number" min="0" class="px-3 py-2 rounded-lg border border-gray-300 focus:border-maroon focus:ring-maroon text-sm" placeholder="Bobot">
-                <button id="btnAddParam" class="px-3 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 text-sm">Tambah</button>
-              </div>
-              <p class="text-[11px] text-gray-500 mt-1">Parameter adalah pilihan teks yang akan dipilih user saat isi evidence; bobot opsional untuk perhitungan skor.</p>
-            </div>
-
-            <div id="paramList" class="mt-4 divide-y rounded-lg border"></div>
-          </div>
-        </div>
-      </div>
 
       <!-- Panel: Pengguna & Akses -->
       <div id="tab-users" class="tab-panel p-4 space-y-4">
@@ -339,514 +300,551 @@
 @endsection
 
 @push('scripts')
-      <script>
-    // ========= Storage Keys =========
-    const KEY_OPD   = 'sigap:konfig:opd';
-    const KEY_DICT  = 'sigap:konfig:dict';
-    const KEY_PARAM = 'sigap:konfig:params';
-    const KEY_USERS = 'sigap:konfig:users';
+<script>
+  // ========= Storage Keys (hanya untuk tab selain Parameter Evidence) =========
+  const KEY_OPD   = 'sigap:konfig:opd';
+  const KEY_DICT  = 'sigap:konfig:dict';
+  const KEY_USERS = 'sigap:konfig:users';
 
-    // ========= Default Seeds =========
-    const DEFAULT_OPD = [
-      {id:1, nama:'Badan Riset dan Inovasi Daerah', alias:'BRIDA', jenis:'OPD', induk:''},
-      {id:2, nama:'Dinas Kesehatan', alias:'Dinkes', jenis:'OPD', induk:''},
-      {id:3, nama:'Bidang Riset', alias:'Bid. Riset', jenis:'Unit Kerja', induk:'BRIDA'},
-    ];
-    const DEFAULT_DICT = {
-      bentuk: ['Inovasi Tata Kelola','Pelayanan Publik','Inovasi Daerah Lainnya'],
-      urusan: ['Kesehatan','Pendidikan','Air Bersih','Transportasi','Sosial'],
-      inisiator: ['OPD','Unit Kerja','Kolaborasi'],
-      klasifikasi: ['Inovasi Perangkat Daerah','Inovasi Desa dan Kelurahan','Inovasi Masyarakat'],
-      asta: ['Ekonomi','Sosial','Infrastruktur','Pemerintahan','Lingkungan'],
-      prioritas: ['Jagai Anakta','Makassar Recover','Smart City'],
-      jenis: ['Digital','Non Digital']
-    };
-    const INDICATOR_TITLES = [
-      'Regulasi Inovasi Daerah *','Ketersediaan SDM *','Dukungan Anggaran','Alat Kerja','Bimtek Inovasi',
-      'Integrasi Program & Kegiatan (RKPD)','Keterlibatan Aktor Inovasi','Pelaksana Inovasi Daerah','Jejaring Inovasi','Sosialisasi Inovasi',
-      'Pedoman Teknis','Kemudahan Informasi Layanan','Kemudahan Proses Layanan','Penyelesaian Layanan Pengaduan','Layanan Terintegrasi',
-      'Replikasi','Kecepatan Penciptaan Inovasi *','Kemanfaatan Inovasi *','Monitoring & Evaluasi','Kualitas Inovasi *'
-    ];
-    function defaultParams(){
-      const map = {};
-      INDICATOR_TITLES.forEach((t,i)=>{ map[i+1] = []; });
-      map[1] = [
-        {label:'Peraturan Daerah (Perda)', weight:10},
-        {label:'Peraturan Kepala Daerah (Perkada)', weight:8},
-        {label:'SK Kepala Daerah', weight:6},
-        {label:'SK Kepala Perangkat Daerah', weight:4}
-      ];
-      map[2] = [
-        {label:'Ada SK Tim & Uraian Tugas', weight:8},
-        {label:'Ada SK Tim (tanpa uraian)', weight:6},
-        {label:'Surat Penugasan/Perintah', weight:4}
-      ];
-      return map;
-    }
-    const ROLE_OPTIONS = ['Superadmin','Admin Inovasi','Admin Evidence','OPD Editor','Viewer'];
-    const DEFAULT_USERS = [
-      {id:1, name:'Admin Sekretariat', username:'admin.sekretariat@makassarkota.go.id', opd:'BRIDA', roles:['Superadmin'], status:'Aktif', created_at:new Date().toISOString(), last_pw_changed_at:new Date().toISOString()},
-      {id:2, name:'User Riset 1', username:'user.riset1@makassarkota.go.id', opd:'Bid. Riset', roles:['OPD Editor'], status:'Aktif', created_at:new Date().toISOString(), last_pw_changed_at:new Date().toISOString()},
-    ];
+  // ========= Default Seeds (untuk demo tab selain Parameter Evidence) =========
+  const DEFAULT_OPD = [
+    {id:1, nama:'Badan Riset dan Inovasi Daerah', alias:'BRIDA', jenis:'OPD', induk:''},
+    {id:2, nama:'Dinas Kesehatan', alias:'Dinkes', jenis:'OPD', induk:''},
+    {id:3, nama:'Bidang Riset', alias:'Bid. Riset', jenis:'Unit Kerja', induk:'BRIDA'},
+  ];
+  const DEFAULT_DICT = {
+    bentuk: ['Inovasi Tata Kelola','Pelayanan Publik','Inovasi Daerah Lainnya'],
+    urusan: ['Kesehatan','Pendidikan','Air Bersih','Transportasi','Sosial'],
+    inisiator: ['OPD','Unit Kerja','Kolaborasi'],
+    klasifikasi: ['Inovasi Perangkat Daerah','Inovasi Desa dan Kelurahan','Inovasi Masyarakat'],
+    asta: ['Ekonomi','Sosial','Infrastruktur','Pemerintahan','Lingkungan'],
+    prioritas: ['Jagai Anakta','Makassar Recover','Smart City'],
+    jenis: ['Digital','Non Digital']
+  };
+  const ROLE_OPTIONS = ['Superadmin','Admin Inovasi','Admin Evidence','OPD Editor','Viewer'];
+  const DEFAULT_USERS = [
+    {id:1, name:'Admin Sekretariat', username:'admin.sekretariat@makassarkota.go.id', opd:'BRIDA', roles:['Superadmin'], status:'Aktif', created_at:new Date().toISOString(), last_pw_changed_at:new Date().toISOString()},
+    {id:2, name:'User Riset 1', username:'user.riset1@makassarkota.go.id', opd:'Bid. Riset', roles:['OPD Editor'], status:'Aktif', created_at:new Date().toISOString(), last_pw_changed_at:new Date().toISOString()},
+  ];
 
-    // ========= State =========
-    let OPDS = JSON.parse(localStorage.getItem(KEY_OPD) || 'null') || DEFAULT_OPD;
-    let DICT = JSON.parse(localStorage.getItem(KEY_DICT) || 'null') || DEFAULT_DICT;
-    let PARAMS = JSON.parse(localStorage.getItem(KEY_PARAM) || 'null') || defaultParams();
-    let USERS = JSON.parse(localStorage.getItem(KEY_USERS) || 'null') || DEFAULT_USERS;
+  // ========= State (untuk tab selain Parameter Evidence) =========
+  let OPDS = JSON.parse(localStorage.getItem(KEY_OPD) || 'null') || DEFAULT_OPD;
+  let DICT = JSON.parse(localStorage.getItem(KEY_DICT) || 'null') || DEFAULT_DICT;
+  let USERS = JSON.parse(localStorage.getItem(KEY_USERS) || 'null') || DEFAULT_USERS;
 
-    // ========= Helpers =========
-    const $ = sel => document.querySelector(sel);
-    const $$ = sel => [...document.querySelectorAll(sel)];
-    function saveAll(){
-      localStorage.setItem(KEY_OPD, JSON.stringify(OPDS));
-      localStorage.setItem(KEY_DICT, JSON.stringify(DICT));
-      localStorage.setItem(KEY_PARAM, JSON.stringify(PARAMS));
-      localStorage.setItem(KEY_USERS, JSON.stringify(USERS));
-    }
-    function toast(msg){
-      const el = $('#toast');
-      el.textContent = msg;
-      el.classList.remove('hidden');
-      clearTimeout(el._t);
-      el._t = setTimeout(()=> el.classList.add('hidden'), 1600);
-    }
-    function nextId(arr){ return (arr.reduce((m,x)=>Math.max(m,x.id||0),0) || 0) + 1; }
+  // ========= Helpers umum =========
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => [...document.querySelectorAll(sel)];
+  function saveAll(){
+    localStorage.setItem(KEY_OPD, JSON.stringify(OPDS));
+    localStorage.setItem(KEY_DICT, JSON.stringify(DICT));
+    localStorage.setItem(KEY_USERS, JSON.stringify(USERS));
+  }
+  function toast(msg){
+    const el = $('#toast');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+    clearTimeout(el._t);
+    el._t = setTimeout(()=> el.classList.add('hidden'), 1600);
+  }
+  function nextId(arr){ return (arr.reduce((m,x)=>Math.max(m,x.id||0),0) || 0) + 1; }
 
-    // ========= Tabs =========
-    $$('.tab-btn').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        $$('.tab-btn').forEach(b=> b.setAttribute('aria-selected','false'));
-        btn.setAttribute('aria-selected','true');
-        const t = btn.dataset.tab;
-        $$('.tab-panel').forEach(p=> p.classList.remove('active'));
-        $('#tab-'+t).classList.add('active');
-      });
+  // ========= Tabs =========
+  $$('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      $$('.tab-btn').forEach(b=> b.setAttribute('aria-selected','false'));
+      btn.setAttribute('aria-selected','true');
+      const t = btn.dataset.tab;
+      $$('.tab-panel').forEach(p=> p.classList.remove('active'));
+      $('#tab-'+t).classList.add('active');
     });
+  });
 
-    // ========= OPD UI =========
-    const tbodyOPD = $('#tbodyOPD');
-    function renderOPD(){
-      const q = ($('#opdSearch').value||'').toLowerCase();
-      const rows = OPDS.filter(o=>{
-        const str = `${o.nama} ${o.alias} ${o.jenis} ${o.induk}`.toLowerCase();
-        return str.includes(q);
-      });
-      tbodyOPD.innerHTML = rows.map((o,i)=>`
-        <tr>
-          <td class="px-4 py-3 text-gray-600">${i+1}</td>
-          <td class="px-4 py-3 font-medium text-gray-900">${o.nama}</td>
-          <td class="px-4 py-3">${o.alias||'—'}</td>
-          <td class="px-4 py-3">${o.jenis}</td>
-          <td class="px-4 py-3">${o.induk||'—'}</td>
-          <td class="px-4 py-3">
-            <div class="flex items-center gap-2">
-              <button class="px-2.5 py-1.5 rounded-md border text-xs hover:bg-gray-50" onclick="editOPD(${o.id})">Edit</button>
-              <button class="px-2.5 py-1.5 rounded-md border text-xs hover:bg-gray-50" onclick="removeOPD(${o.id})">Hapus</button>
-            </div>
-          </td>
-        </tr>
-      `).join('');
-    }
-    $('#opdSearch').addEventListener('input', renderOPD);
-    $('#btnAddOPD').addEventListener('click', ()=> openOPD());
-
-    // Modal OPD
-    let currOPDId = null;
-    function openOPD(id=null){
-      currOPDId = id;
-      $('#opdModalTitle').textContent = id ? 'Edit OPD/Unit' : 'Tambah OPD/Unit';
-      // isi dropdown induk dari semua OPD
-      const sel = $('#opdInduk');
-      sel.innerHTML = `<option value="">—</option>` + OPDS.filter(x=>x.jenis==='OPD').map(x=>`<option>${x.alias || x.nama}</option>`).join('');
-      if(id){
-        const o = OPDS.find(x=>x.id===id);
-        $('#opdNama').value = o.nama;
-        $('#opdAlias').value = o.alias||'';
-        $('#opdJenis').value = o.jenis;
-        $('#opdInduk').value = o.induk||'';
-      }else{
-        $('#formOPD').reset();
-      }
-      $('#modalOPD').classList.remove('hidden');
-    }
-    function closeOPD(){ $('#modalOPD').classList.add('hidden'); }
-    function saveOPD(){
-      const nama = $('#opdNama').value.trim();
-      if(!nama){ alert('Nama wajib diisi'); return; }
-      const data = {
-        nama,
-        alias: $('#opdAlias').value.trim(),
-        jenis: $('#opdJenis').value,
-        induk: $('#opdInduk').value
-      };
-      if(currOPDId){
-        const idx = OPDS.findIndex(x=>x.id===currOPDId);
-        OPDS[idx] = {...OPDS[idx], ...data};
-        toast('OPD diperbarui');
-      }else{
-        OPDS.push({id: nextId(OPDS), ...data});
-        toast('OPD ditambahkan');
-      }
-      saveAll(); renderOPD(); closeOPD();
-      // refresh opsi OPD di modal user bila terbuka
-      if(!$('#modalUser').classList.contains('hidden')) fillUserOPDOptions();
-    }
-    function editOPD(id){ openOPD(id); }
-    function removeOPD(id){
-      const o = OPDS.find(x=>x.id===id);
-      if(!confirm(`Hapus "${o.nama}"?`)) return;
-      OPDS = OPDS.filter(x=>x.id!==id);
-      saveAll(); renderOPD(); toast('OPD dihapus');
-    }
-    window.editOPD = editOPD;
-    window.removeOPD = removeOPD;
-
-    // ========= Master Data Chips =========
-    const dictMap = [
-      {key:'bentuk', el:'#listBentuk', input:'#inBentuk', label:'Bentuk'},
-      {key:'urusan', el:'#listUrusan', input:'#inUrusan', label:'Urusan'},
-      {key:'inisiator', el:'#listInisiator', input:'#inInisiator', label:'Inisiator'},
-      {key:'klasifikasi', el:'#listKlasifikasi', input:'#inKlasifikasi', label:'Klasifikasi'},
-      {key:'asta', el:'#listAsta', input:'#inAsta', label:'Asta'},
-      {key:'prioritas', el:'#listPrioritas', input:'#inPrioritas', label:'Program'},
-      {key:'jenis', el:'#listJenis', input:'#inJenis', label:'Jenis'},
-    ];
-    function renderDict(key){
-      const cfg = dictMap.find(d=>d.key===key);
-      const wrap = $(cfg.el);
-      wrap.innerHTML = (DICT[key]||[]).map((val,idx)=>`
-        <span class="chip text-sm">
-          ${val}
-          <button title="Ubah" onclick="editChip('${key}',${idx})">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M12 20h9"/><path stroke-width="2" d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
-          </button>
-          <button title="Hapus" onclick="delChip('${key}',${idx})">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M3 6h18M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path stroke-width="2" d="M10 11v6M14 11v6"/></svg>
-          </button>
-        </span>
-      `).join('') || '<p class="text-sm text-gray-500">Belum ada data.</p>';
-    }
-    function addDict(key, value){
-      value = value.trim(); if(!value) return;
-      DICT[key] = DICT[key] || [];
-      if(DICT[key].includes(value)){ toast('Sudah ada'); return; }
-      DICT[key].push(value); saveAll(); renderDict(key); toast('Ditambahkan');
-    }
-    function editChip(key, idx){
-      const curr = DICT[key][idx];
-      const val = prompt('Ubah:', curr);
-      if(val===null) return;
-      const v = val.trim();
-      if(!v) return;
-      DICT[key][idx] = v; saveAll(); renderDict(key); toast('Diperbarui');
-    }
-    function delChip(key, idx){
-      const curr = DICT[key][idx];
-      if(!confirm(`Hapus "${curr}"?`)) return;
-      DICT[key].splice(idx,1); saveAll(); renderDict(key); toast('Dihapus');
-    }
-    window.editChip = editChip;
-    window.delChip  = delChip;
-
-    dictMap.forEach(d=>{
-      renderDict(d.key);
-      const btn = document.querySelector(`[data-add="${d.key}"]`);
-      btn.addEventListener('click', ()=>{
-        const val = $(d.input).value;
-        addDict(d.key, val);
-        $(d.input).value = '';
-      });
-      $(d.input).addEventListener('keydown', e=>{
-        if(e.key==='Enter'){ e.preventDefault(); btn.click(); }
-      });
+  // ========= OPD UI (tetap demo local) =========
+  const tbodyOPD = $('#tbodyOPD');
+  function renderOPD(){
+    const q = ($('#opdSearch').value||'').toLowerCase();
+    const rows = OPDS.filter(o=>{
+      const str = `${o.nama} ${o.alias} ${o.jenis} ${o.induk}`.toLowerCase();
+      return str.includes(q);
     });
-
-    // ========= Parameter Evidence =========
-    const indikatorList = $('#indikatorList');
-    const paramList = $('#paramList');
-    let currIndeks = 1;
-
-    function renderIndikatorList(){
-      indikatorList.innerHTML = INDICATOR_TITLES.map((t,i)=>`
-        <li>
-          <button class="w-full text-left px-3 py-2 rounded-md hover:bg-gray-50 ${i+1===currIndeks?'bg-maroon/5 border border-maroon/20':''}"
-                  onclick="selectIndikator(${i+1})">
-            <span class="font-medium">#${i+1}</span> — ${t}
-          </button>
-        </li>
-      `).join('');
-    }
-    function selectIndikator(no){
-      currIndeks = no;
-      $('#indikatorTitle').textContent = `#${no} — ${INDICATOR_TITLES[no-1]}`;
-      renderParams();
-      renderIndikatorList();
-    }
-    window.selectIndikator = selectIndikator;
-
-    function renderParams(){
-      const arr = PARAMS[currIndeks] || [];
-      const total = arr.reduce((s,x)=> s + (parseInt(x.weight||0,10)||0), 0);
-      $('#totalBobot').textContent = total;
-
-      if(arr.length===0){
-        paramList.innerHTML = `<div class="p-4 text-sm text-gray-500">Belum ada parameter. Tambahkan di atas.</div>`;
-        return;
-      }
-      paramList.innerHTML = arr.map((p,idx)=>`
-        <div class="flex items-center gap-3 px-3 py-2">
-          <div class="flex-1 min-w-0">
-            <p class="font-medium text-gray-900 truncate">${p.label}</p>
-            <p class="text-xs text-gray-500">Bobot: <span class="font-semibold">${p.weight||0}</span></p>
+    tbodyOPD.innerHTML = rows.map((o,i)=>`
+      <tr>
+        <td class="px-4 py-3 text-gray-600">${i+1}</td>
+        <td class="px-4 py-3 font-medium text-gray-900">${o.nama}</td>
+        <td class="px-4 py-3">${o.alias||'—'}</td>
+        <td class="px-4 py-3">${o.jenis}</td>
+        <td class="px-4 py-3">${o.induk||'—'}</td>
+        <td class="px-4 py-3">
+          <div class="flex items-center gap-2">
+            <button class="px-2.5 py-1.5 rounded-md border text-xs hover:bg-gray-50" onclick="editOPD(${o.id})">Edit</button>
+            <button class="px-2.5 py-1.5 rounded-md border text-xs hover:bg-gray-50" onclick="removeOPD(${o.id})">Hapus</button>
           </div>
-          <button class="px-2.5 py-1.5 rounded-md border text-xs hover:bg-gray-50" onclick="editParam(${idx})">Ubah</button>
-          <button class="px-2.5 py-1.5 rounded-md border text-xs hover:bg-gray-50" onclick="delParam(${idx})">Hapus</button>
-        </div>
-      `).join('');
-    }
-    function addParam(){
-      const label = $('#paramLabel').value.trim();
-      const bobot = parseInt($('#paramBobot').value||'0',10)||0;
-      if(!label){ alert('Label parameter wajib diisi'); return; }
-      PARAMS[currIndeks] = PARAMS[currIndeks] || [];
-      if(PARAMS[currIndeks].some(x=> x.label.toLowerCase()===label.toLowerCase())){
-        alert('Parameter dengan label sama sudah ada'); return;
-      }
-      PARAMS[currIndeks].push({label, weight:bobot});
-      saveAll(); $('#paramLabel').value=''; $('#paramBobot').value=''; renderParams(); toast('Parameter ditambahkan');
-    }
-    function editParam(idx){
-      const item = PARAMS[currIndeks][idx];
-      const label = prompt('Ubah label:', item.label);
-      if(label===null) return;
-      const weight = prompt('Ubah bobot:', item.weight||0);
-      if(weight===null) return;
-      PARAMS[currIndeks][idx] = {label: label.trim(), weight: parseInt(weight||'0',10)||0};
-      saveAll(); renderParams(); toast('Parameter diperbarui');
-    }
-    function delParam(idx){
-      const item = PARAMS[currIndeks][idx];
-      if(!confirm(`Hapus parameter "${item.label}"?`)) return;
-      PARAMS[currIndeks].splice(idx,1);
-      saveAll(); renderParams(); toast('Parameter dihapus');
-    }
-    window.editParam = editParam;
-    window.delParam = delParam;
-    $('#btnAddParam').addEventListener('click', addParam);
-    $('#paramLabel').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addParam(); }});
-    $('#paramBobot').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addParam(); }});
+        </td>
+      </tr>
+    `).join('');
+  }
+  $('#opdSearch').addEventListener('input', renderOPD);
+  $('#btnAddOPD').addEventListener('click', ()=> openOPD());
 
-    // Copy params dari indikator lain
-    $('#btnCopyParams').addEventListener('click', ()=>{
-      const from = prompt(`Salin parameter dari indikator nomor berapa? (1–${INDICATOR_TITLES.length})`);
-      if(!from) return;
-      const no = parseInt(from,10);
-      if(!(no>=1 && no<=INDICATOR_TITLES.length)){ alert('Nomor tidak valid'); return; }
-      if(no===currIndeks){ alert('Tidak bisa menyalin ke indikator yang sama'); return; }
-      PARAMS[currIndeks] = JSON.parse(JSON.stringify(PARAMS[no]||[]));
-      saveAll(); renderParams(); toast(`Disalin dari #${no}`);
-    });
-
-    // ========= USERS =========
-    const tbodyUsers = $('#tbodyUsers');
-    const ROLE_BADGE_MAP = {
-      'Superadmin':'bg-rose-50 text-rose-700 border-rose-100',
-      'Admin Inovasi':'bg-blue-50 text-blue-700 border-blue-100',
-      'Admin Evidence':'bg-amber-50 text-amber-700 border-amber-100',
-      'OPD Editor':'bg-emerald-50 text-emerald-700 border-emerald-100',
-      'Viewer':'bg-gray-100 text-gray-700 border-gray-200'
+  // Modal OPD
+  let currOPDId = null;
+  function openOPD(id=null){
+    currOPDId = id;
+    $('#opdModalTitle').textContent = id ? 'Edit OPD/Unit' : 'Tambah OPD/Unit';
+    const sel = $('#opdInduk');
+    sel.innerHTML = `<option value="">—</option>` + OPDS.filter(x=>x.jenis==='OPD').map(x=>`<option>${x.alias || x.nama}</option>`).join('');
+    if(id){
+      const o = OPDS.find(x=>x.id===id);
+      $('#opdNama').value = o.nama;
+      $('#opdAlias').value = o.alias||'';
+      $('#opdJenis').value = o.jenis;
+      $('#opdInduk').value = o.induk||'';
+    }else{
+      $('#formOPD').reset();
+    }
+    $('#modalOPD').classList.remove('hidden');
+  }
+  function closeOPD(){ $('#modalOPD').classList.add('hidden'); }
+  function saveOPD(){
+    const nama = $('#opdNama').value.trim();
+    if(!nama){ alert('Nama wajib diisi'); return; }
+    const data = {
+      nama,
+      alias: $('#opdAlias').value.trim(),
+      jenis: $('#opdJenis').value,
+      induk: $('#opdInduk').value
     };
-    function renderUsers(){
-      const q = ($('#userSearch').value||'').toLowerCase();
-      const f = $('#userFilter').value;
-      const rows = USERS.filter(u=>{
-        const hay = `${u.name} ${u.username} ${u.opd} ${(u.roles||[]).join(' ')}`.toLowerCase();
-        const hit = hay.includes(q);
-        const ok = !f || u.status===f;
-        return hit && ok;
+    if(currOPDId){
+      const idx = OPDS.findIndex(x=>x.id===currOPDId);
+      OPDS[idx] = {...OPDS[idx], ...data};
+      toast('OPD diperbarui');
+    }else{
+      OPDS.push({id: nextId(OPDS), ...data});
+      toast('OPD ditambahkan');
+    }
+    saveAll(); renderOPD(); closeOPD();
+    if(!$('#modalUser').classList.contains('hidden')) fillUserOPDOptions();
+  }
+  function editOPD(id){ openOPD(id); }
+  function removeOPD(id){
+    const o = OPDS.find(x=>x.id===id);
+    if(!confirm(`Hapus "${o.nama}"?`)) return;
+    OPDS = OPDS.filter(x=>x.id!==id);
+    saveAll(); renderOPD(); toast('OPD dihapus');
+  }
+  window.editOPD = editOPD;
+  window.removeOPD = removeOPD;
+
+  // ========= Master Data Chips (demo local) =========
+  const dictMap = [
+    {key:'bentuk', el:'#listBentuk', input:'#inBentuk', label:'Bentuk'},
+    {key:'urusan', el:'#listUrusan', input:'#inUrusan', label:'Urusan'},
+    {key:'inisiator', el:'#listInisiator', input:'#inInisiator', label:'Inisiator'},
+    {key:'klasifikasi', el:'#listKlasifikasi', input:'#inKlasifikasi', label:'Klasifikasi'},
+    {key:'asta', el:'#listAsta', input:'#inAsta', label:'Asta'},
+    {key:'prioritas', el:'#listPrioritas', input:'#inPrioritas', label:'Program'},
+    {key:'jenis', el:'#listJenis', input:'#inJenis', label:'Jenis'},
+  ];
+  function renderDict(key){
+    const cfg = dictMap.find(d=>d.key===key);
+    const wrap = $(cfg.el);
+    wrap.innerHTML = (DICT[key]||[]).map((val,idx)=>`
+      <span class="chip text-sm">
+        ${val}
+        <button title="Ubah" onclick="editChip('${key}',${idx})">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M12 20h9"/><path stroke-width="2" d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+        </button>
+        <button title="Hapus" onclick="delChip('${key}',${idx})">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M3 6h18M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path stroke-width="2" d="M10 11v6M14 11v6"/></svg>
+        </button>
+      </span>
+    `).join('') || '<p class="text-sm text-gray-500">Belum ada data.</p>';
+  }
+  function addDict(key, value){
+    value = value.trim(); if(!value) return;
+    DICT[key] = DICT[key] || [];
+    if(DICT[key].includes(value)){ toast('Sudah ada'); return; }
+    DICT[key].push(value); saveAll(); renderDict(key); toast('Ditambahkan');
+  }
+  function editChip(key, idx){
+    const curr = DICT[key][idx];
+    const val = prompt('Ubah:', curr);
+    if(val===null) return;
+    const v = val.trim();
+    if(!v) return;
+    DICT[key][idx] = v; saveAll(); renderDict(key); toast('Diperbarui');
+  }
+  function delChip(key, idx){
+    const curr = DICT[key][idx];
+    if(!confirm(`Hapus "${curr}"?`)) return;
+    DICT[key].splice(idx,1); saveAll(); renderDict(key); toast('Dihapus');
+  }
+  window.editChip = editChip;
+  window.delChip  = delChip;
+
+  dictMap.forEach(d=>{
+    renderDict(d.key);
+    const btn = document.querySelector(`[data-add="${d.key}"]`);
+    btn.addEventListener('click', ()=>{
+      const val = $(d.input).value;
+      addDict(d.key, val);
+      $(d.input).value = '';
+    });
+    $(d.input).addEventListener('keydown', e=>{
+      if(e.key==='Enter'){ e.preventDefault(); btn.click(); }
+    });
+  });
+
+  // ========= USERS (demo local) =========
+  const tbodyUsers = $('#tbodyUsers');
+  const ROLE_BADGE_MAP = {
+    'Superadmin':'bg-rose-50 text-rose-700 border-rose-100',
+    'Admin Inovasi':'bg-blue-50 text-blue-700 border-blue-100',
+    'Admin Evidence':'bg-amber-50 text-amber-700 border-amber-100',
+    'OPD Editor':'bg-emerald-50 text-emerald-700 border-emerald-100',
+    'Viewer':'bg-gray-100 text-gray-700 border-gray-200'
+  };
+  function renderUsers(){
+    const q = ($('#userSearch').value||'').toLowerCase();
+    const f = $('#userFilter').value;
+    const rows = USERS.filter(u=>{
+      const hay = `${u.name} ${u.username} ${u.opd} ${(u.roles||[]).join(' ')}`.toLowerCase();
+      const hit = hay.includes(q);
+      const ok = !f || u.status===f;
+      return hit && ok;
+    });
+    tbodyUsers.innerHTML = rows.map((u,i)=>`
+      <tr>
+        <td class="px-4 py-3 text-gray-600">${i+1}</td>
+        <td class="px-4 py-3 font-medium text-gray-900">${u.name}</td>
+        <td class="px-4 py-3">${u.username}</td>
+        <td class="px-4 py-3">${u.opd||'—'}</td>
+        <td class="px-4 py-3">
+          <div class="flex flex-wrap gap-1">
+            ${(u.roles||[]).map(r=>`<span class="role-pill ${ROLE_BADGE_MAP[r]||''}">${r}</span>`).join('') || '<span class="text-gray-500">—</span>'}
+          </div>
+        </td>
+        <td class="px-4 py-3">
+          <span class="px-2 py-0.5 rounded text-xs ${u.status==='Aktif'?'bg-emerald-50 text-emerald-700':'bg-gray-100 text-gray-700'}">${u.status}</span>
+        </td>
+        <td class="px-4 py-3">
+          <div class="flex flex-wrap gap-2">
+            <button class="px-2.5 py-1.5 rounded-md border text-xs hover:bg-gray-50" onclick="editUser(${u.id})">Edit</button>
+            <button class="px-2.5 py-1.5 rounded-md border text-xs hover:bg-gray-50" onclick="resetPw(${u.id})">Reset Password</button>
+            <button class="px-2.5 py-1.5 rounded-md border text-xs hover:bg-gray-50" onclick="toggleStatus(${u.id})">${u.status==='Aktif'?'Nonaktifkan':'Aktifkan'}</button>
+            <button class="px-2.5 py-1.5 rounded-md border text-xs hover:bg-gray-50" onclick="removeUser(${u.id})">Hapus</button>
+          </div>
+        </td>
+      </tr>
+    `).join('') || `<tr><td colspan="7" class="px-4 py-6 text-center text-sm text-gray-500">Belum ada pengguna.</td></tr>`;
+  }
+  $('#userSearch').addEventListener('input', renderUsers);
+  $('#userFilter').addEventListener('change', renderUsers);
+  $('#btnAddUser').addEventListener('click', ()=> openUser());
+
+  let currUserId = null;
+  function fillUserOPDOptions(){
+    const sel = $('#uOPD');
+    const list = ['', ...OPDS.map(o=> o.alias || o.nama)];
+    sel.innerHTML = list.map(v=> `<option value="${v}">${v || '—'}</option>`).join('');
+  }
+  function fillRoleChips(selected=[]){
+    const wrap = $('#uRolesWrap');
+    wrap.innerHTML = ROLE_OPTIONS.map(r=>{
+      const id = `role-${r.replace(/\s+/g,'-').toLowerCase()}`;
+      const checked = selected.includes(r) ? 'checked' : '';
+      return `
+        <label for="${id}" class="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 rounded-full border hover:bg-gray-50">
+          <input id="${id}" type="checkbox" class="accent-maroon" value="${r}" ${checked}>
+          <span>${r}</span>
+        </label>
+      `;
+    }).join('');
+  }
+  function openUser(id=null){
+    currUserId = id;
+    $('#userModalTitle').textContent = id ? 'Edit Pengguna' : 'Tambah Pengguna';
+    fillUserOPDOptions();
+
+    if(id){
+      const u = USERS.find(x=>x.id===id);
+      $('#uNama').value = u.name;
+      $('#uUser').value = u.username;
+      $('#uOPD').value = u.opd || '';
+      $('#uStatus').value = u.status || 'Aktif';
+      fillRoleChips(u.roles||[]);
+    }else{
+      $('#formUser').reset();
+      fillRoleChips([]);
+    }
+    $('#modalUser').classList.remove('hidden');
+  }
+  function closeUser(){ $('#modalUser').classList.add('hidden'); }
+  function saveUser(){
+    const name = $('#uNama').value.trim();
+    const username = $('#uUser').value.trim();
+    if(!name || !username){ alert('Nama dan Username wajib diisi'); return; }
+    const opd = $('#uOPD').value;
+    const status = $('#uStatus').value;
+    const roles = [...$('#uRolesWrap').querySelectorAll('input[type="checkbox"]:checked')].map(i=> i.value);
+
+    if(currUserId){
+      const idx = USERS.findIndex(x=>x.id===currUserId);
+      USERS[idx] = {...USERS[idx], name, username, opd, status, roles};
+      toast('Pengguna diperbarui');
+    }else{
+      USERS.push({
+        id: nextId(USERS),
+        name, username, opd, status, roles,
+        created_at: new Date().toISOString(),
+        last_pw_changed_at: null
       });
-      tbodyUsers.innerHTML = rows.map((u,i)=>`
-        <tr>
-          <td class="px-4 py-3 text-gray-600">${i+1}</td>
-          <td class="px-4 py-3 font-medium text-gray-900">${u.name}</td>
-          <td class="px-4 py-3">${u.username}</td>
-          <td class="px-4 py-3">${u.opd||'—'}</td>
-          <td class="px-4 py-3">
-            <div class="flex flex-wrap gap-1">
-              ${(u.roles||[]).map(r=>`<span class="role-pill ${ROLE_BADGE_MAP[r]||''}">${r}</span>`).join('') || '<span class="text-gray-500">—</span>'}
-            </div>
-          </td>
-          <td class="px-4 py-3">
-            <span class="px-2 py-0.5 rounded text-xs ${u.status==='Aktif'?'bg-emerald-50 text-emerald-700':'bg-gray-100 text-gray-700'}">${u.status}</span>
-          </td>
-          <td class="px-4 py-3">
-            <div class="flex flex-wrap gap-2">
-              <button class="px-2.5 py-1.5 rounded-md border text-xs hover:bg-gray-50" onclick="editUser(${u.id})">Edit</button>
-              <button class="px-2.5 py-1.5 rounded-md border text-xs hover:bg-gray-50" onclick="resetPw(${u.id})">Reset Password</button>
-              <button class="px-2.5 py-1.5 rounded-md border text-xs hover:bg-gray-50" onclick="toggleStatus(${u.id})">${u.status==='Aktif'?'Nonaktifkan':'Aktifkan'}</button>
-              <button class="px-2.5 py-1.5 rounded-md border text-xs hover:bg-gray-50" onclick="removeUser(${u.id})">Hapus</button>
-            </div>
-          </td>
-        </tr>
-      `).join('') || `<tr><td colspan="7" class="px-4 py-6 text-center text-sm text-gray-500">Belum ada pengguna.</td></tr>`;
+      toast('Pengguna ditambahkan');
     }
-    $('#userSearch').addEventListener('input', renderUsers);
-    $('#userFilter').addEventListener('change', renderUsers);
-    $('#btnAddUser').addEventListener('click', ()=> openUser());
+    saveAll(); renderUsers(); closeUser();
+  }
+  function editUser(id){ openUser(id); }
+  function removeUser(id){
+    const u = USERS.find(x=>x.id===id);
+    if(!confirm(`Hapus pengguna "${u.name}"?`)) return;
+    USERS = USERS.filter(x=>x.id!==id);
+    saveAll(); renderUsers(); toast('Pengguna dihapus');
+  }
+  function toggleStatus(id){
+    const idx = USERS.findIndex(x=>x.id===id);
+    USERS[idx].status = USERS[idx].status==='Aktif' ? 'Nonaktif' : 'Aktif';
+    saveAll(); renderUsers(); toast('Status diperbarui');
+  }
+  function resetPw(id){
+    const u = USERS.find(x=>x.id===id);
+    if(!confirm(`Reset password untuk "${u.name}"?`)) return;
+    u.last_pw_changed_at = new Date().toISOString();
+    saveAll(); toast('Password di-reset (demo)');
+  }
+  window.editUser = editUser;
+  window.removeUser = removeUser;
+  window.toggleStatus = toggleStatus;
+  window.resetPw = resetPw;
 
-    // Modal User
-    let currUserId = null;
-    function fillUserOPDOptions(){
-      const sel = $('#uOPD');
-      const list = ['', ...OPDS.map(o=> o.alias || o.nama)];
-      sel.innerHTML = list.map(v=> `<option value="${v}">${v || '—'}</option>`).join('');
-    }
-    function fillRoleChips(selected=[]){
-      const wrap = $('#uRolesWrap');
-      wrap.innerHTML = ROLE_OPTIONS.map(r=>{
-        const id = `role-${r.replace(/\s+/g,'-').toLowerCase()}`;
-        const checked = selected.includes(r) ? 'checked' : '';
-        return `
-          <label for="${id}" class="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 rounded-full border hover:bg-gray-50">
-            <input id="${id}" type="checkbox" class="accent-maroon" value="${r}" ${checked}>
-            <span>${r}</span>
-          </label>
-        `;
-      }).join('');
-    }
-    function openUser(id=null){
-      currUserId = id;
-      $('#userModalTitle').textContent = id ? 'Edit Pengguna' : 'Tambah Pengguna';
-      fillUserOPDOptions();
+  // ========= Import / Export / Reset (demo untuk tiga tab) =========
+  $('#btnExport').addEventListener('click', ()=>{
+    const data = {
+      exported_at: new Date().toISOString(),
+      opd: OPDS,
+      dict: DICT,
+      users: USERS
+    };
+    const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sigap-konfigurasi-${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
 
-      if(id){
-        const u = USERS.find(x=>x.id===id);
-        $('#uNama').value = u.name;
-        $('#uUser').value = u.username;
-        $('#uOPD').value = u.opd || '';
-        $('#uStatus').value = u.status || 'Aktif';
-        fillRoleChips(u.roles||[]);
-      }else{
-        $('#formUser').reset();
-        fillRoleChips([]);
+  $('#importFile').addEventListener('change', (e)=>{
+    const f = e.target.files?.[0];
+    if(!f) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      try{
+        const obj = JSON.parse(reader.result);
+        if(!confirm('Import akan menimpa konfigurasi saat ini. Lanjutkan?')) return;
+        if(obj.opd)   OPDS = obj.opd;
+        if(obj.dict)  DICT = obj.dict;
+        if(obj.users) USERS = obj.users;
+        saveAll();
+        renderOPD();
+        dictMap.forEach(d=> renderDict(d.key));
+        renderUsers();
+        toast('Import berhasil');
+      }catch(err){
+        alert('File JSON tidak valid');
       }
-      $('#modalUser').classList.remove('hidden');
-    }
-    function closeUser(){ $('#modalUser').classList.add('hidden'); }
+    };
+    reader.readAsText(f);
+    e.target.value = '';
+  });
 
-    function saveUser(){
-      const name = $('#uNama').value.trim();
-      const username = $('#uUser').value.trim();
-      if(!name || !username){ alert('Nama dan Username wajib diisi'); return; }
-      const opd = $('#uOPD').value;
-      const status = $('#uStatus').value;
-      const roles = [...$('#uRolesWrap').querySelectorAll('input[type="checkbox"]:checked')].map(i=> i.value);
-
-      if(currUserId){
-        const idx = USERS.findIndex(x=>x.id===currUserId);
-        USERS[idx] = {...USERS[idx], name, username, opd, status, roles};
-        toast('Pengguna diperbarui');
-      }else{
-        USERS.push({
-          id: nextId(USERS),
-          name, username, opd, status, roles,
-          created_at: new Date().toISOString(),
-          last_pw_changed_at: null
-        });
-        toast('Pengguna ditambahkan');
-      }
-      saveAll(); renderUsers(); closeUser();
-    }
-    function editUser(id){ openUser(id); }
-    function removeUser(id){
-      const u = USERS.find(x=>x.id===id);
-      if(!confirm(`Hapus pengguna "${u.name}"?`)) return;
-      USERS = USERS.filter(x=>x.id!==id);
-      saveAll(); renderUsers(); toast('Pengguna dihapus');
-    }
-    function toggleStatus(id){
-      const idx = USERS.findIndex(x=>x.id===id);
-      USERS[idx].status = USERS[idx].status==='Aktif' ? 'Nonaktif' : 'Aktif';
-      saveAll(); renderUsers(); toast('Status diperbarui');
-    }
-    function resetPw(id){
-      const u = USERS.find(x=>x.id===id);
-      if(!confirm(`Reset password untuk "${u.name}"?`)) return;
-      // Demo: tidak menyimpan password; hanya timestamp sebagai penanda reset
-      u.last_pw_changed_at = new Date().toISOString();
-      saveAll(); toast('Password di-reset (demo)');
-    }
-    window.editUser = editUser;
-    window.removeUser = removeUser;
-    window.toggleStatus = toggleStatus;
-    window.resetPw = resetPw;
-
-    // ========= Import / Export / Reset =========
-    $('#btnExport').addEventListener('click', ()=>{
-      const data = {
-        exported_at: new Date().toISOString(),
-        opd: OPDS,
-        dict: DICT,
-        params: PARAMS,
-        users: USERS
-      };
-      const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `sigap-konfigurasi-${new Date().toISOString().slice(0,10)}.json`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    });
-
-    $('#importFile').addEventListener('change', (e)=>{
-      const f = e.target.files?.[0];
-      if(!f) return;
-      const reader = new FileReader();
-      reader.onload = ()=>{
-        try{
-          const obj = JSON.parse(reader.result);
-          if(!confirm('Import akan menimpa konfigurasi saat ini. Lanjutkan?')) return;
-          if(obj.opd)   OPDS = obj.opd;
-          if(obj.dict)  DICT = obj.dict;
-          if(obj.params)PARAMS = obj.params;
-          if(obj.users) USERS = obj.users;
-          saveAll();
-          // rerender semua
-          renderOPD();
-          dictMap.forEach(d=> renderDict(d.key));
-          renderIndikatorList(); selectIndikator(1);
-          renderUsers();
-          toast('Import berhasil');
-        }catch(err){
-          alert('File JSON tidak valid');
-        }
-      };
-      reader.readAsText(f);
-      e.target.value = '';
-    });
-
-    $('#btnReset').addEventListener('click', ()=>{
-      if(!confirm('Kembalikan ke default pabrik? Semua perubahan akan hilang.')) return;
-      OPDS = DEFAULT_OPD.slice();
-      DICT = JSON.parse(JSON.stringify(DEFAULT_DICT));
-      PARAMS = defaultParams();
-      USERS = DEFAULT_USERS.slice();
-      saveAll();
-      renderOPD();
-      dictMap.forEach(d=> renderDict(d.key));
-      renderIndikatorList(); selectIndikator(1);
-      renderUsers();
-      toast('Konfigurasi direset');
-    });
-
-    // ========= Init =========
+  $('#btnReset').addEventListener('click', ()=>{
+    if(!confirm('Kembalikan ke default pabrik? Semua perubahan akan hilang.')) return;
+    OPDS = DEFAULT_OPD.slice();
+    DICT = JSON.parse(JSON.stringify(DEFAULT_DICT));
+    USERS = DEFAULT_USERS.slice();
+    saveAll();
     renderOPD();
-    renderIndikatorList();
-    selectIndikator(1);
+    dictMap.forEach(d=> renderDict(d.key));
     renderUsers();
-  </script>
+    toast('Konfigurasi direset');
+  });
+
+  // ========= Init tiga tab =========
+  renderOPD();
+  renderUsers();
+  dictMap.forEach(d=> renderDict(d.key));
+</script>
+
+<!-- ========= PARAMETER EVIDENCE — CRUD KE BACKEND, UI TETAP ========= -->
+<script>
+  const CSRF = '{{ csrf_token() }}';
+  const BASE = "{{ url('/admin/evidence-config') }}";
+
+  const API = {
+    listIndicators: () =>
+      fetch(`${BASE}/indicators`, { headers:{'Accept':'application/json'} }).then(r=>r.json()),
+    createParam: (indicatorId, payload) =>
+      fetch(`${BASE}/indicators/${indicatorId}/params`, {
+        method:'POST', headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF}, body:JSON.stringify(payload)
+      }).then(r=>r.json()),
+    updateParam: (paramId, payload) =>
+      fetch(`${BASE}/params/${paramId}`, {
+        method:'PUT', headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF}, body:JSON.stringify(payload)
+      }).then(r=>r.json()),
+    deleteParam: (paramId) =>
+      fetch(`${BASE}/params/${paramId}`, {
+        method:'DELETE', headers:{'X-CSRF-TOKEN':CSRF}
+      }).then(r=>r.json()),
+    copyParams: (indicatorId, fromId) =>
+      fetch(`${BASE}/indicators/${indicatorId}/params/copy`, {
+        method:'POST', headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF}, body:JSON.stringify({from_indicator_id: fromId})
+      }).then(r=>r.json()),
+  };
+
+  let INDICATORS = [];       // [{id,order_no,title,params:[{id,label,weight}]}]
+  let CURR_NO = null;        // nomor indikator aktif (1..N)
+
+  const elIndList   = document.getElementById('indikatorList');
+  const elTitle     = document.getElementById('indikatorTitle');
+  const elParamList = document.getElementById('paramList');
+  const elTotal     = document.getElementById('totalBobot');
+
+  const inLabel     = document.getElementById('paramLabel');
+  const inBobot     = document.getElementById('paramBobot');
+  const btnAddParam = document.getElementById('btnAddParam');
+  const btnCopy     = document.getElementById('btnCopyParams');
+
+  const byNo = no => INDICATORS.find(x => String(x.order_no) === String(no));
+  function escapeHtml(s){return (s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+
+  function renderIndikatorList(){
+    if (!INDICATORS.length){
+      elIndList.innerHTML = `<li class="text-sm text-gray-500 px-3 py-2">Belum ada indikator (seed 20 via seeder).</li>`;
+      elTitle.textContent = '—';
+      elParamList.innerHTML = '';
+      elTotal.textContent = '0';
+      return;
+    }
+    INDICATORS.sort((a,b)=>(a.order_no||0)-(b.order_no||0));
+    if (CURR_NO == null) CURR_NO = INDICATORS[0].order_no;
+
+    elIndList.innerHTML = INDICATORS.map(i => `
+      <li>
+        <button class="w-full text-left px-3 py-2 rounded-md hover:bg-gray-50 ${i.order_no==CURR_NO?'bg-maroon/5 border border-maroon/20':''}"
+                onclick="selectIndikator(${i.order_no})">
+          <span class="font-medium">#${i.order_no}</span> — ${escapeHtml(i.title)}
+        </button>
+      </li>
+    `).join('');
+  }
+
+  function renderParams(){
+    const ind = byNo(CURR_NO);
+    if(!ind){ elTitle.textContent = '—'; elParamList.innerHTML=''; elTotal.textContent='0'; return; }
+
+    elTitle.textContent = `#${ind.order_no} — ${ind.title}`;
+    const params = ind.params || [];
+    const sum = params.reduce((s,p)=> s + (parseInt(p.weight||0,10)||0), 0);
+    elTotal.textContent = sum;
+
+    if(!params.length){
+      elParamList.innerHTML = `<div class="p-4 text-sm text-gray-500">Belum ada parameter. Tambahkan di atas.</div>`;
+      return;
+    }
+
+    elParamList.innerHTML = params.map(p=>`
+      <div class="flex items-center gap-3 px-3 py-2">
+        <div class="flex-1 min-w-0">
+          <p class="font-medium text-gray-900 truncate">${escapeHtml(p.label)}</p>
+          <p class="text-xs text-gray-500">Bobot: <span class="font-semibold">${p.weight||0}</span></p>
+        </div>
+        <button class="px-2.5 py-1.5 rounded-md border text-xs hover:bg-gray-50" onclick="editParam(${p.id})">Ubah</button>
+        <button class="px-2.5 py-1.5 rounded-md border text-xs hover:bg-gray-50" onclick="delParam(${p.id})">Hapus</button>
+      </div>
+    `).join('');
+  }
+
+  window.selectIndikator = function(no){
+    CURR_NO = no;
+    renderIndikatorList();
+    renderParams();
+  };
+
+  window.editParam = async function(paramId){
+    const ind = INDICATORS.find(i => (i.params||[]).some(p=>p.id===paramId));
+    const p   = ind?.params?.find(x=>x.id===paramId);
+    if(!p) return;
+
+    const label = prompt('Ubah label parameter:', p.label);
+    if(label===null) return;
+    const weight = prompt('Ubah bobot:', p.weight ?? 0);
+    if(weight===null) return;
+
+    const res = await API.updateParam(paramId, {label: label.trim(), weight: parseInt(weight||'0',10)||0});
+    if(res?.ok){ await refresh(CURR_NO); } else { alert(res?.message || 'Gagal memperbarui'); }
+  };
+
+  window.delParam = async function(paramId){
+    if(!confirm('Hapus parameter ini?')) return;
+    const res = await API.deleteParam(paramId);
+    if(res?.ok){ await refresh(CURR_NO); } else { alert(res?.message || 'Gagal menghapus'); }
+  };
+
+  btnAddParam?.addEventListener('click', async ()=>{
+    const ind = byNo(CURR_NO);
+    if(!ind){ alert('Pilih indikator dulu'); return; }
+    const label = (inLabel.value||'').trim();
+    const weight = parseInt(inBobot.value||'0',10)||0;
+    if(!label){ alert('Label parameter wajib'); inLabel.focus(); return; }
+
+    const res = await API.createParam(ind.id, {label, weight});
+    if(res?.ok){
+      inLabel.value=''; inBobot.value='';
+      await refresh(CURR_NO);
+    } else {
+      alert(res?.message || 'Gagal menambah parameter');
+    }
+  });
+
+  btnCopy?.addEventListener('click', async ()=>{
+    const ind = byNo(CURR_NO);
+    if(!ind){ alert('Pilih indikator dulu'); return; }
+    const fromNo = prompt(`Salin parameter dari indikator nomor berapa? (1–${INDICATORS.length})`);
+    if(!fromNo) return;
+    const src = byNo(fromNo);
+    if(!src){ alert('Nomor tidak ditemukan'); return; }
+    if(src.id===ind.id){ alert('Tidak bisa menyalin ke indikator yang sama'); return; }
+
+    const res = await API.copyParams(ind.id, src.id);
+    if(res?.ok){ await refresh(CURR_NO); } else { alert(res?.message || 'Gagal menyalin parameter'); }
+  });
+
+  async function refresh(selectNo=null){
+    const res = await API.listIndicators();
+    if(res?.ok && Array.isArray(res.data)){
+      INDICATORS = res.data.sort((a,b)=>(a.order_no||0)-(b.order_no||0));
+      if(selectNo==null) CURR_NO = INDICATORS[0]?.order_no ?? null;
+      renderIndikatorList();
+      renderParams();
+    } else {
+      alert(res?.message || 'Gagal memuat indikator');
+    }
+  }
+
+  // boot khusus tab Parameter Evidence
+  refresh();
+</script>
 @endpush

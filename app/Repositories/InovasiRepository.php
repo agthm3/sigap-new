@@ -19,9 +19,7 @@ class InovasiRepository
         return DB::transaction(function () use ($data, $anggaran, $profilBisnis, $haki, $penghargaan) {
 
             // Normalisasi default tahap jika belum diisi
-            $data['tahap_inisiatif']  = $data['tahap_inisiatif']  ?? 'Belum';
-            $data['tahap_uji_coba']   = $data['tahap_uji_coba']   ?? 'Belum';
-            $data['tahap_penerapan']  = $data['tahap_penerapan']  ?? 'Belum';
+            $data['tahap_inovasi']  = $data['tahap_inovasi']  ?? 'Inisiatif';
 
             // Simpan file, path di kolom *_file (disajikan via storage:link)
             if ($anggaran instanceof UploadedFile) {
@@ -57,15 +55,14 @@ class InovasiRepository
             });
         }
 
-        if (!empty($filters['bentuk']))    $q->where('bentuk', $filters['bentuk']);
         if (!empty($filters['urusan']))    $q->where('urusan', $filters['urusan']);
         if (!empty($filters['inisiator'])) $q->where('inisiator', $filters['inisiator']);
 
         if (!empty($filters['tahap']) && !empty($filters['tahap_status'])) {
             $map = [
-                'Inisiatif' => 'tahap_inisiatif',
-                'Uji Coba'  => 'tahap_uji_coba',
-                'Penerapan' => 'tahap_penerapan',
+                'Inisiatif' => 'tahap_inovasi',
+                'Uji Coba'  => 'tahap_inovasi',
+                'Penerapan' => 'tahap_inovasi',
             ];
             $kolom = $map[$filters['tahap']] ?? null;
             if ($kolom) $q->where($kolom, $filters['tahap_status']);
