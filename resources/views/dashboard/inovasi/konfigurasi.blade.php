@@ -40,7 +40,6 @@
       <div class="p-3 border-b flex flex-wrap gap-2">
         <button class="tab-btn px-3 py-2 rounded-md border text-sm" data-tab="opd" aria-selected="true">OPD & Unit</button>
         <button class="tab-btn px-3 py-2 rounded-md border text-sm" data-tab="master">Master Data Inovasi</button>
-        <button class="tab-btn px-3 py-2 rounded-md border text-sm" data-tab="users">Pengguna & Akses</button>
       </div>
 
       <!-- Panel: OPD -->
@@ -166,44 +165,6 @@
       </div>
 
 
-      <!-- Panel: Pengguna & Akses -->
-      <div id="tab-users" class="tab-panel p-4 space-y-4">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <div>
-            <h2 class="font-semibold text-gray-800">Pengguna & Akses</h2>
-            <p class="text-xs text-gray-500">Kelola akun pengguna, peran, status, dan keterkaitan OPD/Unit.</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <div class="relative">
-              <input id="userSearch" class="pl-9 pr-3 py-2 rounded-lg border border-gray-300 focus:border-maroon focus:ring-maroon w-64" placeholder="Cari nama / username…">
-              <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-width="2" d="M21 21l-4.3-4.3M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></svg>
-            </div>
-            <select id="userFilter" class="px-3 py-2 rounded-lg border border-gray-300 focus:border-maroon focus:ring-maroon text-sm">
-              <option value="">Semua Status</option>
-              <option>Aktif</option>
-              <option>Nonaktif</option>
-            </select>
-            <button id="btnAddUser" class="px-3 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 text-sm">Tambah Pengguna</button>
-          </div>
-        </div>
-
-        <div class="overflow-x-auto border rounded-xl">
-          <table class="min-w-full text-sm">
-            <thead>
-              <tr class="text-left border-b bg-gray-50">
-                <th class="px-4 py-3 w-12">#</th>
-                <th class="px-4 py-3">Nama</th>
-                <th class="px-4 py-3">Username</th>
-                <th class="px-4 py-3">OPD/Unit</th>
-                <th class="px-4 py-3">Peran</th>
-                <th class="px-4 py-3">Status</th>
-                <th class="px-4 py-3 w-56">Aksi</th>
-              </tr>
-            </thead>
-            <tbody id="tbodyUsers" class="divide-y"></tbody>
-          </table>
-        </div>
-      </div>
 
     </div>
   </section>

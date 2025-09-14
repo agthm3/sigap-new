@@ -2,94 +2,93 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Employee;
-use App\Repositories\EmployeeRepository;
+use App\Models\User;
+use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
+use Spatie\Permission\Models\Role;
 
 class SigapPegawaiController extends Controller
 {
- public function __construct(private EmployeeRepository $repo) {}
+    public function __construct(private UserRepository $repo) {}
 
     public function index(Request $request)
     {
-        $filters   = $request->only(['q','unit','role','status','sort']);
-        $perPage   = (int) $request->input('per_page', 25);
-        $employees = $this->repo->paginateWithFilters($filters, $perPage);
+        $filters = $request->only(['q','unit','role','status','sort']);
+        $perPage = (int) $request->input('per_page', 25);
+        $users   = $this->repo->paginateWithFilters($filters, $perPage);
+        $roles   = Role::where('guard_name','web')->pluck('name')->all();
 
-        return view('dashboard.pegawai.index', compact('employees', 'filters'));
+        return view('dashboard.pegawai.index', compact('users','filters','roles'));
     }
 
     public function create()
     {
-        return view('dashboard.pegawai.create');
+        // Form create tetap submit ke route('register'), tapi kita kirim daftar roles untuk checkbox
+        $roles = Role::where('guard_name','web')->pluck('name')->all();
+        return view('dashboard.pegawai.create', compact('roles'));
     }
 
-    public function store(Request $request)
+    public function edit(User $user)
     {
-        $validated = $request->validate([
-            'name'         => ['required','string','max:255'],
-            'username'     => ['required','string','max:100','unique:employees,username'],
-            'nip'          => ['nullable','string','max:50'],
-            'unit'         => ['required','string','max:100'],
-            'role'         => ['required','in:pegawai,verifikator,admin'],
-            'status'       => ['nullable','in:active,inactive'],
-            'phone'        => ['nullable','string','max:50'],
-            'email'        => ['nullable','email','max:255'],
-            'make_account' => ['nullable','in:yes,no'],
-            'password'     => [$request->input('make_account','yes')==='yes' ? 'required' : 'nullable','string','min:8'],
-            'avatar'       => ['nullable','image','mimes:jpg,jpeg,png','max:2048'],
-        ]);
-
-        if ($request->hasFile('avatar')) {
-            $validated['avatar_path'] = $request->file('avatar')->store('avatars', 'public');
-        }
-
-        // NOTE: kalau mau buat akun login di tabel users, tambahkan di sini (opsional)
-
-        $this->repo->create($validated);
-
-        return redirect()->route('sigap-pegawai.index')->with('success', 'Pegawai berhasil ditambahkan.');
+        $roles         = Role::where('guard_name','web')->pluck('name')->all();
+        $userRoleNames = $user->getRoleNames()->all();
+        return view('dashboard.pegawai.edit', compact('user','roles','userRoleNames'));
     }
 
-    public function edit($id)
+    public function update(Request $request, User $user)
     {
-        $employee = Employee::findOrFail($id);
-        return view('dashboard.pegawai.edit', compact('employee'));
-    }
-    public function update(Request $request, Employee $sigap_pegawai)
-    {
-        $employee = $sigap_pegawai;
+        $validRoleNames = Role::where('guard_name','web')->pluck('name')->all();
 
-        $validated = $request->validate([
+        $data = $request->validate([
             'name'     => ['required','string','max:255'],
-            'username' => ['required','string','max:100',"unique:employees,username,{$employee->id}"],
+            'email'    => ['required','email','max:255',"unique:users,email,{$user->id}"],
+            'username' => ['required','string','max:50',"unique:users,username,{$user->id}"],
             'nip'      => ['nullable','string','max:50'],
-            'unit'     => ['required','string','max:100'],
-            'role'     => ['required','in:pegawai,verifikator,admin'],
+            'unit'     => ['nullable','string','max:100'],
             'status'   => ['nullable','in:active,inactive'],
-            'phone'    => ['nullable','string','max:50'],
-            'email'    => ['nullable','email','max:255'],
+            'password' => ['nullable','confirmed', \Illuminate\Validation\Rules\Password::defaults()],
+            'roles'    => ['nullable','array'],
+            'roles.*'  => ['string', Rule::in($validRoleNames)],
+            // ⬇️ foto profil
             'avatar'   => ['nullable','image','mimes:jpg,jpeg,png','max:2048'],
         ]);
 
-        if ($request->hasFile('avatar')) {
-            if ($employee->avatar_path) Storage::disk('public')->delete($employee->avatar_path);
-            $validated['avatar_path'] = $request->file('avatar')->store('avatars', 'public');
+        if (!empty($data['password'])) {
+            $data['password'] = Hash::make($data['password']);
+        } else {
+            unset($data['password']);
         }
 
-        $this->repo->update($employee, $validated);
+        // upload avatar baru (hapus lama jika ada)
+        if ($request->hasFile('avatar')) {
+            if ($user->profile_photo_path) {
+                Storage::disk('public')->delete($user->profile_photo_path);
+            }
+            $data['profile_photo_path'] = $request->file('avatar')->store('avatars','public');
+        }
 
-        return back()->with('success', 'Perubahan tersimpan.');
+        $roles = $request->input('roles', []);
+        unset($data['roles']);
+
+        $this->repo->update($user, $data, $roles);
+
+        return back()->with('success','Perubahan disimpan.');
     }
 
-    public function destroy(Employee $sigap_pegawai)
+    /** opsional: tombol hapus foto */
+    public function destroyAvatar(User $user)
     {
-        $employee = $sigap_pegawai;
-
-        if ($employee->avatar_path) Storage::disk('public')->delete($employee->avatar_path);
-        $this->repo->delete($employee);
-
-        return redirect()->route('sigap-pegawai.index')->with('success', 'Pegawai dihapus.');
+        if ($user->profile_photo_path) {
+            Storage::disk('public')->delete($user->profile_photo_path);
+            $user->update(['profile_photo_path' => null]);
+        }
+        return back()->with('success','Foto profil dihapus.');
+    }
+    public function destroy(User $user)
+    {
+        $this->repo->delete($user);
+        return redirect()->route('sigap-pegawai.index')->with('success','User dihapus.');
     }
 }

@@ -72,7 +72,7 @@
   <section class="max-w-7xl mx-auto px-4 py-6">
     <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
       <div class="px-4 py-3 bg-gray-50 text-sm text-gray-700 flex items-center justify-between">
-        <span id="countInfo">Menampilkan {{ $employees->count() }} pegawai</span>
+        <span id="countInfo">Menampilkan {{ $users->count() }} pegawai</span>
         <div class="flex items-center gap-2">
           <label class="text-sm text-gray-600">Tampilkan</label>
           <select id="pageSize" class="text-sm rounded-md border-gray-300 focus:border-maroon focus:ring-maroon">
@@ -97,13 +97,13 @@
             </tr>
           </thead>
           <tbody class="divide-y">
-            @forelse ($employees as $e)
+            @forelse ($users as $e)
               <tr>
                 <td class="px-4 py-3">
                   <div class="flex items-center gap-3">
                     <img class="w-10 h-10 rounded-full object-cover"
-                        src="{{ $e->avatar_path ? asset('storage/'.$e->avatar_path) : asset('images/avatar-placeholder.png') }}"
-                        alt="">
+                    src="{{ $e->profile_photo_path ? asset('storage/'.$e->profile_photo_path) : asset('images/avatar-placeholder.png') }}"
+                    alt="">
                     <div>
                       <p class="font-medium text-gray-900">{{ $e->name }}</p>
                       <p class="text-xs text-gray-600">{{ '@'.$e->username }}</p>
@@ -112,7 +112,14 @@
                 </td>
                 <td class="px-4 py-3">{{ $e->nip ?: '—' }}</td>
                 <td class="px-4 py-3">{{ $e->unit }}</td>
-                <td class="px-4 py-3 capitalize">{{ $e->role }}</td>
+                <td class="px-4 py-3">
+                  @php($roleNames = $e->getRoleNames())
+                  @forelse($roleNames as $rn)
+                    <span class="px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700 mr-1">{{ $rn }}</span>
+                  @empty
+                    <span class="text-xs text-gray-500">—</span>
+                  @endforelse
+                </td>
                 <td class="px-4 py-3 text-xs">
                   <div>{{ $e->email ?: '—' }}</div>
                   <div class="text-gray-500">{{ $e->phone ?: '—' }}</div>
@@ -146,10 +153,10 @@
       <!-- Pagination -->
       <div class="px-4 py-3 flex items-center justify-between">
         <p class="text-sm text-gray-600">
-          Halaman {{ $employees->currentPage() }} dari {{ $employees->lastPage() }}
+          Halaman {{ $users->currentPage() }} dari {{ $users->lastPage() }}
         </p>
         <div>
-          {{ $employees->links() }}
+          {{ $users->links() }}
         </div>
       </div>
 

@@ -30,13 +30,14 @@
   <main class="max-w-7xl mx-auto px-4 py-6 grid lg:grid-cols-3 gap-6">
     {{-- Kiri --}}
     <section class="lg:col-span-2 space-y-6">
+      @php($roles = $roles ?? ['admin','inovator','verificator','employee','researcher','user'])
       <form id="fPegawai"
             class="bg-white border border-gray-200 rounded-2xl p-5 space-y-5"
             method="POST"
-            action="{{ route('sigap-pegawai.store') }}"
+            action="{{ route('sigap-pegawai.users.store') }}"
             enctype="multipart/form-data">
         @csrf
-
+      <input type="hidden" name="admin_create" value="1">
         {{-- errors --}}
         @if ($errors->any())
           <div class="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
@@ -93,14 +94,20 @@
         </div>
 
         <div class="grid sm:grid-cols-3 gap-4">
+          
           <label class="block">
-            <span class="text-sm font-semibold text-gray-700">Role</span>
-            <select name="role" id="role" required
-                    class="mt-1.5 w-full p-2 rounded-lg border border-gray-300 focus:border-maroon focus:ring-maroon">
-              @foreach (['pegawai','verifikator','admin'] as $r)
-                <option value="{{ $r }}" @selected(old('role','pegawai')===$r)>{{ ucfirst($r) }}</option>
-              @endforeach
-            </select>
+        <div class="mt-4">
+          <span class="text-sm font-semibold text-gray-700">Role</span>
+          <div class="mt-2 grid sm:grid-cols-3 gap-2">
+            @foreach($roles as $r)
+              <label class="inline-flex items-center gap-2 text-sm">
+                <input type="checkbox" name="roles[]" value="{{ $r }}" class="rounded border-gray-300 text-maroon focus:ring-maroon">
+                <span>{{ ucfirst($r) }}</span>
+              </label>
+            @endforeach
+          </div>
+        </div>
+
           </label>
           <label class="block">
             <span class="text-sm font-semibold text-gray-700">Status</span>
@@ -128,18 +135,20 @@
                    placeholder="nama@brida.go.id">
           </label>
           <div class="grid grid-cols-5 gap-2">
-            <div class="col-span-3">
-              <label class="text-sm font-semibold text-gray-700">Buat Akun Login?</label>
-              <select name="make_account" id="makeAccount"
-                      class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
-                <option value="yes" @selected(old('make_account','yes')==='yes')>Ya, setel password awal</option>
-                <option value="no"  @selected(old('make_account')==='no')>Tidak sekarang</option>
-              </select>
-            </div>
             <div class="col-span-2">
-              <label class="text-sm font-semibold text-gray-700">Password Awal</label>
+              <label class="text-sm font-semibold text-gray-700">Password </label>
               <div class="mt-1.5 flex">
                 <input name="password" id="password" type="password"
+                       class="flex-1 rounded-l-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon"
+                       placeholder="Minimal 8 karakter">
+                <button type="button" id="togglePwd"
+                        class="px-3 rounded-r-lg border border-l-0 border-gray-300 text-sm hover:bg-gray-50">
+                  Lihat
+                </button>
+              </div>
+              <label class="text-sm font-semibold text-gray-700">Konfirmasi Password</label>
+              <div class="mt-1.5 flex">
+                <input name="password_confirmation" id="password_confirmation" type="password"
                        class="flex-1 rounded-l-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon"
                        placeholder="Minimal 8 karakter">
                 <button type="button" id="togglePwd"

@@ -76,10 +76,18 @@
         </a>
 
         <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">PENGATURAN</div>
-        <a href="login.html" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100">
+        {{-- <a href="{{ route('logout') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M10 17l5-5-5-5"/><path stroke-width="2" d="M4 12h11"/></svg>
           Keluar
-        </a>
+        </a> --}}
+        <form action="{{ route('logout') }}" method="POST">
+          @csrf
+          <button type="submit" class="w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M10 17l5-5-5-5"/><path stroke-width="2" d="M4 12h11"/></svg>
+            Keluar
+          </button> 
+        </form>
+      @hasanyrole('admin|inovator')
         <!-- SIGAP INOVASI -->
           <!-- SECTION BARU: SIGAP INOVASI -->
         <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">SIGAP INOVASI</div>
@@ -120,6 +128,7 @@
             Konfigurasi
           </a>
         </div>
+      @endhasanyrole
       </nav>
     </aside>
 
