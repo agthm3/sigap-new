@@ -26,16 +26,6 @@
             <p class="mt-1 text-2xl font-extrabold text-maroon" id="kpiOpd">32</p>
             <p class="text-xs text-gray-500 mt-1">5 OPD aktif minggu ini</p>
           </div>
-          <div class="rounded-xl border bg-white p-4">
-            <p class="text-xs text-gray-500">Sedang Uji Coba</p>
-            <p class="mt-1 text-2xl font-extrabold text-maroon" id="kpiUji">41</p>
-            <p class="text-xs text-amber-600 mt-1">+4 dibanding minggu lalu</p>
-          </div>
-          <div class="rounded-xl border bg-white p-4">
-            <p class="text-xs text-gray-500">Siap Penerapan</p>
-            <p class="mt-1 text-2xl font-extrabold text-maroon" id="kpiTerap">19</p>
-            <p class="text-xs text-gray-500 mt-1">Target Q4: 30</p>
-          </div>
         </section>
 
         <!-- Charts -->
@@ -65,18 +55,6 @@
 
         <!-- Urusan & Leaderboard -->
         <section class="grid xl:grid-cols-3 gap-4">
-          <!-- Horizontal bar urusan -->
-          <div class="xl:col-span-2 rounded-xl border bg-white p-4">
-            <div class="flex items-center justify-between mb-3">
-              <h3 class="font-semibold text-gray-800">Top Jenis Urusan</h3>
-              <select class="text-sm rounded-md border-gray-300 focus:border-maroon focus:ring-maroon">
-                <option>Top 5</option>
-                <option>Top 10</option>
-              </select>
-            </div>
-            <canvas id="chartUrusan" height="120"></canvas>
-          </div>
-
           <!-- Leaderboard OPD -->
           <div class="rounded-xl border bg-white overflow-hidden">
             <div class="px-4 py-3 bg-gray-50 text-sm font-semibold text-gray-700">Leaderboard OPD (Jumlah Inovasi)</div>

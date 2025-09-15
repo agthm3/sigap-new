@@ -111,7 +111,17 @@
       </div>
 
       <div class="overflow-x-auto">
-        <table class="min-w-full text-sm">
+        <table class="min-w-full text-sm table-fixed">
+          <colgroup>
+          <col class="w-[28%]" />  <!-- Inovasi -->
+          <col class="w-[10%]" />  <!-- Jenis Urusan -->
+          <col class="w-[12%]" />  <!-- Inisiator -->
+          <col class="w-[10%]" />  <!-- Tahap Inovasi -->
+          <col class="w-[12%]" />  <!-- OPD/Unit -->
+          <col class="w-[10%]" />  <!-- Review -->
+          <col class="w-[12%]" />  <!-- Asistensi -->
+          <col class="w-[16%]" />  <!-- Aksi -->
+        </colgroup>
           <thead>
             <tr class="text-left border-b">
               <th class="px-4 py-3">Inovasi</th>
@@ -119,7 +129,8 @@
               <th class="px-4 py-3">Inisiator</th>
               <th class="px-4 py-3">Tahap Inovasi</th>
               <th class="px-4 py-3">OPD/Unit</th>
-              <th class="px-4 py-3">Review</th>
+              <th class="px-4 py-3">Ai Review</th>
+              <th class="px-4 py-3">Asistensi</th>
               <th class="px-4 py-3">Aksi</th>
             </tr>
           </thead>
@@ -149,7 +160,61 @@
                   </div>
                 </td>
                 <td class="px-4 py-3">{{ $inv->opd_unit ?? '-' }}</td>
-                <td class="px-4 py-3"><p class="p-2 bg-yellow-100 text-black">Belum Direview</p></td>
+                <td class="px-4 py-3"><p class="p-2 bg-yellow-100 text-black">-Coming Soon-</p></td>
+            <td class="px-4 py-3">
+                @role('admin')
+                  <form
+                    action="{{ route('sigap-inovasi.asistensi', $inv->id) }}"
+                    method="POST"
+                    class="flex flex-col gap-2 sm:flex-row sm:items-center"
+                    id="asst-form-{{ $inv->id }}"
+                    data-modal-title="Asistensi: {{ $inv->judul }}"
+                    data-modal-action="{{ route('sigap-inovasi.asistensi', $inv->id) }}"
+                  >
+                    @csrf
+                    <select
+                      name="status"
+                      id="asst-status-{{ $inv->id }}"
+                      class="text-sm rounded-md border-gray-300 focus:border-maroon focus:ring-maroon"
+                    >
+                      @foreach(['Pending','Disetujui','Dikembalikan','Revisi','Ditolak'] as $st)
+                        <option value="{{ $st }}" @selected(($inv->asistensi_status ?? 'Menunggu Verifikasi') === $st)>{{ $st }}</option>
+                      @endforeach
+                    </select>
+
+                    {{-- catatan akan diisi dari modal --}}
+                    <input type="hidden" name="note" id="asst-note-hidden-{{ $inv->id }}" value="">
+
+                    <button type="submit" class="px-3 py-1.5 rounded-md bg-maroon text-white text-xs hover:bg-maroon-800">
+                      Simpan
+                    </button>
+                  </form>
+
+                  {{-- hint terakhir --}}
+                  @if(!empty($inv->asistensi_status) || !empty($inv->asistensi_note))
+                    <div class="mt-1 text-[11px] text-gray-600">
+                      Terakhir:
+                      <span class="font-medium">{{ $inv->asistensi_status ?? '—' }}</span>
+                      @if(!empty($inv->asistensi_note))
+                        • <span class="line-clamp-1" title="{{ $inv->asistensi_note }}">{{ \Illuminate\Support\Str::limit($inv->asistensi_note, 80) }}</span>
+                      @endif
+                    </div>
+                  @endif
+                @else
+                  <span class="px-2 py-1 rounded text-xs
+                    @class([
+                      'bg-gray-100 text-gray-700' => ($inv->asistensi_status ?? 'Menunggu Verifikasi') === 'Menunggu Verifikasi',
+                      'bg-emerald-50 text-emerald-700' => ($inv->asistensi_status ?? '') === 'Disetujui',
+                      'bg-amber-50 text-amber-700' => in_array(($inv->asistensi_status ?? ''), ['Revisi','Dikembalikan']),
+                      'bg-rose-50 text-rose-700' => ($inv->asistensi_status ?? '') === 'Ditolak',
+                    ])"
+                    @if(!empty($inv->asistensi_note)) title="{{ $inv->asistensi_note }}" @endif
+                  >
+                    {{ $inv->asistensi_status ?? 'Menunggu Verifikasi' }}
+                  </span>
+                @endrole
+              </td>
+
                 <td class="px-4 py-3">
                   <div class="flex flex-wrap gap-2">
                     <a href="{{ route('sigap-inovasi.show', $inv->id) }}" class="px-3 py-1.5 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">View</a>
@@ -281,77 +346,36 @@
             </select>
           </label>
 
-          <label class="block">
-            <span class="text-sm font-semibold text-gray-700">Asta Cipta</span>
-            <select name="asta_cipta" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
-              <option value="">--</option>
-              <option value="asta1">Memperkokoh ideologi Pancasila, demokrasi, dan hak asasi manusia (HAM).</option>
-              <option value="asta2">Memantapkan sistem pertahanan keamanan negara dan mendorong kemandirian bangsa melalui swasembada pangan, energi, air, ekonomi kreatif, ekonomi hijau, dan ekonomi biru.</option>
-              <option value="asta3">Meningkatkan lapangan kerja yang berkualitas, mendorong kewirausahaan, mengembangkan industri kreatif, dan melanjutkan pengembangan infrastruktur.</option>
-              <option value="asta4">Memperkuat pembangunan sumber daya manusia (SDM), sains, teknologi, pendidikan, kesehatan, prestasi olahraga, kesetaraan gender, serta penguatan peran perempuan, pemuda, dan penyandang disabilitas.</option>
-              <option value="asta5">Melanjutkan hilirisasi dan industrialisasi untuk meningkatkan nilai tambah di dalam negeri.</option>
-              <option value="asta6">Membangun dari desa dan dari bawah untuk pemerataan ekonomi dan pemberantasan kemiskinan.</option>
-              <option value="asta7">Memperkuat reformasi politik, hukum, dan birokrasi, serta memperkuat pencegahan dan pemberantasan korupsi dan narkoba.</option>
-              <option value="asta8">Memperkuat penyelarasan kehidupan yang harmonis dengan lingkungan, alam, dan budaya, serta peningkatan toleransi antarumat beragama untuk mencapai masyarakat yang adil dan Makmur</option>
-            </select>
-          </label>
-          <label class="block sm:col-span-2">
-            <span class="text-sm font-semibold text-gray-700">Program Prioritas Walikota Makassar</span>
-            <select name="program_prioritas" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
-              <option value="">--</option>
-              <option value="progwalkot_1">Makassar SuperApps: Platform digital terpadu yang menyatukan seluruh layanan publik dalam satu genggaman.</option>
-              <option value="progwalkot_2">Makassar Creative Hub (MCH): Fasilitas pengembangan keterampilan dan inovasi bagi warga, khususnya generasi muda.</option>
-              <option value="progwalkot_3">Penyediaan Air Bersih: Fasilitas air bersih berkualitas tinggi yang dijadwalkan diluncurkan bulan depan.</option>
-              <option value="progwalkot_4">Seragam Gratis: Bantuan seragam sekolah bagi siswa SD dan SMP dari keluarga kurang mampu.</option>
-              <option value="progwalkot_5">Iuran Sampah Gratis: Program pembebasan iuran kebersihan untuk sebagian masyarakat sebagai bentuk keadilan sosial.</option>
-              <option value="progwalkot_6">Makassar Social Assistant: Program bantuan sosial terintegrasi dalam platform SuperApps.</option>
-              <option value="progwalkot_7">Pembangunan Stadion Internasional: Infrastruktur olahraga modern guna mendukung budaya sepak bola lokal.</option>
-            </select>
-          </label>
+        <label class="block">
+          <span class="text-sm font-semibold text-gray-700">Asta Cipta</span>
+          <select name="asta_cipta" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+            <option value="">--</option>
+            @foreach(config('inovasi.asta_cipta') as $code => $label)
+              <option value="{{ $code }}" @selected(old('asta_cipta')===$code)>{{ $label }}</option>
+            @endforeach
+          </select>
+        </label>
 
-          <label class="block">
-            <span class="text-sm font-semibold text-gray-700">Urusan Pemerintah</span>
-            <select name="urusan_pemerintah" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
-              <option value="">--</option>
-              <option value="urusan_pemerintah_1">Pendidikan</option>
-              <option value="urusan_pemerintah_2">Kesehatan</option>
-              <option value="urusan_pemerintah_3">Infrastruktur</option>
-              <option value="urusan_pemerintah_4">Lingkungan Hidup</option>
-              <option value="urusan_pemerintah_5">Sosial</option>
-              <option value="urusan_pemerintah_6">Ekonomi</option>
-              <option value="urusan_pemerintah_7">Budaya</option>
-              <option value="urusan_pemerintah_8">Pendidikan</option>
-              <option value="urusan_pemerintah_9">Pendidikan</option>
-              <option value="urusan_pemerintah_10">Pendidikan</option>
-              <option value="urusan_pemerintah_11">Pendidikan</option>
-              <option value="urusan_pemerintah_12">Pendidikan</option>
-              <option value="urusan_pemerintah_13">Pendidikan</option>
-              <option value="urusan_pemerintah_14">Pendidikan</option>
-              <option value="urusan_pemerintah_15">Pendidikan</option>
-              <option value="urusan_pemerintah_16">Pendidikan</option>
-              <option value="urusan_pemerintah_17">Pendidikan</option>
-              <option value="urusan_pemerintah_18">Pendidikan</option>
-              <option value="urusan_pemerintah_19">Pendidikan</option>
-              <option value="urusan_pemerintah_20">Pendidikan</option>
-              <option value="urusan_pemerintah_21">Pendidikan</option>
-              <option value="urusan_pemerintah_22">Pendidikan</option>
-              <option value="urusan_pemerintah_23">Pendidikan</option>
-              <option value="urusan_pemerintah_24">Pendidikan</option>
-              <option value="urusan_pemerintah_25">Pendidikan</option>
-              <option value="urusan_pemerintah_26">Pendidikan</option>
-              <option value="urusan_pemerintah_27">Pendidikan</option>
-              <option value="urusan_pemerintah_28">Pendidikan</option>
-              <option value="urusan_pemerintah_29">Pendidikan</option>
-              <option value="urusan_pemerintah_30">Pendidikan</option>
-              <option value="urusan_pemerintah_31">Pendidikan</option>
-              <option value="urusan_pemerintah_32">Pendidikan</option>
-              <option value="urusan_pemerintah_33">Pendidikan</option>
-              <option value="urusan_pemerintah_34">Pendidikan</option>
-              <option value="urusan_pemerintah_35">Pendidikan</option>
-              <option value="urusan_pemerintah_36">Pendidikan</option>
-              <option value="urusan_pemerintah_37">Pendidikan</option>
-            </select>
-          </label>
+        <label class="block sm:col-span-2">
+          <span class="text-sm font-semibold text-gray-700">Program Prioritas Walikota Makassar</span>
+          <select name="program_prioritas" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+            <option value="">--</option>
+            @foreach(config('inovasi.program_prioritas') as $code => $label)
+              <option value="{{ $code }}" @selected(old('program_prioritas')===$code)>{{ $label }}</option>
+            @endforeach
+          </select>
+        </label>
+
+        <label class="block">
+          <span class="text-sm font-semibold text-gray-700">Urusan Pemerintah</span>
+          <select name="urusan_pemerintah" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+            <option value="">--</option>
+            @foreach(config('inovasi.urusan_pemerintah') as $code => $label)
+              <option value="{{ $code }}" @selected(old('urusan_pemerintah')===$code)>{{ $label }}</option>
+            @endforeach
+          </select>
+        </label>
+
           <label class="block">
             <span class="text-sm font-semibold text-gray-700">Waktu Uji Coba</span>
             <input name="waktu_uji_coba" type="date" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
@@ -426,6 +450,39 @@
       </div>
     </div>
   </div>
+
+  {{-- Modal Asistensi (global, reuse untuk semua baris) --}}
+<div id="asst-modal" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-black/40" data-asst-dismiss></div>
+  <div class="relative z-10 mx-auto max-w-lg p-4 sm:p-6 mt-16">
+    <div class="bg-white rounded-2xl shadow-2xl">
+      <div class="px-5 py-3 bg-gradient-to-r from-maroon via-maroon-800 to-maroon-900">
+        <h3 id="asst-modal-title" class="text-white text-base font-bold">Asistensi</h3>
+        <p class="text-white/80 text-xs">Mohon isi catatan untuk status yang dipilih.</p>
+      </div>
+      <form id="asst-modal-form" method="POST" class="p-5 space-y-3">
+        @csrf
+        <textarea id="asst-modal-note" rows="3" maxlength="5000"
+          class="w-full rounded-lg border border-gray-300 focus:border-maroon focus:ring-maroon text-sm"
+          placeholder="Tulis catatan… (Wajib)"></textarea>
+        <div class="flex items-center justify-between text-[11px] text-gray-500">
+          <div class="flex flex-wrap gap-2">
+            @foreach(['Lengkapi dokumen','Perbaiki deskripsi manfaat','Tidak sesuai kriteria','Butuh data pendukung'] as $chip)
+              <button type="button" class="px-2 py-1 rounded-md border hover:bg-gray-50"
+                onclick="asstAppendChip('{{ $chip }}')">+ {{ $chip }}</button>
+            @endforeach
+          </div>
+          <span id="asst-modal-count">0/5000</span>
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="button" class="px-3 py-1.5 rounded-md border hover:bg-gray-50" data-asst-dismiss>Batal</button>
+          <button type="submit" class="px-3 py-1.5 rounded-md bg-maroon text-white text-xs hover:bg-maroon-800">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -478,4 +535,71 @@
       try { syncQuillToTextareas(); } catch(err){ e.preventDefault(); }
     });
   </script>
+
+<script>
+  // status yang butuh catatan
+  const NEED_NOTE = new Set(['Dikembalikan','Revisi','Ditolak']);
+
+  const modalEl      = document.getElementById('asst-modal');
+  const modalTitleEl = document.getElementById('asst-modal-title');
+  const modalFormEl  = document.getElementById('asst-modal-form');
+  const noteEl       = document.getElementById('asst-modal-note');
+  const countEl      = document.getElementById('asst-modal-count');
+
+  let pendingForm = null; // form baris yang menunggu note
+  let pendingHiddenNote = null; // hidden input note di baris itu
+
+  function openAsstModal(title){
+    modalTitleEl.textContent = title || 'Asistensi';
+    noteEl.value = '';
+    updateCount();
+    modalEl.classList.remove('hidden');
+    setTimeout(()=> noteEl.focus(), 30);
+  }
+  function closeAsstModal(){
+    modalEl.classList.add('hidden');
+    pendingForm = null;
+    pendingHiddenNote = null;
+  }
+  function updateCount(){ countEl.textContent = `${noteEl.value.length}/5000`; }
+  noteEl.addEventListener('input', updateCount);
+  document.querySelectorAll('[data-asst-dismiss]').forEach(el=> el.addEventListener('click', closeAsstModal));
+
+  // chips
+  window.asstAppendChip = function(text){
+    noteEl.value = (noteEl.value ? (noteEl.value.trim() + (noteEl.value.trim().endsWith('.')?'':'.') + ' ') : '') + text;
+    noteEl.dispatchEvent(new Event('input'));
+    noteEl.focus();
+  };
+
+  // submit modal -> salin catatan ke input hidden baris -> submit form baris
+  modalFormEl.addEventListener('submit', function(e){
+    e.preventDefault();
+    const val = noteEl.value.trim();
+    if(!val){ alert('Catatan wajib diisi.'); return; }
+    if(pendingHiddenNote){ pendingHiddenNote.value = val; }
+    if(pendingForm){ pendingForm.submit(); }
+    closeAsstModal();
+  });
+
+  // intercept semua form asistensi di tabel
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('form[id^="asst-form-"]').forEach(form => {
+      form.addEventListener('submit', function(e){
+        const statusSel = form.querySelector('select[name="status"]');
+        const need = NEED_NOTE.has(statusSel?.value || '');
+        if(need){
+          // tahan submit, buka modal
+          e.preventDefault();
+          pendingForm = form;
+          pendingHiddenNote = form.querySelector('input[name="note"]');
+          const title = form.dataset.modalTitle || 'Asistensi';
+          openAsstModal(title);
+        }
+        // jika tidak perlu note -> submit langsung (biarkan default)
+      });
+    });
+  });
+</script>
+
 @endpush

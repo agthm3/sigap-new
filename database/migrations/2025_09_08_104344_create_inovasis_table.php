@@ -13,6 +13,7 @@ return new class extends Migration
     {
  Schema::create('inovasis', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('judul');
             $table->string('opd_unit')->nullable();
             $table->string('inisiator_daerah')->nullable();

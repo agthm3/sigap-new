@@ -139,13 +139,14 @@
                 <div class="flex flex-wrap gap-2">
                   <a href="{{ route('sigap-dokumen.show', $item->id) }}" target="_blank" class="px-3 py-1.5 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">View</a>
                   <a href="{{ route('sigap-dokumen.download', $item->id) }}" target="_blank" class="px-3 py-1.5 rounded-md bg-maroon text-white hover:bg-maroon-800 transition">Download</a>
-                  {{-- <button class="px-3 py-1.5 rounded-md border hover:bg-gray-50">Edit</button> --}}
+                  @hasrole('admin')
                   <a href="{{ route('sigap-dokumen.edit', $item->id) }}" class="px-3 py-1.5 rounded-md border hover:bg-gray-50">Edit</a>
                   <button type="button"
                           class="px-3 py-1.5 rounded-md border hover:bg-gray-50 text-red-900 border-red-900"
                           onclick="confirmHapus({{ $item->id }}, @js($item->title))">
                     Hapus
                   </button>
+                  @endhasrole
                   {{-- <button class="px-3 py-1.5 rounded-md border hover:bg-gray-50">Hapus</button> --}}
                   <form id="form-delete-{{ $item->id }}" action="{{ route('sigap-dokumen.destroy', $item->id) }}" method="POST" >
                     @csrf

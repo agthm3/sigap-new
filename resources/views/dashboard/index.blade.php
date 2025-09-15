@@ -11,7 +11,7 @@
         <!-- Greeting + Quick Actions -->
         <section class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 class="text-xl sm:text-2xl font-extrabold text-gray-900">Selamat datang, <span class="text-maroon">Admin</span> 👋</h1>
+            <h1 class="text-xl sm:text-2xl font-extrabold text-gray-900">Selamat datang, <span class="text-maroon">{{ Auth::user()->name }}</span> 👋</h1>
             <p class="text-sm text-gray-600 mt-0.5">Ringkasan aktivitas sistem SIGAP BRIDA hari ini.</p>
           </div>
           <div class="flex flex-wrap gap-2">

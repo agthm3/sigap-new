@@ -74,23 +74,32 @@
         </div>
       </div>
 
-      {{-- Klasifikasi & Urusan --}}
+        {{-- Klasifikasi & Urusan --}}
       <div class="bg-white border border-gray-200 rounded-2xl p-4">
         <h2 class="font-semibold text-gray-800 mb-4">Klasifikasi & Urusan</h2>
+
+        @php
+          $cfgAsta = config('inovasi.asta_cipta', []);
+          $cfgProg = config('inovasi.program_prioritas', []);
+          $cfgUrus = config('inovasi.urusan_pemerintah', []);
+          $optKlas = [''=>'—','Inovasi Perangkat Daerah'=>'Inovasi Perangkat Daerah','Inovasi Desa dan Kelurahan'=>'Inovasi Desa dan Kelurahan','Inovasi Masyarakat'=>'Inovasi Masyarakat'];
+          $optJenis= [''=>'—','Digital'=>'Digital','Non Digital'=>'Non Digital'];
+          $optBentuk=[''=>'—','Inovasi Daerah lainnya sesuai urusan kewenangan'=>'Inovasi Daerah lainnya sesuai urusan kewenangan','Inovasi Pelayanan Publik'=>'Inovasi Pelayanan Publik','Inovasi Tata Kelola Pemerintah Daerah'=>'Inovasi Tata Kelola Pemerintah Daerah'];
+        @endphp
+
         <div class="grid sm:grid-cols-2 gap-4">
           <label class="block">
             <span class="text-sm font-semibold text-gray-700">Klasifikasi Inovasi</span>
             <select name="klasifikasi" class="mt-1.5 w-full rounded-lg border border-gray-300 focus:border-maroon focus:ring-maroon px-3 py-2">
-              @php $optKlas = [''=>'—','Inovasi Perangkat Daerah'=>'Inovasi Perangkat Daerah','Inovasi Desa dan Kelurahan'=>'Inovasi Desa dan Kelurahan','Inovasi Masyarakat'=>'Inovasi Masyarakat']; @endphp
               @foreach($optKlas as $val=>$lbl)
                 <option value="{{ $val }}" @selected(old('klasifikasi',$inovasi->klasifikasi)===$val)>{{ $lbl }}</option>
               @endforeach
             </select>
           </label>
+
           <label class="block">
             <span class="text-sm font-semibold text-gray-700">Jenis Inovasi</span>
             <select name="jenis_inovasi" class="mt-1.5 w-full rounded-lg border border-gray-300 focus:border-maroon focus:ring-maroon px-3 py-2">
-              @php $optJenis = [''=>'—','Digital'=>'Digital','Non Digital'=>'Non Digital']; @endphp
               @foreach($optJenis as $val=>$lbl)
                 <option value="{{ $val }}" @selected(old('jenis_inovasi',$inovasi->jenis_inovasi)===$val)>{{ $lbl }}</option>
               @endforeach
@@ -100,34 +109,43 @@
           <label class="block">
             <span class="text-sm font-semibold text-gray-700">Bentuk Inovasi Daerah</span>
             <select name="bentuk_inovasi_daerah" class="mt-1.5 w-full rounded-lg border border-gray-300 focus:border-maroon focus:ring-maroon px-3 py-2">
-              @php $optBentuk = [''=>'—','Inovasi Daerah lainnya sesuai urusan kewenangan'=>'Inovasi Daerah lainnya sesuai urusan kewenangan','Inovasi Pelayanan Publik'=>'Inovasi Pelayanan Publik','Inovasi Tata Kelola Pemerintah Daerah'=>'Inovasi Tata Kelola Pemerintah Daerah']; @endphp
               @foreach($optBentuk as $val=>$lbl)
                 <option value="{{ $val }}" @selected(old('bentuk_inovasi_daerah',$inovasi->bentuk_inovasi_daerah)===$val)>{{ $lbl }}</option>
               @endforeach
             </select>
           </label>
+
+          {{-- ASTA CIPTA: simpan kode (asta1, dst) tapi tampil label --}}
           <label class="block">
             <span class="text-sm font-semibold text-gray-700">Asta Cipta</span>
             <select name="asta_cipta" class="mt-1.5 w-full rounded-lg border border-gray-300 focus:border-maroon focus:ring-maroon px-3 py-2">
-              @php $optAsta=[''=>'—','Ekonomi'=>'Ekonomi','Sosial'=>'Sosial','Infrastruktur'=>'Infrastruktur','Pemerintahan'=>'Pemerintahan','Lingkungan'=>'Lingkungan']; @endphp
-              @foreach($optAsta as $val=>$lbl)
-                <option value="{{ $val }}" @selected(old('asta_cipta',$inovasi->asta_cipta)===$val)>{{ $lbl }}</option>
+              <option value="">—</option>
+              @foreach($cfgAsta as $code=>$label)
+                <option value="{{ $code }}" @selected(old('asta_cipta',$inovasi->asta_cipta)===$code)>{{ $label }}</option>
               @endforeach
             </select>
           </label>
 
+          {{-- PROGRAM PRIORITAS: simpan kode (progwalkot_1, dst) --}}
           <label class="block sm:col-span-2">
             <span class="text-sm font-semibold text-gray-700">Program Prioritas Walikota</span>
-            <input name="program_prioritas" type="text"
-                   class="mt-1.5 w-full rounded-lg border border-gray-300 focus:border-maroon focus:ring-maroon px-3 py-2"
-                   value="{{ old('program_prioritas',$inovasi->program_prioritas) }}">
+            <select name="program_prioritas" class="mt-1.5 w-full rounded-lg border border-gray-300 focus:border-maroon focus:ring-maroon px-3 py-2">
+              <option value="">—</option>
+              @foreach($cfgProg as $code=>$label)
+                <option value="{{ $code }}" @selected(old('program_prioritas',$inovasi->program_prioritas)===$code)>{{ $label }}</option>
+              @endforeach
+            </select>
           </label>
 
-          <label class="block">
+          {{-- URUSAN PEMERINTAH: pakai list panjang dari config --}}
+          <label class="block sm:col-span-2">
             <span class="text-sm font-semibold text-gray-700">Urusan Pemerintah</span>
-            <input name="urusan_pemerintah" type="text"
-                   class="mt-1.5 w-full rounded-lg border border-gray-300 focus:border-maroon focus:ring-maroon px-3 py-2"
-                   value="{{ old('urusan_pemerintah',$inovasi->urusan_pemerintah) }}">
+            <select name="urusan_pemerintah" class="mt-1.5 w-full rounded-lg border border-gray-300 focus:border-maroon focus:ring-maroon px-3 py-2">
+              <option value="">—</option>
+              @foreach($cfgUrus as $u)
+                <option value="{{ $u }}" @selected(old('urusan_pemerintah',$inovasi->urusan_pemerintah)===$u)>{{ $u }}</option>
+              @endforeach
+            </select>
           </label>
         </div>
       </div>
@@ -179,48 +197,52 @@
         </div>
       </div>
 
-      {{-- Lampiran (opsional) --}}
-      <div class="bg-white border border-gray-200 rounded-2xl p-4">
-        <h2 class="font-semibold text-gray-800 mb-4">Lampiran</h2>
-        <div class="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label class="text-sm font-semibold text-gray-700">Anggaran (PDF)</label>
-            <input name="anggaran" type="file" accept=".pdf" class="mt-1.5 block w-full text-sm">
-            @if(!empty($inovasi->anggaran_path))
-              <p class="text-xs mt-1">
-                Saat ini: <a class="text-maroon underline" target="_blank" href="{{ asset('storage/'.$inovasi->anggaran_path) }}">Lihat</a>
-              </p>
-            @endif
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-gray-700">Profil Bisnis (.ppt/.pdf)</label>
-            <input name="profil_bisnis" type="file" accept=".ppt,.pptx,.pdf" class="mt-1.5 block w-full text-sm">
-            @if(!empty($inovasi->profil_bisnis_path))
-              <p class="text-xs mt-1">
-                Saat ini: <a class="text-maroon underline" target="_blank" href="{{ asset('storage/'.$inovasi->profil_bisnis_path) }}">Lihat</a>
-              </p>
-            @endif
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-gray-700">Dokumen HAKI</label>
-            <input name="haki" type="file" accept=".pdf,.jpg,.jpeg,.png" class="mt-1.5 block w-full text-sm">
-            @if(!empty($inovasi->haki_path))
-              <p class="text-xs mt-1">
-                Saat ini: <a class="text-maroon underline" target="_blank" href="{{ asset('storage/'.$inovasi->haki_path) }}">Lihat</a>
-              </p>
-            @endif
-          </div>
-          <div>
-            <label class="text-sm font-semibold text-gray-700">Penghargaan</label>
-            <input name="penghargaan" type="file" accept=".pdf,.jpg,.jpeg,.png" class="mt-1.5 block w-full text-sm">
-            @if(!empty($inovasi->penghargaan_path))
-              <p class="text-xs mt-1">
-                Saat ini: <a class="text-maroon underline" target="_blank" href="{{ asset('storage/'.$inovasi->penghargaan_path) }}">Lihat</a>
-              </p>
-            @endif
-          </div>
-        </div>
-      </div>
+{{-- Lampiran (opsional) --}}
+<div class="bg-white border border-gray-200 rounded-2xl p-4">
+  <h2 class="font-semibold text-gray-800 mb-4">Lampiran</h2>
+  <div class="grid sm:grid-cols-2 gap-4">
+    <div>
+      <label class="text-sm font-semibold text-gray-700">Anggaran (PDF)</label>
+      <input name="anggaran" type="file" accept=".pdf" class="mt-1.5 block w-full text-sm">
+      @if(!empty($inovasi->anggaran_file))
+        <p class="text-xs mt-1">
+          Saat ini: <a class="text-maroon underline" target="_blank" href="{{ asset('storage/'.$inovasi->anggaran_file) }}">Lihat</a>
+        </p>
+      @endif
+    </div>
+
+    <div>
+      <label class="text-sm font-semibold text-gray-700">Profil Bisnis (.ppt/.pdf)</label>
+      <input name="profil_bisnis" type="file" accept=".ppt,.pptx,.pdf" class="mt-1.5 block w-full text-sm">
+      @if(!empty($inovasi->profil_bisnis_file))
+        <p class="text-xs mt-1">
+          Saat ini: <a class="text-maroon underline" target="_blank" href="{{ asset('storage/'.$inovasi->profil_bisnis_file) }}">Lihat</a>
+        </p>
+      @endif
+    </div>
+
+    <div>
+      <label class="text-sm font-semibold text-gray-700">Dokumen HAKI</label>
+      <input name="haki" type="file" accept=".pdf,.jpg,.jpeg,.png" class="mt-1.5 block w-full text-sm">
+      @if(!empty($inovasi->haki_file))
+        <p class="text-xs mt-1">
+          Saat ini: <a class="text-maroon underline" target="_blank" href="{{ asset('storage/'.$inovasi->haki_file) }}">Lihat</a>
+        </p>
+      @endif
+    </div>
+
+    <div>
+      <label class="text-sm font-semibold text-gray-700">Penghargaan</label>
+      <input name="penghargaan" type="file" accept=".pdf,.jpg,.jpeg,.png" class="mt-1.5 block w-full text-sm">
+      @if(!empty($inovasi->penghargaan_file))
+        <p class="text-xs mt-1">
+          Saat ini: <a class="text-maroon underline" target="_blank" href="{{ asset('storage/'.$inovasi->penghargaan_file) }}">Lihat</a>
+        </p>
+      @endif
+    </div>
+  </div>
+</div>
+
     </form>
 
     {{-- Sidebar ringkas --}}

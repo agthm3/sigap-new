@@ -78,7 +78,7 @@
         <section class="bg-white rounded-2xl border border-gray-200 p-5 sm:p-8 shadow-sm">
           <div class="flex items-center justify-between">
             <h2 class="text-xl sm:text-2xl font-extrabold text-maroon">Login</h2>
-            <a href="index.html" class="text-sm text-gray-500 hover:text-maroon">← Kembali</a>
+            <a href="{{ route('home') }}" class="text-sm text-gray-500 hover:text-maroon">← Kembali</a>
           </div>
           <p class="text-sm text-gray-600 mt-1">Gunakan email dinas/username dan kata sandi Anda.</p>
             @if ($errors->any())
@@ -94,13 +94,13 @@
             @csrf
             <label class="block">
               <span class="text-sm font-semibold text-gray-700">Email</span>
-              <input id="email" name="email" type="text" required class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="nama@brida.mks.go.id / user.unit">
+              <input id="email" name="email" type="text" required class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="nama@brida.mks.go.id / user.unit">
             </label>
 
             <label class="block">
               <span class="text-sm font-semibold text-gray-700">Kata Sandi</span>
               <div class="relative mt-1.5">
-                <input id="password" name="password" type="password" required class="w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon pr-10" placeholder="••••••••" autocomplete="current-password">
+                <input id="password" name="password" type="password" required class="w-full border p-2 rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon pr-10" placeholder="••••••••" autocomplete="current-password">
                 <button type="button" class="absolute inset-y-0 right-0 px-3 text-gray-500" onclick="togglePwd()">👁️</button>
               </div>
               <div id="caps" class="hidden mt-1 text-[12px] text-amber-700">Caps Lock aktif</div>
@@ -119,17 +119,17 @@
             <button class="mt-1 px-4 py-2.5 rounded-lg bg-maroon text-white hover:bg-maroon-800 transition">Masuk</button>
 
             <!-- Garis pemisah -->
-            <div class="flex items-center gap-3 my-2">
+            {{-- <div class="flex items-center gap-3 my-2">
               <div class="h-px bg-gray-200 flex-1"></div>
               <span class="text-xs text-gray-500">atau</span>
               <div class="h-px bg-gray-200 flex-1"></div>
-            </div>
+            </div> --}}
 
             <!-- SSO placeholder -->
-            <button type="button" class="px-4 py-2.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition flex items-center justify-center gap-2" onclick="alert('SSO BRIDA (placeholder). Integrasikan dengan IdP internal.')">
+            {{-- <button type="button" class="px-4 py-2.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition flex items-center justify-center gap-2" onclick="alert('SSO BRIDA (placeholder). Integrasikan dengan IdP internal.')">
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M12 2l2.4 7.4H22l-6.2 4.5L18.3 21 12 16.8 5.7 21l2.5-7.1L2 9.4h7.6L12 2z"/></svg>
               Masuk dengan SSO BRIDA
-            </button>
+            </button> --}}
           </form>
 
           <!-- Catatan keamanan -->

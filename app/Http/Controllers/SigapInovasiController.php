@@ -6,37 +6,150 @@ use App\Models\Inovasi;
 use App\Repositories\EvidenceRepository;
 use App\Repositories\InovasiRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class SigapInovasiController extends Controller
 {
     public function __construct(private InovasiRepository $repo)
     {
-        
+//
     }
+
+    /**
+     * Landing / non-dashboard (company profile).
+     */
+    public function home()
+    {
+        return view('SigapInovasi.home.index');
+    }
+
+    /**
+     * Daftar inovasi (terfilter per user kecuali admin).
+     */
     public function index(Request $request)
     {
-        $filters = [
-                'q'            => $request->get('q'),
-                'inisiator'    => $request->get('f_inisiator'),
-                'tahap'        => $request->get('f_tahap_inovasi'),
-                'tahap_status' => $request->get('f_tahap_status'),
-                'sort'         => $request->get('sort','terbaru'),
-            ];
+        $user = Auth::user();
 
-        $items = $this->repo->paginate($filters, 25);
+        $filters = [
+            'q'            => $request->get('q'),
+            'inisiator'    => $request->get('f_inisiator'),
+            'tahap'        => $request->get('f_tahap_inovasi'),
+            'tahap_status' => $request->get('f_tahap_status'),
+            'urusan'       => $request->get('f_urusan'),
+            'sort'         => $request->get('sort','terbaru'),
+        ];
+
+        $items = $this->repo->paginateForUser($user, $filters, 25);
         return view('dashboard.inovasi.index', compact('filters', 'items'));
     }
 
     public function konfigurasi()
     {
+        $this->authorizeAdmin();
         return view('dashboard.inovasi.konfigurasi');
     }
 
+    /**
+     * Dashboard (KPI & ringkasan) – data terfilter per role.
+     */
     public function dashboard()
     {
-        return view('dashboard.inovasi.dashboard');
+        $user = Auth::user();
+
+        $base = Inovasi::query();
+        if (!$user->hasRole('admin')) {
+            $base->where('user_id', $user->id);
+        }
+
+        // KPI ringkas
+        $total      = (clone $base)->count();
+        $opdCount   = (clone $base)->whereNotNull('opd_unit')->distinct('opd_unit')->count('opd_unit');
+        $ujiCount   = (clone $base)->where('tahap_inovasi','Uji Coba')->count();
+        $terapCount = (clone $base)->where('tahap_inovasi','Penerapan')->count();
+
+        // Leaderboard OPD
+        $leaderboard = (clone $base)
+            ->select('opd_unit', DB::raw('COUNT(*) as total'))
+            ->whereNotNull('opd_unit')
+            ->groupBy('opd_unit')
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get();
+
+        // Aktivitas terbaru
+        $recent = (clone $base)->latest('created_at')
+            ->limit(10)
+            ->get(['id','judul','opd_unit','tahap_inovasi','created_at']);
+
+        // Distribusi tahapan
+        $stages = (clone $base)
+            ->select('tahap_inovasi', DB::raw('COUNT(*) as total'))
+            ->groupBy('tahap_inovasi')
+            ->pluck('total','tahap_inovasi');
+
+        // Bulanan 12 bulan terakhir
+        $since = now()->startOfMonth()->subMonths(11);
+        $monthlyRaw = (clone $base)
+            ->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as ym, COUNT(*) as c')
+            ->where('created_at','>=',$since)
+            ->groupBy('ym')
+            ->orderBy('ym')
+            ->get();
+
+        $labels = [];
+        $dataMonthly = [];
+        for ($i = 11; $i >= 0; $i--) {
+            $m = now()->subMonths($i)->format('Y-m');
+            $labels[] = now()->subMonths($i)->isoFormat('MMM YYYY');
+            $dataMonthly[] = (int) ($monthlyRaw->firstWhere('ym', $m)->c ?? 0);
+        }
+
+        // Butuh tindak lanjut (heuristik)
+        $needsFollowup = (clone $base)
+            ->where('tahap_inovasi','Inisiatif')
+            ->where('created_at','<=', now()->subDays(14))
+            ->orderBy('created_at','asc')
+            ->limit(8)
+            ->get(['id','judul','opd_unit','created_at'])
+            ->map(function($row){
+                return [
+                    'judul'      => 'Lengkapi indikator – '.$row->judul,
+                    'pic'        => $row->opd_unit ?: '—',
+                    'deadline'   => $row->created_at->addDays(21)->isoFormat('DD MMM YYYY'),
+                    'inovasi_id' => $row->id,
+                ];
+            });
+
+        // Delta sederhana
+        $addedThisMonth    = (clone $base)->whereBetween('created_at',[now()->startOfMonth(), now()])->count();
+        $activeOpdThisWeek = (clone $base)->whereBetween('created_at',[now()->startOfWeek(), now()])
+                                ->distinct('opd_unit')->count('opd_unit');
+        $ujiDeltaWeek      = (clone $base)->where('tahap_inovasi','Uji Coba')
+                                ->whereBetween('created_at',[now()->startOfWeek(), now()])->count();
+
+        return view('dashboard.inovasi.dashboard', [
+            'kpi' => [
+                'total'          => $total,
+                'opd'            => $opdCount,
+                'uji'            => $ujiCount,
+                'terap'          => $terapCount,
+                'addedThisMonth' => $addedThisMonth,
+                'activeOpdWeek'  => $activeOpdThisWeek,
+                'ujiDeltaWeek'   => $ujiDeltaWeek,
+            ],
+            'leaderboard'   => $leaderboard,
+            'recent'        => $recent,
+            'stages'        => $stages,
+            'chartMonthly'  => ['labels'=>$labels, 'data'=>$dataMonthly],
+            'needsFollowup' => $needsFollowup,
+        ]);
     }
 
+    /**
+     * Simpan inovasi baru.
+     */
     public function store(Request $r)
     {
         $data = $r->validate([
@@ -53,13 +166,16 @@ class SigapInovasiController extends Controller
             'urusan_pemerintah'     => ['nullable','string','max:255'],
             'waktu_uji_coba'        => ['nullable','date'],
             'waktu_penerapan'       => ['nullable','date'],
-            'tahap_inovasi'       => ['nullable','string','max:50'],
+            'tahap_inovasi'         => ['nullable','string','max:50'],
             'rancang_bangun'        => ['nullable','string'],
             'tujuan'                => ['nullable','string'],
             'manfaat'               => ['nullable','string'],
             'hasil_inovasi'         => ['nullable','string'],
             'perkembangan_inovasi'  => ['nullable','string','max:255'],
         ]);
+
+        // set pemilik
+        $data['user_id'] = Auth::id();
 
         $this->repo->create(
             $data,
@@ -70,60 +186,113 @@ class SigapInovasiController extends Controller
         );
 
         return redirect()->route('sigap-inovasi.index')->with('success', 'Inovasi berhasil ditambahkan.');
-
     }
 
+    /**
+     * Hapus inovasi (pemilik/admin).
+     */
     public function destroy($id)
     {
+        $inovasi = $this->repo->find($id);
+        $this->authorizeOwnerOrAdmin($inovasi);
+
         $this->repo->delete($id);
         return redirect()->route('sigap-inovasi.index')->with('success', 'Inovasi berhasil dihapus.');
     }
 
+    /**
+     * Detail inovasi (hydrate evidence file_url/file_name + lampiran utama).
+     */
     public function show(int $id, EvidenceRepository $evidenceRepo)
     {
         $inovasi = $this->repo->find($id);
+        $this->authorizeOwnerOrAdmin($inovasi);
 
-        // Ambil status tahapan (fallback 'Belum')
+        // Status tahapan sederhana
         $tInis  = $inovasi->t_inisiatif   ?? $inovasi->t_inisiatif_status   ?? 'Belum';
         $tUji   = $inovasi->t_uji_coba    ?? $inovasi->t_uji_status         ?? 'Belum';
         $tTerap = $inovasi->t_penerapan   ?? $inovasi->t_penerapan_status   ?? 'Belum';
 
-        // Progress (versi tahapan, seperti sebelumnya)
         $steps = collect([$tInis,$tUji,$tTerap])->filter(fn($s)=> strcasecmp((string)$s,'Belum') !== 0 && !empty($s))->count();
         $progressPct = (int) round($steps / 3 * 100);
 
-        // Evidence (langsung dari repo)
-        $evItems     = collect($evidenceRepo->listForInovasi($inovasi->id));   // array -> collect untuk gampang ngitung
-        $evTotal     = $evidenceRepo->totalWeight($inovasi->id);
-        $evFilled    = $evItems->where('selected_weight','>',0)->count();
-        $evFiles     = $evItems->filter(fn($r)=> !empty($r['file_name']))->count();
+        // Evidence mentah
+        $evItemsRaw = collect($evidenceRepo->listForInovasi($inovasi->id));
+
+        // Hydrate: buat file_url & file_name
+        $evItems = $evItemsRaw->map(function($r){
+            $path = $r['file_path'] ?? $r['path'] ?? $r['file'] ?? $r['storage_path'] ?? null;
+
+            $url  = $r['file_url'] ?? null;
+            if (!$url && $path) {
+                $url = Storage::disk('public')->exists($path)
+                    ? Storage::disk('public')->url($path)
+                    : (preg_match('#^https?://#i', $path) ? $path : null);
+            }
+
+            $name = $r['file_name'] ?? ($path ? basename($path) : null);
+
+            $r['file_url']  = $url;
+            $r['file_name'] = $name;
+            return $r;
+        });
+
+        $evTotal  = $evidenceRepo->totalWeight($inovasi->id);
+        $evFilled = $evItems->where('selected_weight','>',0)->count();
+        $evFiles  = $evItems->filter(fn($r)=> !empty($r['file_url']))->count();
+
+        // Lampiran utama entity Inovasi
+        $mainFiles = collect([
+            ['label' => 'Anggaran',       'path' => $inovasi->anggaran_file],
+            ['label' => 'Profil Bisnis',  'path' => $inovasi->profil_bisnis_file],
+            ['label' => 'HAKI',           'path' => $inovasi->haki_file],
+            ['label' => 'Penghargaan',    'path' => $inovasi->penghargaan_file],
+        ])->map(function($f){
+            if (empty($f['path'])) return null;
+            $exists = Storage::disk('public')->exists($f['path']);
+            return [
+                'label' => $f['label'],
+                'path'  => $f['path'],
+                'url'   => $exists ? Storage::disk('public')->url($f['path']) : null,
+                'name'  => basename($f['path']),
+            ];
+        })->filter();
 
         return view('dashboard.inovasi.show', compact(
             'inovasi','tInis','tUji','tTerap','progressPct',
-            'evItems','evTotal','evFilled','evFiles'
+            'evItems','evTotal','evFilled','evFiles','mainFiles'
         ));
     }
+
+    /**
+     * Form Evidence (pemilik/admin).
+     */
     public function evidenceForm(Inovasi $inovasi, EvidenceRepository $evidenceRepo)
     {
-        $items       = $evidenceRepo->listForInovasi($inovasi->id);   // <- array murni
+        $this->authorizeOwnerOrAdmin($inovasi);
+
+        $items       = $evidenceRepo->listForInovasi($inovasi->id);
         $totalWeight = $evidenceRepo->totalWeight($inovasi->id);
         $doneCount   = collect($items)->filter(fn($i) =>
-                        !empty($i['selected_label']) || (($i['selected_weight'] ?? 0) > 0)
-                    )->count();
+            !empty($i['selected_label']) || (($i['selected_weight'] ?? 0) > 0)
+        )->count();
 
         return view('dashboard.inovasi.evidence', compact('inovasi','items','totalWeight','doneCount'));
     }
 
+    /**
+     * Simpan Evidence (pemilik/admin).
+     */
     public function evidenceSave(Request $r, Inovasi $inovasi, EvidenceRepository $evidenceRepo)
     {
-        // Ambil array input dari form (keyed by nomor indikator)
-        $paramIds   = $r->input('param_id', []);           // [no => param_id]
-        $labels     = $r->input('parameter_label', []);    // opsional (kalau mau manual)
-        $weights    = $r->input('parameter_weight', []);   // opsional (kalau mau manual)
-        $deskripsis = $r->input('deskripsi', []);          // [no => text]
-        $linkUrls   = $r->input('link_url', []);           // [no => url]
+        $this->authorizeOwnerOrAdmin($inovasi);
 
-        // Susun payload untuk repository
+        $paramIds   = $r->input('param_id', []);
+        $labels     = $r->input('parameter_label', []);
+        $weights    = $r->input('parameter_weight', []);
+        $deskripsis = $r->input('deskripsi', []);
+        $linkUrls   = $r->input('link_url', []);
+
         $rows = [];
         for ($no = 1; $no <= 20; $no++) {
             $rows[] = [
@@ -136,7 +305,6 @@ class SigapInovasiController extends Controller
             ];
         }
 
-        // Map file input: file_1..file_20
         $files = [];
         for ($no = 1; $no <= 20; $no++) {
             if ($r->hasFile("file_{$no}")) {
@@ -151,14 +319,25 @@ class SigapInovasiController extends Controller
             ->with('success','Evidence berhasil disimpan.');
     }
 
+    /**
+     * Edit metadata inovasi (pemilik/admin).
+     */
     public function edit(int $id)
     {
         $inovasi = $this->repo->find($id);
+        $this->authorizeOwnerOrAdmin($inovasi);
+
         return view('dashboard.inovasi.edit', compact('inovasi'));
     }
 
+    /**
+     * Update metadata inovasi + file (pemilik/admin).
+     */
     public function update(Request $r, int $id)
     {
+        $inovasi = $this->repo->find($id);
+        $this->authorizeOwnerOrAdmin($inovasi);
+
         $data = $r->validate([
             'judul'                 => ['required','string','max:255'],
             'opd_unit'              => ['nullable','string','max:255'],
@@ -185,7 +364,6 @@ class SigapInovasiController extends Controller
             'penghargaan'           => ['nullable','file','mimes:pdf,jpg,jpeg,png','max:10240'],
         ]);
 
-        // lewat repository (konsisten dengan store())
         $this->repo->update(
             $id,
             $data,
@@ -197,4 +375,41 @@ class SigapInovasiController extends Controller
 
         return redirect()->route('sigap-inovasi.show',$id)->with('success','Metadata inovasi berhasil diperbarui.');
     }
+
+      /**
+     * Aksi: Update Asistensi (admin/verifikator saja)
+     */
+    public function asistensiUpdate(Request $r, int $id)
+    {
+        $this->authorizeAdmin(); // atau buat gate khusus "verifikator" jika ada
+
+        $data = $r->validate([
+            'status' => ['required','in:Menunggu Verifikasi,Disetujui,Dikembalikan,Revisi,Ditolak'],
+            'note'   => ['nullable','string','max:5000'],
+        ]);
+
+        // Wajib isi note jika bukan Disetujui/Menunggu
+        if (in_array($data['status'], ['Dikembalikan','Revisi','Ditolak']) && empty(trim($data['note'] ?? ''))) {
+            return back()->withErrors(['note'=>'Catatan wajib diisi untuk status '.$data['status']])->withInput();
+        }
+
+        $this->repo->updateAsistensi($id, $data['status'], $data['note'] ?? null, Auth::id());
+        return back()->with('success', 'Status asistensi diperbarui.');
+    }
+
+    // ===== Helpers
+    private function authorizeOwnerOrAdmin(Inovasi $inv): void
+    {
+        $user = Auth::user();
+        if ($user->hasRole('admin')) return;
+        if ($inv->user_id === $user->id) return;
+        abort(403, 'Anda tidak berhak mengakses inovasi ini.');
+    }
+    private function authorizeAdmin(): void
+    {
+        if (!Auth::user()->hasRole('admin')) abort(403, 'Akses khusus admin/verifikator.');
+    }
+
+ 
+    
 }

@@ -42,6 +42,7 @@ class AdminUserSeeder extends Seeder
                 'password'          => Hash::make($plainPassword),
                 'status'            => 'active',
                 'unit'              => 'Administrator',
+                'nip'               => '000000000000000000',
                 'email_verified_at' => now(),
             ]
         );

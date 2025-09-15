@@ -206,29 +206,4 @@ class InovasiRepository
             return $inovasi;
         });
     }
-
-      public function updateAsistensi(int $id, string $status, ?string $note, int $byUserId): Inovasi
-    {
-        $allowed = ['Menunggu Verifikasi','Disetujui','Dikembalikan','Revisi','Ditolak'];
-        if (!in_array($status, $allowed, true)) {
-            abort(422, 'Status asistensi tidak valid.');
-        }
-
-        return DB::transaction(function () use ($id, $status, $note, $byUserId) {
-            $inv = Inovasi::findOrFail($id);
-            $inv->asistensi_status = $status;
-            $inv->asistensi_note   = $note;
-            $inv->asistensi_by     = $byUserId;
-            $inv->asistensi_at     = now();
-            $inv->save();
-
-            Log::channel('giga')->info('Asistensi updated', [
-                'inovasi_id'=>$inv->id,
-                'status'=>$status,
-                'by'=>$byUserId
-            ]);
-
-            return $inv;
-        });
-    }
 }

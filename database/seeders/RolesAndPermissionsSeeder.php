@@ -42,7 +42,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'inovasi.view','evidence.review'
         ]);
 
-        $employee->givePermissionTo(['inovasi.view']);
+        $employee->givePermissionTo(['pegawai.manage']);
         $researcher->givePermissionTo(['inovasi.view']);
         $user->givePermissionTo(['inovasi.view']);
     }

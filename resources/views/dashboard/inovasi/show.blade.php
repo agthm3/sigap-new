@@ -79,6 +79,29 @@
     </div>
   </div>
 </section>
+{{-- letakkan di bagian atas detail (mis. setelah header) --}}
+@if(in_array($inovasi->asistensi_status, ['Dikembalikan','Revisi','Ditolak']))
+  <section class="max-w-7xl mx-auto px-4">
+    <div class="rounded-2xl border p-4
+      @if($inovasi->asistensi_status==='Ditolak') bg-rose-50 border-rose-200 text-rose-800
+      @elseif($inovasi->asistensi_status==='Revisi' || $inovasi->asistensi_status==='Dikembalikan') bg-amber-50 border-amber-200 text-amber-800
+      @else bg-gray-50 border-gray-200 text-gray-800 @endif">
+      <div class="flex items-start gap-3">
+        <div class="font-semibold">
+          Status Asistensi: {{ $inovasi->asistensi_status }}
+          @if($inovasi->asistensi_at)
+            <span class="text-xs text-gray-600 block">
+              {{ $inovasi->asistensi_at->timezone('Asia/Makassar')->format('d M Y • H:i') }}
+            </span>
+          @endif
+        </div>
+      </div>
+      @if(!empty($inovasi->asistensi_note))
+        <div class="mt-2 text-sm leading-relaxed">{!! nl2br(e($inovasi->asistensi_note)) !!}</div>
+      @endif
+    </div>
+  </section>
+@endif
 
 <!-- KPI ringkas -->
 <section class="max-w-7xl mx-auto px-4">
@@ -199,37 +222,73 @@
 </section>
 
 
-<!-- Lampiran terkumpul -->
+<!-- Lampiran Utama + Evidence -->
 <section class="max-w-7xl mx-auto px-4">
   <div class="card rounded-2xl border bg-white p-4">
     <div class="flex items-center justify-between">
-      <h3 class="font-semibold text-gray-800">Lampiran Terkumpul</h3>
-      {{-- opsional tombol unduh semua --}}
+      <h3 class="font-semibold text-gray-800">Lampiran</h3>
     </div>
 
+    {{-- LAMPIRAN UTAMA --}}
+    <div class="mt-3">
+      <h4 class="text-sm font-semibold text-gray-700">Lampiran Utama</h4>
+      @if(($mainFiles ?? collect())->isEmpty())
+        <p class="mt-2 text-sm text-gray-500">Belum ada lampiran utama.</p>
+      @else
+        <div class="mt-2 grid md:grid-cols-2 xl:grid-cols-3 gap-3 text-sm">
+          @foreach($mainFiles as $mf)
+            <div class="rounded-xl border p-3 flex items-center gap-3">
+              <span class="inline-flex w-8 h-8 items-center justify-center rounded-md bg-gray-100 text-gray-700">FILE</span>
+              <div class="min-w-0">
+                <p class="font-medium text-gray-800 truncate">{{ $mf['name'] ?? '—' }}</p>
+                <p class="text-xs text-gray-500">{{ $mf['label'] }}</p>
+              </div>
+              <div class="ml-auto flex items-center gap-2">
+                @if(!empty($mf['url']))
+                  <a href="{{ $mf['url'] }}" target="_blank" class="px-2.5 py-1.5 rounded-md border text-xs hover:bg-gray-50">View</a>
+                  <a href="{{ $mf['url'] }}" download class="px-2.5 py-1.5 rounded-md bg-maroon text-white text-xs hover:bg-maroon-800">Download</a>
+                @else
+                  <span class="text-xs text-gray-400">tidak ditemukan</span>
+                @endif
+              </div>
+            </div>
+          @endforeach
+        </div>
+      @endif
+    </div>
+
+    {{-- LAMPIRAN EVIDENCE --}}
     @php
-      $fileRows = $evItems->filter(fn($r)=> !empty($r['file_name']) && !empty($r['file_url']))->values();
+      // gunakan evItems yang SUDAH di-hydrate (punya file_url & file_name)
+      $fileRows = ($evItems ?? collect())->filter(fn($r)=> !empty($r['file_url']))->values();
     @endphp
 
-    @if($fileRows->isEmpty())
-      <p class="mt-3 text-sm text-gray-500">Belum ada lampiran.</p>
-    @else
-      <div class="mt-3 grid md:grid-cols-2 xl:grid-cols-3 gap-3 text-sm">
-        @foreach($fileRows as $f)
-          <div class="rounded-xl border p-3 flex items-center gap-3">
-            <span class="inline-flex w-8 h-8 items-center justify-center rounded-md bg-gray-100 text-gray-700">FILE</span>
-            <div class="min-w-0">
-              <p class="font-medium text-gray-800 truncate">{{ $f['file_name'] }}</p>
-              <p class="text-xs text-gray-500">Indikator #{{ $f['no'] }} • {{ $f['indikator'] }}</p>
+    <div class="mt-6">
+      <h4 class="text-sm font-semibold text-gray-700">Lampiran Evidence</h4>
+      @if($fileRows->isEmpty())
+        <p class="mt-2 text-sm text-gray-500">Belum ada lampiran evidence.</p>
+      @else
+        <div class="mt-2 grid md:grid-cols-2 xl:grid-cols-3 gap-3 text-sm">
+          @foreach($fileRows as $f)
+            <div class="rounded-xl border p-3 flex items-center gap-3">
+              <span class="inline-flex w-8 h-8 items-center justify-center rounded-md bg-gray-100 text-gray-700">FILE</span>
+              <div class="min-w-0">
+                <p class="font-medium text-gray-800 truncate">{{ $f['file_name'] ?? '—' }}</p>
+                <p class="text-xs text-gray-500">
+                  Indikator #{{ $f['no'] ?? '—' }}
+                  @if(!empty($f['indikator'])) • {{ $f['indikator'] }} @endif
+                </p>
+              </div>
+              <div class="ml-auto flex items-center gap-2">
+                <a href="{{ $f['file_url'] }}" target="_blank" class="px-2.5 py-1.5 rounded-md border text-xs hover:bg-gray-50">View</a>
+                <a href="{{ $f['file_url'] }}" download class="px-2.5 py-1.5 rounded-md bg-maroon text-white text-xs hover:bg-maroon-800">Download</a>
+              </div>
             </div>
-            <div class="ml-auto flex items-center gap-2">
-              <a href="{{ $f['file_url'] }}" target="_blank" class="px-2.5 py-1.5 rounded-md border text-xs hover:bg-gray-50">View</a>
-              <a href="{{ $f['file_url'] }}" download class="px-2.5 py-1.5 rounded-md bg-maroon text-white text-xs hover:bg-maroon-800">Download</a>
-            </div>
-          </div>
-        @endforeach
-      </div>
-    @endif
+          @endforeach
+        </div>
+      @endif
+    </div>
   </div>
 </section>
+
 @endsection

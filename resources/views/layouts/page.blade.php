@@ -49,8 +49,22 @@
         <a href="#fitur" class="hover:text-maroon">Fitur</a>
         <a href="#bagaimana" class="hover:text-maroon">Cara Kerja</a>
         <a href="#kontak" class="hover:text-maroon">Kontak</a>
-        <a href="#" class="px-3 py-1.5 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">Login</a>
+      @if(!Auth::check())
+        <a href="{{ route('login') }}" class="px-4 py-2 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">Masuk</a>  
+      @endif
+      @role('admin')
+        <a href="{{ route('home.index') }}" class="px-4 py-2 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">Admin Dashboard</a>
+      @endrole
+      @role('user')
+        <a href="{{ route('sigap-user.index') }}" class="px-4 py-2 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">User Dashboard</a>
+      @endrole
+      @role('employee')
+        <a href="{{ route('pegawai.profil') }}" class="px-4 py-2 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">Dashboard Pegawai</a>
+      @endrole
+      @role("inovator")
+        <a href="{{ route('sigap-inovasi.dashboard') }}" class="px-4 py-2 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">Inovator Dashboard</a>
       </nav>
+      @endrole
       <button class="md:hidden inline-flex items-center px-3 py-2 rounded-md border border-maroon text-maroon" aria-label="Menu">
         <!-- simple burger -->
         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>

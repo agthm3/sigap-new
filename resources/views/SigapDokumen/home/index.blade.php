@@ -211,6 +211,16 @@
           <h4 class="mt-4 font-semibold">SIGAP <span><strong class="text-maroon">FORMAT (Coming Soon)</strong></span></h4>
           <p class="mt-1 text-sm text-gray-600">Kumpulan format dokumen standar (contoh: surat, laporan). Download template dalam bentuk Word untuk kemudahan kerja.</p>
         </div>
+        <a href="{{ route('sigap-inovasi.home') }}">
+          <div class="p-6 rounded-xl border border-gray-200 hover:shadow-lg transition">
+            <div class="w-10 h-10 rounded-lg bg-maroon/10 text-maroon flex items-center justify-center">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M12 2L3 7v7c0 5 4 9 9 9s9-4 9-9V7l-9-5z"/><path stroke-width="2" d="M9 14l2 2 4-4"/></svg>
+            </div>
+            <h4 class="mt-4 font-semibold">SIGAP <span><strong class="text-maroon">INOVASI</strong></span></h4>
+            <p class="mt-1 text-sm text-gray-600">Kumpulan format dokumen standar (contoh: surat, laporan). Download template dalam bentuk Word untuk kemudahan kerja.</p>
+          </div>
+        </a>
+
       </div>
     </div>
 </section>

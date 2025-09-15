@@ -49,23 +49,35 @@
       </div>
 
       <nav class="p-3 space-y-1 overflow-y-auto h-[calc(100vh-4rem)] scrollbar-thin">
-        <a href="{{ route('home.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg bg-maroon text-white">
+        @hasrole('admin')
+        <a href="{{ route('home.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg    {{ request()->routeIs('home.index') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M3 10l9-7 9 7v8a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V12H9v6a2 2 0 0 1-2 2H3z"/></svg>
           Dashboard
         </a>
-        <a href="{{ route('sigap-dokumen.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100">
+        @endhasrole
+        @hasrole('employee|admin')
+        <a href="{{ route('sigap-dokumen.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg  {{ request()->routeIs('sigap-dokumen.*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M21 21l-4.3-4.3M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></svg>
           SIGAP Dokumen
         </a>
-        <a href="{{ route('sigap-pegawai.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          SIGAP Pegawai
-        </a>
-        <a href="pegawai-profil.html" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M4 21v-3.5A4.5 4.5 0 0 1 8.5 13h7A4.5 4.5 0 0 1 20 17.5V21"/><circle cx="12" cy="7" r="4"/></svg>
+        @endhasrole
+        @hasrole('admin')
+            <a href="{{ route('sigap-pegawai.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg {{ request()->routeIs('sigap-pegawai.*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              SIGAP Pegawai
+            </a>
+        @endhasrole
+        <a href="{{ route('pegawai.profil') }}"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg
+                  {{ request()->routeIs('pegawai.profil') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" d="M4 21v-3.5A4.5 4.5 0 0 1 8.5 13h7A4.5 4.5 0 0 1 20 17.5V21"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
           Profil Pegawai
         </a>
-        <a href="permintaan-akses.html" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100">
+
+        {{-- <a href="permintaan-akses.html" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M4 6h16M4 10h16M4 14h10"/></svg>
           Permintaan Akses
           <span class="ml-auto text-[11px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">5</span>
@@ -73,20 +85,9 @@
         <a href="log-aktivitas.html" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M12 2a10 10 0 0 0-7 17l-1 4 4-1A10 10 0 1 0 12 2z"/></svg>
           Log Aktivitas
-        </a>
-
-        <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">PENGATURAN</div>
-        {{-- <a href="{{ route('logout') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M10 17l5-5-5-5"/><path stroke-width="2" d="M4 12h11"/></svg>
-          Keluar
         </a> --}}
-        <form action="{{ route('logout') }}" method="POST">
-          @csrf
-          <button type="submit" class="w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M10 17l5-5-5-5"/><path stroke-width="2" d="M4 12h11"/></svg>
-            Keluar
-          </button> 
-        </form>
+
+
       @hasanyrole('admin|inovator')
         <!-- SIGAP INOVASI -->
           <!-- SECTION BARU: SIGAP INOVASI -->
@@ -108,19 +109,22 @@
         <!-- Dropdown Items -->
         <div id="inovasiMenu" class="ml-3 mt-1 space-y-1 hidden">
           <a href="{{ route('sigap-inovasi.dashboard') }}"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+            {{ request()->routeIs('sigap-inovasi.dashboard') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M3 10l9-7 9 7v8a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V12H9v6a2 2 0 0 1-2 2H3z"/></svg>
             Dashboard 
           </a>
           <a href="{{ route('sigap-inovasi.index') }}"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+            {{ request()->routeIs('sigap-inovasi.index') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path stroke-width="2" d="M3 21h18M9 21V9h6v12M4 10h16v11H4V10zM12 3l8 6H4l8-6z"/>
           </svg>
           Inovasi Daerah
           </a>
           <a href="{{ route('sigap-inovasi.konfigurasi') }}"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+            {{ request()->routeIs('sigap-inovasi.konfigurasi') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path stroke-width="2" d="M10.325 4.317l.387-1.934a1 1 0 0 1 .976-.8h1.624a1 1 0 0 1 .976.8l.387 1.934a1 1 0 0 0 .725.725l1.934.387a1 1 0 0 1 .8.976v1.624a1 1 0 0 1-.8.976l-1.934.387a1 1 0 0 0-.725.725l-.387 1.934a1 1 0 0 1-.976.8h-1.624a1 1 0 0 1-.976-.8l-.387-1.934a1 1 0 0 0-.725-.725l-1.934-.387a1 1 0 0 1-.8-.976V6.005a1 1 0 0 1 .8-.976l1.934-.387a1 1 0 0 0 .725-.325z"/>
               <circle cx="12" cy="12" r="3" stroke-width="2"/>
@@ -129,6 +133,18 @@
           </a>
         </div>
       @endhasanyrole
+        <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">PENGATURAN</div>
+        {{-- <a href="{{ route('logout') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M10 17l5-5-5-5"/><path stroke-width="2" d="M4 12h11"/></svg>
+          Keluar
+        </a> --}}
+        <form action="{{ route('logout') }}" method="POST">
+          @csrf
+          <button type="submit" class="w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M10 17l5-5-5-5"/><path stroke-width="2" d="M4 12h11"/></svg>
+            Keluar
+          </button> 
+        </form>
       </nav>
     </aside>
 
@@ -145,17 +161,31 @@
             </div>
             </div>
 
-            <div class="flex items-center gap-3">
-            <button class="relative inline-flex items-center justify-center w-9 h-9 rounded-full border border-gray-300">
-                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M15 17h5l-1.4-1.4A8 8 0 1 0 5 12"/></svg>
-                <span class="absolute -top-1 -right-1 text-[10px] bg-rose-500 text-white rounded-full px-1.5">3</span>
-            </button>
-            <div class="h-8 w-px bg-gray-200"></div>
+          @auth
+            @php
+              $u = auth()->user();
+              // foto dari storage (public) → simpan path di kolom profile_photo_path, contoh: "avatars/abc.jpg"
+              $avatarUrl = $u->profile_photo_path
+                ? asset('storage/'.$u->profile_photo_path)
+                : asset('images/avatar-placeholder.png'); // fallback lokal (pastikan file ada)
+              // tampilkan username kalau ada, kalau tidak pakai name
+              $displayName = $u->username ?: $u->name;
+            @endphp
+
             <button class="inline-flex items-center gap-2">
-                <img class="w-9 h-9 rounded-full object-cover ring-2 ring-maroon/20" src="https://images.unsplash.com/photo-1544005311-94ddf0286df2?q=80&w=200&auto=format&fit=crop" alt="">
-                <span class="text-sm font-semibold">admin.sekretariat</span>
+              <img class="w-9 h-9 rounded-full object-cover ring-2 ring-maroon/20"
+                  src="{{ $avatarUrl }}"
+                  alt="{{ $displayName }}"
+                  onerror="this.onerror=null;this.src='{{ asset('images/avatar-placeholder.png') }}';">
+              <span class="text-sm font-semibold">{{ $displayName }}</span>
             </button>
-            </div>
+          @else
+            <a href="{{ route('login') }}"
+              class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-50 text-sm">
+              Login
+            </a>
+          @endauth
+
       </header>
          <main class="p-4 lg:p-6 space-y-6">
     @yield('content')
