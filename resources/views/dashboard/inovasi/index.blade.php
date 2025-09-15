@@ -1,4 +1,19 @@
 @extends('layouts.app')
+<style>
+  /* Badge AI kecil dengan “neural orbit” */
+  .ai-hdr-badge{
+    position:relative;width:18px;height:18px;border-radius:9999px;
+    box-shadow:inset 0 0 0 2px rgba(122,34,34,.28); /* maroon */
+  }
+  .ai-hdr-badge::before,.ai-hdr-badge::after{
+    content:"";position:absolute;top:50%;left:50%;
+    width:4px;height:4px;border-radius:9999px;background:#7a2222; /* maroon */
+    transform-origin:-6px -6px;
+  }
+  .ai-hdr-badge::before{ animation:aihdr-spin 1.6s linear infinite; }
+  .ai-hdr-badge::after{ background:#f59e0b; animation:aihdr-spin 1.6s linear infinite .4s; }
+  @keyframes aihdr-spin { to { transform: rotate(360deg) } }
+</style>
 
 @section('content')
   <!-- Page header -->
@@ -129,7 +144,12 @@
               <th class="px-4 py-3">Inisiator</th>
               <th class="px-4 py-3">Tahap Inovasi</th>
               <th class="px-4 py-3">OPD/Unit</th>
-              <th class="px-4 py-3">Ai Review</th>
+              <th class="px-4 py-3">
+                <span class="inline-flex items-center gap-2">
+                  Ai Review
+                  <span class="ai-hdr-badge" aria-hidden="true" title="AI ready"></span>
+                </span>
+              </th>
               <th class="px-4 py-3">Asistensi</th>
               <th class="px-4 py-3">Aksi</th>
             </tr>
