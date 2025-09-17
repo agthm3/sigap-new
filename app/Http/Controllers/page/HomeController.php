@@ -18,12 +18,23 @@ class HomeController extends Controller
         return view('SigapDokumen.home.index');
     }
 
-    public function show(Request $request)
+  public function show(Request $request)
     {
-        $filters = $request->only(['q', 'category', 'stakeholder','sort', 'year']);
-        $perPage = 10;
+        // Ambil filter dari request
+        $filters = $request->only(['q', 'category', 'stakeholder', 'year', 'sort']);
 
+        // Paksa hanya dokumen public di halaman umum
+        $filters['sensitivity'] = 'public';
+
+        $perPage = 10;
         $documents = $this->documentRepository->paginate($filters, $perPage);
+
         return view('SigapDokumen.home.show', compact('documents'));
+    }
+
+
+    public function indexPegawai()
+    {
+        return view('SigapPegawai.index');
     }
 }

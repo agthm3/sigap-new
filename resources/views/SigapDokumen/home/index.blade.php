@@ -17,68 +17,54 @@
           </p>
 
           <form class="mt-6 grid grid-cols-1 gap-4" action="{{ route('home.show') }}" method="GET">
-            @csrf
             <label class="block">
               <span class="text-sm font-semibold text-gray-700">Kata Kunci</span>
               <div class="mt-1.5 relative">
-                <input type="search" name="q" placeholder="Contoh: SK Sekretariat A, Laporan 2024, 'KTP pegawai'…"
+                <input type="search" name="q" value="{{ request('q') }}"
+                  placeholder="Contoh: SK Sekretariat A, Laporan 2024, 'KTP pegawai'…"
                   class="w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon pe-10" />
-                <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400">
-                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <circle cx="11" cy="11" r="7" stroke-width="2"></circle>
-                    <path d="M21 21l-4.3-4.3" stroke-width="2" stroke-linecap="round"></path>
-                  </svg>
-                </span>
+                <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400">…</span>
               </div>
             </label>
 
             <div class="grid sm:grid-cols-3 gap-3">
               <label class="block">
                 <span class="text-sm font-semibold text-gray-700">Kategori</span>
-                <select class="mt-1.5 w-full border p-2 rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
-                  <option>Semua</option>
-                  <option>Surat Keputusan</option>
-                  <option>Laporan</option>
-                  <option>Formulir</option>
-                  <option>Privasi (KK/KTP)</option>
+                <select name="category" class="mt-1.5 w-full border p-2 rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
+                  <option value="">Semua</option>
+                  <option value="Surat Keputusan" @selected(request('category')==='Surat Keputusan')>Surat Keputusan</option>
+                  <option value="Laporan" @selected(request('category')==='Laporan')>Laporan</option>
+                  <option value="Formulir" @selected(request('category')==='Formulir')>Formulir</option>
+                  <option value="Privasi" @selected(request('category')==='Privasi')>Privasi (KK/KTP)</option>
                 </select>
               </label>
+
               <label class="block">
                 <span class="text-sm font-semibold text-gray-700">Pihak Terkait</span>
-                <input type="text" placeholder="Sekretariat A, Bidang X…"
+                <input name="stakeholder" value="{{ request('stakeholder') }}" type="text" placeholder="Sekretariat A, Bidang X…"
                   class="mt-1.5 w-full border p-2 rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
               </label>
+
               <label class="block">
                 <span class="text-sm font-semibold text-gray-700">Tahun</span>
-                <select class="mt-1.5 w-full border p-2 rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
-                  <option>Semua</option>
-                  <option>2025</option>
-                  <option>2024</option>
-                  <option>2023</option>
-                  <option>2022</option>
+                <select name="year" class="mt-1.5 w-full border p-2 rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
+                  <option value="">Semua</option>
+                  @for($y = now()->year; $y >= now()->year-5; $y--)
+                    <option value="{{ $y }}" @selected(request('year')==$y)>{{ $y }}</option>
+                  @endfor
                 </select>
               </label>
             </div>
 
             <div class="flex flex-wrap items-center gap-3 pt-2">
-              <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 transition">
-                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-width="2" d="M21 21l-4.3-4.3M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></svg>
-                Cari Dokumen
-              </button>
-              <button type="reset" class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
-                Reset
-              </button>
+              <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 transition">… Cari Dokumen</button>
+              <a href="{{ route('home.show') }}" class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">Reset</a>
             </div>
 
-            <!-- Nota Privasi -->
-            <div class="mt-4 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
-              <svg class="w-5 h-5 mt-0.5 text-amber-600" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-              <p class="text-[13px] leading-5 text-amber-800">
-                Dokumen privasi (KK/KTP, dsb.) hanya dapat diunduh oleh pengguna berwenang.
-                Setiap akses dan unduhan dicatat lengkap (user, waktu, alasan).
-              </p>
-            </div>
+            {{-- kamu bisa tambahkan sort --}}
+            <input type="hidden" name="sort" value="{{ request('sort','latest') }}">
           </form>
+
         </div>
 
         <!-- Right: System Card -->
@@ -176,13 +162,15 @@
           <h4 class="mt-4 font-semibold">SIGAP <span><strong class="text-maroon">Dokumen</strong></span></h4>
           <p class="mt-1 text-sm text-gray-600">Pusat semua dokumen tetap BRIDA. Cari dan download dokumen dengan metadata lengkap (judul, deskripsi, versi).</p>
         </div>
-        <div class="p-6 rounded-xl border border-gray-200 hover:shadow-lg transition">
-          <div class="w-10 h-10 rounded-lg bg-maroon/10 text-maroon flex items-center justify-center">
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-width="2" d="M21 21l-4.3-4.3M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></svg>
-          </div>
-          <h4 class="mt-4 font-semibold">SIGAP <span><strong class="text-maroon">Pegawai</strong></span></h4>
-          <p class="mt-1 text-sm text-gray-600">Akses data pegawai (seperti KTP, KK) dengan filter canggih. Setiap download dicatat log-nya untuk keamanan.</p>
-        </div>
+        <a href="{{ route('home.pegawai') }}">
+                <div class="p-6 rounded-xl border border-gray-200 hover:shadow-lg transition">
+                  <div class="w-10 h-10 rounded-lg bg-maroon/10 text-maroon flex items-center justify-center">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-width="2" d="M21 21l-4.3-4.3M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></svg>
+                  </div>
+                  <h4 class="mt-4 font-semibold">SIGAP <span><strong class="text-maroon">Pegawai</strong></span></h4>
+               <p class="mt-1 text-sm text-gray-600">Akses data pegawai (seperti KTP, KK) dengan filter canggih. Setiap download dicatat log-nya untuk keamanan.</p>
+            </div>
+        </a>
         <div class="p-6 rounded-xl border border-gray-200 hover:shadow-lg transition">
           <div class="w-10 h-10 rounded-lg bg-maroon/10 text-maroon flex items-center justify-center">
             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M12 2L3 7v7c0 5 4 9 9 9s9-4 9-9V7l-9-5z"/><path stroke-width="2" d="M9 14l2 2 4-4"/></svg>

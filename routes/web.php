@@ -20,6 +20,8 @@ use App\Http\Controllers\PegawaiProfileController;
 Route::get('/',      [HomeController::class, 'index'])->name('home');
 Route::get('/hasil', [HomeController::class, 'show'])->name('home.show');
 
+Route::get('/pegawai', [HomeController::class, 'indexPegawai'])->name('home.pegawai');
+
 require __DIR__.'/auth.php';
 
 // --- Profile (auth)

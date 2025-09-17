@@ -69,7 +69,7 @@ class SigapInovasiController extends Controller
         $ujiCount   = (clone $base)->where('tahap_inovasi','Uji Coba')->count();
         $terapCount = (clone $base)->where('tahap_inovasi','Penerapan')->count();
 
-        // Leaderboard OPD
+        // Leaderboard OPD (Jumlah Inovasi / opd_unit)
         $leaderboard = (clone $base)
             ->select('opd_unit', DB::raw('COUNT(*) as total'))
             ->whereNotNull('opd_unit')
@@ -78,18 +78,24 @@ class SigapInovasiController extends Controller
             ->limit(10)
             ->get();
 
-        // Aktivitas terbaru
+        // Pengajuan terbaru (5)
         $recent = (clone $base)->latest('created_at')
-            ->limit(10)
-            ->get(['id','judul','opd_unit','tahap_inovasi','created_at']);
+            ->limit(5)
+            ->get(['id','judul','opd_unit','tahap_inovasi','asistensi_status','created_at']);
 
-        // Distribusi tahapan
+        // Butuh tindak lanjut: yang baru "Dikembalikan" / "Revisi" / "Ditolak"
+        $needsFollowup = (clone $base)
+            ->whereIn('asistensi_status', ['Dikembalikan','Revisi','Ditolak'])
+            ->orderByDesc('asistensi_at')
+            ->limit(8)
+            ->get(['id','judul','opd_unit','asistensi_status','asistensi_note','asistensi_at']);
+
+        // (opsional) distribusi & chart bulanan tetap
         $stages = (clone $base)
             ->select('tahap_inovasi', DB::raw('COUNT(*) as total'))
             ->groupBy('tahap_inovasi')
             ->pluck('total','tahap_inovasi');
 
-        // Bulanan 12 bulan terakhir
         $since = now()->startOfMonth()->subMonths(11);
         $monthlyRaw = (clone $base)
             ->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as ym, COUNT(*) as c')
@@ -105,22 +111,6 @@ class SigapInovasiController extends Controller
             $labels[] = now()->subMonths($i)->isoFormat('MMM YYYY');
             $dataMonthly[] = (int) ($monthlyRaw->firstWhere('ym', $m)->c ?? 0);
         }
-
-        // Butuh tindak lanjut (heuristik)
-        $needsFollowup = (clone $base)
-            ->where('tahap_inovasi','Inisiatif')
-            ->where('created_at','<=', now()->subDays(14))
-            ->orderBy('created_at','asc')
-            ->limit(8)
-            ->get(['id','judul','opd_unit','created_at'])
-            ->map(function($row){
-                return [
-                    'judul'      => 'Lengkapi indikator – '.$row->judul,
-                    'pic'        => $row->opd_unit ?: '—',
-                    'deadline'   => $row->created_at->addDays(21)->isoFormat('DD MMM YYYY'),
-                    'inovasi_id' => $row->id,
-                ];
-            });
 
         // Delta sederhana
         $addedThisMonth    = (clone $base)->whereBetween('created_at',[now()->startOfMonth(), now()])->count();
