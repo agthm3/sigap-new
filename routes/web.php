@@ -13,15 +13,33 @@ use App\Http\Controllers\Dashboard\EvidenceConfigController;
 
 use App\Http\Controllers\SigapPegawaiController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\page\PegawaiPublicController as PagePegawaiPublicController;
 use App\Http\Controllers\PegawaiProfilController;
 use App\Http\Controllers\PegawaiProfileController;
+use App\Http\Controllers\PegawaiPublicController;
 use App\Http\Controllers\PersonalDocumentController;
 
 // --- Public
 Route::get('/',      [HomeController::class, 'index'])->name('home');
 Route::get('/hasil', [HomeController::class, 'show'])->name('home.show');
 
-Route::get('/pegawai', [HomeController::class, 'indexPegawai'])->name('home.pegawai');
+// Route::get('/pegawai', [HomeController::class, 'indexPegawai'])->name('home.pegawai');
+Route::prefix('pegawai')->middleware(['auth'])->group(function () {
+    Route::get('/',                [\App\Http\Controllers\page\HomeController::class, 'indexPegawai'])->name('home.pegawai');
+
+    // hasil pencarian pegawai (list)
+    Route::get('/hasil',           [PagePegawaiPublicController::class,'search'])->name('public.pegawai.search');
+
+    // detail pegawai + daftar dokumen
+    Route::get('/{user}',          [PagePegawaiPublicController::class,'show'])->name('public.pegawai.show');
+
+    // verifikasi kode akses (modal submit)
+    Route::post('/docs/{doc}/verify', [PagePegawaiPublicController::class,'verify'])->name('public.pegawai.verify');
+
+    // stream preview & download (hanya jika sudah diverifikasi / pemilik / admin)
+    Route::get('/docs/{doc}/view',    [PagePegawaiPublicController::class,'view'])->name('public.pegawai.view');
+    Route::get('/docs/{doc}/download',[PagePegawaiPublicController::class,'download'])->name('public.pegawai.download');
+});
 
 require __DIR__.'/auth.php';
 

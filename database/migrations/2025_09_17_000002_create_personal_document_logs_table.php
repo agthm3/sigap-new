@@ -13,6 +13,7 @@ return new class extends Migration {
       $t->string('action', 20); // view/download
       $t->string('ip', 45)->nullable();
       $t->text('user_agent')->nullable();
+      $table->json('extra')->nullable()->after('action');
       $t->timestamps();
     });
   }

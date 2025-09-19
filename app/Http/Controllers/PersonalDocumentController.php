@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -17,31 +18,37 @@ class PersonalDocumentController extends Controller
     public function __construct(private PersonalDocumentRepository $repo){}
 
     // unggah sendiri (self-serve)
- public function storeSelf(Request $request)
+    public function storeSelf(Request $request)
     {
         $user = Auth::user();
-        // spatie: pastikan user aktif atau punya role yang dibolehkan
         if ($user->status !== 'active') abort(403);
 
         $data = $request->validate([
-            'type'   => ['required','in:ktp,kk,npwp,bpjs,ijazah,sk,other'],
-            'title'  => ['required','string','max:255'],
-            'file'   => ['required','file','mimes:pdf,jpg,jpeg,png','max:4096'],
-            // kode akses opsional saat upload
+            'type'             => ['required','in:ktp,kk,npwp,bpjs,ijazah,sk,other'],
+            'title'            => ['required','string','max:255'],
+            'file'             => ['required','file','mimes:pdf,jpg,jpeg,png','max:4096'],
             'access_code'      => ['nullable','string','min:4','max:50'],
             'access_code_hint' => ['nullable','string','max:100'],
         ]);
 
         $payload = [
-            'type'   => $data['type'],
-            'title'  => $data['title'],
-            'status' => 'pending',
+            'type'               => $data['type'],
+            'title'              => $data['title'],
+            'status'             => 'pending',
+            'access_code_enc'    => null,
+            'access_code_hash'   => null,
+            'access_code_set_at' => null,
+            'access_code_hint'   => $data['access_code_hint'] ?? null,
         ];
 
-        if (!empty($data['access_code'])) {
-            $payload['access_code_plain'] = $data['access_code'];
-            $payload['access_code_hint']  = $data['access_code_hint'] ?? null;
+        if (filled($data['access_code'])) {
+            $payload['access_code_enc']    = Crypt::encryptString($data['access_code']);
+            $payload['access_code_hash']   = Hash::make($data['access_code']);
+            $payload['access_code_set_at'] = now();
         }
+
+        // jangan simpan plain ke DB
+        // unset($payload['access_code_plain']);
 
         $this->repo->storeFor($user, $payload, $request->file('file'), $user);
 

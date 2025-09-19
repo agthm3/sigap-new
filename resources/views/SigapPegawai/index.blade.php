@@ -1,7 +1,8 @@
+{{-- resources/views/SigapPegawai/index.blade.php --}}
 @extends('layouts.page')
 
 @section('content')
-      <!-- Hero: kiri form pencarian pegawai, kanan kartu penjelasan -->
+  <!-- Hero: kiri form pencarian pegawai, kanan kartu penjelasan -->
   <section class="relative overflow-hidden">
     <div class="absolute inset-0 -z-10 bg-gradient-to-br from-maroon via-maroon-800 to-maroon-900"></div>
     <div class="max-w-7xl mx-auto px-4 py-12 sm:py-16 lg:py-20">
@@ -16,7 +17,7 @@
             Telusuri dokumen kepegawaian (KTP, KK, NPWP, BPJS, ijazah, dsb.) dengan kontrol akses & audit ketat.
           </p>
 
-          <form class="mt-6 grid grid-cols-1 gap-4" onsubmit="event.preventDefault(); window.location.href='pegawai-hasil.html';">
+          <form class="mt-6 grid grid-cols-1 gap-4" action="{{ route('public.pegawai.search') }}" method="GET">
             <!-- Tab pencarian sederhana (Nama/NIP) -->
             <div class="grid grid-cols-2 gap-2 text-xs font-semibold">
               <button type="button" class="px-3 py-2 rounded-lg bg-maroon text-white">Nama/NIP</button>
@@ -29,12 +30,12 @@
             <div class="grid sm:grid-cols-2 gap-3">
               <label class="block">
                 <span class="text-sm font-semibold text-gray-700">Nama Pegawai</span>
-                <input type="text" placeholder="Contoh: Andi Rahman"
+                <input type="text" name="q" value="{{ request('q') }}" placeholder="Contoh: Andi Rahman"
                   class="mt-1.5 w-full border p-2 rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
               </label>
               <label class="block">
                 <span class="text-sm font-semibold text-gray-700">NIP</span>
-                <input type="text" placeholder="18xxxxxxxxxxxxxxx"
+                <input type="text" name="nip" value="{{ request('nip') }}" placeholder="18xxxxxxxxxxxxxxx"
                   class="mt-1.5 w-full border p-2 rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon" inputmode="numeric">
               </label>
             </div>
@@ -42,29 +43,28 @@
             <div class="grid sm:grid-cols-3 gap-3">
               <label class="block">
                 <span class="text-sm font-semibold text-gray-700">Jenis Dokumen</span>
-                <select class="mt-1.5 w-full border p-2 rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
-                  <option>Semua</option>
-                  <option>KTP</option>
-                  <option>KK</option>
-                  <option>NPWP</option>
-                  <option>BPJS</option>
-                  <option>Ijazah</option>
-                  <option>Pas Foto</option>
+                <select name="type" class="mt-1.5 w-full border p-2 rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
+                  <option value="">Semua</option>
+                  <option value="ktp"    @selected(request('type')==='ktp')>KTP</option>
+                  <option value="kk"     @selected(request('type')==='kk')>KK</option>
+                  <option value="npwp"   @selected(request('type')==='npwp')>NPWP</option>
+                  <option value="bpjs"   @selected(request('type')==='bpjs')>BPJS</option>
+                  <option value="ijazah" @selected(request('type')==='ijazah')>Ijazah</option>
+                  <option value="foto"   @selected(request('type')==='foto')>Pas Foto</option>
                 </select>
               </label>
               <label class="block">
                 <span class="text-sm font-semibold text-gray-700">Unit/Bagian</span>
-                <input type="text" placeholder="Kepegawaian, Sekretariat A, Bidang X…"
+                <input type="text" name="unit" value="{{ request('unit') }}" placeholder="Kepegawaian, Sekretariat A, Bidang X…"
                   class="mt-1.5 w-full border p-2 rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
               </label>
               <label class="block">
                 <span class="text-sm font-semibold text-gray-700">Tahun Berlaku</span>
-                <select class="mt-1.5 w-full border p-2 rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
-                  <option>Semua</option>
-                  <option>2025</option>
-                  <option>2024</option>
-                  <option>2023</option>
-                  <option>2022</option>
+                <select name="year" class="mt-1.5 w-full border p-2 rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
+                  <option value="">Semua</option>
+                  @for($y = now()->year; $y >= now()->year-5; $y--)
+                    <option value="{{ $y }}" @selected(request('year')==$y)>{{ $y }}</option>
+                  @endfor
                 </select>
               </label>
             </div>
@@ -73,23 +73,19 @@
             <div id="advanced" class="hidden grid sm:grid-cols-3 gap-3">
               <label class="block">
                 <span class="text-sm font-semibold text-gray-700">Status Pegawai</span>
-                <select class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
-                  <option>Semua</option>
-                  <option>PNS</option>
-                  <option>PPPK</option>
-                  <option>Non-ASN</option>
+                <select name="status" class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
+                  <option value="">Semua</option>
+                  <option value="PNS"     @selected(request('status')==='PNS')>PNS</option>
+                  <option value="PPPK"    @selected(request('status')==='PPPK')>PPPK</option>
+                  <option value="Non-ASN" @selected(request('status')==='Non-ASN')>Non-ASN</option>
                 </select>
               </label>
-              <label class="block sm:col-span-2">
-                <span class="text-sm font-semibold text-gray-700">Alasan Akses (Wajib untuk Privasi)</span>
-                <select class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
-                  <option value="">Pilih alasan…</option>
-                  <option>Administrasi gaji/tunjangan</option>
-                  <option>Penugasan/keperluan dinas</option>
-                  <option>Verifikasi identitas internal</option>
-                  <option>Lainnya (sesuai SOP)</option>
+              <div class="sm:col-span-2">
+                <span class="text-sm font-semibold text-gray-700">Alasan Akses (Wajib saat membuka dokumen privasi)</span>
+                <select disabled class="mt-1.5 w-full rounded-lg border-gray-300 bg-gray-50 text-gray-500">
+                  <option>Dipilih saat verifikasi dokumen</option>
                 </select>
-              </label>
+              </div>
             </div>
 
             <!-- Info privasi -->
@@ -102,13 +98,13 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-3 pt-2">
-              <button class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 transition">
+              <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 transition">
                 <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-width="2" d="M21 21l-4.3-4.3M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></svg>
                 Cari Data
               </button>
-              <button type="reset" class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
-                Reset
-              </button>
+              <a href="{{ route('public.pegawai.search') }}" class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
+                Lihat Semua
+              </a>
             </div>
           </form>
         </div>
@@ -161,7 +157,7 @@
               </div>
 
               <div class="mt-6 grid grid-cols-2 gap-3">
-                <a href="index.html" class="inline-flex items-center justify-center rounded-lg border border-maroon text-maroon px-4 py-2.5 hover:bg-maroon hover:text-white transition">Ke SIGAP Dokumen</a>
+                <a href="{{ route('home.index') }}" class="inline-flex items-center justify-center rounded-lg border border-maroon text-maroon px-4 py-2.5 hover:bg-maroon hover:text-white transition">Ke SIGAP Dokumen</a>
                 <a href="#!" class="inline-flex items-center justify-center rounded-lg bg-maroon text-white px-4 py-2.5 hover:bg-maroon-800 transition">Masuk Admin</a>
               </div>
             </div>
@@ -213,11 +209,10 @@
           </div>
           <div class="flex gap-3">
             <a href="#top" onclick="window.scrollTo({top:0,behavior:'smooth'})" class="px-5 py-2.5 rounded-lg bg-white text-maroon font-semibold hover:bg-white/90">Mulai Cari</a>
-            <a href="index.html" class="px-5 py-2.5 rounded-lg bg-maroon-700/40 text-white border border-white/30 hover:bg-maroon-700/60">Ke SIGAP Dokumen</a>
+            <a href="{{ route('home.index') }}" class="px-5 py-2.5 rounded-lg bg-maroon-700/40 text-white border border-white/30 hover:bg-maroon-700/60">Ke SIGAP Dokumen</a>
           </div>
         </div>
       </div>
     </div>
   </section>
-
 @endsection
