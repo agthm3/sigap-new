@@ -15,6 +15,7 @@ use App\Http\Controllers\SigapPegawaiController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\PegawaiProfilController;
 use App\Http\Controllers\PegawaiProfileController;
+use App\Http\Controllers\PersonalDocumentController;
 
 // --- Public
 Route::get('/',      [HomeController::class, 'index'])->name('home');
@@ -30,6 +31,25 @@ Route::middleware('auth')->group(function () {
     Route::patch ('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+// self-serve upload dari halaman index/profil
+Route::post('/pegawai/profil/dokumen', [PersonalDocumentController::class,'storeSelf'])->middleware('auth','role:employee|admin')
+    ->name('pegawai.docs.storeSelf');
+
+// download (pakai policy + log)
+Route::get('/pegawai/dokumen/{doc}/download', [PersonalDocumentController::class,'download'])
+    ->name('pegawai.docs.download');
+   // atur kode akses (pemilik/admin)
+Route::post('/pegawai/dokumen/{doc}/access-code', [PersonalDocumentController::class,'setAccessCode'])
+    ->name('pegawai.docs.access.set');
+Route::delete('/pegawai/dokumen/{doc}/access-code', [PersonalDocumentController::class,'clearAccessCode'])
+    ->name('pegawai.docs.access.clear');
+Route::get('/pegawai/dokumen/{doc}', [PersonalDocumentController::class,'show'])
+    ->name('pegawai.docs.show');
+Route::post('/pegawai/dokumen/{doc}/reveal', [PersonalDocumentController::class,'reveal'])
+    ->name('pegawai.docs.reveal');
+Route::get('/pegawai/dokumen/{doc}/preview', [PersonalDocumentController::class,'preview'])
+    ->name('pegawai.docs.preview');
 
 // --- Dashboard (pakai middleware milikmu)
 Route::get('/dashboard', [DashboardController::class, 'index'])
@@ -68,13 +88,10 @@ Route::prefix('sigap-dokumen')->middleware('auth', 'role:employee|admin')->name(
 });
 
 
-// --- SIGAP Inovasi (middleware milikmu untuk index tetap)
+// // --- SIGAP Inovasi (middleware milikmu untuk index tetap)
 Route::get('/inovasi', [SigapInovasiController::class, 'home'])
     ->name('sigap-inovasi.home'); // Landing / non-dashboard
-        Route::get('/sigap-inovasi', [SigapInovasiController::class, 'index'])->name('sigap-inovasi.index');
-    // Route::get ('/sigap-inovasi/konfigurasi', [SigapInovasiController::class, 'konfigurasi'])->name('sigap-inovasi.konfigurasi');
-    // Route::get ('/sigap-inovasi/dashboard',   [SigapInovasiController::class, 'dashboard'])->name('sigap-inovasi.dashboard');
-    // Route::post('/sigap-inovasi',             [SigapInovasiController::class, 'store'])->name('sigap-inovasi.store');
+//         Route::get('/sigap-inovasi', [SigapInovasiController::class, 'index'])->name('sigap-inovasi.index');
 
 Route::prefix('/sigap-inovasi')->middleware('auth', 'role:inovator|admin')->group(function () {
     Route::get('/home', [SigapInovasiController::class, 'index'])->name('sigap-inovasi.index');

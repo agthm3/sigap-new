@@ -11,19 +11,39 @@ use Illuminate\View\View;
 
 class PegawaiProfilController extends Controller
 {
-    public function show(Request $request): View
-    {
-        $user = $request->user();
-        $roleNames = method_exists($user, 'getRoleNames')
-            ? $user->getRoleNames()->toArray()
-            : (array) ($user->role ?? []);
+    // public function show(Request $request): View
+    // {
+    //     $user = $request->user();
+    //     $roleNames = method_exists($user, 'getRoleNames')
+    //         ? $user->getRoleNames()->toArray()
+    //         : (array) ($user->role ?? []);
 
-        // Dummy berkas (ganti ke query milik user)
-        $docs = [
-            ['label'=>'KTP','filename'=>"ktp_{$user->id}.pdf",'status'=>'Terverifikasi','uploaded_at'=>now()->subDays(10)->toDateString(),'url'=>'#'],
-            ['label'=>'Kartu Keluarga','filename'=>"kk_{$user->id}.pdf",'status'=>'Menunggu verifikasi','uploaded_at'=>now()->subDays(2)->toDateString(),'url'=>'#'],
-            ['label'=>'Pas Foto','filename'=>"foto_{$user->id}.jpg",'status'=>'Terverifikasi','uploaded_at'=>now()->subDay()->toDateString(),'url'=>'#'],
-        ];
+    //     // Dummy berkas (ganti ke query milik user)
+    //     $docs = [
+    //         ['label'=>'KTP','filename'=>"ktp_{$user->id}.pdf",'status'=>'Terverifikasi','uploaded_at'=>now()->subDays(10)->toDateString(),'url'=>'#'],
+    //         ['label'=>'Kartu Keluarga','filename'=>"kk_{$user->id}.pdf",'status'=>'Menunggu verifikasi','uploaded_at'=>now()->subDays(2)->toDateString(),'url'=>'#'],
+    //         ['label'=>'Pas Foto','filename'=>"foto_{$user->id}.jpg",'status'=>'Terverifikasi','uploaded_at'=>now()->subDay()->toDateString(),'url'=>'#'],
+    //     ];
+
+    //     return view('dashboard.pegawai.profil', compact('user','roleNames','docs'));
+    // }
+    // Contoh di SigapPegawaiController atau controller profil khusus
+    public function show()
+    {
+        $user = auth()->user();
+        $roleNames = $user->getRoleNames()->all();
+
+        $docs = $user->personalDocuments()->latest()->get()->map(function($d){
+            return [
+                'id'         => $d->id,
+                'label'      => strtoupper($d->type), // atau mapping cantik
+                'filename'   => basename($d->path),
+                'status'     => $d->status === 'verified' ? 'Terverifikasi' :
+                                ($d->status === 'pending' ? 'Menunggu verifikasi' : 'Ditolak'),
+                'uploaded_at'=> optional($d->created_at)->format('d M Y H:i'),
+                'url'        => route('pegawai.docs.download', $d->id),
+            ];
+        });
 
         return view('dashboard.pegawai.profil', compact('user','roleNames','docs'));
     }

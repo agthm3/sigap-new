@@ -57,4 +57,8 @@ class User extends Authenticatable
     {
         return $this->hasMany(Inovasi::class);
     }
+    public function personalDocuments()
+    {
+        return $this->hasMany(\App\Models\PersonalDocument::class);
+    }
 }

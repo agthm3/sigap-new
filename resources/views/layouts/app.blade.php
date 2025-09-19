@@ -22,6 +22,8 @@
       }
     }
   </script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
     body{font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
