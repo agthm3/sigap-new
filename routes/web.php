@@ -13,15 +13,22 @@ use App\Http\Controllers\Dashboard\EvidenceConfigController;
 
 use App\Http\Controllers\SigapPegawaiController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\FormatController;
 use App\Http\Controllers\page\PegawaiPublicController as PagePegawaiPublicController;
 use App\Http\Controllers\PegawaiProfilController;
 use App\Http\Controllers\PegawaiProfileController;
 use App\Http\Controllers\PegawaiPublicController;
 use App\Http\Controllers\PersonalDocumentController;
+use App\Http\Controllers\RisetController;
+use App\Http\Controllers\SigapKinerjaController;
+use App\Http\Controllers\SigapRisetController;
 
 // --- Public
 Route::get('/',      [HomeController::class, 'index'])->name('home');
 Route::get('/hasil', [HomeController::class, 'show'])->name('home.show');
+
+Route::get('/sigap-riset', [SigapRisetController::class, 'index'])->name('sigap-riset.index');
+Route::get('/sigap-riset/{riset}', [SigapRisetController::class, 'show'])->name('sigap-riset.show');
 
 // Route::get('/pegawai', [HomeController::class, 'indexPegawai'])->name('home.pegawai');
 Route::prefix('pegawai')->middleware(['auth'])->group(function () {
@@ -165,3 +172,28 @@ Route::put('/pegawai-profil', [PegawaiProfilController::class, 'update'])
 
 Route::delete('/pegawai-profil/avatar', [PegawaiProfilController::class, 'destroyAvatar'])
     ->middleware('auth')->name('pegawai.profil.avatar.destroy');
+
+//SIGAP KINERJA
+Route::get('/sigap-kinerja', [SigapKinerjaController::class, 'index'])->name('sigap-kinerja.index');
+Route::post('/sigap-kinerja', [SigapKinerjaController::class, 'store'])->name('sigap-kinerja.store');
+
+Route::get('/sigap-kinerja/p/{id}', [SigapKinerjaController::class, 'publicShow'])->name('sigap-kinerja.public');
+
+Route::get('/kinerja/y/{year}', [SigapKinerjaController::class, 'annualPublic'])->name('sigap-kinerja.annual-public');
+
+
+Route::get('/sigap-format', [FormatController::class, 'index'])->name('sigap-format.index');
+Route::get('/sigap-format/{id}', [FormatController::class, 'show'])
+  ->name('sigap-format.show');
+Route::get('/sigap-format/preview/{id}', [FormatController::class, 'preview'])->name('sigap-format.preview');
+Route::post('/sigap-format/{id}/download', [FormatController::class,'download'])->name('sigap-format.download');
+
+Route::get('/riset', [RisetController::class, 'index'])->name('riset.index');
+Route::get('/riset/dashboard', [RisetController::class, 'dashboard'])->name('riset.dashboard');
+Route::get('/riset/create', [RisetController::class, 'show'])->name('riset.create');
+Route::post('/riset/store', [RisetController::class, 'store'])->name('riset.store');
+
+Route::get('/riset/{id}/edit', [RisetController::class, 'edit'])->name('riset.edit');
+Route::put('/riset/{id}',       [RisetController::class, 'update'])->name('riset.update');
+
+Route::get('/about', [HomeController::class, 'about'])->name('about');

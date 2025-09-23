@@ -78,6 +78,14 @@
           </svg>
           Profil Pegawai
         </a>
+        <a href="{{ route('sigap-kinerja.index') }}"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg
+                {{ request()->routeIs('sigap-kinerja.*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+            <path stroke-width="2" d="M3 7h18M3 12h18M3 17h10"/>
+          </svg>
+          Kinerja
+        </a>
 
         {{-- <a href="permintaan-akses.html" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M4 6h16M4 10h16M4 14h10"/></svg>
@@ -135,6 +143,48 @@
           </a>
         </div>
       @endhasanyrole
+      @hasanyrole('admin|researcher')
+        <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">SIGAP RISET</div>
+
+        <!-- Toggle -->
+        <button id="risetToggle"
+                class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-left"
+                aria-controls="risetMenu" aria-expanded="false">
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" d="M12 3l3.5 6 6.5 1-4.7 4.7 1.1 6.3L12 18l-6 3.9 1.1-6.3L2.4 10 9 9z"/>
+          </svg>
+          <span class="font-medium">SIGAP Riset</span>
+          <svg id="risetCaret" class="w-4 h-4 ml-auto transition-transform duration-200"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" d="M6 9l6 6 6-6"/>
+          </svg>
+        </button>
+
+        <!-- Dropdown Items -->
+        <div id="risetMenu" class="ml-3 mt-1 space-y-1 hidden">
+          <a href="{{ route('riset.index') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+                    {{ request()->routeIs('sigap-riset.index') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-width="2" d="M3 10l9-7 9 7v8a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V12H9v6a2 2 0 0 1-2 2H3z"/>
+            </svg>
+            Dashboard Riset 
+          </a>
+          <a href="#" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-gray-100">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-width="2" d="M3 7h18M3 12h18M3 17h10"/>
+            </svg>
+            Draft / Antrian (Coming Soon)
+          </a>
+          <a href="#" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-gray-100">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-width="2" d="M10.325 4.317l.387-1.934M6 12h12M6 16h12"/>
+            </svg>
+            Konfigurasi (Coming Soon)
+          </a>
+        </div>
+      @endhasanyrole
+
         <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">PENGATURAN</div>
         {{-- <a href="{{ route('logout') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M10 17l5-5-5-5"/><path stroke-width="2" d="M4 12h11"/></svg>
@@ -232,6 +282,29 @@
     // Charts
 
   </script>
+  <script>
+  // Dropdown SIGAP RISET
+  const risetToggle = document.getElementById('risetToggle');
+  const risetMenu   = document.getElementById('risetMenu');
+  const risetCaret  = document.getElementById('risetCaret');
+
+  const RISET_KEY = 'sb_riset_open';
+  const isRisetOpenSaved = localStorage.getItem(RISET_KEY) === '1';
+  if (isRisetOpenSaved) {
+    risetMenu?.classList.remove('hidden');
+    risetCaret?.classList.add('rotate-180');
+    risetToggle?.setAttribute('aria-expanded', 'true');
+  }
+
+  risetToggle?.addEventListener('click', () => {
+    const willOpen = risetMenu.classList.contains('hidden');
+    risetMenu.classList.toggle('hidden');
+    risetCaret.classList.toggle('rotate-180', willOpen);
+    risetToggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    localStorage.setItem(RISET_KEY, willOpen ? '1' : '0');
+  });
+</script>
+
     @stack('scripts')
 </body>
 </html>

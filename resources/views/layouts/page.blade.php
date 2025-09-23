@@ -32,6 +32,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <style>body{font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}</style>
+  
+  {{-- Tambahan: biar child view bisa push head --}}
+  @stack('head')
+
+  {{-- Tambahan: SweetAlert2 untuk semua halaman publik --}}
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-white text-gray-800">
 
@@ -97,12 +103,13 @@
           <li><a href="#" class="hover:text-maroon">FAQ</a></li>
           <li><a href="#" class="hover:text-maroon">Panduan Pengguna</a></li>
           <li><a href="#" class="hover:text-maroon">Hubungi Admin</a></li>
+          <li><a href="{{ route('about') }}" class="hover:text-maroon"><strong>Klik untuk kejutan🎉</strong></a></li>
         </ul>
       </div>
       <div>
         <p class="font-semibold">Kontak</p>
-        <p class="mt-2 text-gray-600">Jl. Contoh No. 123, Makassar</p>
-        <p class="text-gray-600">email@brida.makassar.go.id</p>
+        <p class="mt-2 text-gray-600">Jl. Ahmad Yani No 2 Kecamatan Ujung Pandang, Kota Makassar, Sulawesi Selatan.</p>
+        <p class="text-gray-600">sekretariat.litbang@gmail.com</p>
       </div>
     </div>
   </footer>
