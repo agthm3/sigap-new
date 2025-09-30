@@ -109,17 +109,6 @@
                  class="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition text-sm">
                 Lihat
               </a>
-            <button type="button"
-                      class="copy-link inline-flex items-center gap-2 px-3 py-2 rounded-md border border-gray-300 hover:bg-gray-50 transition text-sm"
-                      data-url="{{ route('sigap-dokumen.download', $item->id) }}"
-                      aria-label="Salin tautan unduhan">
-                {{-- icon copy --}}
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-                Salin Link Download
-              </button>
               @if($item->sensitivity==='public')
                 <a href="{{ route('sigap-dokumen.download', $item->id) }}"
                    class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-maroon text-white hover:bg-maroon-800 transition text-sm">
@@ -143,46 +132,6 @@
     {{ $documents->withQueryString()->links() }}
   </div>
 </section>
-@push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-  document.addEventListener('click', function (e) {
-    const btn = e.target.closest('.copy-link');
-    if (!btn) return;
-
-    const url = btn.getAttribute('data-url');
-    const notify = () => {
-      Swal.fire({
-        icon: 'success',
-        title: 'Tersalin!',
-        text: 'Link download telah disalin ke clipboard.',
-        timer: 1500,
-        showConfirmButton: false
-      });
-    };
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url).then(notify).catch(() => {
-        const ta = document.createElement('textarea');
-        ta.value = url;
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-        notify();
-      });
-    } else {
-      const ta = document.createElement('textarea');
-      ta.value = url;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-      notify();
-    }
-  });
-</script>
-@endpush
 
 
 @endsection
