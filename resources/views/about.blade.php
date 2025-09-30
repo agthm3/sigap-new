@@ -89,7 +89,7 @@
     </div>
     <div class="hidden sm:flex items-center gap-2">
       <span class="inline-flex items-center gap-2 text-xs px-3 py-1 rounded-full bg-maroon text-white">
-        <span class="h-2 w-2 rounded-full bg-emerald-300 animate-pulse"></span> Build in Makassar with 100% pure love and 45% Caffein
+        <span class="h-2 w-2 rounded-full bg-emerald-300 animate-pulse"></span>Built in Makassar with 100% pure love, 45% caffeine, and 38% loneliness (Giga).
       </span>
     </div>
   </div>
@@ -121,7 +121,7 @@
       </header>
 
       <p class="mt-3 text-sm text-gray-700">
-Paling malas lihat website UI nda bagus, flow jelek... kayak tidak pernah saja dites, jadi kalau kamu tidak dapat UI yang tidak bagus atau flow yang tidak nyaman... langsung hubungi saya ya
+Paling malas lihat website UI nda bagus, flow jelek... kayak tidak pernah saja dites, jadi kalau kamu  dapat UI yang tidak bagus atau flow yang tidak nyaman... langsung hubungi saya ya
       </p>
 
       <ul class="mt-4 flex flex-wrap gap-2 text-xs">

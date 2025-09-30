@@ -37,7 +37,7 @@
       </a>
       <div class="text-sm">
         Sudah punya akun?
-        <a href="pegawai-hasil.html" class="font-semibold text-maroon hover:underline">Login</a>
+        <a href="{{ route('login') }}" class="font-semibold text-maroon hover:underline">Login</a>
       </div>
     </div>
   </header>
@@ -160,7 +160,7 @@
 
             <div class="pt-2 flex items-center gap-3">
               <button type="submit" class="flex-1 px-4 py-2.5 rounded-lg bg-maroon text-white hover:bg-maroon-800 transition">Daftar</button>
-              <a href="index.html" class="px-4 py-2.5 rounded-lg border border-gray-300 hover:bg-gray-50">Batal</a>
+              <a href="{{ route('login') }}" class="px-4 py-2.5 rounded-lg border border-gray-300 hover:bg-gray-50">Batal</a>
             </div>
           </form>
 

@@ -38,14 +38,30 @@
         </div>
       </a>
       <nav class="hidden md:flex items-center gap-6 text-sm">
-        <a href="sigap-dokumen.html" class="hover:text-maroon">Dokumen</a>
-        <a href="pegawai.html" class="hover:text-maroon">Pegawai</a>
-        <a href="admin-dashboard.html" class="hover:text-maroon">Admin</a>
-        <a href="login.html" class="px-3 py-1.5 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">Login</a>
-      </nav>
+        @auth
+          @hasrole('employee')
+           <a href="{{ route('sigap-dokumen.index') }}" class="px-3 py-1.5 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">Employee Dashboard</a>
+          @else
+            
+          @endhasrole
+        @else
+            <a href="{{ route('login') }}" class="px-3 py-1.5 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">Login</a>
+        @endauth
+    </nav>
     </div>
   </header>
-
+  <!-- Breadcrumb -->
+  <nav class="max-w-7xl mx-auto px-4 py-3 text-sm" aria-label="Breadcrumb">
+    <ol class="flex items-center space-x-2 text-gray-500">
+      <li>
+        <a href="{{ route('home') }}" class="hover:text-maroon font-semibold">Home</a>
+      </li>
+      <li>
+        <span>/</span>
+      </li>
+      <li class="text-maroon font-bold" aria-current="page">{{ $doc->title }}</li>
+    </ol>
+  </nav>
   <!-- Header -->
   <section class="max-w-7xl mx-auto px-4 py-6">
     <h1 class="text-2xl font-extrabold text-gray-900">Detail Dokumen</h1>

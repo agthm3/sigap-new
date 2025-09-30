@@ -35,10 +35,6 @@
           <p class="text-[11px] text-gray-500">Sistem Informasi Gabungan Arsip & Privasi</p>
         </div>
       </a>
-      <div class="text-sm">
-        Belum punya akun?
-        <a href="register.html" class="font-semibold text-maroon hover:underline">Daftar</a>
-      </div>
     </div>
   </header>
 
@@ -131,6 +127,10 @@
               Masuk dengan SSO BRIDA
             </button> --}}
           </form>
+          <div class="text-sm mt-2">
+            Belum punya akun?
+            <a href="{{ route('register') }}" class="font-semibold text-maroon hover:underline">Daftar</a>
+          </div>
 
           <!-- Catatan keamanan -->
           <div class="mt-6 text-xs text-gray-600">
@@ -139,6 +139,8 @@
               <span>Aktivitas login terekam untuk audit internal. Jangan bagikan kredensial Anda.</span>
             </div>
           </div>
+          
+
         </section>
 
       </div>

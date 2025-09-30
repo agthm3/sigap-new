@@ -62,7 +62,7 @@
         <a href="{{ route('home.index') }}" class="px-4 py-2 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">Admin Dashboard</a>
       @endrole
       @role('user')
-        <a href="{{ route('sigap-user.index') }}" class="px-4 py-2 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">User Dashboard</a>
+        <a href="{{ route('pegawai.profil') }}" class="px-4 py-2 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">User Dashboard</a>
       @endrole
       @role('employee')
         <a href="{{ route('pegawai.profil') }}" class="px-4 py-2 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">Dashboard Pegawai</a>

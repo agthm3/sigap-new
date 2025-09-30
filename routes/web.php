@@ -58,7 +58,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // self-serve upload dari halaman index/profil
-Route::post('/pegawai/profil/dokumen', [PersonalDocumentController::class,'storeSelf'])->middleware('auth','role:employee|admin')
+Route::post('/pegawai/profil/dokumen', [PersonalDocumentController::class,'storeSelf'])->middleware('auth')
     ->name('pegawai.docs.storeSelf');
 
 // download (pakai policy + log)
