@@ -1,9 +1,9 @@
-{{-- resources/views/SigapFormat/home/index.blade.php --}}
+{{-- resources/views/SigapFormat/index.blade.php --}}
 @extends('layouts.page')
 
 @section('content')
 
-<!-- Hero -->
+<!-- Hero / Search -->
 <section class="relative overflow-hidden">
   <div class="absolute inset-0 -z-10 bg-gradient-to-br from-maroon via-maroon-800 to-maroon-900"></div>
   <div class="max-w-7xl mx-auto px-4 py-12 sm:py-16 lg:py-20">
@@ -34,9 +34,7 @@
               <span class="text-sm font-semibold text-gray-700">Kategori</span>
               <select name="category" class="mt-1.5 w-full border p-2 rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
                 <option value="">Semua</option>
-                @php
-                  $cats = ['Surat','Nota Dinas','Laporan','Memo','SK/Peraturan','Kop Surat','Stempel/TTD'];
-                @endphp
+                @php $cats = ['Surat','Nota Dinas','Laporan','Memo','SK/Peraturan','Kop Surat','Stempel/TTD']; @endphp
                 @foreach ($cats as $c)
                   <option value="{{ $c }}" @selected(request('category')===$c)>{{ $c }}</option>
                 @endforeach
@@ -47,7 +45,7 @@
               <span class="text-sm font-semibold text-gray-700">Tipe File</span>
               <select name="file_type" class="mt-1.5 w-full border p-2 rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
                 <option value="">Semua</option>
-                @foreach (['DOCX','XLSX','PPTX','PDF','PNG','SVG'] as $t)
+                @foreach (['DOCX','XLSX','PPTX','PDF','PNG','SVG','JPG'] as $t)
                   <option value="{{ $t }}" @selected(request('file_type')===$t)>{{ $t }}</option>
                 @endforeach
               </select>
@@ -85,10 +83,10 @@
 
             <label class="block">
               <span class="text-sm font-semibold text-gray-700">Urutkan</span>
+              @php $sorts = ['latest'=>'Terbaru','az'=>'A → Z','za'=>'Z → A']; @endphp
               <select name="sort" class="mt-1.5 w-full border p-2 rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
-                @php $sorts = ['latest'=>'Terbaru','popular'=>'Terpopuler','az'=>'A → Z','za'=>'Z → A']; @endphp
                 @foreach ($sorts as $key => $label)
-                  <option value="{{ $key }}" @selected(request('sort', 'latest')===$key)>{{ $label }}</option>
+                  <option value="{{ $key }}" @selected(request('sort','latest')===$key)>{{ $label }}</option>
                 @endforeach
               </select>
             </label>
@@ -101,7 +99,7 @@
         </form>
       </div>
 
-      <!-- Right: System Card -->
+      <!-- Right: Info Card -->
       <div class="relative">
         <div class="h-full rounded-2xl bg-white/10 border border-white/20 backdrop-blur p-1">
           <div class="h-full rounded-xl bg-white shadow-2xl p-6 sm:p-8 flex flex-col">
@@ -113,43 +111,19 @@
               </div>
             </div>
 
-            <ul class="mt-6 space-y-4 text-sm">
-              <li class="flex gap-3">
-                <span class="shrink-0 mt-0.5">🧩</span>
-                <p><span class="font-semibold">Siap Pakai:</span> Struktur & gaya konsisten sesuai identitas BRIDA.</p>
-              </li>
-              <li class="flex gap-3">
-                <span class="shrink-0 mt-0.5">🧭</span>
-                <p><span class="font-semibold">Cepat Ditemukan:</span> Filter kategori, tipe file, bahasa, orientasi, tahun.</p>
-              </li>
-              <li class="flex gap-3">
-                <span class="shrink-0 mt-0.5">🔐</span>
-                <p><span class="font-semibold">Akses Terkendali:</span> Log unduh & pratinjau untuk audit internal.</p>
-              </li>
-              <li class="flex gap-3">
-                <span class="shrink-0 mt-0.5">🛠️</span>
-                <p><span class="font-semibold">Format Beragam:</span> DOCX, XLSX, PPTX, PDF, PNG/SVG (stempel/TTD).</p>
-              </li>
+            <ul class="mt-6 space-y-3 text-sm">
+              <li class="flex gap-3"><span>🧩</span><p><span class="font-semibold">Siap Pakai:</span> Konsisten sesuai identitas BRIDA.</p></li>
+              <li class="flex gap-3"><span>🧭</span><p><span class="font-semibold">Mudah Dicari:</span> Filter kategori, tipe, bahasa, orientasi, tahun.</p></li>
+              <li class="flex gap-3"><span>🔐</span><p><span class="font-semibold">Akses Terkendali:</span> Private butuh kode akses.</p></li>
+              <li class="flex gap-3"><span>🛠️</span><p><span class="font-semibold">Format Beragam:</span> DOCX, XLSX, PPTX, PDF, PNG, SVG.</p></li>
             </ul>
 
-            <div class="mt-6 grid grid-cols-2 gap-3">
-              <a href="#kategori" class="inline-flex items-center justify-center rounded-lg border border-maroon text-maroon px-4 py-2.5 hover:bg-maroon hover:text-white transition">Kategori Populer</a>
-              <a href="#cara-pakai" class="inline-flex items-center justify-center rounded-lg bg-maroon text-white px-4 py-2.5 hover:bg-maroon-800 transition">Cara Pakai</a>
-            </div>
-
-            <!-- mini activity preview -->
             <div class="mt-6 rounded-lg border border-gray-200">
               <div class="px-4 py-2.5 bg-gray-50 text-xs font-semibold text-gray-600">Aktivitas Terkini (contoh)</div>
               <ul class="divide-y text-xs">
-                <li class="px-4 py-2 flex items-center justify-between">
-                  <span>Unduh: Template Nota Dinas</span><span class="text-gray-500">22 Sep 2025 • 16:10</span>
-                </li>
-                <li class="px-4 py-2 flex items-center justify-between">
-                  <span>Preview: Kop Surat (ID)</span><span class="text-gray-500">22 Sep 2025 • 15:02</span>
-                </li>
-                <li class="px-4 py-2 flex items-center justify-between">
-                  <span>Unggah: Stempel Kepala BRIDA (PNG)</span><span class="text-gray-500">21 Sep 2025 • 09:41</span>
-                </li>
+                <li class="px-4 py-2 flex items-center justify-between"><span>Unduh: Nota Dinas</span><span class="text-gray-500">22 Sep 2025 • 16:10</span></li>
+                <li class="px-4 py-2 flex items-center justify-between"><span>Preview: Kop Surat (ID)</span><span class="text-gray-500">22 Sep 2025 • 15:02</span></li>
+                <li class="px-4 py-2 flex items-center justify-between"><span>Unggah: Stempel (PNG)</span><span class="text-gray-500">21 Sep 2025 • 09:41</span></li>
               </ul>
             </div>
 
@@ -161,89 +135,128 @@
   </div>
 </section>
 
-<!-- Hasil -->
 @php
-  // Contoh struktur data. Di produksi, ganti dari controller (LengthAwarePaginator).
-  $templates = $templates ?? collect([
-    (object)[
-      'id'=>1,'title'=>'Template Surat Tugas (DOCX)','description'=>'Format surat tugas resmi dengan header BRIDA, tanggal & nomor otomatis.',
-      'category'=>'Surat','file_type'=>'DOCX','lang'=>'id','orientation'=>'portrait','size'=>'42 KB','updated_at'=>'2025-09-10',
-      'tags'=>['BRIDA','Resmi','Header'],'is_pdf'=>false,'thumbnail'=>null
-    ],
-    (object)[
-      'id'=>2,'title'=>'Nota Dinas - Internal (PDF)','description'=>'Nota dinas siap cetak, struktur paragraf rapi & tanda tangan pejabat.',
-      'category'=>'Nota Dinas','file_type'=>'PDF','lang'=>'id','orientation'=>'portrait','size'=>'118 KB','updated_at'=>'2025-08-31',
-      'tags'=>['Internal','Siap Cetak'],'is_pdf'=>true,'thumbnail'=>null
-    ],
-    (object)[
-      'id'=>3,'title'=>'Kop Surat BRIDA (PNG & SVG)','description'=>'Kop surat resolusi tinggi untuk integrasi ke Word/Google Docs.',
-      'category'=>'Kop Surat','file_type'=>'PNG','lang'=>'id','orientation'=>'landscape','size'=>'256 KB','updated_at'=>'2025-07-26',
-      'tags'=>['Logo','Identitas','Visual'],'is_pdf'=>false,'thumbnail'=>null
-    ],
-    (object)[
-      'id'=>4,'title'=>'Stempel Kepala BRIDA (PNG)','description'=>'Stempel transparan, siap overlay, ukuran 1200px.',
-      'category'=>'Stempel/TTD','file_type'=>'PNG','lang'=>'id','orientation'=>'landscape','size'=>'350 KB','updated_at'=>'2025-09-12',
-      'tags'=>['Stempel','Transparan'],'is_pdf'=>false,'thumbnail'=>null
-    ],
-  ]);
+  // helper thumbnail — gunakan Storage dengan prefix global namespace
+  function sigap_thumb($t) {
+    $type = strtoupper($t->file_type);
+    $isImage = in_array($type, ['PNG','JPG','JPEG','SVG','WEBP']);
+    if ($isImage && !empty($t->file_path ?? null)) {
+      try {
+        return \Storage::disk('public')->url($t->file_path);
+      } catch (\Throwable $e) {}
+    }
+    // private non-image → dummy locked; selainnya → dummy doc
+    if (($t->privacy ?? 'public') === 'private') {
+      return 'https://picsum.photos/seed/locked'.$t->id.'/600/360';
+    }
+    return 'https://picsum.photos/seed/doc'.$t->id.'/600/360';
+  }
 @endphp
 
+<!-- Hasil -->
 <section class="py-12">
   <div class="max-w-7xl mx-auto px-4">
     <div class="flex items-center justify-between mb-4">
       <h3 class="text-xl sm:text-2xl font-extrabold text-gray-900">Hasil Template</h3>
-      <p class="text-sm text-gray-600">{{ method_exists($templates,'total') ? $templates->total() : $templates->count() }} item</p>
+      <p class="text-sm text-gray-600">
+        {{ method_exists($templates,'total') ? $templates->total() : $templates->count() }} item
+      </p>
     </div>
 
     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
       @forelse ($templates as $t)
-        <div class="p-5 rounded-xl border border-gray-200 hover:shadow-lg transition flex flex-col">
-          <div class="flex items-start gap-4">
-            <div class="shrink-0 w-12 h-12 rounded-lg bg-maroon/10 flex items-center justify-center text-maroon text-sm font-bold">
-              {{ $t->file_type }}
-            </div>
-            <div class="min-w-0">
-              <h4 class="font-semibold text-gray-900 line-clamp-2">{{ $t->title }}</h4>
-              <p class="mt-1 text-xs text-gray-500">{{ $t->category }} • {{ strtoupper($t->lang) }} • {{ ucfirst($t->orientation) }}</p>
-            </div>
-          </div>
+        @php
+          $type = strtoupper($t->file_type);
+          $thumb = sigap_thumb($t);
+          $isPrivate = ($t->privacy ?? 'public') === 'private';
+          $detailUrl = route('sigap-format.show', $t->id);
+          $previewUrl = route('sigap-format.preview', $t->id);
+          $downloadUrl = route('sigap-format.download', $t->id);
+          $unlockUrl = route('sigap-format.unlock', $t->id);
+        @endphp
 
-          <p class="mt-3 text-sm text-gray-700 line-clamp-3">{{ $t->description }}</p>
-
-          @if (!empty($t->tags))
-            <div class="mt-3 flex flex-wrap gap-2">
-              @foreach ($t->tags as $tag)
-                <span class="text-[11px] px-2 py-1 rounded-full bg-gray-100 text-gray-700 border border-gray-200">#{{ $tag }}</span>
-              @endforeach
-            </div>
-          @endif
-
-          <div class="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-gray-500">
-            <span>Ukuran: {{ $t->size }}</span>
-            <span>Diupdate: {{ \Illuminate\Support\Carbon::parse($t->updated_at)->format('d M Y') }}</span>
-          </div>
-
-          <div class="mt-4 grid grid-cols-3 gap-2">
-            @if ($t->is_pdf)
-              <a href="{{ route('sigap-format.preview', $t->id) }}" class="px-3 py-2 text-center rounded-lg border border-gray-300 hover:bg-gray-50 text-sm">Preview</a>
-            @else
-              <a href="{{ route('sigap-format.show', $t->id) }}" class="px-3 py-2 text-center rounded-lg border border-gray-300 hover:bg-gray-50 text-sm">Detail</a>
+        <div class="group rounded-xl border border-gray-200 overflow-hidden bg-white hover:shadow-lg transition flex flex-col">
+          <div class="aspect-[16/9] bg-gray-100 relative">
+            <img src="{{ $thumb }}" alt="thumbnail" class="w-full h-full object-cover">
+            @if($isPrivate)
+              <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+                <span class="inline-flex items-center gap-2 text-white text-xs font-semibold bg-black/40 px-3 py-1.5 rounded">
+                  🔐 Private
+                </span>
+              </div>
             @endif
+          </div>
 
-            <button 
-              class="px-3 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 text-sm"
-              data-open-download="true"
-              data-id="{{ $t->id }}"
-              data-title="{{ $t->title }}"
-            >Download</button>
+          <div class="p-5 flex-1 flex flex-col">
+            <div class="flex items-start gap-3">
+              <div class="shrink-0 w-10 h-10 rounded-lg bg-maroon/10 text-maroon text-xs font-bold flex items-center justify-center">
+                {{ $type }}
+              </div>
+              <div class="min-w-0">
+                <h4 class="font-semibold text-gray-900 line-clamp-2">{{ $t->title }}</h4>
+                <p class="mt-0.5 text-xs text-gray-500">
+                  {{ $t->category }} • {{ strtoupper($t->lang) }} • {{ ucfirst($t->orientation) }}
+                </p>
+              </div>
+            </div>
 
-            <a href="{{ route('sigap-format.show', $t->id) }}" class="px-3 py-2 text-center rounded-lg border border-gray-300 hover:bg-gray-50 text-sm">Info</a>
+            <p class="mt-3 text-sm text-gray-700 line-clamp-3">{{ $t->description }}</p>
+
+            <div class="mt-4 flex items-center justify-between text-xs text-gray-500">
+              <span>Ukuran: {{ number_format((($t->size ?? 0)/1024),1) }} KB</span>
+              <span>Diupdate: {{ \Illuminate\Support\Carbon::parse($t->updated_at)->format('d M Y') }}</span>
+            </div>
+
+            <div class="mt-4 grid grid-cols-2 gap-2">
+              {{-- Aksi kiri: Preview untuk PDF, Detail untuk selain PDF --}}
+              @if($type === 'PDF')
+                @if($isPrivate)
+                  <button
+                    class="px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-sm btn-unlock"
+                    data-action="detail"  {{-- intent: show --}}
+                    data-title="{{ $t->title }}"
+                    data-unlock="{{ $unlockUrl }}">
+                    Preview
+                  </button>
+                @else
+                  <a href="{{ $previewUrl }}" class="px-3 py-2 text-center rounded-lg border border-gray-300 hover:bg-gray-50 text-sm">Preview</a>
+                @endif
+              @else
+                @if($isPrivate)
+                  <button
+                    class="px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-sm btn-unlock"
+                    data-action="detail"  {{-- intent: show --}}
+                    data-title="{{ $t->title }}"
+                    data-unlock="{{ $unlockUrl }}">
+                    Detail
+                  </button>
+                @else
+                  <a href="{{ $detailUrl }}" class="px-3 py-2 text-center rounded-lg border border-gray-300 hover:bg-gray-50 text-sm">Detail</a>
+                @endif
+              @endif
+
+              {{-- Aksi kanan: Download --}}
+              @if($isPrivate)
+                <button
+                  class="px-3 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 text-sm btn-unlock"
+                  data-action="download" {{-- intent: download --}}
+                  data-title="{{ $t->title }}"
+                  data-unlock="{{ $unlockUrl }}">
+                  Download
+                </button>
+              @else
+                <form method="POST" action="{{ $downloadUrl }}">
+                  @csrf
+                  <button class="w-full px-3 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 text-sm">Download</button>
+                </form>
+              @endif
+            </div>
           </div>
         </div>
       @empty
         <div class="col-span-full">
           <div class="p-6 rounded-xl border-2 border-dashed border-gray-300 text-center text-gray-600">
-            Tidak ditemukan template sesuai filter. Coba ubah kata kunci/penyaring.
+            Tidak ditemukan template sesuai filter.
           </div>
         </div>
       @endforelse
@@ -257,162 +270,107 @@
   </div>
 </section>
 
-<!-- Kategori Populer -->
-<section id="kategori" class="py-12 bg-gray-50">
-  <div class="max-w-7xl mx-auto px-4">
-    <div class="text-center max-w-2xl mx-auto">
-      <h3 class="text-2xl sm:text-3xl font-extrabold text-maroon">Kategori Populer</h3>
-      <p class="mt-3 text-gray-600">Langsung pilih kategori yang paling sering digunakan pegawai.</p>
+<!-- Modal: Kode Akses -->
+<div id="unlockModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
+  <div id="unlockContent" class="bg-white w-full max-w-md mx-4 rounded-2xl shadow-xl relative animate-fade-in">
+    <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+      <h3 class="text-lg font-bold text-gray-900">Masukkan Kode Akses</h3>
+      <button id="unlockClose" class="text-gray-400 hover:text-red-500 text-xl font-bold">&times;</button>
     </div>
 
-    <div class="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      @foreach (['Surat','Nota Dinas','Laporan','Memo','SK/Peraturan','Kop Surat','Stempel/TTD'] as $kc)
-        <a href="{{ route('sigap-format.index', array_merge(request()->except('page'), ['category'=>$kc])) }}" class="p-5 rounded-xl border border-gray-200 hover:shadow-lg transition flex items-center justify-between">
-          <span class="font-semibold text-gray-900">{{ $kc }}</span>
-          <span class="text-maroon">→</span>
-        </a>
-      @endforeach
-    </div>
-  </div>
-</section>
-
-<!-- Cara Pakai -->
-<section id="cara-pakai" class="py-12">
-  <div class="max-w-7xl mx-auto px-4">
-    <div class="grid lg:grid-cols-3 gap-8">
-      <div>
-        <h3 class="text-2xl sm:text-3xl font-extrabold text-maroon">Cara Pakai Cepat</h3>
-        <p class="mt-3 text-gray-600">Cukup 4 langkah untuk pakai template standar di unit kerjamu.</p>
-      </div>
-      <ol class="lg:col-span-2 grid sm:grid-cols-2 gap-6">
-        <li class="p-5 bg-white rounded-xl border border-gray-200">
-          <p class="text-sm font-semibold text-maroon">1) Pilih Template</p>
-          <p class="mt-1 text-sm text-gray-600">Telusuri berdasarkan kategori/jenis file & pratinjau jika perlu.</p>
-        </li>
-        <li class="p-5 bg-white rounded-xl border border-gray-200">
-          <p class="text-sm font-semibold text-maroon">2) Unduh</p>
-          <p class="mt-1 text-sm text-gray-600">Isi tujuan penggunaan pada dialog download (untuk audit).</p>
-        </li>
-        <li class="p-5 bg-white rounded-xl border border-gray-200">
-          <p class="text-sm font-semibold text-maroon">3) Sesuaikan</p>
-          <p class="mt-1 text-sm text-gray-600">Edit nama, nomor surat, tanggal, pejabat, dan isi sesuai kebutuhan.</p>
-        </li>
-        <li class="p-5 bg-white rounded-xl border border-gray-200">
-          <p class="text-sm font-semibold text-maroon">4) Simpan Arsip</p>
-          <p class="mt-1 text-sm text-gray-600">Unggah balik versi final ke SIGAP Dokumen agar menjadi rujukan fix.</p>
-        </li>
-      </ol>
-    </div>
-  </div>
-</section>
-
-<!-- Modal Download (Konfirmasi & Alasan) -->
-<div id="download-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
-  <div id="download-content" class="bg-white max-w-md w-full mx-4 rounded-xl p-6 shadow-xl relative animate-fade-in">
-    <button id="dl-close" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 text-xl font-bold">&times;</button>
-    <h3 class="text-lg font-bold text-maroon">Unduh Template</h3>
-    <p class="mt-1 text-sm text-gray-700">Mohon isi tujuan penggunaan untuk keperluan <em>log</em> & audit internal.</p>
-
-    <form id="download-form" class="mt-4" method="POST" action="#">
+    <form id="unlockForm" class="p-5" method="POST" action="#">
       @csrf
-      <input type="hidden" name="template_id" id="dl-template-id">
-      <div class="mb-3">
-        <label class="text-sm font-semibold text-gray-700">Judul Template</label>
-        <input id="dl-template-title" type="text" class="mt-1.5 w-full border p-2 rounded-lg border-gray-300 bg-gray-50" readonly>
-      </div>
-      <div class="mb-3">
-        <label class="text-sm font-semibold text-gray-700">Tujuan Penggunaan</label>
-        <input name="purpose" required placeholder="Contoh: Surat Tugas Kegiatan X" class="mt-1.5 w-full border p-2 rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
-      </div>
-      <div class="grid sm:grid-cols-2 gap-3">
-        <div>
-          <label class="text-sm font-semibold text-gray-700">Unit/OPD</label>
-          <input name="unit" placeholder="Contoh: Sekretariat" class="mt-1.5 w-full border p-2 rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
-        </div>
-        <div>
-          <label class="text-sm font-semibold text-gray-700">Nama Peminta</label>
-          <input name="requester" placeholder="Nama lengkap" class="mt-1.5 w-full border p-2 rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
-        </div>
-      </div>
+      {{-- penting: intent dipakai controller (show|download) --}}
+      <input type="hidden" name="intent" id="unlockIntent" value="show">
+      <p id="unlockDocTitle" class="text-sm text-gray-600 mb-3"></p>
 
-      <p class="mt-3 text-[12px] text-gray-500">Dengan menekan “Unduh Sekarang”, Anda menyetujui penggunaan sesuai ketentuan internal BRIDA & pencatatan log akses.</p>
+      <label class="block">
+        <span class="text-sm font-semibold text-gray-700">Kode Akses</span>
+        <div class="mt-1.5 relative">
+          <input name="access_code" id="unlockCode"
+                 class="w-full rounded-lg border border-gray-300 p-2 pr-24 focus:border-maroon"
+                 placeholder="Masukkan kode akses" type="password" required>
+          <button type="button" id="unlockToggle"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 text-xs rounded-md border border-gray-300 hover:bg-gray-50">
+            Tampilkan
+          </button>
+        </div>
+      </label>
 
-      <div class="mt-4 flex items-center gap-3">
-        <button type="submit" class="px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800">Unduh Sekarang</button>
-        <button type="button" id="dl-cancel" class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">Batal</button>
+      <div class="mt-5 flex items-center justify-end gap-2">
+        <button type="button" id="unlockCancel" class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">Batal</button>
+        <button type="submit" class="px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800">Lanjut</button>
       </div>
     </form>
-
-    <p id="dl-timer" class="mt-3 text-xs text-gray-500 hidden">Dialog ini akan tertutup otomatis dalam <span id="dl-count">15</span> detik…</p>
   </div>
 </div>
 
 <style>
-  @keyframes fade-in {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .animate-fade-in { animation: fade-in 0.35s ease-out; }
+  @keyframes fade-in { from { opacity:.0; transform: translateY(8px);} to { opacity:1; transform: translateY(0);} }
+  .animate-fade-in { animation: fade-in .25s ease-out; }
 </style>
 
 @endsection
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  // --- Modal Download ---
-  const modal = document.getElementById('download-modal');
-  const content = document.getElementById('download-content');
-  const closeBtn = document.getElementById('dl-close');
-  const cancelBtn = document.getElementById('dl-cancel');
-  const form = document.getElementById('download-form');
-  const inputId = document.getElementById('dl-template-id');
-  const inputTitle = document.getElementById('dl-template-title');
-  const timerText = document.getElementById('dl-timer');
-  const countSpan = document.getElementById('dl-count');
-  let timer = null, counter = 15;
+document.addEventListener('DOMContentLoaded', ()=>{
+  // ===== Unlock Modal =====
+  const m = document.getElementById('unlockModal');
+  const c = document.getElementById('unlockContent');
+  const f = document.getElementById('unlockForm');
+  const closeBtn = document.getElementById('unlockClose');
+  const cancelBtn= document.getElementById('unlockCancel');
+  const code     = document.getElementById('unlockCode');
+  const toggle   = document.getElementById('unlockToggle');
+  const titleEl  = document.getElementById('unlockDocTitle');
+  const intentEl = document.getElementById('unlockIntent');
 
-  function openModal(id, title) {
-    inputId.value = id;
-    inputTitle.value = title;
-    // Set action route dinamis:
-    form.setAttribute('action', "{{ route('sigap-format.download', '__ID__') }}".replace('__ID__', id));
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+  function openUnlock(action, title, url){
+    f.setAttribute('action', url);
+    // mapping: 'detail' -> 'show', 'download' -> 'download'
+    const intent = (action === 'download') ? 'download' : 'show';
+    intentEl.value = intent;
 
-    // Auto close 15 detik
-    counter = 15;
-    countSpan.textContent = counter;
-    timerText.classList.remove('hidden');
-    timer = setInterval(() => {
-      counter--;
-      countSpan.textContent = counter;
-      if (counter <= 0) closeModal();
-    }, 1000);
+    code.type = 'password'; code.value = '';
+    toggle.textContent = 'Tampilkan';
+    titleEl.textContent = 'Dokumen: ' + (title || '');
+    m.classList.remove('hidden'); m.classList.add('flex');
+    setTimeout(()=>code.focus(), 80);
   }
-  function closeModal() {
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-    if (timer) { clearInterval(timer); timer = null; }
-  }
+  function closeUnlock(){ m.classList.add('hidden'); m.classList.remove('flex'); }
 
-  // Delegasi tombol "Download"
-  document.body.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-open-download="true"]');
-    if (btn) {
-      const id = btn.getAttribute('data-id');
-      const title = btn.getAttribute('data-title') || 'Template';
-      openModal(id, title);
-    }
+  document.body.addEventListener('click', (e)=>{
+    const btn = e.target.closest('.btn-unlock');
+    if(!btn) return;
+    const action = btn.getAttribute('data-action');
+    const title  = btn.getAttribute('data-title');
+    const url    = btn.getAttribute('data-unlock');
+    openUnlock(action, title, url);
   });
 
-  // Tutup manual
-  closeBtn.addEventListener('click', closeModal);
-  cancelBtn.addEventListener('click', closeModal);
-  // Klik di luar konten = tutup
-  modal.addEventListener('click', (e) => {
-    if (!content.contains(e.target)) closeModal();
+  // toggle show/hide
+  toggle.addEventListener('click', ()=>{
+    const visible = code.type === 'text';
+    code.type = visible ? 'password' : 'text';
+    toggle.textContent = visible ? 'Tampilkan' : 'Sembunyikan';
   });
+
+  closeBtn.addEventListener('click', closeUnlock);
+  cancelBtn.addEventListener('click', closeUnlock);
+  m.addEventListener('click', (e)=>{ if(!c.contains(e.target)) closeUnlock(); });
+
+  // SweetAlert error (dari session)
+  @if(session('format_error_msg'))
+    Swal.fire({ icon:'error', title:'Gagal', text:@json(session('format_error_msg')), confirmButtonColor:'#7a2222' });
+  @endif
+
+  // Auto open modal jika diarahkan dengan ?need={id}
+  @if(request('need'))
+    const needId = @json((int)request('need'));
+    const unlockUrl = @json(route('sigap-format.unlock', 0)).replace('/0/unlock','/'+needId+'/unlock');
+    openUnlock('detail','', unlockUrl);
+  @endif
 });
 </script>
 @endpush

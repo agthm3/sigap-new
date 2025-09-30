@@ -20,6 +20,7 @@ use App\Http\Controllers\PegawaiProfileController;
 use App\Http\Controllers\PegawaiPublicController;
 use App\Http\Controllers\PersonalDocumentController;
 use App\Http\Controllers\RisetController;
+use App\Http\Controllers\SigapFormatController;
 use App\Http\Controllers\SigapKinerjaController;
 use App\Http\Controllers\SigapRisetController;
 
@@ -183,10 +184,10 @@ Route::get('/kinerja/y/{year}', [SigapKinerjaController::class, 'annualPublic'])
 
 
 Route::get('/sigap-format', [FormatController::class, 'index'])->name('sigap-format.index');
-Route::get('/sigap-format/{id}', [FormatController::class, 'show'])
-  ->name('sigap-format.show');
+Route::post('/sigap-format/{id}/unlock', [FormatController::class, 'unlock'])->name('sigap-format.unlock'); // NEW (kode akses)
+Route::get('/sigap-format/{id}', [FormatController::class, 'show'])->name('sigap-format.show');
 Route::get('/sigap-format/preview/{id}', [FormatController::class, 'preview'])->name('sigap-format.preview');
-Route::post('/sigap-format/{id}/download', [FormatController::class,'download'])->name('sigap-format.download');
+Route::post('/sigap-format/{id}/download', [FormatController::class, 'download'])->name('sigap-format.download');
 
 Route::get('/riset', [RisetController::class, 'index'])->name('riset.index');
 Route::get('/riset/dashboard', [RisetController::class, 'dashboard'])->name('riset.dashboard');
@@ -197,3 +198,18 @@ Route::get('/riset/{id}/edit', [RisetController::class, 'edit'])->name('riset.ed
 Route::put('/riset/{id}',       [RisetController::class, 'update'])->name('riset.update');
 
 Route::get('/about', [HomeController::class, 'about'])->name('about');
+
+
+// Dashboard SIGAP FORMAT (login required via controller)
+Route::get('/format',               [SigapFormatController::class, 'index'])->name('format.index');
+
+// hanya admin
+Route::post('/format',              [SigapFormatController::class, 'store'])->middleware('role:admin')->name('format.store');
+Route::get('/format/{id}/edit',     [SigapFormatController::class, 'edit'])->middleware('role:admin')->name('format.edit');
+Route::put('/format/{id}',          [SigapFormatController::class, 'update'])->middleware('role:admin')->name('format.update');
+Route::delete('/format/{id}',       [SigapFormatController::class, 'destroy'])->middleware('role:admin')->name('format.destroy');
+Route::post('/format/{id}/unlock-download', [SigapFormatController::class, 'unlockAndDownload'])
+    ->name('format.unlock');
+
+// download (dashboard)
+Route::get('/format/{id}/download', [SigapFormatController::class, 'download'])->name('format.download');

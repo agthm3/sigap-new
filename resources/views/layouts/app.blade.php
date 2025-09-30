@@ -184,6 +184,38 @@
           </a>
         </div>
       @endhasanyrole
+      @hasanyrole('admin|employee')
+        <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">SIGAP FORMAT</div>
+
+        <!-- Toggle -->
+        <button id="formatToggle"
+                class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-left"
+                aria-controls="formatMenu" aria-expanded="false">
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M6 3h12a2 2 0 0 1 2 2v16H4V5a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="2" />
+          <path d="M8 8h8M8 12h8M8 16h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <span class="font-medium">SIGAP Format</span>
+          <svg id="formatCaret" class="w-4 h-4 ml-auto transition-transform duration-200"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" d="M6 9l6 6 6-6"/>
+          </svg>
+        </button>
+
+        <!-- Dropdown Items -->
+        <div id="formatMenu" class="ml-3 mt-1 space-y-1 hidden">
+          <a href="{{ route('format.index') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+                    {{ request()->routeIs('sigap-format.*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M6 3h8l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="2"/>
+              <path d="M8 12h8M8 15h8M8 18h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M14 3v5h5" fill="none" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            Katalog Template
+          </a>
+        </div>
+      @endhasanyrole
 
         <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">PENGATURAN</div>
         {{-- <a href="{{ route('logout') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100">
@@ -304,6 +336,30 @@
     localStorage.setItem(RISET_KEY, willOpen ? '1' : '0');
   });
 </script>
+
+<script>
+// Dropdown SIGAP FORMAT
+const formatToggle = document.getElementById('formatToggle');
+const formatMenu   = document.getElementById('formatMenu');
+const formatCaret  = document.getElementById('formatCaret');
+
+const FORMAT_KEY = 'sb_format_open';
+const isFormatOpenSaved = localStorage.getItem(FORMAT_KEY) === '1';
+if (isFormatOpenSaved) {
+  formatMenu?.classList.remove('hidden');
+  formatCaret?.classList.add('rotate-180');
+  formatToggle?.setAttribute('aria-expanded', 'true');
+}
+
+formatToggle?.addEventListener('click', () => {
+  const willOpen = formatMenu.classList.contains('hidden');
+  formatMenu.classList.toggle('hidden');
+  formatCaret.classList.toggle('rotate-180', willOpen);
+  formatToggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+  localStorage.setItem(FORMAT_KEY, willOpen ? '1' : '0');
+});
+</script>
+
 
     @stack('scripts')
 </body>
