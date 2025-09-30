@@ -19,7 +19,9 @@ use App\Http\Controllers\PegawaiProfilController;
 use App\Http\Controllers\PegawaiProfileController;
 use App\Http\Controllers\PegawaiPublicController;
 use App\Http\Controllers\PersonalDocumentController;
+use App\Http\Controllers\RewardController;
 use App\Http\Controllers\RisetController;
+use App\Http\Controllers\SigapAutoController;
 use App\Http\Controllers\SigapFormatController;
 use App\Http\Controllers\SigapKinerjaController;
 use App\Http\Controllers\SigapRisetController;
@@ -213,3 +215,8 @@ Route::post('/format/{id}/unlock-download', [SigapFormatController::class, 'unlo
 
 // download (dashboard)
 Route::get('/format/{id}/download', [SigapFormatController::class, 'download'])->name('format.download');
+
+Route::get('/reward', [RewardController::class, 'index'])->name('reward.index');
+
+
+Route::get('/sigap-auto', [SigapAutoController::class, 'index'])->name('sigap-auto.index');

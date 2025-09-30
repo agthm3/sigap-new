@@ -103,6 +103,8 @@
           <li><a href="#" class="hover:text-maroon">FAQ</a></li>
           <li><a href="#" class="hover:text-maroon">Panduan Pengguna</a></li>
           <li><a href="#" class="hover:text-maroon">Hubungi Admin</a></li>
+          <li><a href="#" class="hover:text-maroon">Hubungi Admin</a></li>
+          <li><a href="{{ route('reward.index') }}" class="hover:text-maroon"><strong>Reward ⭐⭐⭐⭐</strong></a></li>
           <li><a href="{{ route('about') }}" class="hover:text-maroon"><strong>Klik untuk kejutan🎉</strong></a></li>
         </ul>
       </div>

@@ -127,7 +127,7 @@
                 </a>
               @else
                 <span class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-gray-200 text-gray-600 cursor-not-allowed text-sm" title="Unduh membutuhkan hak akses">
-                  … Download
+                 Download
                 </span>
               @endif
             </div>

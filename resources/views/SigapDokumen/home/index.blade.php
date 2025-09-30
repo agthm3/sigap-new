@@ -171,6 +171,7 @@
                <p class="mt-1 text-sm text-gray-600">Akses data pegawai (seperti KTP, KK) dengan filter canggih. Setiap download dicatat log-nya untuk keamanan.</p>
             </div>
         </a>
+        <a href="{{ route('sigap-auto.index') }}">
         <div class="p-6 rounded-xl border border-gray-200 hover:shadow-lg transition">
           <div class="w-10 h-10 rounded-lg bg-maroon/10 text-maroon flex items-center justify-center">
             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M12 2L3 7v7c0 5 4 9 9 9s9-4 9-9V7l-9-5z"/><path stroke-width="2" d="M9 14l2 2 4-4"/></svg>
@@ -178,6 +179,7 @@
           <h4 class="mt-4 font-semibold">SIGAP <span><strong class="text-maroon">Auto (Coming Soon)</strong></span></h4>
           <p class="mt-1 text-sm text-gray-600">Automasi tugas repetitif. Sistem yang bekerja otomatis, pegawai hanya konfirmasi atau monitor hasilnya.</p>
         </div>
+        </a>
         <div class="p-6 rounded-xl border border-gray-200 hover:shadow-lg transition">
           <div class="w-10 h-10 rounded-lg bg-maroon/10 text-maroon flex items-center justify-center">
             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M12 2L3 7v7c0 5 4 9 9 9s9-4 9-9V7l-9-5z"/><path stroke-width="2" d="M9 14l2 2 4-4"/></svg>
@@ -552,7 +554,17 @@
     <p class="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-3">
       📱 Untuk sementara, tampilan website ini hanya dioptimalkan untuk perangkat <strong>desktop</strong>. Penggunaan di mobile mungkin tidak tampil sempurna. Mohon pengertiannya.
     </p>
-
+    <p class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md p-3 mb-3">
+      🔐 <strong>Catatan Keamanan:</strong><br>
+      Karena <em>SIGAP BRIDA</em> masih dalam tahap pengembangan, bisa saja masih terdapat
+      <span class="font-semibold">celah keamanan</span> yang belum terdeteksi.  
+      Jika Anda memiliki kemampuan atau menemukan potensi celah, mohon bantu kami dengan
+      melaporkannya melalui WhatsApp ke 
+      <a href="https://wa.me/6285173231604" class="text-maroon font-semibold hover:underline" target="_blank">0851-7323-1604</a>.
+      <br><br>
+      🙏 Sebagai bentuk penghargaan, nama Anda akan dimasukkan di halaman <strong><a href="{{ route('reward.index') }}">“Reward”</a></strong>
+      sebagai apresiasi kontribusi menjaga keamanan sistem ini.
+    </p>
     <hr>
 
     <p class="mt-4 text-sm italic text-gray-600">
