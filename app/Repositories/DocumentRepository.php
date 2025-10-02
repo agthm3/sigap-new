@@ -23,9 +23,9 @@ class DocumentRepository
 
             // Map status akses dari UI ke enum DB
             // UI: "Publik" | "Akses Terkendali"
-            if (!empty($data['sensitivity'])) {
-                $data['sensitivity'] = $data['sensitivity'] === 'Akses Terkendali' ? 'private' : 'public';
-            }
+            // if (!empty($data['sensitivity'])) {
+            //     $data['sensitivity'] = $data['sensitivity'] === 'Akses Terkendali' ? 'private' : 'public';
+            // }
 
             // Simpan file fisik
             if ($file) {
@@ -136,9 +136,9 @@ class DocumentRepository
             $doc = Document::findOrFail($id);
 
 
-            if(!empty($data['sensitivity'])) {
-                $data['sensitivity'] = $data['sensitivity'] === 'Akses Terkendali' ? 'private' : 'public';
-            }
+            // if(!empty($data['sensitivity'])) {
+            //     $data['sensitivity'] = $data['sensitivity'] === 'Akses Terkendali' ? 'private' : 'public';
+            // }
 
             if($thumb instanceof UploadedFile){
                 if($doc->thumb_path && Storage::disk('public')->exists($doc->thumb_path)) {

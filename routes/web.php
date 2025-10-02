@@ -32,6 +32,7 @@ Route::get('/hasil', [HomeController::class, 'show'])->name('home.show');
 
 Route::get('/sigap-riset', [SigapRisetController::class, 'index'])->name('sigap-riset.index');
 Route::get('/sigap-riset/{riset}', [SigapRisetController::class, 'show'])->name('sigap-riset.show');
+Route::get('/sigap-riset/{riset}/download', [SigapRisetController::class, 'download'])->name('sigap-riset.download');
 
 // Route::get('/pegawai', [HomeController::class, 'indexPegawai'])->name('home.pegawai');
 Route::prefix('pegawai')->middleware(['auth'])->group(function () {

@@ -41,7 +41,7 @@
   <div class="min-h-screen flex">
 
     <!-- Sidebar -->
-    <aside id="sidebar" class="fixed lg:sticky top-0 h-screen w-72 translate-x-[-100%] lg:translate-x-0 bg-white border-r border-gray-200 z-40 transition-transform">
+    <aside id="sidebar"  class="fixed lg:sticky top-0 h-screen w-72 translate-x-[-100%] lg:translate-x-0 bg-white border-r border-gray-200 z-40 transition-transform duration-200">
       <div class="h-16 px-4 border-b border-gray-200 flex items-center gap-3">
         <span class="inline-flex h-9 w-9 items-center justify-center rounded-md bg-maroon text-white font-extrabold">SB</span>
         <div>
@@ -299,21 +299,62 @@
     });
   </script>
 
-  <script>
-    // Sidebar toggle (mobile)
-    const sidebar = document.getElementById('sidebar');
-    const toggle = document.getElementById('sidebarToggle');
-    if (toggle) {
-      toggle.addEventListener('click', () => {
-        const opened = !sidebar.classList.contains('translate-x-0');
-        sidebar.classList.toggle('-translate-x-[100%]', opened);
-        sidebar.classList.toggle('translate-x-0', !opened);
-      });
+<script>
+  // Sidebar toggle (mobile)
+  const sidebar  = document.getElementById('sidebar');
+  const toggle   = document.getElementById('sidebarToggle');
+  const backdrop = document.getElementById('sidebarBackdrop');
+  const body     = document.body;
+
+  function openSidebar() {
+    // hapus posisi offscreen, tampilkan
+    sidebar.classList.remove('translate-x-[-100%]');
+    sidebar.classList.add('translate-x-0');
+    backdrop.classList.remove('hidden');
+    body.classList.add('overflow-hidden');
+    // aksesibilitas
+    toggle?.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeSidebar() {
+    sidebar.classList.add('translate-x-[-100%]');
+    sidebar.classList.remove('translate-x-0');
+    backdrop.classList.add('hidden');
+    body.classList.remove('overflow-hidden');
+    toggle?.setAttribute('aria-expanded', 'false');
+  }
+
+  function isSidebarOpen() {
+    return sidebar.classList.contains('translate-x-0');
+  }
+
+  // tombol hamburger
+  toggle?.addEventListener('click', () => {
+    isSidebarOpen() ? closeSidebar() : openSidebar();
+  });
+
+  // klik backdrop menutup
+  backdrop?.addEventListener('click', closeSidebar);
+
+  // tekan ESC menutup
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isSidebarOpen()) closeSidebar();
+  });
+
+  // kalau di desktop (lg:) pastikan backdrop selalu hidden & body bebas scroll
+  const mql = window.matchMedia('(min-width: 1024px)');
+  mql.addEventListener('change', (ev) => {
+    if (ev.matches) { // masuk desktop
+      backdrop.classList.add('hidden');
+      body.classList.remove('overflow-hidden');
+      // biarkan Tailwind lg:translate-x-0 yang tampilkan sidebar
+    } else {
+      // kembali ke mobile, sembunyikan default
+      closeSidebar();
     }
+  });
+</script>
 
-    // Charts
-
-  </script>
   <script>
   // Dropdown SIGAP RISET
   const risetToggle = document.getElementById('risetToggle');

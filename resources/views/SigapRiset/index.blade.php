@@ -1,4 +1,41 @@
 @extends('layouts.page')
+@if(isset($isPublic) && !$isPublic)
+  <div id="restricted-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div class="bg-white max-w-md w-full mx-4 rounded-xl p-6 shadow-xl relative">
+      <button type="button" id="restricted-close" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 text-xl font-bold">&times;</button>
+      <h3 class="text-lg font-bold text-maroon mb-2">🔒 Akses Terbatas</h3>
+      <p class="text-sm text-gray-700 mb-3">
+        Dokumen atau riset ini memiliki akses terbatas, hubungi admin melalui email untuk mendapatkan akses penuh.
+      </p>
+      <div class="flex gap-2">
+        <a href="mailto:admin@brida.makassar.go.id"
+           class="inline-flex items-center px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800">
+           Hubungi Admin
+        </a>
+        <a href="{{ route('sigap-riset.index') }}"
+           class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
+           Kembali
+        </a>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function(){
+      function closeNow(){
+        var m = document.getElementById('restricted-modal');
+        if(m){ m.parentNode.removeChild(m); }
+      }
+      document.addEventListener('keydown', function(e){
+        if(e.key === 'Escape') closeNow();
+      });
+      document.addEventListener('click', function(e){
+        var m = document.getElementById('restricted-modal');
+        if(!m) return;
+        if(e.target === m || e.target.id === 'restricted-close') closeNow();
+      });
+    })();
+  </script>
+@endif
 
 @section('content')
 @php use Illuminate\Support\Str; @endphp
@@ -19,7 +56,7 @@
 {{-- SECTION 2: Filter & Tombol --}}
 <section class="py-6 bg-white">
   <div class="max-w-7xl mx-auto px-4">
-    <form action="{{ route('sigap-riset.index') }}" method="GET" class="rounded-2xl border border-gray-200 p-4 sm:p-6 shadow-sm">
+    <form action="{{ route('sigap-riset.index') }}"  method="GET" class="rounded-2xl border border-gray-200 p-4 sm:p-6 shadow-sm">
       <div class="grid gap-4 sm:gap-5">
         <div class="grid sm:grid-cols-3 gap-3">
           <label class="block">
@@ -164,17 +201,52 @@
           </div>
         </dl>
 
-        <div class="mt-4 flex flex-wrap gap-2">
-          <a href="{{ route('sigap-riset.show', $r->id) }}" class="px-3 py-2 rounded-lg bg-maroon text-white text-sm hover:bg-maroon-800">Lihat Detail</a>
-          <a href="#" class="px-3 py-2 rounded-lg border border-gray-300 text-sm hover:bg-gray-50">Unduh PDF</a>
-          <button type="button"
-            onclick="navigator.clipboard.writeText(this.nextElementSibling.textContent); this.innerText='Disalin!'; setTimeout(()=>this.innerText='Salin Sitasi',1400);"
-            class="px-3 py-2 rounded-lg border border-gray-300 text-sm hover:bg-gray-50">Salin Sitasi</button>
-          <pre class="sr-only">{{ $cite }}</pre>
-          @if($r->doi)
-            <a href="#" class="px-3 py-2 rounded-lg border border-gray-300 text-sm hover:bg-gray-50">Buka DOI</a>
-          @endif
-        </div>
+@php
+  $isPublic = strtoupper(trim($access ?? 'Public')) === 'PUBLIC';
+@endphp
+@php
+  $isPublic = strtoupper(trim($access ?? 'Public')) === 'PUBLIC';
+@endphp
+
+<div class="mt-4 flex flex-wrap gap-2">
+  {{-- Selalu tampil --}}
+  <a href="{{ route('sigap-riset.show', $r->id) }}"
+     class="px-3 py-2 rounded-lg bg-maroon text-white text-sm hover:bg-maroon-800">
+     Lihat Detail
+  </a>
+
+  {{-- Unduh hanya untuk Public --}}
+  @if($isPublic)
+    <a href="{{ route('sigap-riset.download', $r->id) }}"
+       class="px-3 py-2 rounded-lg border border-gray-300 text-sm hover:bg-gray-50">
+       Unduh PDF
+    </a>
+  @endif
+
+  {{-- Selalu tampil --}}
+  <button type="button"
+    onclick="navigator.clipboard.writeText(this.nextElementSibling.textContent); this.innerText='Disalin!'; setTimeout(()=>this.innerText='Salin Sitasi',1400);"
+    class="px-3 py-2 rounded-lg border border-gray-300 text-sm hover:bg-gray-50">
+    Salin Sitasi
+  </button>
+  <pre class="sr-only">{{ $cite }}</pre>
+
+  @if($r->doi)
+    <a href="https://doi.org/{{ $r->doi }}" target="_blank"
+       class="px-3 py-2 rounded-lg border border-gray-300 text-sm hover:bg-gray-50">
+       Buka DOI
+    </a>
+  @endif
+
+  {{-- (Opsional) Label peringatan untuk Restricted --}}
+  @unless($isPublic)
+    <span class="text-xs text-yellow-700 bg-yellow-50 border border-yellow-200 px-2 py-1 rounded">
+      Akses terbatas (Restricted)
+    </span>
+  @endunless
+</div>
+
+
       </article>
       @empty
         <div class="lg:col-span-2">

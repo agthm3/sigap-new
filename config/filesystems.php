@@ -48,6 +48,11 @@ return [
             'root'   => storage_path('app/private'),
             'visibility' => 'private',
         ],
+        'riset_private' => [
+                'driver' => 'local',
+                'root'   => storage_path('app/riset_private'), 
+                'throw'  => false,
+        ],
 
         's3' => [
             'driver' => 's3',

@@ -126,21 +126,50 @@
               <th class="px-4 py-2">Alasan</th>
             </tr>
           </thead>
-          <tbody class="divide-y">
+        <tbody class="divide-y">
+          @forelse ($logs as $log)
             <tr>
-              <td class="px-4 py-2">Andi Rahman</td>
-              <td class="px-4 py-2">10 Aug 2025 • 14:05</td>
-              <td class="px-4 py-2">Download</td>
-              <td class="px-4 py-2">Administrasi internal</td>
+              <td class="px-4 py-2">
+                {{ $log->user_name ?? 'Tamu' }}
+                @if($log->user_role)
+                  <span class="ml-1 text-xs text-gray-500">({{ $log->user_role }})</span>
+                @endif
+              </td>
+              <td class="px-4 py-2">
+                {{ $log->created_at->timezone('Asia/Makassar')->format('d M Y • H:i') }}
+              </td>
+              <td class="px-4 py-2">
+                @php
+                  $label = [
+                    'view' => 'View',
+                    'download' => 'Download',
+                    'create' => 'Create',
+                    'update' => 'Update',
+                    'delete' => 'Delete',
+                    'access_denied' => 'Access Denied',
+                  ][$log->action] ?? $log->action;
+                @endphp
+                {{ $label }}
+                @if($log->success === false)
+                  <span class="ml-2 px-2 py-0.5 rounded text-xs bg-red-50 text-red-700">Gagal</span>
+                @endif
+              </td>
+              <td class="px-4 py-2">
+                {{ $log->reason ?? '—' }}
+              </td>
             </tr>
+          @empty
             <tr>
-              <td class="px-4 py-2">Budi Santoso</td>
-              <td class="px-4 py-2">09 Aug 2025 • 10:21</td>
-              <td class="px-4 py-2">View</td>
-              <td class="px-4 py-2">Verifikasi data pegawai</td>
+              <td colspan="4" class="px-4 py-6 text-center text-gray-500">Belum ada riwayat akses.</td>
             </tr>
-          </tbody>
+          @endforelse
+        </tbody>
+
         </table>
+        <div class="px-5 py-3">
+        {{ $logs->links() }}
+      </div>
+
       </div>
     </div>
   </section>

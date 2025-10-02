@@ -57,7 +57,7 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-3 pt-2">
-              <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 transition">… Cari Dokumen</button>
+              <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 transition"> Cari Dokumen</button>
               <a href="{{ route('home.show') }}" class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">Reset</a>
             </div>
 

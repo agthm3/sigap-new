@@ -213,6 +213,7 @@
               <option>Laporan</option>
               <option>Formulir</option>
               <option>Privasi</option>
+              <option>Dokumen</option>
             </select>
           </label>
           <label class="block">
@@ -249,8 +250,8 @@
 
           <div class="sm:col-span-2 grid sm:grid-cols-2 gap-4">
             <label class="block">
-              <span class="text-sm font-semibold text-gray-700">File</span>
-              <input id="d_file" name="file" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required class="mt-1.5 w-full rounded border border-black-300 p-2 focus:ring-maroon">
+              <span class="text-sm font-semibold text-gray-700">File (Maksimal 20 Mb)</span>
+              <input id="d_file" name="file" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required class="mt-1.5 w-full rounded border border-black-300 p-2 focus:ring-maroon"   onchange="validateFileSize(this)">
               <p class="text-[12px] text-gray-500 mt-1">Utamakan PDF. Dokumen privasi wajib disimpan sebagai private.</p>
             </label>
             <label class="block">
@@ -319,4 +320,14 @@
       Swal.fire({ icon:'error', title:'Gagal', text:@json($errors->first()) });
     </script>
   @endif
+  <script>
+    function validateFileSize(input) {
+      const file = input.files[0];
+      if (file && file.size > 20 * 1024 * 1024) { // 20 MB
+        alert("Ukuran file maksimal 5 MB!");
+        input.value = ""; // reset input
+      }
+    }
+</script>
+
 @endpush

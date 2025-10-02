@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
+use App\Models\Document as ModelsDocument;
 use Illuminate\Http\Request;
 use App\Repositories\DocumentRepository;
+use App\Services\ActivityLogger;
 use Illuminate\Container\Attributes\Auth;
 use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Support\Facades\Facade;
@@ -61,6 +64,11 @@ class SigapDokumenController extends Controller
     {
         $doc = $this->repo->find($id);
 
+        ActivityLogger::log(
+            module: 'dokumen',
+            action: 'view',
+            object: $doc
+        );
 
         $fileUrl = asset('storage/' . $doc->file_path);
         $thumbUrl = $doc->thumb_path ? asset('storage/' . $doc->thumb_path) : null;
@@ -69,13 +77,29 @@ class SigapDokumenController extends Controller
         $isPdf = $ext === 'pdf';
         $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif']);
 
-        return view('dashboard.dokumen.show', compact('doc', 'fileUrl', 'thumbUrl', 'isPdf', 'isImage'));
+           // Ambil riwayat akses untuk tabel
+        $logs = ActivityLog::where('module','dokumen')
+            ->where('object_type', ModelsDocument::class)
+            ->where('object_id', $doc->id)
+            ->latest()
+            ->paginate(10);
+
+        return view('dashboard.dokumen.show', compact('doc', 'fileUrl', 'thumbUrl', 'isPdf', 'isImage', 'logs'));
     }
 
 
     public function download(int $id)
     {
     $doc = $this->repo->find($id);
+
+     // Validasi fisik file
+    if (!Storage::disk('public')->exists($doc->file_path)) {
+        // LOG: access_denied (file missing)
+        ActivityLogger::log('dokumen', 'access_denied', $doc, ['success' => false, 'reason' => 'file_missing']);
+        abort(404, 'File tidak ditemukan');
+    }
+
+    ActivityLogger::log('dokumen', 'download', $doc);
 
     // Pastikan file ada di storage
     if (!Storage::disk('public')->exists($doc->file_path)) {
