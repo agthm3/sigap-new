@@ -1,12 +1,12 @@
 {{-- resources/views/kinerja/show.blade.php --}}
-@extends('layouts.page') {{-- publik tanpa sidebar --}}
+@extends('layouts.page') {{-- untuk publik tanpa sidebar --}}
 @section('content')
 @php
   use Carbon\Carbon;
 
   $tgl   = Carbon::parse($item['date'] ?? now())->locale('id')->translatedFormat('d F Y');
-  $media = $item['media'] ?? []; // [{url,mime,is_image,is_primary,filename}]
-  // Tentukan primary untuk viewer:
+  $media = $item['media'] ?? []; // [{url,mime,is_image,is_primary}]
+  // Tentukan primary viewer:
   $primary = null;
 
   if (!empty($media)) {
@@ -16,18 +16,17 @@
             ?? $media[0];
   } else {
     // fallback single file (legacy)
-    $url     = $item['file_url'] ?? null;
-    $mime    = $item['file_mime'] ?? null;
+    $url = $item['file_url'] ?? null;
+    $mime = $item['file_mime'] ?? null;
     $isImage = $url && preg_match('/\.(png|jpe?g|gif|webp)$/i', $url);
     if ($url) {
       $primary = [
-        'url'        => $url,
-        'mime'       => $mime ?: ($isImage ? 'image/*' : 'application/octet-stream'),
-        'is_image'   => (bool) $isImage,
-        'is_primary' => true,
-        'filename'   => basename(parse_url($url, PHP_URL_PATH) ?: 'file'),
+        'url'       => $url,
+        'mime'      => $mime ?: ($isImage ? 'image/*' : 'application/octet-stream'),
+        'is_image'  => (bool) $isImage,
+        'is_primary'=> true,
       ];
-      $media = [$primary];
+      $media = [$primary]; // supaya galeri tetap jalan
     }
   }
 
@@ -66,13 +65,12 @@
         <button id="btnCopy" class="px-3 py-2 rounded-md bg-maroon text-white hover:bg-maroon-800 text-sm">
           Salin Link
         </button>
-
-          @if(!empty($media) && count(collect($media)->where('is_image', true)) > 0)
-            <a href="{{ route('sigap-kinerja.download-images', $item['id']) }}"
-              class="px-3 py-2 rounded-md border border-gray-300 hover:bg-gray-50 text-sm">
-              Download Semua Gambar
-            </a>
-          @endif
+        @if(!empty($primary['url']))
+          <a href="{{ $primary['url'] }}" target="_blank"
+            class="px-3 py-2 rounded-md border border-gray-300 hover:bg-gray-50 text-sm">
+            Buka File
+          </a>
+        @endif
       </div>
     </div>
 
@@ -97,13 +95,6 @@
               <path stroke-width="2" d="M14 2v6h6"/>
             </svg>
             Buka Berkas
-          </a>
-          <a href="{{ $primary['url'] }}" download="{{ $primary['filename'] ?? 'unduh' }}"
-             class="ml-2 inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path stroke-width="2" d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/>
-            </svg>
-            Download
           </a>
         </div>
       @else
@@ -140,39 +131,23 @@
           <h3 class="text-sm font-semibold text-gray-700 mb-2">Media Lainnya</h3>
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             @foreach($media as $m)
-              @php
-                $isImg = !empty($m['is_image']);
-                $fn    = $m['filename'] ?? 'unduh';
-              @endphp
-
-              <div class="relative group">
-                @if($isImg)
-                  <a href="{{ $m['url'] }}" target="_blank"
-                     class="block border rounded-lg overflow-hidden">
-                    <img src="{{ $m['url'] }}" alt="media"
-                         class="w-full h-36 object-cover group-hover:opacity-90">
-                  </a>
-                @else
-                  <a href="{{ $m['url'] }}" target="_blank"
-                     class="flex items-center gap-2 px-3 py-2 border rounded-lg hover:bg-gray-50">
-                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                      <path stroke-width="2" d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/>
-                      <path stroke-width="2" d="M14 2v6h6"/>
-                    </svg>
-                    <span class="text-xs truncate">Berkas</span>
-                  </a>
-                @endif
-
-                {{-- tombol download pojok kanan atas thumbnail --}}
-                <a href="{{ $m['url'] }}" download="{{ $fn }}"
-                   class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition
-                          inline-flex items-center justify-center w-8 h-8 rounded-md
-                          bg-white/90 border border-gray-300 shadow">
-                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path stroke-width="2" d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/>
-                  </svg>
+              @php $isImg = !empty($m['is_image']); @endphp
+              @if($isImg)
+                <a href="{{ $m['url'] }}" target="_blank"
+                   class="block border rounded-lg overflow-hidden group">
+                  <img src="{{ $m['url'] }}" alt="media"
+                       class="w-full h-36 object-cover group-hover:opacity-90">
                 </a>
-              </div>
+              @else
+                <a href="{{ $m['url'] }}" target="_blank"
+                   class="flex items-center gap-2 px-3 py-2 border rounded-lg hover:bg-gray-50">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-width="2" d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/>
+                    <path stroke-width="2" d="M14 2v6h6"/>
+                  </svg>
+                  <span class="text-xs truncate">Berkas</span>
+                </a>
+              @endif
             @endforeach
           </div>
         </div>
@@ -188,14 +163,8 @@
         </button>
         @if(!empty($primary['url']))
           <a href="{{ $primary['url'] }}" target="_blank"
-             class="px-3 py-2 rounded-md border border-gray-300 hover:bg-gray-50 text-sm">
-            Buka File
-          </a>
-        @endif
-        @if(!empty($media) && count(collect($media)->where('is_image', true)) > 0)
-          <a href="{{ route('sigap-kinerja.download-images', $item['id']) }}"
             class="px-3 py-2 rounded-md border border-gray-300 hover:bg-gray-50 text-sm">
-            Download Semua Gambar
+            Buka File
           </a>
         @endif
       </div>

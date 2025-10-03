@@ -17,4 +17,10 @@ class Kinerja extends Model
     protected $casts = [
         'activity_date' => 'date',
     ];
+
+    public function media()
+    {
+        return $this->hasMany(\App\Models\KinerjaMedia::class);
+    }
+
 }

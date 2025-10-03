@@ -184,6 +184,10 @@ Route::post('/sigap-kinerja', [SigapKinerjaController::class, 'store'])->name('s
 Route::get('/sigap-kinerja/p/{id}', [SigapKinerjaController::class, 'publicShow'])->name('sigap-kinerja.public');
 
 Route::get('/kinerja/y/{year}', [SigapKinerjaController::class, 'annualPublic'])->name('sigap-kinerja.annual-public');
+Route::get('/sigap-kinerja/p/{id}/download-images', [SigapKinerjaController::class, 'downloadImages'])
+    ->name('sigap-kinerja.download-images');
+Route::delete('/sigap-kinerja/{id}', [SigapKinerjaController::class, 'destroy'])->middleware('role:admin')
+    ->name('sigap-kinerja.destroy');
 
 
 Route::get('/sigap-format', [FormatController::class, 'index'])->name('sigap-format.index');

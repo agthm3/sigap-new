@@ -240,6 +240,13 @@
                   onclick="copyLink(@js(route('sigap-kinerja.public', $it['id'])))">
             Salin Link
           </button>
+            @if($isAdminDemo)
+              <button type="button"
+                      class="col-span-1 px-3 py-2 rounded-md border border-red-300 text-red-700 hover:bg-red-50 text-sm"
+                      onclick="confirmHapus({{ $it['id'] }}, @js($it['title']))">
+                Hapus
+              </button>
+            @endif
         </div>
       </article>
     @empty
@@ -333,17 +340,23 @@
         <div class="sm:col-span-2 grid sm:grid-cols-2 gap-4">
           <label class="block">
             <span class="text-sm font-semibold text-gray-700">File Bukti</span>
-            <input name="file" type="file" accept=".jpg,.jpeg,.png,.pdf" required
-                   class="mt-1.5 w-full rounded border border-gray-300 p-2 focus:border-maroon focus:ring-maroon">
-            <p class="text-[12px] text-gray-500 mt-1">Jika foto (jpg/png), otomatis jadi thumbnail.</p>
+            <input name="files[]" type="file" multiple
+                  accept=".jpg,.jpeg,.png,.webp,.pdf"
+                  class="mt-1.5 w-full rounded border border-gray-300 p-2 focus:border-maroon focus:ring-maroon" required>
+            <p class="text-[12px] text-gray-500 mt-1">
+              Kamu bisa unggah beberapa foto/PDF sekaligus. Foto akan dikompres otomatis.
+            </p>
           </label>
           <label class="block">
             <span class="text-sm font-semibold text-gray-700">Thumbnail (opsional)</span>
-            <input name="thumb" type="file" accept=".jpg,.jpeg,.png"
-                   class="mt-1.5 w-full rounded border border-gray-300 p-2 focus:border-maroon focus:ring-maroon">
-            <p class="text-[12px] text-gray-500 mt-1">Kosongkan jika file bukti berupa foto.</p>
+            <input name="thumb" type="file" accept=".jpg,.jpeg,.png,.webp"
+                  class="mt-1.5 w-full rounded border border-gray-300 p-2 focus:border-maroon focus:ring-maroon">
+            <p class="text-[12px] text-gray-500 mt-1">
+              Hanya diperlukan jika semua file bukan gambar.
+            </p>
           </label>
         </div>
+
 
         <label class="block">
           <span class="text-sm font-semibold text-gray-700">Tanggal Kegiatan</span>
@@ -382,6 +395,37 @@
 @endpush
 
 @push('scripts')
+@if($isAdminDemo)
+  {{-- form delete tersembunyi --}}
+  <form id="formDeleteKinerja" method="POST" class="hidden">
+    @csrf
+    @method('DELETE')
+  </form>
+@endif
+<script>
+  @if($isAdminDemo)
+  const DELETE_BASE = @js(route('sigap-kinerja.destroy', ['id' => '__ID__']));
+
+  function confirmHapus(id, title){
+    Swal.fire({
+      icon: 'warning',
+      title: 'Hapus bukti ini?',
+      html: `<div class="text-left"><b>${title || 'Tanpa judul'}</b><br><span class="text-xs text-gray-500">Tindakan ini tidak bisa dibatalkan.</span></div>`,
+      showCancelButton: true,
+      confirmButtonText: 'Ya, hapus',
+      cancelButtonText: 'Batal',
+      confirmButtonColor: '#7a2222'
+    }).then(res => {
+      if(res.isConfirmed){
+        const form = document.getElementById('formDeleteKinerja');
+        form.action = DELETE_BASE.replace('__ID__', id);
+        form.submit();
+      }
+    });
+  }
+  @endif
+</script>
+
 <script>
   // ====== Reusable combobox Alpine component (searchable) ======
   // props: name, options(map {code:label}), initial, placeholder, disabled

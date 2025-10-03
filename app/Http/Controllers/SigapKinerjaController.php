@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Repositories\KinerjaRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
+use ZipArchive; 
 
 class SigapKinerjaController extends Controller
 {
@@ -81,26 +83,44 @@ class SigapKinerjaController extends Controller
         $cats = config('kinerja.categories', []);
         $catCodes = array_keys($cats);
 
-        $data = $request->validate([
-            'category'    => ['required', 'in:'.implode(',', $catCodes)], // kode kategori
-            'rhk'         => ['nullable', 'string'],                      // kode rhk (nanti divalidasi cross-field)
+        // Bisa kirim lewat "files[]" (multi) atau "file" (legacy)
+        $rules = [
+            'category'    => ['required', 'in:'.implode(',', $catCodes)],
+            'rhk'         => ['nullable', 'string'],
             'title'       => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'date'        => ['required', 'date'],        // Y-m-d
-            'file'        => ['required', 'file', 'max:10240'], // 10MB
-            'thumb'       => ['nullable', 'image', 'max:4096'], // 4MB
-        ]);
+            'date'        => ['required', 'date'],
+            'thumb'       => ['nullable', 'image', 'max:4096'],
+        ];
 
-        // Validasi silang: rhk (jika ada) harus terdaftar di kategori terpilih
+        if ($request->hasFile('files')) {
+            $rules['files']   = ['required','array','min:1'];
+            $rules['files.*'] = ['file','max:10240','mimes:jpg,jpeg,png,webp,pdf'];
+        } else {
+            $rules['file'] = ['required','file','max:10240','mimes:jpg,jpeg,png,webp,pdf'];
+        }
+
+        $data = $request->validate($rules);
+
+        // Validasi silang RHK
         if (!empty($data['rhk'])) {
             $rhkCodes = array_keys($cats[$data['category']]['rhks'] ?? []);
             abort_unless(in_array($data['rhk'], $rhkCodes, true), 422, 'RHK tidak valid untuk kategori terpilih.');
         }
 
-        $file  = $request->file('file');   /** @var \Illuminate\Http\UploadedFile $file */
-        $thumb = $request->file('thumb');  /** @var \Illuminate\Http\UploadedFile|null $thumb */
+        // Kumpulkan files[]
+        $files = [];
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $f) {
+                if ($f instanceof \Illuminate\Http\UploadedFile) $files[] = $f;
+            }
+        } else {
+            $files[] = $request->file('file');
+        }
 
-        $this->repo->create($data, $file, $thumb);
+        $thumb = $request->file('thumb');
+
+        $this->repo->create($data, $files, $thumb);
 
         return back()->with('success', 'Bukti kinerja berhasil diunggah.');
     }
@@ -108,13 +128,32 @@ class SigapKinerjaController extends Controller
     /**
      * SHOW PUBLIK — preview per item (dipakai tombol “Lihat” & untuk share)
      */
-    public function publicShow(int $id)
+   public function publicShow(int $id)
     {
         $cats = config('kinerja.categories', []);
         $m = $this->repo->findOrFail($id);
 
         $catLabel = $cats[$m->category]['label'] ?? $m->category;
         $rhkLabel = $cats[$m->category]['rhks'][$m->rhk] ?? $m->rhk;
+
+        // ==== ambil semua media (jika ada tabel kinerja_media) ====
+        $media = [];
+        if (method_exists($m, 'media')) {
+            $media = $m->media()
+                ->orderByDesc('is_primary')
+                ->oldest()
+                ->get()
+                ->map(function($mm){
+                    $url = $this->repo->fileUrl($mm->path);
+                    return [
+                        'url'        => $url,
+                        'mime'       => $mm->mime,
+                        'is_image'   => (bool) $mm->is_image,
+                        'is_primary' => (bool) $mm->is_primary,
+                        'filename'   => basename($mm->path),
+                    ];
+                })->values()->all();
+        }
 
         $item = [
             'id'          => $m->id,
@@ -123,13 +162,72 @@ class SigapKinerjaController extends Controller
             'rhk'         => $rhkLabel,
             'description' => $m->description,
             'date'        => optional($m->activity_date)->toDateString(),
+
+            // legacy single file (tetap dikirim agar kompatibel)
             'file_url'    => $this->repo->fileUrl($m->file_path),
-            'thumb_url'   => $this->repo->fileUrl($m->thumb_path),
-            'public_url'  => route('sigap-kinerja.public', $m->id),
             'file_mime'   => $m->file_mime,
+
+            'thumb_url'   => $this->repo->fileUrl($m->thumb_path),
+
+            // media multiple
+            'media'       => $media,
+
+            'public_url'  => route('sigap-kinerja.public', $m->id),
         ];
 
         return view('kinerja.show', compact('item'));
+    }
+    public function downloadImages(int $id)
+    {
+        $m = $this->repo->findOrFail($id);
+
+        // Kumpulkan path gambar dari tabel media (kalau ada),
+        // fallback ke file utama jika dia gambar.
+        $images = [];
+
+        if (method_exists($m, 'media')) {
+            foreach ($m->media()->where('is_image', true)->get() as $mm) {
+                $images[] = $mm->path; // path relatif di disk 'public'
+            }
+        }
+
+        // fallback legacy: kalau media kosong tapi file_path adalah gambar
+        if (empty($images) && $m->file_mime && str_starts_with(strtolower($m->file_mime), 'image/')) {
+            $images[] = $m->file_path;
+        }
+
+        if (empty($images)) {
+            return back()->with('error', 'Tidak ada gambar untuk diunduh.');
+        }
+
+        // Siapkan ZIP sementara
+        $safeTitle = Str::slug($m->title ?: 'kinerja');
+        $zipName   = $safeTitle.'-images-'.now()->format('Ymd_His').'.zip';
+        $tmpDir    = storage_path('app/tmp');
+        if (!is_dir($tmpDir)) @mkdir($tmpDir, 0775, true);
+        $zipPath   = $tmpDir.DIRECTORY_SEPARATOR.$zipName;
+
+        $zip = new ZipArchive;
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            return back()->with('error', 'Gagal membuat arsip ZIP.');
+        }
+
+        // Tambahkan file gambar ke ZIP
+        foreach ($images as $index => $relPath) {
+            $absPath = \Storage::disk('public')->path($relPath);
+            if (!is_file($absPath)) continue;
+
+            // Nama file dalam ZIP
+            $basename = basename($relPath);
+            // Hindari duplikat nama
+            $entryName = sprintf('%02d-%s', $index+1, $basename);
+
+            $zip->addFile($absPath, $entryName);
+        }
+
+        $zip->close();
+
+        return response()->download($zipPath, $zipName)->deleteFileAfterSend(true);
     }
 
     /**
@@ -199,5 +297,15 @@ class SigapKinerjaController extends Controller
         }
 
         return view('kinerja.annual_public', compact('items', 'meta', 'year'));
+    }
+    public function destroy(int $id, Request $request)
+    {
+        $u = auth()->user();
+        $isAdmin = $u && method_exists($u, 'hasRole') ? $u->hasRole('admin') : false;
+        abort_unless($isAdmin, 403, 'Unauthorized');
+
+        $this->repo->delete($id);
+
+        return back()->with('success', 'Bukti kinerja berhasil dihapus.');
     }
 }
