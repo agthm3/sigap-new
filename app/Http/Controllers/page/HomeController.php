@@ -20,6 +20,7 @@ class HomeController extends Controller
 
   public function show(Request $request)
     {
+        // dd($request->all());
         // Ambil filter dari request
         $filters = $request->only(['q', 'category', 'stakeholder', 'year', 'sort']);
 
@@ -28,6 +29,7 @@ class HomeController extends Controller
 
         $perPage = 10;
         $documents = $this->documentRepository->paginate($filters, $perPage);
+        // dd($documents);
 
         return view('SigapDokumen.home.show', compact('documents'));
     }

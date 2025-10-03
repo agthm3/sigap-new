@@ -44,7 +44,7 @@
             @php $encoded = urlencode($previewUrl); @endphp
             <iframe src="https://view.officeapps.live.com/op/embed.aspx?src={{ $encoded }}" class="w-full h-full bg-white" frameborder="0"></iframe>
             <div class="px-4 py-2 text-xs text-gray-500 bg-white">
-              Jika pratinjau tidak tampil, kemungkinan file tidak publik. Silakan unduh langsung.
+              Jika pratinjau tidak tampil, kemungkinan file bukan dalam format PDF atau tidak publik. Silakan unduh langsung.
             </div>
           @else
             <div class="w-full h-full flex items-center justify-center">

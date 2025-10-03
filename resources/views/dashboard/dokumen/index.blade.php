@@ -53,7 +53,7 @@
           <label class="text-sm font-semibold text-gray-700">Tahun</label>
           <select name="year" id="f_th" class="mt-1.5 w-full rounded border border-black-300 p-2 focus:border-maroon focus:ring-maroon">
             <option value="">Semua</option>
-            @for ($y = now()->year; $y>= now()->year-5; $y--) 
+            @for ($y = now()->year; $y>= now()->year-10; $y--) 
               <option value="{{ $y }}" @selected(request('year') == $y)>{{ $y }}</option>
             @endfor
           </select>
@@ -222,6 +222,12 @@
               <option value="2025">2025</option>
               <option value="2024">2024</option>
               <option value="2023">2023</option>
+              <option value="2023">2022</option>
+              <option value="2023">2021</option>
+              <option value="2023">2020</option>
+              <option value="2023">2019</option>
+              <option value="2023">2018</option>
+              <option value="2023">2017</option>
             </select>
           </label>
 

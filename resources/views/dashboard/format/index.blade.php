@@ -32,7 +32,7 @@
         <select name="category" class="mt-1 w-full rounded-lg border border-gray-300 p-2 focus:border-maroon">
           @php $cat=$filters['category']??''; @endphp
           <option value="">Semua</option>
-          @foreach(['Surat','Nota Dinas','Laporan','Kop Surat','Stempel/TTD', 'kentut Test'] as $o)
+          @foreach(['Surat','Nota Dinas','Laporan','Kop Surat','Stempel/TTD', 'Lainnya'] as $o)
             <option value="{{ $o }}" @selected($cat===$o)>{{ $o }}</option>
           @endforeach
         </select>

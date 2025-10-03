@@ -76,7 +76,7 @@
                     {{ $preInfo }}
                   </span>
                   <span class="weightTag text-xs px-2 py-0.5 rounded bg-maroon/10 text-maroon font-semibold">
-                    Bobot: {{ $preBobot }}
+                    Skor: {{ $preBobot }}
                   </span>
                   <svg class="chev w-4 h-4 text-gray-400 transition-transform"
                        viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -192,21 +192,29 @@
 
 @push('scripts')
 <script>
+    const MULTIPLIER = {
+    1:3, 2:2, 3:2, 4:1, 5:2,
+    6:1, 7:1, 8:1, 9:1, 10:1,
+    11:1, 12:2, 13:2, 14:3, 15:2,
+    16:3, 17:2, 18:1, 19:2, 20:4
+  };
   // Hitung total bobot + indikator terisi secara lokal (tanpa API)
-  function recompute() {
+ function recompute() {
     let total = 0, done = 0;
 
     document.querySelectorAll('select.paramSelect').forEach(sel => {
-      const opt = sel.selectedOptions[0];
-      const weight = opt ? parseInt(opt.dataset.weight || '0', 10) : 0;
+      const opt    = sel.selectedOptions[0];
+      const raw    = opt ? parseInt(opt.dataset.weight || '0', 10) : 0; // bobot dasar (1/2/3/...)
       const label  = opt ? (opt.dataset.label || '') : '';
+      const no     = parseInt(sel.dataset.no || '0', 10);
+      const mult   = MULTIPLIER[no] || 1;
+      const score  = raw * mult; // skor akhir = raw × multiplier
 
       // set hidden fallback (kalau backend butuh)
-      const no = sel.dataset.no;
       const hiddenLabel  = document.querySelector(`input[name="parameter_label[${no}]"]`);
       const hiddenWeight = document.querySelector(`input[name="parameter_weight[${no}]"]`);
       if (hiddenLabel)  hiddenLabel.value  = label || '';
-      if (hiddenWeight) hiddenWeight.value = String(weight || 0);
+      if (hiddenWeight) hiddenWeight.value = String(raw || 0); // tetap raw yg disubmit (server akan kalikan)
 
       const wrap = sel.closest('details');
       const infoTag   = wrap.querySelector('.infoTag');
@@ -215,15 +223,15 @@
       infoTag.textContent   = label || '—';
       infoTag.className = 'infoTag text-xs px-2 py-0.5 rounded ' + (
         !opt || !sel.value ? 'bg-gray-100 text-gray-700' :
-        weight >= 10 ? 'bg-emerald-50 text-emerald-700' :
-        weight >= 6  ? 'bg-blue-50 text-blue-700' :
-        weight >  0  ? 'bg-amber-50 text-amber-700' :
-                       'bg-gray-100 text-gray-700'
+        score >= 20 ? 'bg-emerald-50 text-emerald-700' :
+        score >= 10 ? 'bg-blue-50 text-blue-700' :
+        score >   0 ? 'bg-amber-50 text-amber-700' :
+                      'bg-gray-100 text-gray-700'
       );
-      weightTag.textContent = 'Bobot: ' + (weight || 0);
+      weightTag.textContent = 'Skor: ' + (score || 0);
 
       if (sel.value) done++;
-      total += (weight || 0);
+      total += (score || 0);
     });
 
     document.getElementById('totalBobot').textContent = String(total);

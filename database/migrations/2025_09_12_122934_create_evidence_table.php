@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('indikator', 191);                        // snapshot judul indikator (stabil)
 
             // pilihan parameter yang dipilih user (snapshot)
-            $table->string('parameter_label', 191)->nullable();
+            $table->text('parameter_label')->nullable();
             $table->integer('parameter_weight')->default(0);
 
             // isian tambahan

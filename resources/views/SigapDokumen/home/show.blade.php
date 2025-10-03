@@ -17,6 +17,7 @@
             <option value="Laporan" @selected(request('category')==='Laporan')>Laporan</option>
             <option value="Formulir" @selected(request('category')==='Formulir')>Formulir</option>
             <option value="Privasi" @selected(request('category')==='Privasi')>Privasi (KK/KTP)</option>
+            <option value="Dokumen" @selected(request('category')==='Dokumen')>Dokumen</option>
           </select>
         </div>
         <div>
@@ -27,7 +28,7 @@
           <label class="text-sm font-semibold text-gray-700">Tahun</label>
           <select name="year" class="mt-1.5 w-full rounded-lg p-2 border border-gray-300 focus:border-maroon focus:ring-maroon">
             <option value="">Semua</option>
-            @for($y = now()->year; $y >= now()->year-5; $y--)
+            @for($y = now()->year; $y >= now()->year-10; $y--)
               <option value="{{ $y }}" @selected(request('year')==$y)>{{ $y }}</option>
             @endfor
           </select>

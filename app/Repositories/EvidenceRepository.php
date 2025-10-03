@@ -16,6 +16,21 @@ class EvidenceRepository
      * Ambil 20 indikator (template) lengkap dengan parameter + merge isian inovasi (jika ada).
      * Return: collection 20 item terurut no=1..20.
      */
+    private function evidenceMultipliers(): array
+    {
+        return [
+            1=>3, 2=>2, 3=>2, 4=>1, 5=>2,
+            6=>1, 7=>1, 8=>1, 9=>1, 10=>1,
+            11=>1, 12=>2, 13=>2, 14=>3, 15=>2,
+            16=>3, 17=>2, 18=>1, 19=>2, 20=>4,
+        ];
+    }
+
+    private function weightedScoreFor(int $no, int $rawWeight): int
+    {
+        $mult = $this->evidenceMultipliers()[$no] ?? 1;
+        return $rawWeight * $mult;
+    }
     public function listForInovasi(int $inovasiId): array
     {
         $templates = EvidenceTemplate::with(['params' => function($q){
@@ -140,6 +155,16 @@ class EvidenceRepository
      */
     public function totalWeight(int $inovasiId): int
     {
-        return (int) Evidence::where('inovasi_id', $inovasiId)->sum('parameter_weight');
+        $rows = \App\Models\Evidence::where('inovasi_id', $inovasiId)
+            ->get(['no','parameter_weight']);
+
+        $total = 0;
+        foreach ($rows as $r) {
+            $no = (int) $r->no;
+            $w  = (int) $r->parameter_weight;
+            $total += $this->weightedScoreFor($no, $w);
+        }
+        return (int) $total;
     }
+
 }

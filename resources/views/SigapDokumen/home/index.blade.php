@@ -56,7 +56,7 @@
               </label>
             </div>
 
-            <div class="flex flex-wrap items-center gap-3 pt-2">
+            <div class="flex flex-wrap items-center  Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.gap-3 pt-2">
               <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 transition"> Cari Dokumen</button>
               <a href="{{ route('home.show') }}" class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">Reset</a>
             </div>
@@ -136,7 +136,7 @@
     </div>
     <div class="aspect-w-16 aspect-h-9">
       <iframe class="w-full h-[315px] sm:h-[450px] rounded-xl shadow-lg"
-        src="https://www.youtube.com/embed/VIDEO_ID" 
+        src="https://www.youtube.com/embed/DOUC9yEuskg?si=5EqoL-9pVV5XVCsn" 
         title="Penjelasan SIGAP BRIDA" 
         frameborder="0" 
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
@@ -615,3 +615,4 @@
     });
   });
 </script>
+
