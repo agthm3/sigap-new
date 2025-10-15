@@ -75,11 +75,11 @@
 
         <div class="grid sm:grid-cols-2 gap-4">
           <label class="block">
-            <span class="text-sm font-semibold text-gray-700">NIP (opsional)</span>
+            <span class="text-sm font-semibold text-gray-700">NIP (Wajib)</span>
             <input name="nip" id="nip" type="text"
                    value="{{ old('nip') }}"
                    class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon"
-                   placeholder="19910505 201501 1 010">
+                   placeholder="19910505 201501 1 010" required>
           </label>
           <label class="block">
             <span class="text-sm font-semibold text-gray-700">Unit</span>

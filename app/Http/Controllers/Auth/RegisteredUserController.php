@@ -76,7 +76,7 @@ class RegisteredUserController extends Controller
             'name'     => ['required','string','max:255'],
             'email'    => ['required','string','lowercase','email','max:255','unique:users,email'],
             'username' => ['nullable','string','max:50','unique:users,username'],
-            'nip'      => ['nullable','string','max:50'],
+            'nip'      => ['required','string','max:50'],
             'unit'     => ['nullable','string','max:100'],
             'status'   => ['nullable','in:active,inactive'],
             'password' => ['nullable','confirmed', Rules\Password::defaults()],
