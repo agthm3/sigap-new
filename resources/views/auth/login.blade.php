@@ -28,7 +28,7 @@
   <!-- Navbar mini -->
   <header class="border-b border-maroon/10 bg-white">
     <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-      <a href="index.html" class="flex items-center gap-3">
+      <a href="{{ route('home') }}" class="flex items-center gap-3">
         <span class="inline-flex h-9 w-9 items-center justify-center rounded-md bg-maroon text-white font-extrabold">SB</span>
         <div>
           <p class="text-sm font-semibold text-maroon leading-4">SIGAP BRIDA</p>

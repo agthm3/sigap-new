@@ -21,6 +21,7 @@ use App\Http\Controllers\PegawaiPublicController;
 use App\Http\Controllers\PersonalDocumentController;
 use App\Http\Controllers\RewardController;
 use App\Http\Controllers\RisetController;
+use App\Http\Controllers\SigapAgendaController;
 use App\Http\Controllers\SigapAutoController;
 use App\Http\Controllers\SigapFormatController;
 use App\Http\Controllers\SigapKinerjaController;
@@ -225,3 +226,24 @@ Route::get('/reward', [RewardController::class, 'index'])->name('reward.index');
 
 
 Route::get('/sigap-auto', [SigapAutoController::class, 'index'])->name('sigap-auto.index');
+
+
+
+Route::get('/agenda', [SigapAgendaController::class, 'publicIndex'])->name('agenda.public-index');
+
+Route::middleware('auth','role:user|admin|verificator')->group(function () {
+    Route::get('/sigap-agenda',            [SigapAgendaController::class, 'index'])->name('sigap-agenda.index');
+    Route::get('/sigap-agenda/create',     [SigapAgendaController::class, 'create'])->name('sigap-agenda.create');
+    Route::post('/sigap-agenda/store',     [SigapAgendaController::class, 'store'])->name('sigap-agenda.store');
+
+    Route::get('/sigap-agenda/edit',       [SigapAgendaController::class, 'edit'])->name('sigap-agenda.edit');      // ?id=123
+    Route::post('/sigap-agenda/update',    [SigapAgendaController::class, 'update'])->name('sigap-agenda.update');  // POST
+    Route::post('/sigap-agenda/delete', [SigapAgendaController::class, 'delete'])->name('sigap-agenda.delete');
+});
+
+// (opsional) jika masih butuh JSON show:
+Route::get('/sigap-agenda/show',       [SigapAgendaController::class, 'show'])->name('sigap-agenda.show');     
+
+// routes/web.php
+Route::post('/sigap-agenda/share-image', [SigapAgendaController::class, 'shareImageGD'])
+    ->name('sigap-agenda.share-image');

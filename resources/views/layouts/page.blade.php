@@ -87,6 +87,7 @@
             <li><a href="{{ route('sigap-inovasi.home') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Inovasi</a></li>
             <li><a href="{{ route('sigap-riset.index') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Riset</a></li>
             <li><a href="{{ route('sigap-kinerja.index') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Kinerja</a></li>
+            <li><a href="{{ route('sigap-agenda.index') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Agenda</a></li>
           </ul>
         </div>
       </div>
@@ -149,6 +150,7 @@
             <li><a href="{{ route('sigap-inovasi.home') }}" class="block px-4 py-2 hover:bg-gray-50">SIGAP Inovasi</a></li>
             <li><a href="{{ route('sigap-riset.index') }}" class="block px-4 py-2 hover:bg-gray-50">SIGAP Riset</a></li>
             <li><a href="{{ route('sigap-kinerja.index') }}" class="block px-4 py-2 hover:bg-gray-50">SIGAP Kinerja</a></li>
+            <li><a href="{{ route('sigap-agenda.index') }}" class="block px-4 py-2 hover:bg-gray-50">SIGAP Agenda</a></li>
           </ul>
         </div>
       </div>
