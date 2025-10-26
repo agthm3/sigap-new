@@ -48,7 +48,21 @@
                   </div>
                 @endif
                 <div>
-                  <div class="font-semibold text-gray-900">{{ $r->title }}</div>
+                  @php
+                  $isPolicyBrief = isset($r->category) && $r->category === 'policy_brief';
+                @endphp
+
+                <div class="font-semibold text-gray-900 flex items-center flex-wrap gap-1">
+                  <span>{{ $r->title }}</span>
+
+                  @if ($isPolicyBrief)
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium
+                                bg-yellow-50 border border-yellow-200 text-yellow-700">
+                      Policy Brief
+                    </span>
+                  @endif
+                </div>
+
                   <div class="text-xs text-gray-500">
                     @php
                       $authors = is_array($r->authors) ? $r->authors : [];

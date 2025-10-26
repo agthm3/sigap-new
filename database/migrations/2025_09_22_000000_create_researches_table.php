@@ -12,7 +12,8 @@ return new class extends Migration {
             $table->string('title');
             $table->unsignedSmallInteger('year');
             $table->enum('type', ['internal','kolaborasi','eksternal'])->nullable();
-
+            $table->string('category', 50)->nullable();
+            $table->string('youtube_url', 255)->nullable();
             $table->text('abstract');
             $table->string('method', 1000)->nullable();
 
@@ -44,6 +45,7 @@ return new class extends Migration {
             $table->unsignedInteger('stats_downloads')->default(0);
 
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+ 
 
             $table->timestamps();
         });

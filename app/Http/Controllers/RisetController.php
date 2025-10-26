@@ -78,6 +78,8 @@ class RisetController extends Controller
             'datasets'                  => 'nullable|array',
             'datasets.*.label'          => 'nullable|string|max:255',
             'datasets.*.file'           => 'nullable|file|max:20480', // 20MB masing-masing
+            'category'    => 'nullable|string|max:50',
+            'youtube_url' => 'nullable|url|max:255',
         ], [
             'authors.required' => 'Minimal satu penulis.',
             'authors.*.name.required' => 'Nama penulis wajib diisi.',
@@ -149,6 +151,8 @@ class RisetController extends Controller
 
             'datasets'      => $datasets,
             'created_by'    => $request->user()?->id,
+            'category'      => $data['category'] ?? null,   
+            'youtube_url'   => $data['youtube_url'] ?? null,
         ];
 
         $this->repo->create($payload);
@@ -236,6 +240,8 @@ class RisetController extends Controller
             'datasets_new'                      => 'nullable|array',
             'datasets_new.*.label'              => 'nullable|string|max:255',
             'datasets_new.*.file'               => 'nullable|file|max:20480',
+            'category'    => 'nullable|string|max:50',
+            'youtube_url' => 'nullable|url|max:255',
         ], [
             'authors.required' => 'Minimal satu penulis.',
             'authors.*.name.required' => 'Nama penulis wajib diisi.',
@@ -346,6 +352,8 @@ class RisetController extends Controller
             'thumbnail_path'=> $thumbPath,
 
             'datasets'      => $currentDatasets,
+            'category'      => $data['category'] ?? null,
+            'youtube_url'   => $data['youtube_url'] ?? null,
         ];
 
         $this->repo->update($id, $payload);

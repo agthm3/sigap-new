@@ -93,6 +93,35 @@
           </div>
         </div>
       </div>
+            <!-- Policy Brief (opsional) -->
+      <div class="rounded-xl bg-white border border-gray-200 p-4 sm:p-5">
+        <h3 class="text-sm font-semibold text-maroon">Policy Brief (opsional)</h3>
+
+        <div class="mt-4 grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="text-xs font-semibold text-gray-700">Kategori Konten</label>
+            <select id="f_category" name="category"
+              class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:ring-maroon focus:border-maroon">
+              <option value="">Bukan Policy Brief</option>
+              <option value="policy_brief">Policy Brief</option>
+            </select>
+            <p class="text-[11px] text-gray-500 mt-1">
+              Pilih <span class="font-semibold text-maroon">Policy Brief</span> jika ini produk ringkas kebijakan.
+            </p>
+          </div>
+
+          <div id="youtubeWrap" class="sm:col-span-2 hidden">
+            <label class="text-xs font-semibold text-gray-700">Link YouTube Policy Brief</label>
+            <input id="f_youtube" name="youtube_url" type="url"
+                   placeholder="https://www.youtube.com/watch?v=xxxx"
+                   class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:ring-maroon focus:border-maroon">
+            <p class="text-[11px] text-gray-500 mt-1">
+              Link video penjelasan policy brief. Akan dipakai sebagai embed di halaman publik.
+            </p>
+          </div>
+        </div>
+      </div>
+
 
       <!-- Penulis (repeater) -->
       <div class="rounded-xl bg-white border border-gray-200 p-4 sm:p-5">
@@ -361,7 +390,17 @@
         chkAbstrak = $('#chkAbstrak'), chkPenulis = $('#chkPenulis'), chkPdf = $('#chkPdf');
 
   // inputs utama
-  const fTitle = $('#f_title'), fYear = $('#f_year'), fAbstract = $('#f_abstract');
+  // const fTitle = $('#f_title'), fYear = $('#f_year'), fAbstract = $('#f_abstract');
+  // inputs utama
+  const fTitle = $('#f_title'),
+        fYear = $('#f_year'),
+        fAbstract = $('#f_abstract');
+
+  // policy brief
+  const fCategory   = $('#f_category');
+  const youtubeWrap = $('#youtubeWrap');
+  const fYoutube    = $('#f_youtube');
+
 
   // PDF
   const inpPdf = $('#inpPdf'), pdfNameHelp = $('#pdfNameHelp');
@@ -517,7 +556,20 @@
   }
   accessRadios.forEach(r => r.addEventListener('change', updateAccessVisibility));
   updateAccessVisibility();
+ function updatePolicyBriefVisibility() {
+    const val = fCategory.value;
+    const isPB = (val === 'policy_brief');
 
+    youtubeWrap.classList.toggle('hidden', !isPB);
+
+    if (!isPB) {
+      // kalau bukan policy brief, kosongkan youtube_url biar ga nyasar
+      fYoutube.value = '';
+    }
+  }
+
+  fCategory && fCategory.addEventListener('change', updatePolicyBriefVisibility);
+  updatePolicyBriefVisibility();
   // ===== PDF name & checklist =====
   inpPdf.addEventListener('change', () => {
     pdfNameHelp.textContent = inpPdf.files?.[0]?.name || 'Maks. 20MB. Format PDF.';

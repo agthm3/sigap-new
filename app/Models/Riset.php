@@ -17,7 +17,8 @@ class Riset extends Model
         'file_path','file_name','file_size','thumbnail_path',
         'datasets',
         'stats_views','stats_downloads',
-        'created_by',
+        'created_by', 'category',
+        'youtube_url',
     ];
 
     protected $casts = [

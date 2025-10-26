@@ -67,7 +67,78 @@
     <div class="grid lg:grid-cols-3 gap-6">
 
       {{-- KONTEN UTAMA --}}
+      @php
+        $isPolicyBrief = isset($research->category) && $research->category === 'policy_brief';
+        $hasYoutube    = $isPolicyBrief && !empty($research->youtube_url);
+
+        // extract video id dari youtube_url secara sederhana
+        // kita coba ambil parameter v=... atau path /embed/... atau youtu.be/...
+        $youtubeId = null;
+        if (!empty($research->youtube_url)) {
+            $urlRaw = $research->youtube_url;
+            // pola umum ?v=XXXXXXXX
+            if (preg_match('/[?&]v=([^&]+)/', $urlRaw, $m)) {
+                $youtubeId = $m[1];
+            }
+            // pola youtu.be/XXXXXXXX
+            elseif (preg_match('#youtu\.be/([^?&/]+)#', $urlRaw, $m)) {
+                $youtubeId = $m[1];
+            }
+            // pola /embed/XXXXXXXX
+            elseif (preg_match('#/embed/([^?&/]+)#', $urlRaw, $m)) {
+                $youtubeId = $m[1];
+            }
+        }
+
+        // siapkan embed src kalau ada id
+        $youtubeEmbedSrc = $youtubeId
+          ? 'https://www.youtube.com/embed/'.$youtubeId.'?autoplay=1&mute=1&rel=0&modestbranding=1'
+          : null;
+      @endphp
+
       <div class="lg:col-span-2 space-y-6">
+
+        {{-- BLOK VIDEO POLICY BRIEF (PALING ATAS) --}}
+        @if($hasYoutube && $youtubeEmbedSrc)
+          <section id="video" class="rounded-xl border border-yellow-300 bg-black shadow ring-1 ring-yellow-100 overflow-hidden">
+            <div class="aspect-video w-full bg-black">
+              <iframe
+                src="{{ $youtubeEmbedSrc }}"
+                allow="autoplay; encrypted-media; picture-in-picture"
+                allowfullscreen
+                class="w-full h-full border-0">
+              </iframe>
+            </div>
+
+            <div class="p-4 sm:p-5 bg-white">
+              <div class="flex items-start flex-wrap gap-2">
+                <span class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold bg-yellow-50 text-yellow-700 border border-yellow-300">
+                  Policy Brief
+                </span>
+
+                <div class="text-xs text-gray-500 flex items-center gap-3 ms-auto">
+                  <span class="inline-flex items-center gap-1">
+                    <span>👁️</span>
+                    <span>{{ number_format($research->stats['views'] ?? 0) }}</span>
+                  </span>
+                  <span class="inline-flex items-center gap-1">
+                    <span>⬇️</span>
+                    <span>{{ number_format($research->stats['downloads'] ?? 0) }}</span>
+                  </span>
+                </div>
+              </div>
+
+              <h2 class="mt-3 text-lg font-extrabold text-gray-900 leading-snug">
+                {{ $research->title }}
+              </h2>
+              <p class="mt-1 text-sm text-gray-700">
+                {{ $authorsText ?: '—' }} • {{ $research->year ?: '—' }}
+              </p>
+            </div>
+          </section>
+        @endif
+
+        {{-- KONTEN UTAMA: ABSTRAK, AKSI, PREVIEW PDF --}}
         <div class="rounded-xl border border-gray-200 p-4 sm:p-6 bg-white">
           {{-- Badge & meta atas --}}
           <div class="flex flex-wrap items-center gap-2">
@@ -75,20 +146,27 @@
               {{ $isPublic ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200' }}">
               {{ $accessRaw }}
             </span>
+
+            @if($isPolicyBrief)
+              <span class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold bg-yellow-50 text-yellow-700 border border-yellow-300">
+                Policy Brief
+              </span>
+            @endif
+
             <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs border bg-gray-50 text-gray-700">
               Lisensi: {{ $research->license ?? '—' }}
             </span>
 
             @if(!empty($research->doi))
               <a href="https://doi.org/{{ $research->doi }}" target="_blank"
-                 class="inline-flex items-center rounded-full px-2.5 py-1 text-xs border bg-blue-50 text-blue-700 border-blue-200">
+                class="inline-flex items-center rounded-full px-2.5 py-1 text-xs border bg-blue-50 text-blue-700 border-blue-200">
                 DOI
               </a>
             @endif
 
             @if(!empty($research->ojs_url))
               <a href="{{ $research->ojs_url }}" target="_blank"
-                 class="inline-flex items-center rounded-full px-2.5 py-1 text-xs border bg-purple-50 text-purple-700 border-purple-200">
+                class="inline-flex items-center rounded-full px-2.5 py-1 text-xs border bg-purple-50 text-purple-700 border-purple-200">
                 OJS
               </a>
             @endif
@@ -125,18 +203,26 @@
 
           {{-- Tombol aksi --}}
           <div class="mt-5 flex flex-wrap gap-2">
-            {{-- Unduh & Buka PDF hanya jika Public --}}
+            {{-- Kalau policy brief & ada video, tawarkan tombol lompat ke video (atas) --}}
+            @if($hasYoutube && $youtubeEmbedSrc)
+              <a href="#video"
+                class="px-4 py-2 rounded-lg bg-yellow-400 text-gray-900 text-sm font-semibold hover:bg-yellow-300 transition">
+                Tonton Video
+              </a>
+            @endif
+
+            {{-- Unduh/Buka PDF hanya jika Public --}}
             @if(isset($isPublic, $pdfUrl) && $isPublic && !empty($pdfUrl))
               <a href="{{ $pdfUrl }}" class="px-4 py-2 rounded-lg bg-maroon text-white text-sm hover:bg-maroon-800" download>
                 Unduh PDF {{ isset($research->file['size']) ? '(' . $research->file['size'] . ')' : '' }}
               </a>
               <a href="{{ $pdfUrl }}" target="_blank"
-                 class="px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-gray-50">
+                class="px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-gray-50">
                 Buka PDF Penuh
               </a>
             @endif
 
-            {{-- Salin sitasi selalu tersedia --}}
+            {{-- Salin sitasi selalu --}}
             <button type="button"
               onclick="navigator.clipboard.writeText(document.getElementById('cite-apa').textContent); this.innerText='Sitasi Disalin!'; setTimeout(()=>this.innerText='Salin Sitasi (APA)',1400);"
               class="px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-gray-50">
@@ -169,7 +255,9 @@
             <ul class="mt-3 space-y-2 text-sm">
               @foreach($datasets as $d)
                 <li>
-                  <a href="{{ $d['url'] ?? '#' }}" class="text-maroon hover:underline">{{ $d['label'] ?? ($d['url'] ?? 'Dataset') }}</a>
+                  <a href="{{ $d['url'] ?? '#' }}" class="text-maroon hover:underline">
+                    {{ $d['label'] ?? ($d['url'] ?? 'Dataset') }}
+                  </a>
                 </li>
               @endforeach
             </ul>
@@ -212,6 +300,7 @@
             </div>
           </dl>
         </div>
+
       </div>
 
       {{-- SIDEBAR --}}
