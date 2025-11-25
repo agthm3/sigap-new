@@ -46,13 +46,34 @@
       @foreach($agenda->items as $it)
         @php $i++; @endphp
         <div class="border border-gray-200 rounded-xl bg-gray-50 p-3" data-item="{{ $i }}">
-          <div class="flex justify-between items-center">
-            <div class="font-semibold text-sm text-gray-800">Kegiatan #{{ $i }}</div>
-            <div class="flex gap-2">
-              <button type="button" onclick="dupItem({{ $i }})" class="text-xs px-2 py-1 rounded-lg border hover:bg-gray-100">Duplikat</button>
-              <button type="button" onclick="delItem({{ $i }})" class="text-xs px-2 py-1 rounded-lg border border-red-300 text-red-700 hover:bg-red-50">Hapus</button>
-            </div>
+        <div class="flex justify-between items-center">
+          <div class="font-semibold text-sm text-gray-800 item-title">
+            Kegiatan #{{ $i }}
           </div>
+          <div class="flex flex-wrap gap-2">
+            <button type="button"
+                    onclick="moveItem(this, 'up')"
+                    class="text-xs px-2 py-1 rounded-lg border border-gray-300 hover:bg-gray-100">
+              ↑ Atas
+            </button>
+            <button type="button"
+                    onclick="moveItem(this, 'down')"
+                    class="text-xs px-2 py-1 rounded-lg border border-gray-300 hover:bg-gray-100">
+              ↓ Bawah
+            </button>
+            <button type="button"
+                    onclick="dupItem({{ $i }})"
+                    class="text-xs px-2 py-1 rounded-lg border hover:bg-gray-100">
+              Duplikat
+            </button>
+            <button type="button"
+                    onclick="delItem({{ $i }})"
+                    class="text-xs px-2 py-1 rounded-lg border border-red-300 text-red-700 hover:bg-red-50">
+              Hapus
+            </button>
+          </div>
+        </div>
+
 
           <div class="mt-3 grid gap-3">
             <input type="hidden" name="items[{{ $i }}][id]" value="{{ $it->id }}">
@@ -158,13 +179,33 @@ function addItem(){
   el.className='border border-gray-200 rounded-xl bg-gray-50 p-3';
   el.dataset.item=itemCount;
   el.innerHTML=`
-    <div class="flex justify-between items-center">
-      <div class="font-semibold text-sm text-gray-800">Kegiatan #${itemCount}</div>
-      <div class="flex gap-2">
-        <button type="button" onclick="dupItem(${itemCount})" class="text-xs px-2 py-1 rounded-lg border hover:bg-gray-100">Duplikat</button>
-        <button type="button" onclick="delItem(${itemCount})" class="text-xs px-2 py-1 rounded-lg border border-red-300 text-red-700 hover:bg-red-50">Hapus</button>
-      </div>
+  <div class="flex justify-between items-center">
+    <div class="font-semibold text-sm text-gray-800 item-title">
+      Kegiatan #${itemCount}
     </div>
+    <div class="flex flex-wrap gap-2">
+      <button type="button"
+              onclick="moveItem(this, 'up')"
+              class="text-xs px-2 py-1 rounded-lg border border-gray-300 hover:bg-gray-100">
+        ↑ Atas
+      </button>
+      <button type="button"
+              onclick="moveItem(this, 'down')"
+              class="text-xs px-2 py-1 rounded-lg border border-gray-300 hover:bg-gray-100">
+        ↓ Bawah
+      </button>
+      <button type="button"
+              onclick="dupItem(${itemCount})"
+              class="text-xs px-2 py-1 rounded-lg border hover:bg-gray-100">
+        Duplikat
+      </button>
+      <button type="button"
+              onclick="delItem(${itemCount})"
+              class="text-xs px-2 py-1 rounded-lg border border-red-300 text-red-700 hover:bg-red-50">
+        Hapus
+      </button>
+    </div>
+  </div>
 
     <div class="mt-3 grid gap-3">
       <input type="hidden" name="items[${itemCount}][id]" value="">
@@ -220,22 +261,31 @@ function addItem(){
       </div>
     </div>`;
   wrap.appendChild(el);
+   renumberItems();
 }
 
 function delItem(id){
-  const el=document.querySelector(`[data-item="${id}"]`);
-  if(!el) return;
-  const all=document.querySelectorAll('#itemsWrap [data-item]');
-  if(all.length===1){
-    el.querySelectorAll('input[type="text"], textarea').forEach(i=>i.value='');
-    const sel = el.querySelector('select'); if (sel) sel.value='kepala';
-    el.querySelector('input[name$="[id]"]').value='';
-    // kosongkan file input (tidak bisa set value, biarkan kosong)
-    const delChk = el.querySelector('input[name$="[file_delete]"]'); if (delChk) delChk.checked = false;
+  const el = document.querySelector(`[data-item="${id}"]`);
+  if (!el) return;
+
+  const all = document.querySelectorAll('#itemsWrap [data-item]');
+  if (all.length === 1) {
+    // kalau cuma satu, jangan dihapus, cukup kosongkan saja
+    el.querySelectorAll('input[type="text"], textarea').forEach(i => i.value = '');
+    const sel = el.querySelector('select'); if (sel) sel.value = 'kepala';
+    const idInput = el.querySelector('input[name$="[id]"]'); if (idInput) idInput.value = '';
+    const delChk  = el.querySelector('input[name$="[file_delete]"]'); if (delChk) delChk.checked = false;
+    const orderInput = el.querySelector('input[type="hidden"][name$="[order_no]"]');
+    if (orderInput) orderInput.value = 1;
+    const title = el.querySelector('.item-title');
+    if (title) title.textContent = 'Kegiatan #1';
     return;
   }
+
   el.remove();
+  renumberItems();
 }
+
 
 function dupItem(id){
   const el=document.querySelector(`[data-item="${id}"]`);
@@ -252,11 +302,60 @@ function dupItem(id){
   fDst[2].value = fSrc[2].value || ''; // time_text
   fDst[3].value = fSrc[3].value || ''; // place
   // file tidak ikut diduplikasi (demi keamanan browser)
+  renumberItems();
 }
+
 </script>
 @endpush
 
 @push('scripts')
+<script>
+  function moveItem(btn, direction){
+  const card = btn.closest('[data-item]');
+  if (!card) return;
+
+  const wrap = document.getElementById('itemsWrap');
+
+  if (direction === 'up') {
+    const prev = card.previousElementSibling;
+    if (prev) {
+      wrap.insertBefore(card, prev);
+    }
+  } else if (direction === 'down') {
+    const next = card.nextElementSibling;
+    if (next) {
+      wrap.insertBefore(next, card);
+    }
+  }
+
+  renumberItems();
+}
+
+function renumberItems(){
+  const cards = document.querySelectorAll('#itemsWrap [data-item]');
+  let idx = 0;
+
+  cards.forEach(card => {
+    idx++;
+
+    // update dataset
+    card.dataset.item = idx;
+
+    // update label "Kegiatan #X"
+    const title = card.querySelector('.item-title');
+    if (title) {
+      title.textContent = 'Kegiatan #' + idx;
+    }
+
+    // update hidden order_no
+    const orderInput = card.querySelector('input[type="hidden"][name$="[order_no]"]');
+    if (orderInput) {
+      orderInput.value = idx;
+    }
+  });
+}
+
+</script>
 <script>
 // inject form delete jika belum ada (reuse dari index)
 (function ensureDeleteForm(){
