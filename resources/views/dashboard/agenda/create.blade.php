@@ -16,7 +16,7 @@
     <label class="block">
       <span class="text-sm font-semibold text-gray-800">Unit / Pejabat</span>
       <input name="unit_title" required placeholder="Contoh: Kepala BRIDA Kota Makassar"
-             class="mt-1.5 w-full rounded-xl border border-gray-300 p-3 focus:border-maroon focus:ring-maroon">
+             class="mt-1.5 w-full rounded-xl border border-gray-300 p-3 focus:border-maroon focus:ring-maroon" value="KEPALA BADAN RISET DAN INOVASI DAERAH KOTA MAKASSAR">
     </label>
 
     <label class="flex items-center gap-2 select-none">
