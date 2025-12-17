@@ -266,9 +266,6 @@ function buildAgendaShareText(id){
   const items = Array.isArray(ag.items) ? ag.items : [];
   items.forEach((it, idx) => {
     lines.push(`${idx+1}️⃣ ${composeDescClient(it)}`);
-    if ((it.assignees || '').trim() !== '') {
-      lines.push(`👤 Ditugaskan: ${it.assignees}`);
-    }
     if ((it.time_text || '').trim() !== '') {
       lines.push(`⏰ Waktu: ${it.time_text}`);
     }
