@@ -38,24 +38,52 @@
     @else
       <ol class="space-y-5 list-decimal list-inside">
         @foreach($agenda->items as $idx => $it)
+        @php
+          $assignees = [];
+          if ($it->assignees) {
+            try {
+              $json = json_decode($it->assignees, true);
+              if (is_array($json)) {
+                foreach ($json['users'] ?? [] as $u) {
+                  $assignees[] = $u['name'];
+                }
+                foreach ($json['manual'] ?? [] as $m) {
+                  $assignees[] = $m;
+                }
+              }
+            } catch (\Throwable $e) {}
+          }
+        @endphp
+
           <li>
             <div class="pl-1">
               {{-- Badge assignees (opsional) --}}
-              @if($it->assignees)
-                <div class="inline-flex items-center px-3 py-1 rounded-md ring-1 ring-maroon/40 bg-maroon/5 text-maroon text-xs font-semibold mb-2">
-                  {{ $it->assignees }}
+              @if(!empty($assignees))
+                <div class="flex flex-wrap gap-1 mb-2">
+                  @foreach($assignees as $name)
+                    <span class="inline-flex items-center px-2 py-1 rounded-full
+                                text-xs bg-maroon/10 text-maroon ring-1 ring-maroon/30">
+                      {{ $name }}
+                    </span>
+                  @endforeach
                 </div>
               @endif
+
 
               {{-- Deskripsi dengan mode kalimat --}}
               <div class="text-gray-900">
                 @php
                   $desc = $it->description;
+
                   if (($it->mode ?? 'kepala') === 'kepala') {
                     $desc = "Kepala Brida, ".$it->description;
-                  } elseif (($it->mode ?? 'kepala') === 'menugaskan') {
-                    $who = trim((string)$it->assignees);
-                    $desc = "Menugaskan ".($who ? ($who.', ') : '').$it->description;
+                  }
+                  elseif (($it->mode ?? 'kepala') === 'menugaskan') {
+                    if (!empty($assignees)) {
+                      $desc = "Menugaskan:\n- ".implode("\n- ", $assignees)."\n\n".$it->description;
+                    } else {
+                      $desc = "Menugaskan, ".$it->description;
+                    }
                   }
                 @endphp
                 {!! nl2br(e($desc)) !!}

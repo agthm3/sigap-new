@@ -5,164 +5,182 @@
   <div class="flex items-start justify-between gap-3">
     <div>
       <h1 class="text-2xl font-extrabold text-gray-900">Edit Agenda</h1>
-      <p class="text-sm text-gray-600 mt-1">Ubah data agenda lalu simpan. (Mobile-first)</p>
+      <p class="text-sm text-gray-600 mt-1">Ubah data agenda lalu simpan.</p>
     </div>
-    <a href="{{ route('sigap-agenda.index') }}" class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50">Kembali</a>
+    <a href="{{ route('sigap-agenda.index') }}"
+       class="text-sm px-3 py-1.5 rounded-lg border hover:bg-gray-50">Kembali</a>
   </div>
 
   <form method="POST"
         action="{{ route('sigap-agenda.update') }}"
         enctype="multipart/form-data"
-        class="mt-5 bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 space-y-4">
+        class="mt-5 bg-white border rounded-2xl p-4 space-y-4">
     @csrf
     <input type="hidden" name="id" value="{{ $agenda->id }}">
 
+    {{-- Header --}}
     <label class="block">
-      <span class="text-sm font-semibold text-gray-800">Tanggal</span>
-      <input name="date" type="date" required value="{{ \Illuminate\Support\Str::of($agenda->date)->substr(0,10) }}"
-             class="mt-1.5 w-full rounded-xl border border-gray-300 p-3 focus:border-maroon focus:ring-maroon">
+      <span class="text-sm font-semibold">Tanggal</span>
+      <input type="date" name="date"
+             value="{{ substr($agenda->date,0,10) }}"
+             required class="mt-1 w-full rounded border p-2">
     </label>
 
     <label class="block">
-      <span class="text-sm font-semibold text-gray-800">Unit / Pejabat</span>
-      <input name="unit_title" required value="{{ $agenda->unit_title }}"
-             class="mt-1.5 w-full rounded-xl border border-gray-300 p-3 focus:border-maroon focus:ring-maroon">
+      <span class="text-sm font-semibold">Unit / Pejabat</span>
+      <input type="text" name="unit_title"
+             value="{{ $agenda->unit_title }}"
+             required class="mt-1 w-full rounded border p-2">
     </label>
 
-    <label class="flex items-center gap-2 select-none">
-      <input type="checkbox" name="is_public" value="1" class="w-4 h-4 rounded text-maroon focus:ring-maroon border-gray-300" {{ $agenda->is_public ? 'checked' : '' }}>
-      <span class="text-sm text-gray-800">Tandai sebagai <b>Publik</b></span>
+    <label class="flex items-center gap-2">
+      <input type="checkbox" name="is_public" value="1"
+             {{ $agenda->is_public ? 'checked' : '' }}>
+      <span class="text-sm">Publik</span>
     </label>
 
     <hr>
 
-    <div class="flex items-center justify-between">
-      <h2 class="font-semibold text-gray-900">Daftar Kegiatan</h2>
-      <button type="button" onclick="addItem()" class="px-3 py-1.5 rounded-lg bg-maroon text-white text-sm hover:bg-maroon-800">+ Tambah</button>
+    {{-- ITEMS --}}
+    <div class="flex justify-between items-center">
+      <h2 class="font-semibold">Daftar Kegiatan</h2>
+      <button type="button" onclick="addItem()"
+              class="px-3 py-1.5 rounded bg-maroon text-white text-sm">
+        + Tambah
+      </button>
     </div>
 
     <div id="itemsWrap" class="space-y-3">
-      @php $i = 0; @endphp
+      @php $i=0; @endphp
       @foreach($agenda->items as $it)
-        @php $i++; @endphp
-        <div class="border border-gray-200 rounded-xl bg-gray-50 p-3" data-item="{{ $i }}">
+      @php $i++; @endphp
+
+      <div class="border rounded-xl bg-gray-50 p-3" data-item="{{ $i }}">
         <div class="flex justify-between items-center">
-          <div class="font-semibold text-sm text-gray-800 item-title">
-            Kegiatan #{{ $i }}
-          </div>
-          <div class="flex flex-wrap gap-2">
-            <button type="button"
-                    onclick="moveItem(this, 'up')"
-                    class="text-xs px-2 py-1 rounded-lg border border-gray-300 hover:bg-gray-100">
-              ↑ Atas
-            </button>
-            <button type="button"
-                    onclick="moveItem(this, 'down')"
-                    class="text-xs px-2 py-1 rounded-lg border border-gray-300 hover:bg-gray-100">
-              ↓ Bawah
-            </button>
-            <button type="button"
-                    onclick="dupItem({{ $i }})"
-                    class="text-xs px-2 py-1 rounded-lg border hover:bg-gray-100">
-              Duplikat
-            </button>
-            <button type="button"
-                    onclick="delItem({{ $i }})"
-                    class="text-xs px-2 py-1 rounded-lg border border-red-300 text-red-700 hover:bg-red-50">
-              Hapus
-            </button>
+          <div class="font-semibold text-sm item-title">Kegiatan #{{ $i }}</div>
+          <div class="flex gap-1">
+            <button type="button" onclick="moveItem(this,'up')" class="text-xs border px-2 py-1">↑</button>
+            <button type="button" onclick="moveItem(this,'down')" class="text-xs border px-2 py-1">↓</button>
+            <button type="button" onclick="dupItem({{ $i }})" class="text-xs border px-2 py-1">Duplikat</button>
+            <button type="button" onclick="delItem({{ $i }})"
+                    class="text-xs border px-2 py-1 text-red-600">Hapus</button>
           </div>
         </div>
 
+        <div class="mt-3 grid gap-3">
+          <input type="hidden" name="items[{{ $i }}][id]" value="{{ $it->id }}">
+          <input type="hidden" name="items[{{ $i }}][order_no]" value="{{ $it->order_no ?? $i }}">
 
-          <div class="mt-3 grid gap-3">
-            <input type="hidden" name="items[{{ $i }}][id]" value="{{ $it->id }}">
-            <input type="hidden" name="items[{{ $i }}][order_no]" value="{{ $it->order_no ?? $i }}">
+          <label>
+            <span class="text-sm">Mode</span>
+            <select name="items[{{ $i }}][mode]" class="w-full border rounded p-2">
+              <option value="kepala" {{ $it->mode=='kepala'?'selected':'' }}>Kepala</option>
+              <option value="menugaskan" {{ $it->mode=='menugaskan'?'selected':'' }}>Menugaskan</option>
+              <option value="custom" {{ $it->mode=='custom'?'selected':'' }}>Custom</option>
+            </select>
+          </label>
 
-            <label class="block">
-              <span class="text-sm text-gray-800">Mode Kalimat</span>
-              <select name="items[{{ $i }}][mode]" class="mt-1 w-full rounded-lg border border-gray-300 p-2 focus:border-maroon focus:ring-maroon">
-                <option value="kepala" {{ $it->mode === 'kepala' ? 'selected' : '' }}>Kepala Brida</option>
-                <option value="menugaskan" {{ $it->mode === 'menugaskan' ? 'selected' : '' }}>Menugaskan</option>
-                <option value="custom" {{ $it->mode === 'custom' ? 'selected' : '' }}>Custom</option>
-              </select>
-            </label>
+          {{-- ASSIGNEE --}}
+          <div class="assignee-wrap">
+            <span class="text-sm">Yang Ditugaskan</span>
 
-            <label class="block">
-              <span class="text-sm text-gray-800">Yang Ditugaskan (opsional)</span>
-              <input type="text" name="items[{{ $i }}][assignees]" value="{{ $it->assignees }}"
-                     class="mt-1 w-full rounded-lg border border-gray-300 p-2 focus:border-maroon focus:ring-maroon" placeholder="Pisahkan dengan koma">
-            </label>
+            <div class="assignee-chips flex flex-wrap gap-1 mt-1"></div>
 
-            <label class="block">
-              <span class="text-sm text-gray-800">Deskripsi</span>
-              <textarea name="items[{{ $i }}][description]" rows="2" required
-                        class="mt-1 w-full rounded-lg border border-gray-300 p-2 focus:border-maroon focus:ring-maroon">{{ $it->description }}</textarea>
-            </label>
+            <input type="text" class="assignee-search w-full border rounded p-2 mt-2"
+                   placeholder="Cari nama pegawai...">
 
-            <div class="grid sm:grid-cols-2 gap-3">
-              <label class="block">
-                <span class="text-sm text-gray-800">Waktu</span>
-                <input type="text" name="items[{{ $i }}][time_text]" required value="{{ $it->time_text }}"
-                       class="mt-1 w-full rounded-lg border border-gray-300 p-2 focus:border-maroon focus:ring-maroon">
-              </label>
-              <label class="block">
-                <span class="text-sm text-gray-800">Tempat</span>
-                <input type="text" name="items[{{ $i }}][place]" required value="{{ $it->place }}"
-                       class="mt-1 w-full rounded-lg border border-gray-300 p-2 focus:border-maroon focus:ring-maroon">
-              </label>
+            <div class="assignee-results border bg-white mt-1 hidden max-h-40 overflow-y-auto"></div>
+
+            <div class="flex gap-2 mt-2">
+              <input type="text"
+                    class="assignee-manual flex-1 border rounded p-2"
+                    placeholder="Tambah manual">
+
+              <button type="button"
+                      class="assignee-add px-3 rounded bg-maroon text-white text-sm">
+                +
+              </button>
             </div>
 
-            {{-- ====== File dokumen (lihat/ganti/hapus) ====== --}}
-            <div class="grid sm:grid-cols-2 gap-3">
-              <div class="block">
-                <span class="text-sm text-gray-800">Berkas (opsional)</span>
+
+            <input type="hidden"
+                   name="items[{{ $i }}][assignees]"
+                   class="assignee-json"
+                   value='{{ $it->assignees ?: '{"users":[],"manual":[]}' }}'>
+          </div>
+
+          <label>
+            <span class="text-sm">Deskripsi</span>
+            <textarea name="items[{{ $i }}][description]"
+                      class="w-full border rounded p-2"
+                      required>{{ $it->description }}</textarea>
+          </label>
+
+          {{-- ===== DOKUMEN ===== --}}
+          <div class="grid sm:grid-cols-2 gap-3">
+            {{-- Upload baru --}}
+            <div>
+              <label class="block">
+                <span class="text-sm font-semibold">Ganti Dokumen (opsional)</span>
                 <input type="file"
-                       name="items[{{ $i }}][file]"
-                       accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                       class="mt-1 block w-full text-sm file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border file:border-gray-300 file:bg-white hover:file:bg-gray-50">
-                <p class="text-xs text-gray-500 mt-1">PDF/DOC/DOCX/JPG/PNG</p>
-              </div>
-
-              <div class="block">
-                @if($it->file_path)
-                  <span class="text-sm text-gray-800">Berkas saat ini</span>
-                  <div class="mt-1 flex items-center gap-2">
-                    <a href="{{ asset('storage/'.$it->file_path) }}"
-                       target="_blank"
-                       class="inline-flex items-center gap-1 text-sm text-maroon hover:underline">
-                      Lihat berkas
-                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-width="2" d="M14 3h7v7M10 14L21 3M21 10v11H3V3h11"/>
-                      </svg>
-                    </a>
-                    <label class="inline-flex items-center gap-2 text-sm text-red-700">
-                      <input type="checkbox" name="items[{{ $i }}][file_delete]" value="1"
-                             class="rounded border-gray-300 text-red-700 focus:ring-red-700">
-                      Hapus berkas
-                    </label>
-                  </div>
-                @else
-                  <span class="text-sm text-gray-800">Berkas saat ini</span>
-                  <p class="text-xs text-gray-500 mt-1">— belum ada berkas —</p>
-                @endif
-              </div>
+                      name="items[{{ $i }}][file]"
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      class="mt-1 w-full text-sm rounded border p-2">
+                <p class="text-xs text-gray-500 mt-1">
+                  Jika diisi, dokumen lama akan diganti
+                </p>
+              </label>
             </div>
-            {{-- ====== /File ====== --}}
+
+            {{-- Dokumen saat ini --}}
+            <div>
+              <span class="text-sm font-semibold">Dokumen Saat Ini</span>
+
+              @if($it->file_path)
+                <div class="mt-1 flex flex-col gap-2">
+                  <a href="{{ asset('storage/'.$it->file_path) }}"
+                    target="_blank"
+                    class="inline-flex items-center gap-1 text-sm text-maroon hover:underline">
+                    Lihat Dokumen
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path stroke-width="2"
+                            d="M14 3h7v7M10 14L21 3M21 10v11H3V3h11"/>
+                    </svg>
+                  </a>
+
+                  <label class="inline-flex items-center gap-2 text-sm text-red-600">
+                    <input type="checkbox"
+                          name="items[{{ $i }}][file_delete]"
+                          value="1"
+                          class="rounded border">
+                    Hapus dokumen
+                  </label>
+                </div>
+              @else
+                <p class="text-xs text-gray-500 mt-1 italic">
+                  — Tidak ada dokumen —
+                </p>
+              @endif
+            </div>
+          </div>
+          {{-- ===== /DOKUMEN ===== --}}
+
+
+          <div class="grid grid-cols-2 gap-2">
+            <input name="items[{{ $i }}][time_text]"
+                   value="{{ $it->time_text }}"
+                   class="border rounded p-2" placeholder="Waktu">
+            <input name="items[{{ $i }}][place]"
+                   value="{{ $it->place }}"
+                   class="border rounded p-2" placeholder="Tempat">
           </div>
         </div>
+      </div>
       @endforeach
     </div>
 
-    <div class="flex flex-col sm:flex-row justify-end gap-2 pt-3">
-      <button type="submit" class="px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 text-center">
-        Simpan Perubahan
-      </button>
-      <button type="button"
-              onclick="confirmHapus({{ $agenda->id }}, @js($agenda->unit_title), @js($agenda->date))"
-              class="px-4 py-2 rounded-lg border border-red-300 text-red-700 hover:bg-red-50 text-center">
-        Hapus Agenda
-      </button>
+    <div class="flex justify-end gap-2 pt-4">
+      <button class="px-4 py-2 bg-maroon text-white rounded">Simpan</button>
     </div>
   </form>
 </section>
@@ -170,224 +188,265 @@
 
 @push('scripts')
 <script>
-let itemCount = {{ max(1, $agenda->items->count()) }};
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.assignee-wrap').forEach(initAssignee);
+});
 
+function initAssignee(block){
+  const hidden = block.querySelector('.assignee-json');
+  let state = { users: [], manual: [] };
+
+  try {
+    const parsed = JSON.parse(hidden.value || '{}');
+    state.users  = [...(parsed.users || [])];
+    state.manual= [...(parsed.manual || [])];
+  } catch(e){}
+
+  block._state = state;
+  renderChips(block);
+  bindSearch(block);
+  bindManual(block);
+}
+
+function renderChips(block){
+  const chips = block.querySelector('.assignee-chips');
+  const hidden = block.querySelector('.assignee-json');
+  const s = block._state;
+
+  chips.innerHTML = '';
+
+  s.users.forEach((u,i)=>{
+    const c=document.createElement('span');
+    c.className='px-2 py-1 bg-maroon text-white text-xs rounded-full';
+    c.innerHTML=`${u.name} <button type="button">&times;</button>`;
+    c.querySelector('button').onclick=()=>{
+      s.users.splice(i,1);
+      hidden.value=JSON.stringify(s);
+      renderChips(block);
+    };
+    chips.appendChild(c);
+  });
+
+  s.manual.forEach((m,i)=>{
+    const c=document.createElement('span');
+    c.className='px-2 py-1 bg-gray-600 text-white text-xs rounded-full';
+    c.innerHTML=`${m} <button type="button">&times;</button>`;
+    c.querySelector('button').onclick=()=>{
+      s.manual.splice(i,1);
+      hidden.value=JSON.stringify(s);
+      renderChips(block);
+    };
+    chips.appendChild(c);
+  });
+}
+
+function bindSearch(block){
+  const input = block.querySelector('.assignee-search');
+  const box   = block.querySelector('.assignee-results');
+  const hidden= block.querySelector('.assignee-json');
+  const s     = block._state;
+
+  input.addEventListener('input', async()=>{
+    const q=input.value.trim();
+    if(q.length<2){ box.classList.add('hidden'); return; }
+
+    const res=await fetch(`/api/users/search?q=${encodeURIComponent(q)}`);
+    const data=await res.json();
+
+    box.innerHTML='';
+    data.forEach(u=>{
+      if(s.users.some(x=>x.id===u.id)) return;
+      const d=document.createElement('div');
+      d.className='px-3 py-2 hover:bg-gray-100 cursor-pointer';
+      d.textContent=u.name;
+      d.onclick=()=>{
+        s.users.push({id:u.id,name:u.name});
+        hidden.value=JSON.stringify(s);
+        input.value='';
+        box.classList.add('hidden');
+        renderChips(block);
+      };
+      box.appendChild(d);
+    });
+    box.classList.remove('hidden');
+  });
+}
+
+function bindManual(block){
+  const input  = block.querySelector('.assignee-manual');
+  const btn    = block.querySelector('.assignee-add');
+  const hidden = block.querySelector('.assignee-json');
+  const s      = block._state;
+
+  function addManual(){
+    const val = input.value.trim();
+    if(!val) return;
+
+    s.manual.push(val);
+    hidden.value = JSON.stringify(s);
+    input.value = '';
+    renderChips(block);
+  }
+
+  // Enter (desktop)
+  input.addEventListener('keydown', e => {
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      addManual();
+    }
+  });
+
+  // Klik tombol + (mobile friendly)
+  if(btn){
+    btn.addEventListener('click', addManual);
+  }
+}
+
+
+/* === ITEM ORDER === */
+function moveItem(btn,dir){
+  const c=btn.closest('[data-item]');
+  const w=document.getElementById('itemsWrap');
+  if(dir==='up' && c.previousElementSibling) w.insertBefore(c,c.previousElementSibling);
+  if(dir==='down' && c.nextElementSibling) w.insertBefore(c.nextElementSibling,c);
+  renumber();
+}
+function renumber(){
+  document.querySelectorAll('[data-item]').forEach((c,i)=>{
+    c.dataset.item=i+1;
+    c.querySelector('.item-title').textContent='Kegiatan #'+(i+1);
+    c.querySelector('input[name$="[order_no]"]').value=i+1;
+  });
+}
+</script>
+
+<script>
+let itemCount = document.querySelectorAll('#itemsWrap [data-item]').length;
+
+/* === ADD ITEM === */
 function addItem(){
   itemCount++;
-  const wrap=document.getElementById('itemsWrap');
-  const el=document.createElement('div');
-  el.className='border border-gray-200 rounded-xl bg-gray-50 p-3';
-  el.dataset.item=itemCount;
-  el.innerHTML=`
-  <div class="flex justify-between items-center">
-    <div class="font-semibold text-sm text-gray-800 item-title">
-      Kegiatan #${itemCount}
+
+  const wrap = document.getElementById('itemsWrap');
+  const div  = document.createElement('div');
+
+  div.className = 'border rounded-xl bg-gray-50 p-3';
+  div.dataset.item = itemCount;
+
+  div.innerHTML = `
+    <div class="flex justify-between items-center">
+      <div class="font-semibold text-sm item-title">Kegiatan #${itemCount}</div>
+      <div class="flex gap-1">
+        <button type="button" onclick="moveItem(this,'up')" class="text-xs border px-2 py-1">↑</button>
+        <button type="button" onclick="moveItem(this,'down')" class="text-xs border px-2 py-1">↓</button>
+        <button type="button" onclick="dupItem(${itemCount})" class="text-xs border px-2 py-1">Duplikat</button>
+        <button type="button" onclick="delItem(${itemCount})"
+                class="text-xs border px-2 py-1 text-red-600">Hapus</button>
+      </div>
     </div>
-    <div class="flex flex-wrap gap-2">
-      <button type="button"
-              onclick="moveItem(this, 'up')"
-              class="text-xs px-2 py-1 rounded-lg border border-gray-300 hover:bg-gray-100">
-        ↑ Atas
-      </button>
-      <button type="button"
-              onclick="moveItem(this, 'down')"
-              class="text-xs px-2 py-1 rounded-lg border border-gray-300 hover:bg-gray-100">
-        ↓ Bawah
-      </button>
-      <button type="button"
-              onclick="dupItem(${itemCount})"
-              class="text-xs px-2 py-1 rounded-lg border hover:bg-gray-100">
-        Duplikat
-      </button>
-      <button type="button"
-              onclick="delItem(${itemCount})"
-              class="text-xs px-2 py-1 rounded-lg border border-red-300 text-red-700 hover:bg-red-50">
-        Hapus
-      </button>
-    </div>
-  </div>
 
     <div class="mt-3 grid gap-3">
       <input type="hidden" name="items[${itemCount}][id]" value="">
       <input type="hidden" name="items[${itemCount}][order_no]" value="${itemCount}">
 
-      <label class="block">
-        <span class="text-sm text-gray-800">Mode Kalimat</span>
-        <select name="items[${itemCount}][mode]" class="mt-1 w-full rounded-lg border border-gray-300 p-2 focus:border-maroon focus:ring-maroon">
-          <option value="kepala">Kepala Brida</option>
+      <label>
+        <span class="text-sm">Mode</span>
+        <select name="items[${itemCount}][mode]" class="w-full border rounded p-2">
+          <option value="kepala">Kepala</option>
           <option value="menugaskan">Menugaskan</option>
           <option value="custom">Custom</option>
         </select>
       </label>
 
-      <label class="block">
-        <span class="text-sm text-gray-800">Yang Ditugaskan (opsional)</span>
-        <input type="text" name="items[${itemCount}][assignees]" class="mt-1 w-full rounded-lg border border-gray-300 p-2 focus:border-maroon focus:ring-maroon" placeholder="Pisahkan dengan koma">
-      </label>
+      <div class="assignee-wrap">
+        <span class="text-sm">Yang Ditugaskan</span>
 
-      <label class="block">
-        <span class="text-sm text-gray-800">Deskripsi</span>
-        <textarea name="items[${itemCount}][description]" rows="2" required
-                  class="mt-1 w-full rounded-lg border border-gray-300 p-2 focus:border-maroon focus:ring-maroon"></textarea>
-      </label>
+        <div class="assignee-chips flex flex-wrap gap-1 mt-1"></div>
 
-      <div class="grid sm:grid-cols-2 gap-3">
-        <label class="block">
-          <span class="text-sm text-gray-800">Waktu</span>
-          <input type="text" name="items[${itemCount}][time_text]" required placeholder="08.30 Wita"
-                 class="mt-1 w-full rounded-lg border border-gray-300 p-2 focus:border-maroon focus:ring-maroon">
-        </label>
-        <label class="block">
-          <span class="text-sm text-gray-800">Tempat</span>
-          <input type="text" name="items[${itemCount}][place]" required placeholder="Ruang Rapat BRIDA Lt.6"
-                 class="mt-1 w-full rounded-lg border border-gray-300 p-2 focus:border-maroon focus:ring-maroon">
-        </label>
+        <input type="text" class="assignee-search w-full border rounded p-2 mt-2"
+               placeholder="Cari nama pegawai...">
+
+        <div class="assignee-results border bg-white mt-1 hidden max-h-40 overflow-y-auto"></div>
+
+        <div class="flex gap-2 mt-2">
+          <input type="text"
+                class="assignee-manual flex-1 border rounded p-2"
+                placeholder="Tambah manual">
+
+          <button type="button"
+                  class="assignee-add px-3 rounded bg-maroon text-white text-sm">
+            +
+          </button>
+        </div>
+
+
+        <input type="hidden"
+               name="items[${itemCount}][assignees]"
+               class="assignee-json"
+               value='{"users":[],"manual":[]}'>
       </div>
 
-      <!-- File untuk item baru -->
-      <div class="grid sm:grid-cols-2 gap-3">
-        <div class="block">
-          <span class="text-sm text-gray-800">Berkas (opsional)</span>
-          <input type="file"
-                 name="items[${itemCount}][file]"
-                 accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                 class="mt-1 block w-full text-sm file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border file:border-gray-300 file:bg-white hover:file:bg-gray-50">
-          <p class="text-xs text-gray-500 mt-1">PDF/DOC/DOCX/JPG/PNG</p>
-        </div>
-        <div class="block">
-          <span class="text-sm text-gray-800">Berkas saat ini</span>
-          <p class="text-xs text-gray-500 mt-1">— belum ada berkas —</p>
-        </div>
+      <label>
+        <span class="text-sm">Deskripsi</span>
+        <textarea name="items[${itemCount}][description]"
+                  class="w-full border rounded p-2" required></textarea>
+      </label>
+
+      <div class="grid grid-cols-2 gap-2">
+        <input name="items[${itemCount}][time_text]" class="border rounded p-2" placeholder="Waktu">
+        <input name="items[${itemCount}][place]" class="border rounded p-2" placeholder="Tempat">
       </div>
-    </div>`;
-  wrap.appendChild(el);
-   renumberItems();
+    </div>
+  `;
+
+  wrap.appendChild(div);
+  initAssignee(div.querySelector('.assignee-wrap'));
+  renumber();
 }
 
+/* === DELETE ITEM === */
 function delItem(id){
   const el = document.querySelector(`[data-item="${id}"]`);
-  if (!el) return;
+  if(!el) return;
 
   const all = document.querySelectorAll('#itemsWrap [data-item]');
-  if (all.length === 1) {
-    // kalau cuma satu, jangan dihapus, cukup kosongkan saja
-    el.querySelectorAll('input[type="text"], textarea').forEach(i => i.value = '');
-    const sel = el.querySelector('select'); if (sel) sel.value = 'kepala';
-    const idInput = el.querySelector('input[name$="[id]"]'); if (idInput) idInput.value = '';
-    const delChk  = el.querySelector('input[name$="[file_delete]"]'); if (delChk) delChk.checked = false;
-    const orderInput = el.querySelector('input[type="hidden"][name$="[order_no]"]');
-    if (orderInput) orderInput.value = 1;
-    const title = el.querySelector('.item-title');
-    if (title) title.textContent = 'Kegiatan #1';
+  if(all.length === 1){
+    alert('Minimal harus ada satu kegiatan.');
     return;
   }
 
   el.remove();
-  renumberItems();
+  renumber();
 }
 
-
+/* === DUPLICATE ITEM === */
 function dupItem(id){
-  const el=document.querySelector(`[data-item="${id}"]`);
-  if(!el) return;
+  const src = document.querySelector(`[data-item="${id}"]`);
+  if(!src) return;
+
   addItem();
-  const dst=document.querySelector(`[data-item="${itemCount}"]`);
-  const sSrc=el.querySelector('select'); const sDst=dst.querySelector('select');
-  const fSrc=el.querySelectorAll('input[type="text"], textarea');
-  const fDst=dst.querySelectorAll('input[type="text"], textarea');
-  sDst.value = sSrc.value;
-  // urutan: assignees, description, time_text, place
-  fDst[0].value = fSrc[0].value || ''; // assignees
-  fDst[1].value = fSrc[1].value || ''; // description
-  fDst[2].value = fSrc[2].value || ''; // time_text
-  fDst[3].value = fSrc[3].value || ''; // place
-  // file tidak ikut diduplikasi (demi keamanan browser)
-  renumberItems();
-}
+  const dst = document.querySelector(`[data-item="${itemCount}"]`);
 
-</script>
-@endpush
+  // copy basic fields
+  dst.querySelector('select').value =
+    src.querySelector('select').value;
 
-@push('scripts')
-<script>
-  function moveItem(btn, direction){
-  const card = btn.closest('[data-item]');
-  if (!card) return;
+  dst.querySelector('textarea').value =
+    src.querySelector('textarea').value;
 
-  const wrap = document.getElementById('itemsWrap');
+  const srcTime = src.querySelector('input[name$="[time_text]"]');
+  const srcPlace= src.querySelector('input[name$="[place]"]');
 
-  if (direction === 'up') {
-    const prev = card.previousElementSibling;
-    if (prev) {
-      wrap.insertBefore(card, prev);
-    }
-  } else if (direction === 'down') {
-    const next = card.nextElementSibling;
-    if (next) {
-      wrap.insertBefore(next, card);
-    }
-  }
+  dst.querySelector('input[name$="[time_text]"]').value = srcTime.value;
+  dst.querySelector('input[name$="[place]"]').value    = srcPlace.value;
 
-  renumberItems();
-}
+  // copy assignees
+  const srcAss = src.querySelector('.assignee-json').value;
+  const dstAss = dst.querySelector('.assignee-json');
+  dstAss.value = srcAss;
 
-function renumberItems(){
-  const cards = document.querySelectorAll('#itemsWrap [data-item]');
-  let idx = 0;
-
-  cards.forEach(card => {
-    idx++;
-
-    // update dataset
-    card.dataset.item = idx;
-
-    // update label "Kegiatan #X"
-    const title = card.querySelector('.item-title');
-    if (title) {
-      title.textContent = 'Kegiatan #' + idx;
-    }
-
-    // update hidden order_no
-    const orderInput = card.querySelector('input[type="hidden"][name$="[order_no]"]');
-    if (orderInput) {
-      orderInput.value = idx;
-    }
-  });
-}
-
-</script>
-<script>
-// inject form delete jika belum ada (reuse dari index)
-(function ensureDeleteForm(){
-  if(document.getElementById('formDeleteAgenda')) return;
-  const f = document.createElement('form');
-  f.id = 'formDeleteAgenda';
-  f.method = 'POST';
-  f.action = "{{ route('sigap-agenda.delete') }}";
-  f.className = 'hidden';
-  f.innerHTML = `@csrf <input type="hidden" name="id" value="">`;
-  document.body.appendChild(f);
-})();
-function confirmHapus(id, unitTitle = '', dateStr = ''){
-  if(!window.Swal){
-    if(confirm(`Hapus agenda ini?\n${unitTitle}\n${dateStr}`)){ submitDelete(id); }
-    return;
-  }
-  Swal.fire({
-    icon:'warning',
-    title:'Hapus agenda ini?',
-    html:`<div class="text-left"><div class="font-semibold">${unitTitle||'Agenda'}</div><div class="text-xs text-gray-500 mt-1">${dateStr}</div><div class="text-xs text-gray-500 mt-2">Tindakan ini tidak bisa dibatalkan.</div></div>`,
-    showCancelButton:true,
-    confirmButtonText:'Ya, hapus',
-    cancelButtonText:'Batal',
-    confirmButtonColor:'#7a2222',
-    focusCancel:true
-  }).then(res=>{ if(res.isConfirmed) submitDelete(id); });
-}
-function submitDelete(id){
-  const form=document.getElementById('formDeleteAgenda');
-  form.querySelector('input[name="id"]').value=id;
-  form.submit();
+  initAssignee(dst.querySelector('.assignee-wrap'));
 }
 </script>
+
 @endpush

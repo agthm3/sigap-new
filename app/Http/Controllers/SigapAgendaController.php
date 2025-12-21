@@ -21,15 +21,20 @@ class SigapAgendaController extends Controller
     public function index()
     {
         $agendas = SigapAgenda::query()
+            ->select('id','date','unit_title','is_public')
+            ->with([
+                'items' => function ($q) {
+                    $q->orderByRaw('COALESCE(order_no, 999999), id');
+                }
+            ])
             ->withCount('items')
-            ->with(['items' => function ($q) {
-                $q->orderByRaw('COALESCE(order_no, 999999), id');
-            }])
             ->orderByDesc('date')
             ->get();
 
         return view('dashboard.agenda.index', compact('agendas'));
     }
+
+
 
     public function create()
     {
@@ -558,210 +563,6 @@ private function findBinary(array $candidates): ?string
         }
     }
 
-
-    /**
-     * SHARE IMAGE (SERVER-SIDE) — Pure PHP GD (tanpa composer)
-     * Hasil: 1 gambar panjang berisi SEMUA kegiatan (tinggi dinamis, tidak terpotong)
-     */
-public function shareImageGD(Request $request)
-{
-    $request->validate(['id' => 'required|integer|exists:sigap_agendas,id']);
-
-    @ini_set('memory_limit', '512M');
-    @ini_set('gd.jpeg_ignore_warning', 1);
-
-    $agenda = \App\Models\SigapAgenda::with(['items' => function ($q) {
-        $q->orderByRaw('COALESCE(order_no, 999999), id');
-    }])->findOrFail($request->id);
-
-    // ===== Layout base
-    $W         = 1080;
-    $P_LEFT    = 64;
-    $P_RIGHT   = 64;
-    $P_TOP     = 64;
-    $P_BOTTOM  = 120; // <-- dinaikkan agar footer aman
-
-    $HDR_BAR   = 110;
-    $HDR_GAP   = 50;
-    $HEADER_H  = $HDR_BAR + $HDR_GAP;
-    $NUMBER_GAP = 52;
-
-    // ===== Font & metrik
-    $fontBold    = $this->findFont(['Inter-Bold.ttf','Inter-SemiBold.ttf','DejaVuSans-Bold.ttf','arialbd.ttf']);
-    $fontRegular = $this->findFont(['Inter-Regular.ttf','DejaVuSans.ttf','arial.ttf']);
-    $hasTTF      = is_readable($fontBold) && is_readable($fontRegular);
-    $fs28 = 28; $fs22 = 22;
-    $LH28 = (int)ceil($fs28 * 1.22);
-    $LH22 = (int)ceil($fs22 * 1.25);
-
-    $contentW = $W - $P_LEFT - $P_RIGHT - $NUMBER_GAP;
-
-    // ====== PASS #1: hitung tinggi konten
-    $y = $P_TOP + $HEADER_H + 36;
-
-    foreach ($agenda->items as $it) {
-        $x = $P_LEFT + $NUMBER_GAP;
-
-        if (!empty($it->assignees)) {
-            $badgeText = trim($it->assignees);
-            $badgeW = $this->ttfTextWidth($badgeText, $fontBold, 22);
-            $badgeW = min($badgeW + 40, $contentW);
-            $y += 52;
-        }
-
-        $desc = $this->composeDescGD($it);
-        $y += $this->wrapHeight($desc, $hasTTF ? $fontRegular : null, $fs28, $contentW, $LH28) + 6;
-
-        $y += 26;
-        $y += $this->wrapHeight('Waktu : '.$it->time_text, $hasTTF ? $fontBold : null, $fs22, $contentW, $LH22);
-
-        $y += 26;
-        $y += $this->wrapHeight('Tempat : '.$it->place, $hasTTF ? $fontBold : null, $fs22, $contentW, $LH22);
-
-        $y += 20;
-        $y += 24;
-    }
-
-    // ===== Footer dynamic (ditambah ruangnya)
-    $verifyText = 'Agenda telah diverifikasi melalui SIGAP AGENDA';
-    $verifyH = $this->wrapHeight($verifyText, $hasTTF ? $fontBold : null, $fs22, $contentW, $LH22);
-    $linkH   = $LH22;
-
-    $footerGapTop   = 36;  // <-- lebih besar
-    $betweenLines   = 28;  // <-- lebih besar
-    $footerPaddingB = 56;  // <-- lebih besar
-    $descenderSafe  = 12;  // <-- tambahan kecil agar tidak kepotong pixel terakhir
-
-    $footerBlockH = $footerGapTop + $verifyH + $betweenLines + $linkH + $footerPaddingB + $descenderSafe;
-
-    // Tinggi total
-    $H = $y + $footerBlockH + $P_BOTTOM;
-
-    // ====== PASS #2: gambar
-    $im = imagecreatetruecolor($W, $H);
-    imagesavealpha($im, true);
-    $transparent = imagecolorallocatealpha($im, 0,0,0,127);
-    imagefill($im, 0, 0, $transparent);
-
-    // background
-    $white = imagecolorallocate($im, 255,255,255);
-    imagefilledrectangle($im, 0, 0, $W, $H, $white);
-    $bgGray = imagecolorallocate($im, 247,247,249);
-    imagefilledrectangle($im, 0, 0, $W, $H, $bgGray);
-
-    $maroon   = imagecolorallocate($im, 122, 34, 34);
-    $black    = imagecolorallocate($im, 17,17,17);
-    $grayDark = imagecolorallocate($im, 68,68,68);
-    $gray     = imagecolorallocate($im, 107,114,128);
-    $lineCol  = imagecolorallocate($im, 229,231,235);
-    $whiteCol = imagecolorallocate($im, 255,255,255);
-
-    // header bar
-    imagefilledrectangle($im, $P_LEFT, $P_TOP, $W - $P_RIGHT, $P_TOP + $HDR_BAR, $maroon);
-
-    // header text
-    if ($hasTTF) {
-        imagettftext($im, 44, 0, $P_LEFT+28, $P_TOP+62,  $whiteCol, $fontBold, 'AGENDA');
-        imagettftext($im, 28, 0, $P_LEFT+28, $P_TOP+102, $whiteCol, $fontBold, $agenda->unit_title);
-    } else {
-        imagestring($im, 5, $P_LEFT+28, $P_TOP+40, 'AGENDA', $whiteCol);
-        imagestring($im, 4, $P_LEFT+28, $P_TOP+80, $agenda->unit_title, $whiteCol);
-    }
-
-    // tanggal
-    $dateStr = \Carbon\Carbon::parse($agenda->date)->locale('id')->translatedFormat('l, d F Y');
-    if ($hasTTF) imagettftext($im, 30, 0, $P_LEFT, $P_TOP + $HDR_BAR + 54, $black, $fontBold, $dateStr);
-    else imagestring($im, 5, $P_LEFT, $P_TOP + $HDR_BAR + 36, $dateStr, $black);
-
-    // watermark diagonal (gambar lebih dulu, nanti footer diberi background putih)
-    $this->gdWatermark($im, $W, $H, 'Diverifikasi melalui SIGAP AGENDA', $fontBold ?: $fontRegular);
-
-    // body
-    $y = $P_TOP + $HEADER_H + 36;
-    $idx = 1;
-    foreach ($agenda->items as $it) {
-        if ($hasTTF) imagettftext($im, 28, 0, $P_LEFT, $y+28, $black, $fontBold, $idx.'.');
-        else imagestring($im, 5, $P_LEFT, $y+12, $idx.'.', $black);
-
-        $x = $P_LEFT + $NUMBER_GAP;
-
-        if (!empty($it->assignees)) {
-            $badgeText = trim($it->assignees);
-            $badgeW = $this->ttfTextWidth($badgeText, $fontBold, 22);
-            $badgeW = min($badgeW + 40, $contentW);
-            $badgeFill= imagecolorallocatealpha($im, 122,34,34, 100);
-            imagefilledrectangle($im, $x, $y, $x+$badgeW, $y+40, $badgeFill);
-            imagerectangle($im,     $x, $y, $x+$badgeW, $y+40, $maroon);
-            if ($hasTTF) {
-                $textFitted = $this->gdFit($im, $badgeText, $fontBold, 22, $badgeW-16);
-                imagettftext($im, 22, 0, $x+14, $y+26, $maroon, $fontBold, $textFitted);
-            } else {
-                imagestring($im, 4, $x+14, $y+12, $badgeText, $maroon);
-            }
-            $y += 52;
-        }
-
-        $desc = $this->composeDescGD($it);
-        if ($hasTTF) {
-            $y = $this->gdDrawWrap($im, $desc, $fontRegular, $fs28, $black, $x, $y+34, $contentW, $LH28) + 6;
-        } else {
-            $y = $this->gdDrawWrapBuiltin($im, $desc, 4, $black, $x, $y+20, $contentW, $LH28) + 6;
-        }
-
-        if ($hasTTF) {
-            $y = $this->gdDrawWrap($im, 'Waktu : '.$it->time_text, $fontBold, $fs22, $grayDark, $x, $y+26, $contentW, $LH22);
-            $y = $this->gdDrawWrap($im, 'Tempat : '.$it->place,    $fontBold, $fs22, $grayDark, $x, $y+26, $contentW, $LH22);
-        } else {
-            $y = $this->gdDrawWrapBuiltin($im, 'Waktu : '.$it->time_text, 3, $grayDark, $x, $y+18, $contentW, $LH22);
-            $y = $this->gdDrawWrapBuiltin($im, 'Tempat : '.$it->place,    3, $grayDark, $x, $y+18, $contentW, $LH22);
-        }
-
-        $y += 20;
-        imageline($im, $P_LEFT, $y, $W - $P_RIGHT, $y, $lineCol);
-        $y += 24;
-
-        $idx++;
-    }
-
-    // ===== Footer BG putih (agar tak ketimpa watermark) + teks
-    $footerTop = $y + $footerGapTop;
-    $footerBottom = $footerTop + ($verifyH + $betweenLines + $linkH + $footerPaddingB + $descenderSafe);
-    $footerBG = imagecolorallocatealpha($im, 255,255,255, 0);
-    imagefilledrectangle($im, $P_LEFT, $footerTop - 18, $W - $P_RIGHT, $footerBottom, $footerBG);
-
-    $link = rtrim(config('app.url'), '/').'/agenda/'.$agenda->id;
-
-    if ($hasTTF) {
-        $yFooter = $this->gdDrawWrap($im, $verifyText, $fontBold, $fs22, $maroon, $P_LEFT, $footerTop + $LH22, $contentW, $LH22);
-        $yFooter = $this->gdDrawWrap($im, $link,       $fontRegular, $fs22, $gray,   $P_LEFT, $yFooter + $betweenLines, $contentW, $LH22);
-    } else {
-        $yFooter = $this->gdDrawWrapBuiltin($im, $verifyText, 3, $maroon, $P_LEFT, $footerTop + ($LH22 - 22), $contentW, $LH22);
-        $yFooter = $this->gdDrawWrapBuiltin($im, $link,       3, $gray,   $P_LEFT, $yFooter + $betweenLines - 8, $contentW, $LH22);
-    }
-
-    // ===== Simpan: nama unik + hapus lama
-    $dirRel = "sigap/agenda";
-    $dirAbs = storage_path('app/public/'.$dirRel);
-    @mkdir($dirAbs, 0775, true);
-    foreach (glob($dirAbs."/agenda-{$agenda->id}-*.jpg") ?: [] as $old) { @unlink($old); }
-
-    $ts = time();
-    $relPath = "{$dirRel}/agenda-{$agenda->id}-{$ts}.jpg";
-    $abs     = $dirAbs."/agenda-{$agenda->id}-{$ts}.jpg";
-    imagejpeg($im, $abs, 90);
-    imagedestroy($im);
-
-    $text = "AGENDA ".mb_strtoupper($agenda->unit_title)."\n{$dateStr}\n{$link}";
-
-    return response()->json([
-        'ok'        => true,
-        'image_url' => asset('storage/'.$relPath).'?t='.$ts,
-        'text'      => $text,
-    ]);
-}
-
-
-
     /* ===================== Helpers (GD) ===================== */
 
     private function findFont(array $candidates): ?string
@@ -782,14 +583,63 @@ public function shareImageGD(Request $request)
 
     private function composeDescGD($it): string
     {
-        $mode = $it->mode ?? 'kepala';
-        if ($mode === 'kepala') return 'Kepala Brida, '.$it->description;
-        if ($mode === 'menugaskan') {
-            $who = trim((string)$it->assignees);
-            return 'Menugaskan '.($who ? ($who.', ') : '').$it->description;
+        if ($it->mode !== 'menugaskan') {
+            return $it->mode === 'kepala'
+                ? 'Kepala Brida, '.$it->description
+                : $it->description;
         }
-        return (string)$it->description;
+
+        $lines = [];
+
+        try {
+            $data = json_decode($it->assignees, true);
+            foreach ($data['users'] ?? [] as $u) {
+                $lines[] = '• '.$u['name'];
+            }
+            foreach ($data['manual'] ?? [] as $m) {
+                $lines[] = '• '.$m;
+            }
+        } catch (\Throwable $e) {
+            if ($it->assignees) $lines[] = '• '.$it->assignees;
+        }
+
+        return "Menugaskan:\n".implode("\n", $lines)."\n\n".$it->description;
     }
+
+    private function assigneeBadgeText($it): ?string
+    {
+        if (empty($it->assignees)) return null;
+
+        try {
+            $data = json_decode($it->assignees, true);
+            if (!is_array($data)) return null;
+
+            $names = [];
+
+            foreach ($data['users'] ?? [] as $u) {
+                if (!empty($u['name'])) $names[] = $u['name'];
+            }
+            foreach ($data['manual'] ?? [] as $m) {
+                if (!empty($m)) $names[] = $m;
+            }
+
+            if (empty($names)) return null;
+
+            // Badge cukup ringkas
+            if (count($names) === 1) {
+                return $names[0];
+            }
+
+            if (count($names) === 2) {
+                return $names[0].' & '.$names[1];
+            }
+
+            return $names[0].' +'.(count($names) - 1);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
 
     private function ttfTextWidth(string $text, ?string $font, int $size): int
     {

@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\UserSearchController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 
 use App\Http\Controllers\page\HomeController;
 use App\Http\Controllers\DashboardController;
@@ -239,11 +241,12 @@ Route::middleware('auth','role:user|admin|verificator')->group(function () {
     Route::get('/sigap-agenda/edit',       [SigapAgendaController::class, 'edit'])->name('sigap-agenda.edit');      // ?id=123
     Route::post('/sigap-agenda/update',    [SigapAgendaController::class, 'update'])->name('sigap-agenda.update');  // POST
     Route::post('/sigap-agenda/delete', [SigapAgendaController::class, 'delete'])->name('sigap-agenda.delete');
+
 });
+
+Route::middleware('auth')
+    ->get('/api/users/search', [UserSearchController::class, 'search'])
+    ->name('api.users.search');
 
 // (opsional) jika masih butuh JSON show:
 Route::get('/sigap-agenda/show',       [SigapAgendaController::class, 'show'])->name('sigap-agenda.show');     
-
-// routes/web.php
-Route::post('/sigap-agenda/share-image', [SigapAgendaController::class, 'shareImageGD'])
-    ->name('sigap-agenda.share-image');
