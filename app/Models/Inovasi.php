@@ -53,6 +53,11 @@ class Inovasi extends Model
         // Admin: tidak difilter
         return $user->hasRole('admin') ? $query : $query->where('user_id', $user->id);
     }
+    public function referensiVideos()
+    {
+        return $this->hasMany(InovasiReferensiVideo::class);
+    }
+
 
     public function verifikator() { return $this->belongsTo(User::class, 'asistensi_by'); }
 }
