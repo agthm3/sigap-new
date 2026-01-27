@@ -231,6 +231,23 @@ class SigapInovasiController extends Controller
         $evFilled = $evItems->where('selected_weight','>',0)->count();
         $evFiles  = $evItems->filter(fn($r)=> !empty($r['file_url']))->count();
 
+        $evMax = $evidenceRepo->maxTotalWeight();
+
+        // Indikator Warna
+        if ($evTotal <= 30) {
+            $statusTeks = 'Kurang';
+            $badgeColor = 'bg-red-50  text-red-700 inset-ring inset-ring-red-600/10';
+        } elseif ($evTotal > 30 && $evTotal <= 60) {
+            $statusTeks = 'Cukup';
+            $badgeColor = 'bg-yellow-50  text-yellow-700 inset-ring inset-ring-yellow-600/20'; // Kuning/Oranye
+        } elseif ($evTotal > 60 && $evTotal <= 80) {
+            $statusTeks = 'Baik';
+            $badgeColor = 'bg-blue-50  text-blue-700 inset-ring inset-ring-blue-700/20'; // Biru
+        } else {
+            $statusTeks = 'Sangat Baik';
+            $badgeColor = 'bg-green-50  text-green-700 inset-ring inset-ring-green-600/20'; // Hijau
+        }
+
         // Lampiran utama entity Inovasi
         $mainFiles = collect([
             ['label' => 'Anggaran',       'path' => $inovasi->anggaran_file],
@@ -250,7 +267,8 @@ class SigapInovasiController extends Controller
 
         return view('dashboard.inovasi.show', compact(
             'inovasi','tInis','tUji','tTerap','progressPct',
-            'evItems','evTotal','evFilled','evFiles','mainFiles'
+            'evItems','evTotal','evFilled','evFiles','mainFiles', 
+            'statusTeks', 'badgeColor', 'evMax'
         ));
     }
 
