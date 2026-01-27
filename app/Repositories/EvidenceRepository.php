@@ -167,4 +167,18 @@ class EvidenceRepository
         return (int) $total;
     }
 
+    public function evidenceChecklistText(): string
+    {
+        $rows = EvidenceTemplate::orderBy('no')->get(['no','indikator']);
+
+        $lines = [];
+        foreach ($rows as $r) {
+            $lines[] = "{$r->no}. {$r->indikator}:";
+        }
+
+        return "Mohon dilakukan perbaikan pada Evidence berikut:\n\n"
+            . implode("\n", $lines);
+    }
+
+
 }

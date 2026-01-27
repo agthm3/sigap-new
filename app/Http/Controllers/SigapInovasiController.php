@@ -28,7 +28,7 @@ class SigapInovasiController extends Controller
     /**
      * Daftar inovasi (terfilter per user kecuali admin).
      */
-    public function index(Request $request)
+    public function index(Request $request, EvidenceRepository $evidenceRepo)
     {
         $user = Auth::user();
 
@@ -40,9 +40,9 @@ class SigapInovasiController extends Controller
             'urusan'       => $request->get('f_urusan'),
             'sort'         => $request->get('sort','terbaru'),
         ];
-
+        $evidenceNoteTemplate = $evidenceRepo->evidenceChecklistText();
         $items = $this->repo->paginateForUser($user, $filters, 25);
-        return view('dashboard.inovasi.index', compact('filters', 'items'));
+        return view('dashboard.inovasi.index', compact('filters', 'items', 'evidenceNoteTemplate'));
     }
 
     public function konfigurasi()
@@ -162,18 +162,31 @@ class SigapInovasiController extends Controller
             'manfaat'               => ['nullable','string'],
             'hasil_inovasi'         => ['nullable','string'],
             'perkembangan_inovasi'  => ['nullable','string','max:255'],
+
+            'videos' => ['required','array','min:3','max:5'],
+            'videos.*.judul' => ['required','string','max:255'],
+            'videos.*.url' => ['required','url','max:500'],
+            'videos.*.deskripsi' => ['nullable','string'],
         ]);
 
         // set pemilik
         $data['user_id'] = Auth::id();
 
-        $this->repo->create(
+        $inovasi = $this->repo->create(
             $data,
             $r->file('anggaran'),
             $r->file('profil_bisnis'),
             $r->file('haki'),
             $r->file('penghargaan')
         );
+
+        foreach ($r->videos as $video) {
+            $inovasi->referensiVideos()->create([
+                'judul' => $video['judul'],
+                'deskripsi' => $video['deskripsi'] ?? null,
+                'video_url' => $video['url'],
+        ]);
+}
 
         return redirect()->route('sigap-inovasi.index')->with('success', 'Inovasi berhasil ditambahkan.');
     }
@@ -247,10 +260,11 @@ class SigapInovasiController extends Controller
                 'name'  => basename($f['path']),
             ];
         })->filter();
+        $referensiVideos = $inovasi->referensiVideos()->get();
 
         return view('dashboard.inovasi.show', compact(
             'inovasi','tInis','tUji','tTerap','progressPct',
-            'evItems','evTotal','evFilled','evFiles','mainFiles'
+            'evItems','evTotal','evFilled','evFiles','mainFiles','referensiVideos'
         ));
     }
 
@@ -352,6 +366,13 @@ class SigapInovasiController extends Controller
             'profil_bisnis'         => ['nullable','file','mimes:ppt,pptx,pdf','max:20480'],
             'haki'                  => ['nullable','file','mimes:pdf,jpg,jpeg,png','max:10240'],
             'penghargaan'           => ['nullable','file','mimes:pdf,jpg,jpeg,png','max:10240'],
+
+            'refs' => ['nullable','array','min:3','max:5'],
+            'refs.*.id' => ['nullable','integer'],
+            'refs.*.judul' => ['required','string','max:255'],
+            'refs.*.url' => ['required','url','max:500'],
+            'refs.*.deskripsi' => ['nullable','string'],
+
         ]);
 
         $this->repo->update(
@@ -362,6 +383,24 @@ class SigapInovasiController extends Controller
             $r->file('haki'),
             $r->file('penghargaan')
         );
+        $idsKeep = [];
+
+        foreach ($r->input('refs', []) as $ref) {
+            $video = $inovasi->referensiVideos()->updateOrCreate(
+                ['id' => $ref['id'] ?? null],
+                [
+                    'judul' => $ref['judul'],
+                    'deskripsi' => $ref['deskripsi'] ?? null,
+                    'video_url' => $ref['url'],
+                ]
+            );
+            $idsKeep[] = $video->id;
+        }
+
+        // hapus referensi yang tidak dikirim
+        $inovasi->referensiVideos()
+            ->whereNotIn('id', $idsKeep)
+            ->delete();
 
         return redirect()->route('sigap-inovasi.show',$id)->with('success','Metadata inovasi berhasil diperbarui.');
     }

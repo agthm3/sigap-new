@@ -13,6 +13,21 @@
   .ai-hdr-badge::before{ animation:aihdr-spin 1.6s linear infinite; }
   .ai-hdr-badge::after{ background:#f59e0b; animation:aihdr-spin 1.6s linear infinite .4s; }
   @keyframes aihdr-spin { to { transform: rotate(360deg) } }
+  /* QUILL FIX – FINAL */
+.quill-wrapper {
+  width: 100%;
+  margin-bottom: 2rem; /* jarak ke field berikutnya */
+}
+
+.quill-wrapper .ql-container {
+  min-height: 220px;
+}
+
+.quill-wrapper .ql-editor {
+  min-height: 200px;
+  line-height: 1.6;
+}
+
 </style>
 
 @section('content')
@@ -144,12 +159,12 @@
               <th class="px-4 py-3">Inisiator</th>
               <th class="px-4 py-3">Tahap Inovasi</th>
               <th class="px-4 py-3">OPD/Unit</th>
-              <th class="px-4 py-3">
+              {{-- <th class="px-4 py-3">
                 <span class="inline-flex items-center gap-2">
                   Ai Review
                   <span class="ai-hdr-badge" aria-hidden="true" title="AI ready"></span>
                 </span>
-              </th>
+              </th> --}}
               <th class="px-4 py-3">Asistensi</th>
               <th class="px-4 py-3">Aksi</th>
             </tr>
@@ -180,7 +195,7 @@
                   </div>
                 </td>
                 <td class="px-4 py-3">{{ $inv->opd_unit ?? '-' }}</td>
-                <td class="px-4 py-3"><p class="p-2 bg-yellow-100 text-black">-Coming Soon-</p></td>
+                {{-- <td class="px-4 py-3"><p class="p-2 bg-yellow-100 text-black">-Coming Soon-</p></td> --}}
             <td class="px-4 py-3">
                 @role('admin')
                   <form
@@ -416,22 +431,114 @@
           </label>
 
           <!-- Richtext (Quill -> textarea) -->
-          <label class="block sm:col-span-2">
-            <span class="text-sm font-semibold text-gray-700">Rancang bangun (Min 300 karakter)</span>
-            <textarea name="rancang_bangun" class="richtext mt-1.5 w-full rounded-lg border p-2 border-gray-300" data-minlength="300" data-short="true"></textarea>
-          </label>
-          <label class="block sm:col-span-2">
-            <span class="text-sm font-semibold text-gray-700">Tujuan inovasi daerah</span>
-            <textarea name="tujuan" class="richtext mt-1.5 w-full rounded-lg border p-2 border-gray-300"></textarea>
-          </label>
-          <label class="block sm:col-span-2">
-            <span class="text-sm font-semibold text-gray-700">Manfaat yang diperoleh</span>
-            <textarea name="manfaat" class="richtext mt-1.5 w-full rounded-lg border p-2 border-gray-300"></textarea>
-          </label>
-          <label class="block sm:col-span-2">
-            <span class="text-sm font-semibold text-gray-700">Hasil Inovasi</span>
-            <textarea name="hasil_inovasi" class="richtext mt-1.5 w-full rounded-lg border p-2 border-gray-300"></textarea>
-          </label>
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">
+              Rancang bangun (Min 300 karakter)
+            </label>
+
+            <textarea
+              name="rancang_bangun"
+              rows="8"
+              minlength="300"
+              required
+              class="w-full rounded-lg border border-gray-300 p-3
+                    focus:border-maroon focus:ring-maroon resize-y"
+              placeholder="Jelaskan rancang bangun inovasi secara rinci..."
+            ></textarea>
+
+            <p class="text-xs text-gray-500 mt-1">
+              Minimal 300 karakter.
+            </p>
+          </div>
+
+
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">
+              Tujuan inovasi daerah
+            </label>
+
+            <textarea
+              name="tujuan"
+              rows="5"
+              class="w-full rounded-lg border border-gray-300 p-3
+                    focus:border-maroon focus:ring-maroon resize-y"
+              placeholder="Tuliskan tujuan inovasi..."
+            ></textarea>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">
+             Manfaat yang diperoleh
+            </label>
+
+            <textarea
+              name="manfaat"
+              rows="5"
+              class="w-full rounded-lg border border-gray-300 p-3
+                    focus:border-maroon focus:ring-maroon resize-y"
+              placeholder="Tuliskan manfaat yang diperoleh..."
+            ></textarea>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">
+             Hasil Inovasi
+            </label>
+
+            <textarea
+              name="hasil_inovasi"
+              rows="5"
+              class="w-full rounded-lg border border-gray-300 p-3
+                    focus:border-maroon focus:ring-maroon resize-y"
+              placeholder="Tuliskan hasil inovasi..."
+            ></textarea>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Penelitian / Inovasi Terdahulu (Minimal 3, Maksimal 5)
+            </label>
+
+            <div id="video-wrapper" class="space-y-3">
+
+              @for ($i = 0; $i < 3; $i++)
+                <div class="video-item border rounded-lg p-3">
+                  <input
+                    type="text"
+                    name="videos[{{ $i }}][judul]"
+                    required
+                    placeholder="Judul penelitian / inovasi"
+                    class="w-full mb-2 rounded-lg border-black-300"
+                  >
+
+                  <textarea
+                    name="videos[{{ $i }}][deskripsi]"
+                    rows="2"
+                    placeholder="Deskripsi singkat"
+                    class="w-full mb-2 rounded-lg border-gray-300"
+                  ></textarea>
+
+                  <input
+                    type="url"
+                    name="videos[{{ $i }}][url]"
+                    required
+                    placeholder="Link video (YouTube / website)"
+                    class="w-full rounded-lg border-gray-300"
+                  >
+                </div>
+              @endfor
+
+            </div>
+
+            <div class="flex gap-2 mt-3">
+              <button type="button" id="addVideo"
+                class="px-3 py-1 text-sm border rounded hover:bg-gray-50">
+                + Tambah Referensi
+              </button>
+
+              <button type="button" id="removeVideo"
+                class="px-3 py-1 text-sm border rounded hover:bg-gray-50">
+                − Hapus
+              </button>
+            </div>
+          </div>
 
           <!-- Files -->
           <div class="sm:col-span-2 grid sm:grid-cols-2 gap-4">
@@ -482,9 +589,14 @@
       </div>
       <form id="asst-modal-form" method="POST" class="p-5 space-y-3">
         @csrf
-        <textarea id="asst-modal-note" rows="3" maxlength="5000"
+        <textarea id="asst-modal-note"
+          rows="6"
+          maxlength="5000"
           class="w-full rounded-lg border border-gray-300 focus:border-maroon focus:ring-maroon text-sm"
-          placeholder="Tulis catatan… (Wajib)"></textarea>
+          data-template="{{ e($evidenceNoteTemplate) }}"
+          placeholder="Tulis catatan… (Wajib)">
+        </textarea>
+
         <div class="flex items-center justify-between text-[11px] text-gray-500">
           <div class="flex flex-wrap gap-2">
             @foreach(['Lengkapi dokumen','Perbaiki deskripsi manfaat','Tidak sesuai kriteria','Butuh data pendukung'] as $chip)
@@ -506,54 +618,13 @@
 @endsection
 
 @push('scripts')
-  {{-- Quill CDN (kalau belum dimuat global) --}}
-  <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
-  <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
-
   <script>
     // Modal controls
     const modal = document.getElementById('modal');
     document.getElementById('btnTambah')?.addEventListener('click', () => { modal.classList.remove('hidden'); setTimeout(()=>window.dispatchEvent(new Event('resize')),50); });
     function closeModal(){ modal.classList.add('hidden'); }
 
-    // Quill init
-    const QUILL_EDITORS=[];
-    function initQuillEditors(){
-      document.querySelectorAll('textarea.richtext').forEach((ta, idx) => {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'mt-1.5';
-        const editor = document.createElement('div');
-        wrapper.appendChild(editor);
-        ta.insertAdjacentElement('afterend', wrapper);
-        ta.style.display='none';
-
-        const quill = new Quill(editor, {
-          theme: 'snow',
-          modules: { toolbar: [['bold','italic','underline'], [{'list':'ordered'},{'list':'bullet'}], ['link','clean']] }
-        });
-        if (ta.value && ta.value.trim()!=='') quill.root.innerHTML = ta.value;
-
-        QUILL_EDITORS.push({
-          ta, quill,
-          min: parseInt(ta.dataset.minlength || '0',10) || 0,
-          label: ta.previousElementSibling?.querySelector('span')?.innerText || ta.name || `Field ${idx+1}`
-        });
-      });
-    }
-    function syncQuillToTextareas(){
-      for(const {ta,quill,min,label} of QUILL_EDITORS){
-        const html = quill.root.innerHTML.trim();
-        const plainLen = quill.getText().trim().length;
-        if(min && plainLen < min){ alert(`${label}: minimal ${min} karakter. Saat ini ${plainLen}.`); throw new Error('VALIDATION_FAIL'); }
-        ta.value = html;
-      }
-    }
-    initQuillEditors();
-
-    // Sync sebelum submit form create
-    document.getElementById('formTambah')?.addEventListener('submit', (e)=>{
-      try { syncQuillToTextareas(); } catch(err){ e.preventDefault(); }
-    });
+ 
   </script>
 
 <script>
@@ -569,13 +640,19 @@
   let pendingForm = null; // form baris yang menunggu note
   let pendingHiddenNote = null; // hidden input note di baris itu
 
-  function openAsstModal(title){
+  function openAsstModal(title, status){
     modalTitleEl.textContent = title || 'Asistensi';
-    noteEl.value = '';
+
+    const template = noteEl.dataset.template || '';
+    const needTemplate = ['Dikembalikan','Revisi','Ditolak'].includes(status);
+
+    noteEl.value = needTemplate ? template : '';
     updateCount();
+
     modalEl.classList.remove('hidden');
     setTimeout(()=> noteEl.focus(), 30);
   }
+
   function closeAsstModal(){
     modalEl.classList.add('hidden');
     pendingForm = null;
@@ -606,20 +683,64 @@
   document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('form[id^="asst-form-"]').forEach(form => {
       form.addEventListener('submit', function(e){
-        const statusSel = form.querySelector('select[name="status"]');
-        const need = NEED_NOTE.has(statusSel?.value || '');
-        if(need){
-          // tahan submit, buka modal
-          e.preventDefault();
-          pendingForm = form;
-          pendingHiddenNote = form.querySelector('input[name="note"]');
-          const title = form.dataset.modalTitle || 'Asistensi';
-          openAsstModal(title);
-        }
+      const statusSel = form.querySelector('select[name="status"]');
+      const statusVal = statusSel?.value || '';
+
+      if (NEED_NOTE.has(statusVal)) {
+        e.preventDefault();
+        pendingForm = form;
+        pendingHiddenNote = form.querySelector('input[name="note"]');
+
+        openAsstModal(form.dataset.modalTitle, statusVal);
+      }
+
         // jika tidak perlu note -> submit langsung (biarkan default)
       });
     });
   });
+</script>
+<script>
+let videoIndex = 3;
+const minVideo = 3;
+const maxVideo = 5;
+
+const wrapper = document.getElementById('video-wrapper');
+
+document.getElementById('addVideo').addEventListener('click', () => {
+  if (videoIndex >= maxVideo) {
+    alert('Maksimal 5 referensi video.');
+    return;
+  }
+
+  const div = document.createElement('div');
+  div.className = 'video-item border rounded-lg p-3';
+  div.innerHTML = `
+    <input type="text" name="videos[${videoIndex}][judul]"
+      required placeholder="Judul penelitian / inovasi"
+      class="w-full mb-2 rounded-lg border-gray-300">
+
+    <textarea name="videos[${videoIndex}][deskripsi]"
+      rows="2" placeholder="Deskripsi singkat"
+      class="w-full mb-2 rounded-lg border-gray-300"></textarea>
+
+    <input type="url" name="videos[${videoIndex}][url]"
+      required placeholder="Link video"
+      class="w-full rounded-lg border-gray-300">
+  `;
+
+  wrapper.appendChild(div);
+  videoIndex++;
+});
+
+document.getElementById('removeVideo').addEventListener('click', () => {
+  if (videoIndex <= minVideo) {
+    alert('Minimal 3 referensi wajib diisi.');
+    return;
+  }
+
+  wrapper.lastElementChild.remove();
+  videoIndex--;
+});
 </script>
 
 @endpush

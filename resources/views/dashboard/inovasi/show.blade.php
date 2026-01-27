@@ -220,6 +220,61 @@
     </div>
   </div>
 </section>
+{{-- Penelitian / Inovasi Terdahulu --}}
+<section class="max-w-7xl mx-auto px-4 py-6">
+  <div class="card rounded-2xl border bg-white p-4">
+    <h3 class="font-semibold text-gray-800 mb-3">
+      Penelitian / Inovasi Terdahulu
+    </h3>
+
+    @if($referensiVideos->isEmpty())
+      <p class="text-sm text-gray-500">
+        Belum ada referensi penelitian atau inovasi terdahulu.
+      </p>
+    @else
+      <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+        @foreach($referensiVideos as $ref)
+          <div class="rounded-xl border p-3 flex flex-col gap-2">
+
+            {{-- Judul --}}
+            <p class="font-semibold text-gray-900 leading-snug">
+              {{ $ref->judul }}
+            </p>
+
+            {{-- Deskripsi --}}
+            @if($ref->deskripsi)
+              <p class="text-sm text-gray-600 line-clamp-3">
+                {{ $ref->deskripsi }}
+              </p>
+            @endif
+
+            {{-- Video / Link --}}
+            @php
+              $isYoutube = preg_match('/(youtube\.com|youtu\.be)/i', $ref->video_url);
+            @endphp
+
+            @if($isYoutube)
+              <div class="aspect-video mt-2 rounded overflow-hidden border">
+                <iframe
+                  src="https://www.youtube.com/embed/{{ \Illuminate\Support\Str::afterLast($ref->video_url, '/') }}"
+                  class="w-full h-full"
+                  frameborder="0"
+                  allowfullscreen>
+                </iframe>
+              </div>
+            @else
+              <a href="{{ $ref->video_url }}" target="_blank"
+                 class="mt-2 inline-flex items-center gap-2 text-sm text-maroon hover:underline">
+                🔗 Buka Referensi
+              </a>
+            @endif
+
+          </div>
+        @endforeach
+      </div>
+    @endif
+  </div>
+</section>
 
 
 <!-- Lampiran Utama + Evidence -->
