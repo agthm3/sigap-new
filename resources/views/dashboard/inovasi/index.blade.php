@@ -182,7 +182,7 @@
                     <div>
                       <p class="font-medium text-gray-900">{{ $inv->judul }}</p>
                       <p class="text-xs text-gray-600 line-clamp-1">
-                        {!! \Illuminate\Support\Str::limit(strip_tags($inv->rancang_bangun ?? '-'), 120) !!}
+                        {!! \Illuminate\Support\Str::limit(strip_tags($inv->rancang_bangun ?? '-'), 20) !!}
                       </p>
                     </div>
                   </div>

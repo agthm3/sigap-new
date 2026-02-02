@@ -7,6 +7,23 @@
     .scrollbar-thin::-webkit-scrollbar-thumb{background:#e5e7eb;border-radius:8px}
     details[open] .chev { transform: rotate(180deg); }
   </style>
+<style>
+  /* select tetap normal */
+  .paramSelect {
+    max-width: 100%;
+  }
+
+  /* INI YANG PENTING */
+  .paramSelect option {
+    display: block;
+    max-width: 100vw;       /* jangan lebih lebar dari layar */
+    overflow-x: auto;       /* scroll ke samping */
+    white-space: nowrap;    /* tetap satu baris */
+  }
+</style>
+
+
+
 
   <section class="max-w-7xl mx-auto px-4 py-6">
     <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
@@ -104,9 +121,16 @@
                           if ($selectedLabel && $selectedLabel === $p['label']) $sel = 'selected';
                           elseif (!$selectedLabel && $selectedWeight && $selectedWeight == $p['weight']) $sel = 'selected';
                         @endphp
-                        <option value="{{ $p['id'] }}" data-weight="{{ (int)$p['weight'] }}" data-label="{{ $p['label'] }}" {{ $sel }}>
+                        <option
+                          value="{{ $p['id'] }}"
+                          data-weight="{{ (int)$p['weight'] }}"
+                          data-label="{{ $p['label'] }}"
+                          title="{{ $p['label'] }}"
+                          {{ $sel }}
+                        >
                           {{ $p['label'] }}
                         </option>
+
                       @endforeach
                     </select>
                     {{-- Kalau mau support input manual, siapkan ini (opsional) --}}
