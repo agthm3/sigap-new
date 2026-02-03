@@ -70,11 +70,12 @@
               // dipakai untuk badge kanan saat load awal
               $preInfo  = $selectedLabel ?: '—';
               $preBobot = $selectedWeight ?: 0;
-              $accept = '';
-              if (preg_match('/Upload Video/i', $it['jenis_file'] ?? '')) $accept = '.mp4,.mov';
-              elseif (preg_match('/Foto\/Gambar/i', $it['jenis_file'] ?? '')) $accept = '.jpg,.jpeg,.png,.gif,.webp,.svg';
-              elseif (preg_match('/Dokumen\/Foto\/Gambar/i', $it['jenis_file'] ?? '')) $accept = '.pdf,.jpg,.jpeg,.png';
-              elseif (preg_match('/Dokumen PDF/i', $it['jenis_file'] ?? '')) $accept = '.pdf';
+              // $accept = '';
+              // if (preg_match('/Upload Video/i', $it['jenis_file'] ?? '')) $accept = '.mp4,.mov';
+              // elseif (preg_match('/Foto\/Gambar/i', $it['jenis_file'] ?? '')) $accept = '.jpg,.jpeg,.png,.gif,.webp,.svg';
+              // elseif (preg_match('/Dokumen\/Foto\/Gambar/i', $it['jenis_file'] ?? '')) $accept = '.pdf,.jpg,.jpeg,.png';
+              // elseif (preg_match('/Dokumen PDF/i', $it['jenis_file'] ?? '')) $accept = '.pdf';
+              $accept = '.pdf';
             @endphp
 
             <details class="bg-white border border-gray-200 rounded-2xl overflow-hidden" {{ $no <= 2 ? 'open' : '' }}>
@@ -105,8 +106,12 @@
               <div class="px-4 pb-4 pt-3 border-t bg-white">
                 <div class="grid md:grid-cols-2 gap-4">
                   <div class="rounded-lg border p-3">
-                    <p class="text-xs text-gray-500 mb-1">Jenis File yang diharapkan</p>
-                    <p class="text-sm font-medium text-gray-800">{{ $it['jenis_file'] ?? '-' }}</p>
+                    <p class="text-xs text-gray-500 mb-1">
+                      Jenis File yang diharapkan
+                    </p>
+                    <p class="text-sm font-medium text-gray-800">
+                      Dokumen PDF
+                    </p>
                   </div>
 
                   <div class="rounded-lg border p-3">

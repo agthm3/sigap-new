@@ -290,6 +290,10 @@ class SigapInovasiController extends Controller
     public function evidenceSave(Request $r, Inovasi $inovasi, EvidenceRepository $evidenceRepo)
     {
         $this->authorizeOwnerOrAdmin($inovasi);
+        $r->validate([
+            'file_*' => ['nullable', 'file', 'mimes:pdf', 'max:10240'], // 10MB
+        ]);
+
 
         $paramIds   = $r->input('param_id', []);
         $labels     = $r->input('parameter_label', []);
