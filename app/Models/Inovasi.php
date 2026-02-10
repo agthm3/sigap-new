@@ -16,7 +16,7 @@ class Inovasi extends Model
         'rancang_bangun','tujuan','manfaat','hasil_inovasi','perkembangan_inovasi',
         'anggaran_file','profil_bisnis_file','haki_file','penghargaan_file', 'user_id',
         // asistensi
-        'asistensi_status','asistensi_note','asistensi_by','asistensi_at',
+        'asistensi_status','asistensi_note','asistensi_by','asistensi_at','misi_walikota',
     ];
 
     protected $casts = [

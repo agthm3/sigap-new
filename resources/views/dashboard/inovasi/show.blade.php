@@ -29,6 +29,15 @@
     ];
     return $map[$text] ?? $map['Belum'];
   };
+
+   $cfg = [
+    'misi'   => config('inovasi.misi_walikota', []),
+    'program'=> config('inovasi.program_prioritas', []),
+    'urusan' => config('inovasi.urusan_pemerintah', []),
+    'asta'   => config('inovasi.asta_cipta', []),
+  ];
+
+  $label = fn($map, $key) => $map[$key] ?? '—';
 @endphp
 
 <!-- Header -->
@@ -102,6 +111,67 @@
     </div>
   </section>
 @endif
+
+<section class="max-w-7xl mx-auto px-4 py-4">
+  <div class="card rounded-2xl border bg-white p-4">
+    <h3 class="font-semibold text-gray-800 mb-3">
+      Keterkaitan Kebijakan Daerah
+    </h3>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
+
+      {{-- MISI WALIKOTA --}}
+      <div class="rounded-lg border p-3">
+        <p class="text-xs text-gray-500">Misi Walikota Makassar</p>
+        <p class="font-medium text-gray-900 mt-1 leading-snug">
+          {{ $label($cfg['misi'], $inovasi->misi_walikota) }}
+        </p>
+      </div>
+
+      {{-- PROGRAM PRIORITAS --}}
+      <div class="rounded-lg border p-3">
+        <p class="text-xs text-gray-500">Program Prioritas Walikota</p>
+        <p class="font-medium text-gray-900 mt-1">
+          {{ $label($cfg['program'], $inovasi->program_prioritas) }}
+        </p>
+      </div>
+
+      {{-- ASTA CIPTA --}}
+      <div class="rounded-lg border p-3">
+        <p class="text-xs text-gray-500">Asta Cipta</p>
+        <p class="font-medium text-gray-900 mt-1">
+          {{ $label($cfg['asta'], $inovasi->asta_cipta) }}
+        </p>
+      </div>
+
+      {{-- URUSAN PEMERINTAH --}}
+      <div class="rounded-lg border p-3">
+        <p class="text-xs text-gray-500">Urusan Pemerintah</p>
+        <p class="font-medium text-gray-900 mt-1">
+          {{ $label($cfg['urusan'], $inovasi->urusan_pemerintah) }}
+        </p>
+      </div>
+
+      {{-- KLASIFIKASI --}}
+      <div class="rounded-lg border p-3">
+        <p class="text-xs text-gray-500">Klasifikasi Inovasi</p>
+        <p class="font-medium text-gray-900 mt-1">
+          {{ $inovasi->klasifikasi ?? '—' }}
+        </p>
+      </div>
+
+      {{-- JENIS --}}
+      <div class="rounded-lg border p-3">
+        <p class="text-xs text-gray-500">Jenis Inovasi</p>
+        <p class="font-medium text-gray-900 mt-1">
+          {{ $inovasi->jenis_inovasi ?? '—' }}
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
 
 <!-- KPI ringkas -->
 <section class="max-w-7xl mx-auto px-4">

@@ -12,6 +12,9 @@ class EvidenceFile extends Model
         'file_name',
         'file_mime',
         'file_size',
+        'nomor_surat',
+        'tanggal_surat',
+        'tentang',
     ];
 
     public function evidence()
