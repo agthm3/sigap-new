@@ -574,8 +574,8 @@
           <!-- Files -->
           <div class="sm:col-span-2 grid sm:grid-cols-2 gap-4">
             <label class="block">
-              <span class="text-sm font-semibold text-gray-700">Anggaran (Jika diperlukan)</span>
-              <input name="anggaran" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
+              <span class="text-sm font-semibold text-gray-700 ">Anggaran <span style="color:red">*</span></span>
+              <input name="anggaran" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon" required>
               <p class="text-[12px] text-gray-500 mt-1">Utamakan PDF untuk ringkasan / TOR.</p>
             </label>
             <label class="block">
