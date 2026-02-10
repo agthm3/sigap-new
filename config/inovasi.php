@@ -63,4 +63,15 @@ return [
         'litbang' => 'Penelitian dan Pengembangan',
         'fungsi_lain' => 'Fungsi lain sesuai ketentuan peraturan perundang-undangan',
     ],
+
+
+    'misi_walikota' => [
+        1 => 'Meningkatkan daya saing ekonomi daerah, penciptaan lapangan kerja dan kesejahteraan masyarakat, khususnya masyarakat pesisir dan pulau',
+        2 => 'Meningkatkan kualitas layanan dasar bidang Pendidikan dan Kesehatan secara merata',
+        3 => 'Mewujudkan pembangunan infrastruktur dan tata ruang kota yang berkeadilan dan ramah lingkungan',
+        4 => 'Mengembangkan pusat inovasi kepemudaan dan pengembangan olahraga, seni budaya serta pariwisata',
+        5 => 'Mewujudkan tata Kelola pemerintahan yang Bersih dan Terpercaya',
+        6 => 'Meningkatkan akses pelayanan dan perlindungan perempuan, anak, dan penyandang disabilitas',
+        7 => 'Menegakkan ketertiban umum dan kesadaran masyarakat terhadap mitigasi bencana',
+    ],
 ];

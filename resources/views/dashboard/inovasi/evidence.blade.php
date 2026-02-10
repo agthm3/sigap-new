@@ -40,10 +40,12 @@
       <div class="flex flex-wrap gap-2">
         <a href="{{ route('sigap-inovasi.show', $inovasi->id) }}"
            class="px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-sm">Kembali ke Detail</a>
-        <button form="evidenceForm"
+        <button id="btnSubmitEvidence"
+                form="evidenceForm"
                 class="px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 text-sm">
           Simpan Evidence
         </button>
+
       </div>
     </div>
 
@@ -153,14 +155,40 @@
                                value="{{ $it['deskripsi'] ?? '' }}">
                       </div>
                       <div>
-                        <input type="file" name="file_{{ $no }}" accept="{{ $accept }}"
+                        <input  type="file"
+                                name="files[{{ $no }}][]"
+                                accept=".pdf"
+                                multiple
                                class="block w-full text-sm border rounded-lg file:mr-2 file:px-3 file:py-1.5 file:border-0 file:rounded-md file:bg-gray-100 hover:file:bg-gray-200">
-                        @if(!empty($it['file_url']))
-                          <div class="text-xs text-gray-600 mt-1">
-                            <span class="truncate">{{ $it['file_name'] ?? '' }}</span>
-                            • <a href="{{ $it['file_url'] }}" target="_blank" class="text-maroon underline">Lihat file</a>
-                          </div>
-                        @endif
+       @if(!empty($it['files']))
+  <div class="mt-2 space-y-1">
+    @foreach($it['files'] as $file)
+      <div class="flex items-center gap-2 text-xs border rounded-md px-2 py-1"
+           data-file-row>
+
+        <span class="truncate flex-1 text-gray-700">
+          📄 {{ $file['name'] }}
+        </span>
+
+        <a href="{{ $file['url'] }}" target="_blank"
+           class="text-maroon underline">
+          View
+        </a>
+
+        <button type="button"
+                class="text-rose-600 hover:text-rose-800 text-sm"
+                onclick="markFileDelete(this)">
+          🗑️
+        </button>
+
+        <input type="hidden"
+               name="delete_files[{{ $no }}][{{ $file['id'] }}]"
+               value="0">
+      </div>
+    @endforeach
+  </div>
+@endif
+
                       </div>
                     </div>
                     @if(!empty($it['hint']))
@@ -216,6 +244,27 @@
         </div>
       </aside>
     </div>
+
+
+    {{-- Loading Overlay --}}
+  <div id="uploadOverlay"
+      class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
+    <div class="bg-white rounded-xl px-6 py-5 flex items-center gap-4 shadow-xl">
+      <svg class="animate-spin h-6 w-6 text-maroon"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10"
+                stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor"
+              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+      </svg>
+      <div>
+        <p class="font-semibold text-gray-800">Mengunggah Evidence</p>
+        <p class="text-sm text-gray-500">Mohon tunggu, jangan menutup halaman…</p>
+      </div>
+    </div>
+  </div>
+
   </section>
 @endsection
 
@@ -289,4 +338,47 @@
   // inisialisasi pertama (update badge sesuai preselect)
   recompute();
 </script>
+<script>
+  const form = document.getElementById('evidenceForm');
+  const overlay = document.getElementById('uploadOverlay');
+  const btnSubmit = document.getElementById('btnSubmitEvidence');
+
+  if (form) {
+    form.addEventListener('submit', function () {
+      // tampilkan overlay
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
+
+      // disable tombol supaya tidak double submit
+      if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.classList.add('opacity-70', 'cursor-not-allowed');
+        btnSubmit.textContent = 'Mengunggah...';
+      }
+    });
+  }
+</script>
+<script>
+  function markFileDelete(btn) {
+    const row = btn.closest('[data-file-row]');
+    const input = row.querySelector('input[type="hidden"]');
+
+    if (!row || !input) return;
+
+    const isDeleted = input.value === '1';
+
+    if (isDeleted) {
+      // UNDO
+      input.value = '0';
+      row.classList.remove('opacity-50', 'bg-rose-50');
+      btn.textContent = '🗑️';
+    } else {
+      // MARK DELETE
+      input.value = '1';
+      row.classList.add('opacity-50', 'bg-rose-50');
+      btn.textContent = '↩️';
+    }
+  }
+</script>
+
 @endpush

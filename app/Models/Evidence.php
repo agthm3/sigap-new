@@ -25,4 +25,9 @@ class Evidence extends Model
     {
         return $this->belongsTo(EvidenceTemplate::class, 'template_id');
     }
+    public function files()
+    {
+        return $this->hasMany(EvidenceFile::class);
+    }
+
 }
