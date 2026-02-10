@@ -146,6 +146,7 @@
             <th class="px-4 py-3">Indikator</th>
             <th class="px-4 py-3">Parameter</th>
             <th class="px-4 py-3">Bobot</th>
+            <th class="px-4 py-3">Deskripsi</th>
             <th class="px-4 py-3">File</th>
           </tr>
         </thead>
@@ -166,13 +167,46 @@
                 <span class="px-2 py-0.5 rounded {{ $tone }}">{{ $label }}</span>
               </td>
               <td class="px-4 py-3 font-semibold {{ $bobot>0?'text-maroon':'' }}">{{ $bobot }}</td>
-              <td class="px-4 py-3">
-                @if($fname && $furl)
-                  <a href="{{ $furl }}" target="_blank" class="text-maroon underline">{{ $fname }}</a>
+              <td class="px-4 py-3 text-sm text-gray-700">
+                @php
+                  $desc = $row['deskripsi'] ?? null;
+                  $isUrl = $desc && preg_match('/^https?:\/\/\S+/i', $desc);
+                @endphp
+
+                @if($desc)
+                  @if($isUrl)
+                    <a href="{{ $desc }}"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="{{ $desc }}"
+                      class="text-maroon underline block truncate">
+                      {{ \Illuminate\Support\Str::limit($desc, 40) }}
+                    </a>
+                  @else
+                    <span title="{{ $desc }}">
+                      {{ \Illuminate\Support\Str::limit($desc, 40) }}
+                    </span>
+                  @endif
                 @else
-                  <span class="text-gray-500">—</span>
+                  <span class="text-gray-400">—</span>
                 @endif
               </td>
+
+
+              <td class="px-4 py-3 space-y-1">
+                  @forelse(($row['files'] ?? []) as $file)
+                    <a href="{{ $file['url'] }}"
+                      target="_blank"
+                      title="{{ $file['name'] }}"
+                      class="block text-maroon underline truncate">
+                      {{ \Illuminate\Support\Str::limit($file['name'], 40) }}
+                    </a>
+
+                  @empty
+                    <span class="text-gray-500">—</span>
+                  @endforelse
+                </td>
+
             </tr>
           @empty
             <tr><td colspan="5" class="px-4 py-6 text-center text-gray-500">Belum ada data template evidence.</td></tr>
@@ -314,34 +348,55 @@
 
     {{-- LAMPIRAN EVIDENCE --}}
     @php
-      // gunakan evItems yang SUDAH di-hydrate (punya file_url & file_name)
-      $fileRows = ($evItems ?? collect())->filter(fn($r)=> !empty($r['file_url']))->values();
+      $evidenceFiles = collect($evItems ?? [])
+        ->flatMap(fn($r) =>
+          collect($r['files'] ?? [])
+            ->map(fn($f) => array_merge($f, [
+              'no' => $r['no'],
+              'indikator' => $r['indikator'],
+            ]))
+        );
     @endphp
+
 
     <div class="mt-6">
       <h4 class="text-sm font-semibold text-gray-700">Lampiran Evidence</h4>
-      @if($fileRows->isEmpty())
-        <p class="mt-2 text-sm text-gray-500">Belum ada lampiran evidence.</p>
-      @else
-        <div class="mt-2 grid md:grid-cols-2 xl:grid-cols-3 gap-3 text-sm">
-          @foreach($fileRows as $f)
-            <div class="rounded-xl border p-3 flex items-center gap-3">
-              <span class="inline-flex w-8 h-8 items-center justify-center rounded-md bg-gray-100 text-gray-700">FILE</span>
-              <div class="min-w-0">
-                <p class="font-medium text-gray-800 truncate">{{ $f['file_name'] ?? '—' }}</p>
-                <p class="text-xs text-gray-500">
-                  Indikator #{{ $f['no'] ?? '—' }}
-                  @if(!empty($f['indikator'])) • {{ $f['indikator'] }} @endif
-                </p>
-              </div>
-              <div class="ml-auto flex items-center gap-2">
-                <a href="{{ $f['file_url'] }}" target="_blank" class="px-2.5 py-1.5 rounded-md border text-xs hover:bg-gray-50">View</a>
-                <a href="{{ $f['file_url'] }}" download class="px-2.5 py-1.5 rounded-md bg-maroon text-white text-xs hover:bg-maroon-800">Download</a>
-              </div>
-            </div>
-          @endforeach
+@if($evidenceFiles->isEmpty())
+  <p class="mt-2 text-sm text-gray-500">Belum ada lampiran evidence.</p>
+@else
+  <div class="mt-2 grid md:grid-cols-2 xl:grid-cols-3 gap-3 text-sm">
+    @foreach($evidenceFiles as $f)
+      <div class="rounded-xl border p-3 flex items-center gap-3">
+        <span class="inline-flex w-8 h-8 items-center justify-center rounded-md bg-gray-100 text-gray-700">
+          PDF
+        </span>
+
+        <div class="min-w-0">
+          <p class="font-medium text-gray-800 truncate">
+            {{ $f['name'] }}
+          </p>
+          <p class="text-xs text-gray-500">
+            Indikator #{{ $f['no'] }} • {{ $f['indikator'] }}
+          </p>
         </div>
-      @endif
+
+        <div class="ml-auto flex items-center gap-2">
+          <a href="{{ $f['url'] }}"
+             target="_blank"
+             class="px-2.5 py-1.5 rounded-md border text-xs hover:bg-gray-50">
+            View
+          </a>
+          <a href="{{ $f['url'] }}"
+             download
+             class="px-2.5 py-1.5 rounded-md bg-maroon text-white text-xs hover:bg-maroon-800">
+            Download
+          </a>
+        </div>
+      </div>
+    @endforeach
+  </div>
+@endif
+
     </div>
   </div>
 </section>

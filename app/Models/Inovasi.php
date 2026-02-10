@@ -58,6 +58,5 @@ class Inovasi extends Model
         return $this->hasMany(InovasiReferensiVideo::class);
     }
 
-
     public function verifikator() { return $this->belongsTo(User::class, 'asistensi_by'); }
 }

@@ -146,6 +146,22 @@ Route::prefix('/sigap-inovasi')->middleware('auth', 'role:inovator|admin')->grou
     Route::get   ('/sigap-inovasi/{id}/edit',  [SigapInovasiController::class, 'edit'])->name('sigap-inovasi.edit');
     Route::put   ('/sigap-inovasi/{id}',       [SigapInovasiController::class, 'update'])->name('sigap-inovasi.update');
     Route::delete('/sigap-inovasi/{id}',       [SigapInovasiController::class, 'destroy'])->name('sigap-inovasi.destroy');
+   
+    // === PEDOMAN EVIDENCE (GLOBAL) ===
+    Route::get('/pedoman-evidence',
+        [SigapInovasiController::class, 'pedomanEvidence']
+    )->name('evidence.pedoman');
+
+    Route::post('/pedoman-evidence',
+        [SigapInovasiController::class, 'pedomanEvidenceSave']
+    )->middleware('role:admin')
+    ->name('evidence.pedoman.save');
+
+    Route::delete(
+        '/pedoman-evidence/{guide}',
+        [SigapInovasiController::class, 'pedomanEvidenceDelete']
+    )->middleware('role:admin')
+    ->name('evidence.pedoman.delete');
 
 });
 

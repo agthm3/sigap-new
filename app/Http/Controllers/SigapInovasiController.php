@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\EvidenceGuide;
 use App\Models\Inovasi;
 use App\Repositories\EvidenceRepository;
 use App\Repositories\InovasiRepository;
@@ -290,11 +291,19 @@ class SigapInovasiController extends Controller
     public function evidenceSave(Request $r, Inovasi $inovasi, EvidenceRepository $evidenceRepo)
     {
         $this->authorizeOwnerOrAdmin($inovasi);
-        $r->validate([
-            'file_*' => ['nullable', 'file', 'mimes:pdf', 'max:10240'], // 10MB
-        ]);
-
-
+    
+        // ✅ VALIDASI MULTIPLE FILE
+        for ($no = 1; $no <= 20; $no++) {
+            if ($r->hasFile("files.$no")) {
+                foreach ($r->file("files.$no") as $file) {
+                    validator(
+                        ['file' => $file],
+                        ['file' => ['file', 'mimes:pdf', 'max:5120']]
+                    )->validate();
+                }
+            }
+        }
+        $deleteFiles = $r->input('delete_files', []);
         $paramIds   = $r->input('param_id', []);
         $labels     = $r->input('parameter_label', []);
         $weights    = $r->input('parameter_weight', []);
@@ -304,27 +313,25 @@ class SigapInovasiController extends Controller
         $rows = [];
         for ($no = 1; $no <= 20; $no++) {
             $rows[] = [
-                'no'                => $no,
-                'param_id'          => $paramIds[$no] ?? null,
-                'parameter_label'   => $labels[$no] ?? null,
-                'parameter_weight'  => $weights[$no] ?? null,
-                'deskripsi'         => $deskripsis[$no] ?? null,
-                'link_url'          => $linkUrls[$no] ?? null,
+                'no'               => $no,
+                'param_id'         => $paramIds[$no] ?? null,
+                'parameter_label'  => $labels[$no] ?? null,
+                'parameter_weight' => $weights[$no] ?? null,
+                'deskripsi'        => $deskripsis[$no] ?? null,
+                'link_url'         => $linkUrls[$no] ?? null,
             ];
         }
 
-        $files = [];
-        for ($no = 1; $no <= 20; $no++) {
-            if ($r->hasFile("file_{$no}")) {
-                $files[$no] = $r->file("file_{$no}");
-            }
-        }
+        // ✅ AMBIL FILE MULTIPLE
+        $files = $r->file('files', []);
 
         $evidenceRepo->upsertBulk($inovasi->id, $rows, $files);
+        $evidenceRepo->deleteMarkedFiles($inovasi->id, $deleteFiles);
 
+       
         return redirect()
             ->route('evidence.form', $inovasi->id)
-            ->with('success','Evidence berhasil disimpan.');
+            ->with('success', 'Evidence berhasil disimpan.');
     }
 
     /**
@@ -443,6 +450,73 @@ class SigapInovasiController extends Controller
         if (!Auth::user()->hasRole('admin')) abort(403, 'Akses khusus admin/verifikator.');
     }
 
- 
-    
+    public function pedomanEvidence()
+    {
+        $guides = EvidenceGuide::all()->keyBy('no');
+
+       $items = collect(range(1, 20))->map(function ($no) use ($guides) {
+
+        $g = $guides->get($no);
+
+        return [
+            'id'        => $g?->id,
+            'no'        => $no,
+            'indikator' => $g?->indikator ?? "Evidence {$no}",
+            'deskripsi' => $g?->deskripsi ?? null,
+            'file_url'  => $g && $g->file_path
+                ? Storage::disk('public')->url($g->file_path)
+                : null,
+            'file_name' => $g?->file_name,
+        ];
+    });
+
+
+        return view('dashboard.inovasi.evidence-pedoman', compact('items'));
+    }
+
+    public function pedomanEvidenceSave(Request $r)
+    {
+        $this->authorizeAdmin();
+
+        foreach ($r->input('no', []) as $idx => $no) {
+
+            $guide = EvidenceGuide::firstOrNew(['no' => $no]);
+
+            $guide->indikator = $r->indikator[$idx] ?? $guide->indikator;
+            $guide->deskripsi = $r->deskripsi[$idx] ?? $guide->deskripsi;
+
+            if ($r->hasFile("file.$idx")) {
+                if ($guide->file_path) {
+                    Storage::disk('public')->delete($guide->file_path);
+                }
+
+                $file = $r->file("file.$idx");
+                $path = $file->store('evidence-pedoman', 'public');
+
+                $guide->file_path = $path;
+                $guide->file_name = $file->getClientOriginalName();
+            }
+
+            $guide->save();
+        }
+
+        return back()->with('success','Pedoman evidence berhasil disimpan.');
+    }
+
+    public function pedomanEvidenceDelete(EvidenceGuide $guide)
+    {
+        $this->authorizeAdmin();
+
+        if ($guide->file_path) {
+            Storage::disk('public')->delete($guide->file_path);
+        }
+
+        $guide->update([
+            'file_path' => null,
+            'file_name' => null,
+        ]);
+
+        return back()->with('success','File pedoman berhasil dihapus.');
+    }
+
 }
