@@ -65,30 +65,24 @@ class EvidenceRepository
                 'file_url'        => $ev?->file_path ? Storage::disk('public')->url($ev->file_path) : null,
                 'file_name'       => $ev?->file_name,
                 'files' => $ev
-                ? $ev->files->map(fn($f) => [
-                    'id'   => (int) $f->id,
-                    'url'  => Storage::disk('public')->url($f->file_path),
-                    'name' => $f->file_name,
-                    'size' => $f->file_size,
-                ])->values()->all()
-                : [],
+                    ? $ev->files->map(fn($f) => [
+                        'id'            => (int) $f->id,
+                        'url'           => Storage::disk('public')->url($f->file_path),
+                        'name'          => $f->file_name,
+                        'size'          => $f->file_size,
+
+                        // ✅ METADATA SURAT
+                        'nomor_surat'   => $f->nomor_surat,
+                        'tanggal_surat' => $f->tanggal_surat,
+                        'tentang'       => $f->tentang,
+                    ])->values()->all()
+                    : [],
+
 
             ];
-        })->values()->all(); // ⬅️ array murni
+        })->values()->all(); 
     }
 
-    /**
-     * Simpan bulk 1..20 indikator sekaligus.
-     * $items: array of [
-     *   'no' => 1..20,
-     *   'param_id' => (optional) EvidenceTemplateParam id,
-     *   'parameter_label' => (jika tidak pakai param_id),
-     *   'parameter_weight' => (angka, jika tidak pakai param_id),
-     *   'deskripsi' => string|null,
-     *   'link_url' => string|null
-     * ]
-     * $files: array map no => UploadedFile (mis. [1 => UploadedFile, 5 => UploadedFile])
-     */
     public function upsertBulk(int $inovasiId, array $items, array $files = []): void
     {
         DB::transaction(function () use ($inovasiId, $items, $files) {

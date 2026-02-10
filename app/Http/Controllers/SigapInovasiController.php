@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Evidence;
+use App\Models\EvidenceFile;
 use App\Models\EvidenceGuide;
 use App\Models\Inovasi;
 use App\Repositories\EvidenceRepository;
@@ -163,7 +165,7 @@ class SigapInovasiController extends Controller
             'manfaat'               => ['nullable','string'],
             'hasil_inovasi'         => ['nullable','string'],
             'perkembangan_inovasi'  => ['nullable','string','max:255'],
-
+            'misi_walikota' => ['required','integer','between:1,7'],
             'videos' => ['required','array','min:3','max:5'],
             'videos.*.judul' => ['required','string','max:255'],
             'videos.*.url' => ['required','url','max:500'],
@@ -291,19 +293,10 @@ class SigapInovasiController extends Controller
     public function evidenceSave(Request $r, Inovasi $inovasi, EvidenceRepository $evidenceRepo)
     {
         $this->authorizeOwnerOrAdmin($inovasi);
-    
-        // ✅ VALIDASI MULTIPLE FILE
-        for ($no = 1; $no <= 20; $no++) {
-            if ($r->hasFile("files.$no")) {
-                foreach ($r->file("files.$no") as $file) {
-                    validator(
-                        ['file' => $file],
-                        ['file' => ['file', 'mimes:pdf', 'max:5120']]
-                    )->validate();
-                }
-            }
-        }
-        $deleteFiles = $r->input('delete_files', []);
+
+        /**
+         * 1. SIMPAN DATA EVIDENCE (PARAMETER)
+         */
         $paramIds   = $r->input('param_id', []);
         $labels     = $r->input('parameter_label', []);
         $weights    = $r->input('parameter_weight', []);
@@ -322,17 +315,61 @@ class SigapInovasiController extends Controller
             ];
         }
 
-        // ✅ AMBIL FILE MULTIPLE
-        $files = $r->file('files', []);
+        // ✅ SIMPAN EVIDENCE SAJA
+        $evidenceRepo->upsertBulk($inovasi->id, $rows);
 
-        $evidenceRepo->upsertBulk($inovasi->id, $rows, $files);
+        /**
+         * 2. HAPUS FILE YANG DITANDAI
+         */
+        $deleteFiles = $r->input('delete_files', []);
         $evidenceRepo->deleteMarkedFiles($inovasi->id, $deleteFiles);
 
-       
+        /**
+         * 3. SIMPAN DOKUMEN (docs)
+         */
+        $docs      = $r->input('docs', []);
+        $docFiles = $r->file('docs', []);
+
+        foreach ($docs as $no => $items) {
+
+            $evidence = Evidence::where('inovasi_id', $inovasi->id)
+                ->where('no', $no)
+                ->first();
+
+            if (!$evidence) continue;
+
+            foreach ($items as $idx => $meta) {
+
+                if (!isset($docFiles[$no][$idx]['file'])) continue;
+
+                $file = $docFiles[$no][$idx]['file'];
+
+                $path = $file->store(
+                    "inovasi/{$inovasi->id}/evidence/no-{$no}",
+                    'public'
+                );
+
+                EvidenceFile::create([
+                    'evidence_id'   => $evidence->id,
+                    'file_path'     => $path,
+                    'file_name'     => $file->getClientOriginalName(),
+                    'file_mime'     => $file->getClientMimeType(),
+                    'file_size'     => $file->getSize(),
+
+                    // METADATA
+                    'nomor_surat'   => $meta['nomor']   ?? null,
+                    'tanggal_surat' => $meta['tanggal'] ?? null,
+                    'tentang'       => $meta['tentang'] ?? null,
+                ]);
+            }
+        }
+
         return redirect()
             ->route('evidence.form', $inovasi->id)
             ->with('success', 'Evidence berhasil disimpan.');
     }
+
+
 
     /**
      * Edit metadata inovasi (pemilik/admin).

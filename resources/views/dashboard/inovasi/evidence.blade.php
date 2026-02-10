@@ -155,40 +155,61 @@
                                value="{{ $it['deskripsi'] ?? '' }}">
                       </div>
                       <div>
-                        <input  type="file"
-                                name="files[{{ $no }}][]"
-                                accept=".pdf"
-                                multiple
-                               class="block w-full text-sm border rounded-lg file:mr-2 file:px-3 file:py-1.5 file:border-0 file:rounded-md file:bg-gray-100 hover:file:bg-gray-200">
-       @if(!empty($it['files']))
-  <div class="mt-2 space-y-1">
-    @foreach($it['files'] as $file)
-      <div class="flex items-center gap-2 text-xs border rounded-md px-2 py-1"
-           data-file-row>
+                      <button type="button"
+                        onclick="openDocModal({{ $no }})"
+                        class="px-3 py-2 rounded-md border text-sm hover:bg-gray-50">
+                        ➕ Tambah Dokumen
+                      </button>
+                      <div id="docList-{{ $no }}" class="mt-2 space-y-2"></div>
+                      @if(!empty($it['files']))
+                        <div class="mt-3 space-y-2">
+                          @foreach($it['files'] as $file)
+                            <div class="flex items-start gap-3 border rounded-lg px-3 py-2 text-xs"
+                                data-file-row>
 
-        <span class="truncate flex-1 text-gray-700">
-          📄 {{ $file['name'] }}
-        </span>
+                              {{-- ICON --}}
+                              <span class="mt-0.5">📄</span>
 
-        <a href="{{ $file['url'] }}" target="_blank"
-           class="text-maroon underline">
-          View
-        </a>
+                              {{-- INFO --}}
+                              <div class="flex-1 min-w-0">
+                                <p class="font-semibold text-gray-800 truncate"
+                                  title="{{ $file['nomor_surat'] }}">
+                                  {{ $file['nomor_surat'] ?? '—' }}
+                                </p>
 
-        <button type="button"
-                class="text-rose-600 hover:text-rose-800 text-sm"
-                onclick="markFileDelete(this)">
-          🗑️
-        </button>
+                                <p class="text-gray-500">
+                                  {{ $file['tanggal_surat'] ?? '—' }}
+                                </p>
 
-        <input type="hidden"
-               name="delete_files[{{ $no }}][{{ $file['id'] }}]"
-               value="0">
-      </div>
-    @endforeach
-  </div>
-@endif
+                                <p class="text-gray-700 truncate"
+                                  title="{{ $file['tentang'] }}">
+                                  {{ \Illuminate\Support\Str::limit($file['tentang'] ?? '—', 20) }}
+                                </p>
+                              </div>
 
+                              {{-- AKSI --}}
+                              <div class="flex items-center gap-2 shrink-0">
+                                <a href="{{ $file['url'] }}"
+                                  target="_blank"
+                                  class="text-maroon underline">
+                                  View
+                                </a>
+
+                                <button type="button"
+                                        class="text-rose-600 hover:text-rose-800"
+                                        onclick="markFileDelete(this)">
+                                  🗑️
+                                </button>
+
+                                {{-- hidden flag delete --}}
+                                <input type="hidden"
+                                      name="delete_files[{{ $no }}][{{ $file['id'] }}]"
+                                      value="0">
+                              </div>
+                            </div>
+                          @endforeach
+                        </div>
+                      @endif
                       </div>
                     </div>
                     @if(!empty($it['hint']))
@@ -264,6 +285,44 @@
       </div>
     </div>
   </div>
+<div id="docModal" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-black/40" onclick="closeDocModal()"></div>
+
+  <div class="relative bg-white rounded-xl max-w-md mx-auto mt-24 p-4">
+    <h3 class="font-semibold text-gray-800 mb-3">Tambah Dokumen Evidence</h3>
+
+    <input type="hidden" id="doc_no">
+
+    <label class="block mb-2">
+      <span class="text-sm">Nomor Surat / Dokumen</span>
+      <input id="doc_nomor" class="w-full border rounded px-2 py-1">
+    </label>
+
+    <label class="block mb-2">
+      <span class="text-sm">Tanggal Surat / Dokumen</span>
+      <input type="date" id="doc_tanggal" class="w-full border rounded px-2 py-1">
+    </label>
+
+    <label class="block mb-2">
+      <span class="text-sm">Tentang</span>
+      <input id="doc_tentang" class="w-full border rounded px-2 py-1">
+    </label>
+
+    <label class="block mb-3">
+      <span class="text-sm">File (PDF)</span>
+      <input type="file" id="doc_file" accept=".pdf">
+    </label>
+
+    <div class="flex justify-end gap-2">
+      <button onclick="closeDocModal()" class="px-3 py-1 border rounded">
+        Batal
+      </button>
+      <button onclick="addDoc()" class="px-3 py-1 bg-maroon text-white rounded">
+        Tambah
+      </button>
+    </div>
+  </div>
+</div>
 
   </section>
 @endsection
@@ -381,4 +440,60 @@
   }
 </script>
 
+<script>
+  let docCounter = 0;
+
+function openDocModal(no){
+  document.getElementById('doc_no').value = no;
+  document.getElementById('docModal').classList.remove('hidden');
+}
+
+function closeDocModal(){
+  document.getElementById('docModal').classList.add('hidden');
+}
+
+function addDoc(){
+  const no = document.getElementById('doc_no').value;
+
+  const nomor   = document.getElementById('doc_nomor').value;
+  const tanggal = document.getElementById('doc_tanggal').value;
+  const tentang = document.getElementById('doc_tentang').value;
+  const file    = document.getElementById('doc_file').files[0];
+
+  if(!nomor || !tanggal || !tentang || !file){
+    alert('Semua field wajib diisi');
+    return;
+  }
+
+  const idx = docCounter++;
+
+  const row = document.createElement('div');
+  row.className = 'border rounded p-2 text-sm flex justify-between items-center';
+
+  row.innerHTML = `
+    <div>
+      <p class="font-medium">${nomor}</p>
+      <p class="text-xs text-gray-600">${tentang} • ${tanggal}</p>
+    </div>
+
+    <button type="button" onclick="this.closest('div').remove()">🗑️</button>
+
+    <input type="hidden" name="docs[${no}][${idx}][nomor]" value="${nomor}">
+    <input type="hidden" name="docs[${no}][${idx}][tanggal]" value="${tanggal}">
+    <input type="hidden" name="docs[${no}][${idx}][tentang]" value="${tentang}">
+  `;
+
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.name = `docs[${no}][${idx}][file]`;
+  fileInput.files = document.getElementById('doc_file').files;
+  fileInput.hidden = true;
+
+  row.appendChild(fileInput);
+
+  document.getElementById(`docList-${no}`).appendChild(row);
+  closeDocModal();
+}
+
+</script>
 @endpush

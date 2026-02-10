@@ -39,12 +39,19 @@
         <p class="text-sm text-gray-600 mt-1">Direktori inovasi daerah: cari, pantau tahapan, dan kelola unggahan tiap OPD.</p>
       </div>
       <div class="flex flex-wrap gap-2">
+        <a href="{{ route('evidence.pedoman') }}"
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg
+                border border-maroon text-maroon
+                hover:bg-maroon hover:text-white transition">
+        📘 Pedoman Evidence
+        </a>
         <button id="btnTambah" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 transition">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M12 5v14M5 12h14"/></svg>
           Tambah Inovasi
         </button>
       </div>
     </div>
+
   </section>
 
   <!-- Filter & Search -->
@@ -400,6 +407,30 @@
             @endforeach
           </select>
         </label>
+        <label class="block sm:col-span-2">
+        <span class="text-sm font-semibold text-gray-700">
+          Misi Walikota Makassar <span class="text-rose-600">*</span>
+        </span>
+
+        <select
+          name="misi_walikota"
+          required
+          class="mt-1.5 w-full rounded-lg border p-2 border-gray-300
+                focus:border-maroon focus:ring-maroon"
+        >
+          <option value="">— Pilih Misi —</option>
+          @foreach(config('inovasi.misi_walikota') as $no => $label)
+            <option value="{{ $no }}" @selected(old('misi_walikota')==$no)>
+              Misi {{ $no }} — {{ \Illuminate\Support\Str::limit($label, 80) }}
+            </option>
+          @endforeach
+        </select>
+
+        <p class="text-xs text-gray-500 mt-1">
+          Pilih misi Walikota yang paling relevan dengan inovasi ini.
+        </p>
+      </label>
+
 
         <label class="block">
           <span class="text-sm font-semibold text-gray-700">Urusan Pemerintah</span>
