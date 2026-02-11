@@ -156,6 +156,36 @@
           </a>
         </div>
       @endhasanyrole
+
+      @hasanyrole('admin|verifikator_inkubatorma|user')
+      <!-- SIGAP INKUBATORMA -->
+          <!-- SECTION BARU: SIGAP INKUBATORMA -->
+        <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">SIGAP INKUBATORMA</div>
+
+        <!-- Toggle -->
+        <button id="inkubatormaToggle"
+                class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-left">
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" d="M12 3l3.5 6 6.5 1-4.7 4.7 1.1 6.3L12 18l-6 3.9 1.1-6.3L2.4 10 9 9z"/>
+          </svg>
+          <span class="font-medium">SIGAP Inkubatorma</span>
+          <svg id="inkubatormaCaret" class="w-4 h-4 ml-auto transition-transform duration-200"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" d="M6 9l6 6 6-6"/>
+          </svg>
+        </button>
+
+        <!-- Dropdown Items -->
+        <div id="inkubatormaMenu" class="ml-3 mt-1 space-y-1 hidden">
+          <a href="{{ route('sigap-inkubatorma.dashboard') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+            {{ request()->routeIs('sigap-inkubatorma.dashboard') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M3 10l9-7 9 7v8a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V12H9v6a2 2 0 0 1-2 2H3z"/></svg>
+            Dashboard 
+          </a>
+        </div>
+      @endhasanyrole
+
       @hasanyrole('admin|researcher')
         <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">SIGAP RISET</div>
 
@@ -308,6 +338,28 @@
       const willOpen = inovasiMenu.classList.contains('hidden');
       inovasiMenu.classList.toggle('hidden');
       inovasiCaret.classList.toggle('rotate-180', willOpen);
+      localStorage.setItem(INOVASI_KEY, willOpen ? '1' : '0');
+    });
+  </script>
+
+  <script>
+    // Dropdown SIGAP INOVASI
+    const inkubatormaToggle = document.getElementById('inkubatormaToggle');
+    const inkubatormaMenu   = document.getElementById('inkubatormaMenu');
+    const inkubatormaCaret  = document.getElementById('inkubatormaCaret');
+
+    // // (opsional) restore state dari localStorage
+    // const INOVASI_KEY = 'sb_inovasi_open';
+    // const isOpenSaved = localStorage.getItem(INOVASI_KEY) === '1';
+    // if (isOpenSaved) {
+    //   inovasiMenu.classList.remove('hidden');
+    //   inovasiCaret.classList.add('rotate-180');
+    // }
+
+    inkubatormaToggle.addEventListener('click', () => {
+      const willOpen = inkubatormaMenu.classList.contains('hidden');
+      inkubatormaMenu.classList.toggle('hidden');
+      inkubatormaCaret.classList.toggle('rotate-180', willOpen);
       localStorage.setItem(INOVASI_KEY, willOpen ? '1' : '0');
     });
   </script>
