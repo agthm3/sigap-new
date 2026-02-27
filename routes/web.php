@@ -28,6 +28,7 @@ use App\Http\Controllers\SigapAutoController;
 use App\Http\Controllers\SigapFormatController;
 use App\Http\Controllers\SigapKinerjaController;
 use App\Http\Controllers\SigapRisetController;
+use App\Http\Controllers\SigapInkubatormaController;
 
 // --- Public
 Route::get('/',      [HomeController::class, 'index'])->name('home');
@@ -250,3 +251,64 @@ Route::middleware('auth')
 
 // (opsional) jika masih butuh JSON show:
 Route::get('/sigap-agenda/show',       [SigapAgendaController::class, 'show'])->name('sigap-agenda.show');     
+
+
+// --- SIGAP Inkubatorma 
+Route::get('/sigap-inkubatorma', [SigapInkubatormaController::class, 'index'])
+    ->name('sigap-inkubatorma.index'); // landing publik
+
+Route::post('/sigap-inkubatorma/store', [SigapInkubatormaController::class, 'store'])
+    ->name('sigap-inkubatorma.store');
+
+Route::prefix('/sigap-inkubatorma')->group(function () {
+
+    // ========== PUBLIK ==========
+    Route::get('/', [SigapInkubatormaController::class, 'index'])
+        ->name('sigap-inkubatorma.index');
+
+    // ========== WAJIB LOGIN UNTUK SUBMIT ==========
+    // Route::post('/store', [SigapInkubatormaController::class, 'store'])
+    //     ->middleware('auth')
+    //     ->name('sigap-inkubatorma.store');
+
+    // ========== AUTH AREA ==========
+    Route::middleware('auth')->group(function () {
+
+        Route::get('/dashboard', [SigapInkubatormaController::class, 'dashboard'])
+            ->name('sigap-inkubatorma.dashboard');
+
+        Route::get('/{id}/detail', [SigapInkubatormaController::class, 'detail'])
+            ->whereNumber('id')
+            ->name('sigap-inkubatorma.detail');
+
+        Route::get('/employees/search', [SigapInkubatormaController::class, 'employeesSearch'])
+            ->middleware('role:admin|verifikator|employee')
+            ->name('sigap-inkubatorma.employees.search');
+
+        Route::middleware('role:admin|verifikator|employee')->group(function () {
+
+            Route::get('/{id}/verifikasi', [SigapInkubatormaController::class, 'verifikasi'])
+                ->whereNumber('id')
+                ->name('sigap-inkubatorma.verifikasi');
+
+            Route::put('/{id}/verifikasi', [SigapInkubatormaController::class, 'verifikasiUpdate'])
+                ->whereNumber('id')
+                ->name('sigap-inkubatorma.verifikasi.update');
+        });
+
+        Route::middleware('role:admin|user')->group(function () {
+
+            Route::get('/{id}/edit', [SigapInkubatormaController::class, 'edit'])
+                ->whereNumber('id')
+                ->name('sigap-inkubatorma.edit');
+
+            Route::put('/{id}', [SigapInkubatormaController::class, 'update'])
+                ->whereNumber('id')
+                ->name('sigap-inkubatorma.update');
+
+            Route::delete('/{id}', [SigapInkubatormaController::class, 'destroy'])
+                ->whereNumber('id')
+                ->name('sigap-inkubatorma.destroy');
+        });
+    });
+});
