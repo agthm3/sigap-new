@@ -11,77 +11,319 @@
       <li class="text-gray-900 font-semibold">Profil Pegawai</li>
     </ol>
   </nav>
+{{-- ================= PROFIL PEGAWAI TAB ================= --}}
+@if($user->profile)
 
-  {{-- Header + Identitas --}}
-  <section class="max-w-7xl mx-auto px-4">
-    <div class="bg-white border border-gray-200 rounded-2xl p-5">
-      <div class="flex items-start gap-4">
-        {{-- Avatar --}}
-        <div class="w-20 h-20 rounded-full overflow-hidden ring-2 ring-maroon/20 shrink-0">
-          @if ($user->profile_photo_path)
-            <img src="{{ asset('storage/'.$user->profile_photo_path) }}" class="w-full h-full object-cover" alt="Foto profil">
-          @else
-            <div class="w-full h-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold">
-              {{ strtoupper(substr($user->name,0,1)) }}
+<section class="max-w-7xl mx-auto px-4 mt-6">
+
+    @php
+        $profile = $user->profile;
+    @endphp
+
+    <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+
+        {{-- ================= HEADER PROFIL ================= --}}
+        <div class="p-6 border-b">
+
+            <div class="flex items-center gap-4">
+
+                {{-- Foto --}}
+                <div class="relative w-20 h-20 shrink-0">
+
+                    <div class="w-20 h-20 rounded-full overflow-hidden ring-2 ring-maroon/20">
+
+                        @if ($user->profile_photo_path)
+                            <img
+                                src="{{ asset('storage/'.$user->profile_photo_path) }}"
+                                class="w-full h-full object-cover"
+                            >
+                        @else
+                            <div class="w-full h-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold">
+                                {{ strtoupper(substr($user->name,0,1)) }}
+                            </div>
+                        @endif
+
+                    </div>
+
+                    <!-- Upload Form -->
+                    <form
+                        action="{{ route('pegawai.profil.avatar') }}"
+                        method="POST"
+                        enctype="multipart/form-data"
+                        class="absolute -bottom-2 -right-2"
+                    >
+                        @csrf
+
+                        <label class="cursor-pointer">
+
+                            <input
+                                type="file"
+                                name="photo"
+                                class="hidden"
+                                onchange="this.form.submit()"
+                            >
+
+                            <div class="w-8 h-8 rounded-full bg-maroon text-white flex items-center justify-center shadow hover:bg-maroon-800">
+                                ✎
+                            </div>
+
+                        </label>
+
+                    </form>
+
+                </div>
+
+                
+
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900">
+                        {{ $user->name }}
+                    </h2>
+
+                    <div class="flex flex-wrap gap-2 mt-2 text-xs">
+
+                        @if($user->nip)
+                            <span class="px-2 py-1 bg-gray-100 rounded">
+                                NIP: {{ $user->nip }}
+                            </span>
+                        @endif
+
+                        @if($user->unit)
+                            <span class="px-2 py-1 bg-gray-100 rounded">
+                                Unit: {{ $user->unit }}
+                            </span>
+                        @endif
+
+                        @if($profile->jabatan)
+                            <span class="px-2 py-1 bg-maroon/10 text-maroon rounded">
+                                {{ $profile->jabatan }}
+                            </span>
+                        @endif
+
+                    </div>
+                </div>
+
+                 {{-- TOMBOL EDIT --}}
+                  <div class="shrink-0">
+                      <a
+                          href="{{ route('pegawai.profil.edit') }}"
+                          class="px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 text-sm shadow"
+                      >
+                          Edit Profil
+                      </a>
+                  </div>
             </div>
-          @endif
+
+            
         </div>
 
-        <div class="flex-1">
-          <div class="flex flex-wrap items-center gap-2">
-            <h1 class="text-xl sm:text-2xl font-extrabold text-gray-900">{{ $user->name }}</h1>
-            @if(($user->status ?? 'active') === 'active')
-              <span class="px-2 py-0.5 rounded text-xs bg-emerald-50 text-emerald-700">Aktif</span>
-            @else
-              <span class="px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-600">Nonaktif</span>
-            @endif
-          </div>
-          <p class="text-sm text-gray-600 mt-0.5">
-            <span class="text-gray-500">Username:</span> <span class="font-medium">{{ $user->username ?: '—' }}</span>
-            <span class="mx-2">•</span>
-            <span class="text-gray-500">Email:</span> <span class="font-medium">{{ $user->email }}</span>
-          </p>
 
-          <div class="mt-3 flex flex-wrap gap-2 text-xs">
-            @forelse ($roleNames as $r)
-              <span class="px-2 py-0.5 rounded bg-maroon/5 text-maroon border border-maroon/10">{{ ucfirst($r) }}</span>
-            @empty
-              <span class="px-2 py-0.5 rounded bg-gray-100 text-gray-600 border border-gray-200">Tanpa role</span>
-            @endforelse
-          </div>
+        {{-- ================= TAB NAV ================= --}}
+        <div class="border-b px-6">
+
+            <nav class="flex gap-8 text-sm font-semibold">
+
+                <button class="tab-btn border-b-2 border-maroon pb-3" data-tab="identitas">
+                    Identitas
+                </button>
+
+                <button class="tab-btn pb-3" data-tab="kepegawaian">
+                    Kepegawaian
+                </button>
+
+                <button class="tab-btn pb-3" data-tab="alamat">
+                    Alamat & Administrasi
+                </button>
+
+                <button class="tab-btn pb-3" data-tab="keluarga">
+                    Keluarga
+                </button>
+
+                <button class="tab-btn pb-3" data-tab="pendidikan">
+                    Pendidikan
+                </button>
+
+                <button class="tab-btn pb-3" data-tab="sertifikat">
+                    Sertifikat
+                </button>
+
+            </nav>
+
         </div>
 
-        {{-- Aksi cepat --}}
-        <div class="shrink-0">
-          <a href="{{ route('pegawai.profil.edit') }}" class="px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-sm">Edit Profil</a>
-        </div>
-      </div>
 
-      {{-- Info grid --}}
-      <div class="mt-5 grid sm:grid-cols-3 gap-4 text-sm">
-        <div class="p-3 rounded-lg bg-gray-50 border border-gray-200">
-          <p class="text-gray-500">NIP</p>
-          <p class="font-semibold text-gray-900">{{ $user->nip ?: '—' }}</p>
+        {{-- ================= TAB CONTENT ================= --}}
+        <div class="p-6">
+
+            {{-- IDENTITAS --}}
+            <div id="tab-identitas" class="tab-content">
+                <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+
+                    @include('partials.field',['label'=>'NIK','value'=>$profile->nik])
+                    @include('partials.field',['label'=>'Tempat Lahir','value'=>$profile->tempat_lahir])
+                    @include('partials.field',['label'=>'Tanggal Lahir','value'=>$profile->tanggal_lahir])
+                    @include('partials.field',['label'=>'Jenis Kelamin','value'=>$profile->jenis_kelamin])
+                    @include('partials.field',['label'=>'Agama','value'=>$profile->agama])
+                    @include('partials.field',['label'=>'Status Perkawinan','value'=>$profile->status_perkawinan])
+                    @include('partials.field',['label'=>'Golongan Darah','value'=>$profile->golongan_darah])
+                    @include('partials.field',['label'=>'NIP Baru','value'=>$profile->nip_baru])
+                    @include('partials.field',['label'=>'NIP Lama','value'=>$profile->nip_lama])
+                    @include('partials.field',['label'=>'Keterangan','value'=>$profile->keterangan,'class'=>'sm:col-span-2'])
+
+                </div>
+            </div>
+
+
+            {{-- KEPEGAWAIAN --}}
+            <div id="tab-kepegawaian" class="tab-content hidden">
+                <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+
+                    @include('partials.field',['label'=>'Status Pegawai','value'=>$profile->status_pegawai])
+                    @include('partials.field',['label'=>'Jabatan','value'=>$profile->jabatan])
+                    @include('partials.field',['label'=>'Golongan','value'=>$profile->golongan])
+                    @include('partials.field',['label'=>'TMT PNS','value'=>$profile->tmt_pns])
+                    @include('partials.field',['label'=>'Atasan Langsung','value'=>$profile->atasan_langsung])
+                    @include('partials.field',['label'=>'Golongan Ruang','value'=>$profile->golongan_ruang])
+                    @include('partials.field',['label'=>'TMT Golongan','value'=>$profile->tmt_golongan])
+                    @include('partials.field',['label'=>'Masa Kerja','value'=>$profile->masa_kerja_tahun.' Tahun '.$profile->masa_kerja_bulan.' Bulan'])
+                    @include('partials.field',['label'=>'TMT Jabatan','value'=>$profile->tmt_jabatan])
+                    @include('partials.field',['label'=>'Eselon','value'=>$profile->eselon])
+                    @include('partials.field',['label'=>'Jabatan Struktural','value'=>$profile->jabatan_struktural])
+                    @include('partials.field',['label'=>'Jabatan Fungsional','value'=>$profile->jabatan_fungsional])
+                    @include('partials.field',['label'=>'Jabatan Teknis','value'=>$profile->jabatan_teknis])
+                    @include('partials.field',['label'=>'Unit Organisasi','value'=>$profile->unor])
+
+                </div>
+            </div>
+
+
+            {{-- ALAMAT --}}
+            <div id="tab-alamat" class="tab-content hidden">
+                <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+
+                    @include('partials.field',['label'=>'Alamat KTP','value'=>$profile->alamat_ktp,'class'=>'sm:col-span-2'])
+                    @include('partials.field',['label'=>'Alamat Domisili','value'=>$profile->alamat_domisili,'class'=>'sm:col-span-2'])
+                    @include('partials.field',['label'=>'NPWP','value'=>$profile->npwp])
+                    @include('partials.field',['label'=>'BPJS Kesehatan','value'=>$profile->bpjs_kesehatan])
+                    @include('partials.field',['label'=>'BPJS Ketenagakerjaan','value'=>$profile->bpjs_ketenagakerjaan])
+                    @include('partials.field',['label'=>'Bank','value'=>$profile->bank_nama])
+                    @include('partials.field',['label'=>'Nomor Rekening','value'=>$profile->nomor_rekening])
+                    @include('partials.field',['label'=>'Atas Nama Rekening','value'=>$profile->nama_rekening])
+
+                </div>
+            </div>
+
+
+            {{-- KELUARGA --}}
+            <div id="tab-keluarga" class="tab-content hidden">
+                <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+
+                    @include('partials.field',['label'=>'Nama Pasangan','value'=>$profile->nama_pasangan])
+                    @include('partials.field',['label'=>'Pekerjaan Pasangan','value'=>$profile->pekerjaan_pasangan])
+                    @include('partials.field',['label'=>'Jumlah Anak','value'=>$profile->jumlah_anak])
+                    @include('partials.field',['label'=>'Kontak Darurat','value'=>$profile->kontak_darurat])
+
+                </div>
+            </div>
+
+
+            {{-- PENDIDIKAN --}}
+            <div id="tab-pendidikan" class="tab-content hidden">
+                <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+
+                    @include('partials.field',['label'=>'Pendidikan Terakhir','value'=>$profile->pendidikan_terakhir])
+                    @include('partials.field',['label'=>'Jurusan','value'=>$profile->jurusan])
+                    @include('partials.field',['label'=>'Tahun Lulus','value'=>$profile->tahun_lulus])
+
+                </div>
+            </div>
+
+
+            <div id="tab-sertifikat" class="tab-content hidden">
+
+                <div class="border border-gray-200 rounded-xl overflow-hidden">
+
+                    <div class="px-5 py-3 bg-gray-50 text-sm font-semibold text-gray-700">
+                        Sertifikat Kompetensi
+                    </div>
+
+                    <div class="overflow-x-auto">
+
+                        <table class="min-w-full text-sm">
+
+                            <thead class="bg-white">
+                                <tr class="text-left border-b">
+                                    <th class="px-5 py-3">Nama Sertifikat</th>
+                                    <th class="px-5 py-3">Bidang</th>
+                                    <th class="px-5 py-3">Tahun</th>
+                                    <th class="px-5 py-3">File</th>
+                                </tr>
+                            </thead>
+
+                            <tbody class="divide-y">
+
+                                @forelse($sertifikats as $s)
+
+                                    <tr>
+
+                                        <td class="px-5 py-3 font-medium text-gray-900">
+                                            {{ $s->nama_sertifikat }}
+                                        </td>
+
+                                        <td class="px-5 py-3 text-gray-700">
+                                            {{ $s->bidang }}
+                                        </td>
+
+                                        <td class="px-5 py-3 text-gray-700">
+                                            {{ $s->tahun }}
+                                        </td>
+
+                                        <td class="px-5 py-3">
+
+                                            @if($s->file_path)
+                                                <a
+                                                    href="{{ asset('storage/'.$s->file_path) }}"
+                                                    target="_blank"
+                                                    class="px-3 py-1.5 rounded-md border hover:bg-gray-50 text-sm"
+                                                >
+                                                    Lihat
+                                                </a>
+                                            @else
+                                                <span class="text-gray-400 text-xs">
+                                                    Tidak ada file
+                                                </span>
+                                            @endif
+
+                                        </td>
+
+                                    </tr>
+
+                                @empty
+
+                                    <tr>
+                                        <td colspan="4" class="px-5 py-8 text-center text-gray-500">
+                                            Belum ada sertifikat yang ditambahkan.
+                                        </td>
+                                    </tr>
+
+                                @endforelse
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </div>
         </div>
-        <div class="p-3 rounded-lg bg-gray-50 border border-gray-200">
-          <p class="text-gray-500">Unit</p>
-          <p class="font-semibold text-gray-900">{{ $user->unit ?: '—' }}</p>
-        </div>
-        <div class="p-3 rounded-lg bg-gray-50 border border-gray-200">
-          <p class="text-gray-500">Telepon</p>
-          <p class="font-semibold text-gray-900">{{ $user->nomor_hp ?: '—' }}</p>
-        </div>
-        <div class="p-3 rounded-lg bg-gray-50 border border-gray-200">
-          <p class="text-gray-500">Bergabung</p>
-          <p class="font-semibold text-gray-900">{{ optional($user->created_at)->format('d M Y') }}</p>
-        </div>
-        <div class="p-3 rounded-lg bg-gray-50 border border-gray-200">
-          <p class="text-gray-500">Terakhir Update</p>
-          <p class="font-semibold text-gray-900">{{ optional($user->updated_at)->format('d M Y H:i') }}</p>
-        </div>
-      </div>
+
     </div>
-  </section>
+
+</section>
+
+@endif
 
   {{-- Berkas Saya --}}
   <section class="max-w-7xl mx-auto px-4 mt-6">
@@ -232,3 +474,24 @@
     </div>
   </section>
 @endsection
+
+@push('scripts')
+    {{-- ================= SCRIPT TAB ================= --}}
+<script>
+document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.onclick = () => {
+
+        document.querySelectorAll(".tab-btn").forEach(b => {
+            b.classList.remove("border-maroon");
+        });
+
+        document.querySelectorAll(".tab-content").forEach(c => {
+            c.classList.add("hidden");
+        });
+
+        btn.classList.add("border-maroon");
+        document.getElementById("tab-" + btn.dataset.tab).classList.remove("hidden");
+    };
+});
+</script>
+@endpush

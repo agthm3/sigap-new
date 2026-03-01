@@ -10,36 +10,265 @@
     </ol>
   </nav>
 
-  <!-- Header -->
-  <section class="max-w-7xl mx-auto px-4 pb-6">
-    <div class="rounded-2xl border border-gray-200 p-4 sm:p-6">
-      <div class="flex flex-col md:flex-row md:items-center gap-6">
-        @php
+<section class="max-w-7xl mx-auto px-4 pb-6">
+
+    @php
+        $profile = $pegawai->profile;
+
         $photoUrl = $pegawai->profile_photo_path
             ? asset('storage/'.$pegawai->profile_photo_path)
-            : null;
-        @endphp
+            : 'https://placehold.co/120x120?text=SP';
+    @endphp
 
-        <img class="w-28 h-28 rounded-xl object-cover ring-2 ring-maroon/20"
-            src="{{ $photoUrl ?: 'https://placehold.co/112x112?text=SP' }}"
-            alt="Foto profil pegawai">
+    <div class="rounded-2xl border border-gray-200 p-6">
 
-        <div class="flex-1">
-          <div class="flex flex-wrap items-center gap-2">
-            <h1 class="text-2xl font-extrabold text-gray-900">{{ $pegawai->name }}</h1>
-            @if($pegawai->nip)
-              <span class="px-2 py-0.5 rounded bg-gray-100 text-gray-700 text-xs">NIP: {{ $pegawai->nip }}</span>
-            @endif
-            @if($pegawai->unit)
-              <span class="px-2 py-0.5 rounded bg-gray-100 text-gray-700 text-xs">Unit: {{ $pegawai->unit }}</span>
-            @endif
-          </div>
-          <p class="text-sm text-gray-600 mt-1">Jabatan: {{ $pegawai->position ?? '—' }}</p>
+        <!-- ================= IDENTITAS UTAMA ================= -->
+        <div class="flex flex-col md:flex-row md:items-center gap-6">
+
+            <img
+                src="{{ $photoUrl }}"
+                class="w-28 h-28 rounded-xl object-cover ring-2 ring-maroon/20"
+                alt="Foto Pegawai"
+            >
+
+            <div class="flex-1">
+
+                <h1 class="text-2xl font-extrabold text-gray-900">
+                    {{ $pegawai->name }}
+                </h1>
+
+                <div class="flex flex-wrap gap-2 mt-2 text-xs">
+
+                    @if($pegawai->nip)
+                        <span class="px-2 py-1 bg-gray-100 rounded">
+                            NIP: {{ $pegawai->nip }}
+                        </span>
+                    @endif
+
+                    @if($pegawai->unit)
+                        <span class="px-2 py-1 bg-gray-100 rounded">
+                            Unit: {{ $pegawai->unit }}
+                        </span>
+                    @endif
+
+                    @if($profile?->jabatan)
+                        <span class="px-2 py-1 bg-maroon/10 text-maroon rounded">
+                            {{ $profile->jabatan }}
+                        </span>
+                    @endif
+
+                    @if($profile?->status_pegawai)
+                        <span class="px-2 py-1 bg-emerald-50 text-emerald-700 rounded">
+                            {{ $profile->status_pegawai }}
+                        </span>
+                    @endif
+
+                </div>
+
+            </div>
+
         </div>
-      </div>
-    </div>
-  </section>
 
+        @if($profile)
+
+            <div class="mt-8 space-y-6">
+
+                <!-- ================= IDENTITAS ================= -->
+                <div class="border rounded-xl overflow-hidden">
+
+                    <div class="px-5 py-3 font-semibold bg-gray-50">
+                        Identitas
+                    </div>
+
+                    <div class="p-5 grid sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+
+                        @include('partials.field', ['label'=>'NIK','value'=>$profile->nik])
+                        @include('partials.field', ['label'=>'Tempat Lahir','value'=>$profile->tempat_lahir])
+                        @include('partials.field', ['label'=>'Tanggal Lahir','value'=>$profile->tanggal_lahir])
+                        @include('partials.field', ['label'=>'Jenis Kelamin','value'=>$profile->jenis_kelamin])
+                        @include('partials.field', ['label'=>'Agama','value'=>$profile->agama])
+                        @include('partials.field', ['label'=>'Status Perkawinan','value'=>$profile->status_perkawinan])
+                        @include('partials.field', ['label'=>'Golongan Darah','value'=>$profile->golongan_darah])
+                        @include('partials.field', ['label'=>'NIP Baru','value'=>$profile->nip_baru])
+                        @include('partials.field', ['label'=>'NIP Lama','value'=>$profile->nip_lama])
+                        @include('partials.field', ['label'=>'Keterangan','value'=>$profile->keterangan,'class'=>'sm:col-span-2'])
+
+                    </div>
+
+                </div>
+
+
+                <!-- ================= KEPEGAWAIAN ================= -->
+                <div class="border rounded-xl overflow-hidden">
+
+                    <div class="px-5 py-3 font-semibold bg-gray-50">
+                        Kepegawaian
+                    </div>
+
+                    <div class="p-5 grid sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+
+                        @include('partials.field', ['label'=>'Status Pegawai','value'=>$profile->status_pegawai])
+                        @include('partials.field', ['label'=>'Jabatan','value'=>$profile->jabatan])
+                        @include('partials.field', ['label'=>'Golongan','value'=>$profile->golongan])
+                        @include('partials.field', ['label'=>'TMT PNS','value'=>$profile->tmt_pns])
+                        @include('partials.field', ['label'=>'Atasan Langsung','value'=>$profile->atasan_langsung])
+                        @include('partials.field', ['label'=>'Golongan Ruang','value'=>$profile->golongan_ruang])
+                        @include('partials.field', ['label'=>'TMT Golongan','value'=>$profile->tmt_golongan])
+                        @include('partials.field', ['label'=>'Masa Kerja','value'=>$profile->masa_kerja_tahun.' Tahun '.$profile->masa_kerja_bulan.' Bulan'])
+                        @include('partials.field', ['label'=>'TMT Jabatan','value'=>$profile->tmt_jabatan])
+                        @include('partials.field', ['label'=>'Eselon','value'=>$profile->eselon])
+                        @include('partials.field', ['label'=>'Jabatan Struktural','value'=>$profile->jabatan_struktural])
+                        @include('partials.field', ['label'=>'Jabatan Fungsional','value'=>$profile->jabatan_fungsional])
+                        @include('partials.field', ['label'=>'Jabatan Teknis','value'=>$profile->jabatan_teknis])
+                        @include('partials.field', ['label'=>'Unit Organisasi','value'=>$profile->unor])
+
+                    </div>
+
+                </div>
+
+
+                <!-- ================= ALAMAT & ADMINISTRASI ================= -->
+                <div class="border rounded-xl overflow-hidden">
+
+                    <div class="px-5 py-3 font-semibold bg-gray-50">
+                        Alamat & Administrasi
+                    </div>
+
+                    <div class="p-5 grid sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+
+                        @include('partials.field', ['label'=>'Alamat KTP','value'=>$profile->alamat_ktp,'class'=>'sm:col-span-2'])
+                        @include('partials.field', ['label'=>'Alamat Domisili','value'=>$profile->alamat_domisili,'class'=>'sm:col-span-2'])
+                        @include('partials.field', ['label'=>'NPWP','value'=>$profile->npwp])
+                        @include('partials.field', ['label'=>'BPJS Kesehatan','value'=>$profile->bpjs_kesehatan])
+                        @include('partials.field', ['label'=>'BPJS Ketenagakerjaan','value'=>$profile->bpjs_ketenagakerjaan])
+                        @include('partials.field', ['label'=>'Bank','value'=>$profile->bank_nama])
+                        @include('partials.field', ['label'=>'Nomor Rekening','value'=>$profile->nomor_rekening])
+                        @include('partials.field', ['label'=>'Atas Nama Rekening','value'=>$profile->nama_rekening])
+
+                    </div>
+
+                </div>
+
+
+                <!-- ================= KELUARGA ================= -->
+                <div class="border rounded-xl overflow-hidden">
+
+                    <div class="px-5 py-3 font-semibold bg-gray-50">
+                        Keluarga
+                    </div>
+
+                    <div class="p-5 grid sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+
+                        @include('partials.field', ['label'=>'Nama Pasangan','value'=>$profile->nama_pasangan])
+                        @include('partials.field', ['label'=>'Pekerjaan Pasangan','value'=>$profile->pekerjaan_pasangan])
+                        @include('partials.field', ['label'=>'Jumlah Anak','value'=>$profile->jumlah_anak])
+                        @include('partials.field', ['label'=>'Kontak Darurat','value'=>$profile->kontak_darurat])
+
+                    </div>
+
+                </div>
+
+
+                <!-- ================= PENDIDIKAN ================= -->
+                <div class="border rounded-xl overflow-hidden">
+
+                    <div class="px-5 py-3 font-semibold bg-gray-50">
+                        Pendidikan
+                    </div>
+
+                    <div class="p-5 grid sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+
+                        @include('partials.field', ['label'=>'Pendidikan Terakhir','value'=>$profile->pendidikan_terakhir])
+                        @include('partials.field', ['label'=>'Jurusan','value'=>$profile->jurusan])
+                        @include('partials.field', ['label'=>'Tahun Lulus','value'=>$profile->tahun_lulus])
+
+                    </div>
+
+                </div>
+
+                {{-- ================= SERTIFIKAT ================= --}}
+                @if(isset($sertifikats) && $sertifikats->count())
+
+                <section class="max-w-7xl mx-auto px-4 pb-8">
+
+                    <div class="rounded-2xl border border-gray-200 overflow-hidden">
+
+                        <div class="px-5 py-3 bg-gray-50 text-sm font-semibold text-gray-700">
+                            Sertifikat / Kompetensi
+                        </div>
+
+                        <div class="overflow-x-auto">
+
+                            <table class="min-w-full text-sm">
+
+                                <thead class="bg-white">
+                                    <tr class="text-left border-b">
+                                        <th class="px-5 py-3">Nama Sertifikat</th>
+                                        <th class="px-5 py-3">Bidang</th>
+                                        <th class="px-5 py-3">Tahun</th>
+                                        <th class="px-5 py-3">File</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody class="divide-y">
+
+                                    @foreach($sertifikats as $s)
+
+                                    <tr>
+
+                                        <td class="px-5 py-3 font-medium text-gray-900">
+                                            {{ $s->nama_sertifikat ?? '-' }}
+                                        </td>
+
+                                        <td class="px-5 py-3 text-gray-700">
+                                            {{ $s->bidang ?? '-' }}
+                                        </td>
+
+                                        <td class="px-5 py-3 text-gray-700">
+                                            {{ $s->tahun ?? '-' }}
+                                        </td>
+
+                                        <td class="px-5 py-3">
+
+                                            @if(!empty($s->file_path))
+                                                <a
+                                                    href="{{ asset('storage/'.$s->file_path) }}"
+                                                    target="_blank"
+                                                    class="px-3 py-1.5 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition text-sm"
+                                                >
+                                                    Lihat
+                                                </a>
+                                            @else
+                                                <span class="text-gray-400 text-xs">
+                                                    Tidak ada file
+                                                </span>
+                                            @endif
+
+                                        </td>
+
+                                    </tr>
+
+                                    @endforeach
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                @endif
+
+            </div>
+
+        @endif
+
+    </div>
+
+</section>
   <!-- Flash messages -->
   <section class="max-w-7xl mx-auto px-4">
     @if (session('access_granted'))

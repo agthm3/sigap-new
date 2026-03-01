@@ -36,18 +36,24 @@ class PegawaiPublicController extends Controller
         ]);
     }
 
-    // /pegawai/{user}
+        // /pegawai/{user}
     public function show(User $user)
     {
-        // ambil dokumen pribadi milik user ini (hanya status verified/pending juga bisa ditampilkan)
+        $user->load(['profile','kompetensis']);
+
+        // dokumen pribadi
         $docs = PersonalDocument::query()
             ->where('user_id',$user->id)
             ->latest()
             ->get();
 
+        // sertifikat (kompetensi)
+        $sertifikats = $user->kompetensis()->latest()->get();
+
         return view('SigapPegawai.detail', [
-            'pegawai' => $user,
-            'docs'    => $docs,
+            'pegawai'     => $user,
+            'docs'        => $docs,
+            'sertifikats' => $sertifikats,
         ]);
     }
 
