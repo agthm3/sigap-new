@@ -61,4 +61,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(\App\Models\PersonalDocument::class);
     }
+    public function profile()
+    {
+        return $this->hasOne(PegawaiProfile::class);
+    }
+    public function kompetensis()
+    {
+        return $this->hasMany(PegawaiKompetensi::class);
+    }
 }

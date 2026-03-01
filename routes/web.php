@@ -195,6 +195,8 @@ Route::put('/pegawai-profil', [PegawaiProfilController::class, 'update'])
 
 Route::delete('/pegawai-profil/avatar', [PegawaiProfilController::class, 'destroyAvatar'])
     ->middleware('auth')->name('pegawai.profil.avatar.destroy');
+Route::post('/pegawai/profil/avatar', [PegawaiProfilController::class, 'updateAvatar'])
+    ->name('pegawai.profil.avatar');
 
 //SIGAP KINERJA
 Route::get('/sigap-kinerja', [SigapKinerjaController::class, 'index'])->name('sigap-kinerja.index');
