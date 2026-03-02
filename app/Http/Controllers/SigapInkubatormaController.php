@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\Inkubatorma;
-use Illuminate\Http\Request;
 use App\Models\InkubatormaLog;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Notifications\InkubatormaPengajuanBaruNotification;
+use App\Notifications\InkubatormaStatusUpdateNotification;
 use Illuminate\Support\Facades\Schema;
 
 class SigapInkubatormaController extends Controller
@@ -109,36 +112,413 @@ class SigapInkubatormaController extends Controller
      */
     public function dashboard(Request $request)
     {
-        $inkubatormas = Inkubatorma::query()
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        // dashboard blade butuh ini untuk label layanan (statis)
-        $layananOptions = $this->layananOptions();
-
         $user = Auth::user();
 
-        // ambil per page dari query (?per_page=10/25/50)
+        // =========================
+        // 0) ROLE FILTER (single source of truth)
+        // =========================
+        $base = Inkubatorma::query()->orderBy('created_at', 'desc');
+
+        if ($user && ($user->hasRole('admin') || $user->hasRole('verifikator_inkubatorma'))) {
+            // lihat semua
+        } else {
+            // user biasa: hanya miliknya
+            $base->where('created_by', $user->id);
+        }
+
+        // =========================
+        // 1) INPUT PERIODE (overall | yearly | monthly)
+        // =========================
+        $period = $request->query('period', 'overall'); // overall, yearly, monthly
+        if (!in_array($period, ['overall', 'yearly', 'monthly'], true)) $period = 'overall';
+
+        $now   = Carbon::now('Asia/Makassar');
+        $year  = (int) $request->query('year', (int) $now->year);
+        $month = (int) $request->query('month', (int) $now->month);
+
+        // kalau period bukan monthly, month tidak terlalu penting tapi tetap aman
+        if ($month < 1 || $month > 12) $month = (int) $now->month;
+
+        // =========================
+        // 2) DATE RANGE UNTUK "FILTERED DATA"
+        // dipakai ringkasan + pie layanan + bar opd
+        // =========================
+        $filterStart = null;
+        $filterEnd   = null;
+
+        if ($period === 'yearly') {
+            $filterStart = Carbon::create($year, 1, 1, 0, 0, 0, 'Asia/Makassar')->startOfDay();
+            $filterEnd   = (clone $filterStart)->endOfYear()->endOfDay();
+        }
+
+        if ($period === 'monthly') {
+            $filterStart = Carbon::create($year, $month, 1, 0, 0, 0, 'Asia/Makassar')->startOfDay();
+            $filterEnd   = (clone $filterStart)->endOfMonth()->endOfDay();
+        }
+
+        $filtered = (clone $base);
+        if ($filterStart && $filterEnd) {
+            $filtered->whereBetween('created_at', [$filterStart, $filterEnd]);
+        }
+
+        // =========================
+        // 3) PAGINATION UNTUK TABLE
+        // =========================
         $perPage = (int) $request->query('per_page', 10);
-        if (!in_array($perPage, [10, 25, 50], true)) {
-            $perPage = 10;
+        if (!in_array($perPage, [10, 25, 50], true)) $perPage = 10;
+
+        $inkubatormas = (clone $base)
+            ->paginate($perPage)
+            ->withQueryString();
+
+        // =========================
+        // 4) OPTIONS LAYANAN
+        // =========================
+        $layananOptions = $this->layananOptions();
+
+        // =========================
+        // 5) RINGKASAN STATUS (dari FILTERED)
+        // =========================
+        $statusCounts = (clone $filtered)
+            ->reorder()
+            ->selectRaw('status, COUNT(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        $ringkasanStatus = [
+            'Menunggu'  => (int) ($statusCounts['Menunggu'] ?? 0),
+            'Terjadwal' => (int) ($statusCounts['Terjadwal'] ?? 0),
+            'Selesai'   => (int) ($statusCounts['Selesai'] ?? 0),
+        ];
+
+        // =========================
+        // 6) PIE: PERSEBARAN LAYANAN (dari FILTERED)
+        // =========================
+        $layananCountsRaw = (clone $filtered)
+            ->reorder()
+            ->selectRaw('layanan_id, COUNT(*) as total')
+            ->groupBy('layanan_id')
+            ->pluck('total', 'layanan_id');
+
+        $pieLayanan = [];
+        foreach ($layananCountsRaw as $k => $v) {
+            $key = (string) $k;
+            $pieLayanan[] = [
+                'key'   => $key,
+                'label' => $layananOptions[$key] ?? $key,
+                'total' => (int) $v,
+            ];
         }
 
-        $q = Inkubatorma::query()->orderBy('created_at', 'desc');
+        // =========================
+        // 7) BAR: TOP OPD (dari FILTERED)
+        // =========================
+        $opdCounts = (clone $filtered)
+            ->reorder()
+            ->selectRaw('opd_unit, COUNT(*) as total')
+            ->groupBy('opd_unit')
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get()
+            ->map(fn($r) => ['label' => (string)($r->opd_unit ?? '—'), 'total' => (int)$r->total])
+            ->values()
+            ->all();
 
-        // ===== ROLE FILTER (Spatie) =====
-        if ($user && $user->hasRole('admin') || $user->hasRole('verifikator_inkubatorma')) {
-            // Admin dan Verifikator lihat semua
+        // =========================
+        // 8) LINE: JUMLAH PENGAJUAN
+        // overall: YEAR-MONTH across all time (YYYY-MM)
+        // yearly : Jan..Dec (bulan) untuk tahun terpilih
+        // monthly: per hari dalam bulan terpilih (01..N)
+        // =========================
+        $line = [
+            'labels' => [],
+            'values' => [],
+            'meta'   => ['period' => $period],
+        ];
+
+        if ($period === 'overall') {
+            $rows = (clone $base)
+                ->reorder()
+                ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as ym, COUNT(*) as total")
+                ->groupBy('ym')
+                ->orderBy('ym')
+                ->get();
+
+            $line['labels'] = $rows->pluck('ym')->all();
+            $line['values'] = $rows->pluck('total')->map(fn($v)=>(int)$v)->all();
         }
-        else {
-            // User hanya lihat pengajuan yang dia buat (pakai kolom created_by yang ada di tabel)
-            $q->where('created_by', $user->id);
+
+        if ($period === 'yearly') {
+            $yearStart = Carbon::create($year, 1, 1, 0, 0, 0, 'Asia/Makassar')->startOfDay();
+            $yearEnd   = (clone $yearStart)->endOfYear()->endOfDay();
+
+            $rows = (clone $base)
+                ->reorder()
+                ->whereBetween('created_at', [$yearStart, $yearEnd])
+                ->selectRaw("MONTH(created_at) as m, COUNT(*) as total")
+                ->groupBy('m')
+                ->orderBy('m')
+                ->get()
+                ->keyBy('m');
+
+            $labels = [];
+            $values = [];
+            for ($m=1; $m<=12; $m++) {
+                $labels[] = Carbon::create($year, $m, 1, 0, 0, 0, 'Asia/Makassar')->translatedFormat('M');
+                $values[] = (int) ($rows[$m]->total ?? 0);
+            }
+
+            $line['labels'] = $labels;
+            $line['values'] = $values;
+            $line['meta']['year'] = $year;
         }
 
-        // paginate + keep query string
-        $inkubatormas = $q->paginate($perPage)->withQueryString();
+        if ($period === 'monthly') {
+            $monthStart = Carbon::create($year, $month, 1, 0, 0, 0, 'Asia/Makassar')->startOfDay();
+            $monthEnd   = (clone $monthStart)->endOfMonth()->endOfDay();
+            $daysInMonth = $monthStart->daysInMonth;
 
-        return view('dashboard.inkubatorma.dashboard', compact('inkubatormas', 'layananOptions'));
+            $rows = (clone $base)
+                ->reorder()
+                ->whereBetween('created_at', [$monthStart, $monthEnd])
+                ->selectRaw("DAY(created_at) as d, COUNT(*) as total")
+                ->groupBy('d')
+                ->orderBy('d')
+                ->get()
+                ->keyBy('d');
+
+            $labels = [];
+            $values = [];
+            for ($d=1; $d<=$daysInMonth; $d++) {
+                $labels[] = str_pad((string)$d, 2, '0', STR_PAD_LEFT); // 01..31
+                $values[] = (int) ($rows[$d]->total ?? 0);
+            }
+
+            $line['labels'] = $labels;
+            $line['values'] = $values;
+            $line['meta']['year'] = $year;
+            $line['meta']['month'] = $month;
+        }
+
+        return view('dashboard.inkubatorma.dashboard', [
+            'inkubatormas'      => $inkubatormas,
+            'layananOptions'    => $layananOptions,
+
+            // state untuk UI
+            'period'            => $period,
+            'year'              => $year,
+            'month'             => $month,
+
+            // datasets
+            'ringkasanStatus'   => $ringkasanStatus,
+            'pieLayanan'        => $pieLayanan,
+            'opdCounts'         => $opdCounts,
+            'line'              => $line,
+            'updatedAtLabel'    => Carbon::now('Asia/Makassar')->translatedFormat('d M Y H:i') . ' WITA',
+        ]);
+    }
+
+    public function printLaporan(Request $request)
+    {
+        $user = Auth::user();
+        $tz   = 'Asia/Makassar';
+        $now  = Carbon::now($tz);
+
+        // =========================
+        // 1) BASE QUERY SESUAI ROLE
+        // =========================
+        $base = Inkubatorma::query();
+
+        if ($user && ($user->hasRole('admin') || $user->hasRole('verifikator_inkubatorma'))) {
+            // lihat semua
+        } elseif ($user) {
+            $base->where('created_by', $user->id);
+        } else {
+            $base->whereRaw('1 = 0');
+        }
+
+        // =========================
+        // 2) PARAMETER PERIODE
+        // =========================
+        $period = $request->query('period', 'overall');
+        if (!in_array($period, ['overall', 'yearly', 'monthly'], true)) {
+            $period = 'overall';
+        }
+
+        $year  = (int) $request->query('year', $now->year);
+        $month = (int) $request->query('month', $now->month);
+        $month = ($month >= 1 && $month <= 12) ? $month : (int) $now->month;
+
+        // =========================
+        // 3) FILTER RANGE
+        // =========================
+        [$filterStart, $filterEnd, $periodeLabel] = match ($period) {
+            'yearly' => [
+                Carbon::create($year, 1, 1, 0, 0, 0, $tz)->startOfDay(),
+                Carbon::create($year, 12, 31, 23, 59, 59, $tz)->endOfDay(),
+                'Tahun ' . $year,
+            ],
+            'monthly' => [
+                Carbon::create($year, $month, 1, 0, 0, 0, $tz)->startOfDay(),
+                Carbon::create($year, $month, 1, 0, 0, 0, $tz)->endOfMonth()->endOfDay(),
+                Carbon::create($year, $month, 1, 0, 0, 0, $tz)->translatedFormat('F Y'),
+            ],
+            default => [null, null, 'Keseluruhan Data'],
+        };
+
+        $filtered = clone $base;
+        if ($filterStart && $filterEnd) {
+            $filtered->whereBetween('created_at', [$filterStart, $filterEnd]);
+        }
+
+        $layananOptions = $this->layananOptions();
+
+        // =========================
+        // 4) DATA TABEL
+        // =========================
+        $rows = (clone $filtered)
+            ->reorder()
+            ->latest('created_at')
+            ->get();
+
+        // =========================
+        // 5) RINGKASAN STATUS
+        // =========================
+        $statusCounts = (clone $filtered)
+            ->reorder()
+            ->selectRaw('status, COUNT(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        $ringkasanStatus = [
+            'Menunggu'  => (int) ($statusCounts['Menunggu'] ?? 0),
+            'Terjadwal' => (int) ($statusCounts['Terjadwal'] ?? 0),
+            'Selesai'   => (int) ($statusCounts['Selesai'] ?? 0),
+        ];
+
+        // =========================
+        // 6) PERSEBARAN LAYANAN
+        // =========================
+        $pieLayanan = (clone $filtered)
+            ->reorder()
+            ->selectRaw('layanan_id, COUNT(*) as total')
+            ->groupBy('layanan_id')
+            ->orderByDesc('total')
+            ->get()
+            ->map(function ($r) use ($layananOptions) {
+                return [
+                    'key'   => (string) $r->layanan_id,
+                    'label' => $layananOptions[$r->layanan_id] ?? (string) $r->layanan_id,
+                    'total' => (int) $r->total,
+                ];
+            })
+            ->values()
+            ->all();
+
+        // untuk tabel print versi layanan
+        $layananCounts = collect($pieLayanan)
+            ->map(fn ($r) => [
+                'label' => $r['label'],
+                'total' => $r['total'],
+            ])
+            ->values()
+            ->all();
+
+        // =========================
+        // 7) PERSEBARAN OPD
+        // =========================
+        $opdCounts = (clone $filtered)
+            ->reorder()
+            ->selectRaw('opd_unit, COUNT(*) as total')
+            ->groupBy('opd_unit')
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get()
+            ->map(fn ($r) => [
+                'label' => (string) ($r->opd_unit ?? '—'),
+                'total' => (int) $r->total,
+            ])
+            ->values()
+            ->all();
+
+        // =========================
+        // 8) LINE CHART
+        // overall : per bulan sepanjang data
+        // yearly  : per bulan pada tahun dipilih
+        // monthly : per hari pada bulan dipilih
+        // =========================
+        $line = [
+            'labels' => [],
+            'values' => [],
+            'meta'   => ['period' => $period],
+        ];
+
+        if ($period === 'overall') {
+            $lineRows = (clone $base)
+                ->reorder()
+                ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as periode, COUNT(*) as total")
+                ->groupBy('periode')
+                ->orderBy('periode')
+                ->get();
+
+            $line['labels'] = $lineRows->pluck('periode')->all();
+            $line['values'] = $lineRows->pluck('total')->map(fn ($v) => (int) $v)->all();
+        }
+
+        if ($period === 'yearly') {
+            $lineRows = (clone $base)
+                ->reorder()
+                ->whereYear('created_at', $year)
+                ->selectRaw('MONTH(created_at) as periode, COUNT(*) as total')
+                ->groupBy('periode')
+                ->orderBy('periode')
+                ->get()
+                ->keyBy('periode');
+
+            for ($m = 1; $m <= 12; $m++) {
+                $line['labels'][] = Carbon::create($year, $m, 1, 0, 0, 0, $tz)->translatedFormat('M');
+                $line['values'][] = (int) ($lineRows[$m]->total ?? 0);
+            }
+
+            $line['meta']['year'] = $year;
+        }
+
+        if ($period === 'monthly') {
+            $daysInMonth = Carbon::create($year, $month, 1, 0, 0, 0, $tz)->daysInMonth;
+
+            $lineRows = (clone $base)
+                ->reorder()
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->selectRaw('DAY(created_at) as periode, COUNT(*) as total')
+                ->groupBy('periode')
+                ->orderBy('periode')
+                ->get()
+                ->keyBy('periode');
+
+            for ($d = 1; $d <= $daysInMonth; $d++) {
+                $line['labels'][] = str_pad((string) $d, 2, '0', STR_PAD_LEFT);
+                $line['values'][] = (int) ($lineRows[$d]->total ?? 0);
+            }
+
+            $line['meta']['year']  = $year;
+            $line['meta']['month'] = $month;
+        }
+
+        return view('dashboard.inkubatorma.print', [
+            'rows'            => $rows,
+            'layananOptions'  => $layananOptions,
+            'period'          => $period,
+            'year'            => $year,
+            'month'           => $month,
+            'periodeLabel'    => $periodeLabel,
+            'ringkasanStatus' => $ringkasanStatus,
+            'layananCounts'   => $layananCounts,
+            'pieLayanan'      => $pieLayanan,
+            'opdCounts'       => $opdCounts,
+            'line'            => $line,
+            'printedAt'       => $now->translatedFormat('d F Y H:i') . ' WITA',
+        ]);
     }
 
     /**
@@ -195,7 +575,7 @@ class SigapInkubatormaController extends Controller
         $newNumber = $lastNumber + 1;
         $kode = $prefix . str_pad((string) $newNumber, 4, '0', STR_PAD_LEFT);
 
-        Inkubatorma::create([
+        $inkubatorma = Inkubatorma::create([
             'kode' => $kode,
 
             // simpan string layanan ke layanan_id
@@ -222,6 +602,16 @@ class SigapInkubatormaController extends Controller
 
             'target_personil_usulan' => $targetPersonilNama,
         ]);
+
+        $verifikators = User::role('verifikator_inkubatorma')
+            ->where('status', 'active')
+            ->whereNotNull('email')
+            ->select('id', 'name', 'email')
+            ->get();
+
+        foreach ($verifikators as $verifikator) {
+            $verifikator->notify(new InkubatormaPengajuanBaruNotification($inkubatorma));
+        }
 
         if (!auth()->check()) {
             session()->put('inkubatorma_form', $validated);
@@ -429,6 +819,16 @@ class SigapInkubatormaController extends Controller
         $inkubatorma->verifikasi_at = now();
 
         $inkubatorma->save();
+
+        if (!empty($inkubatorma->created_by)) {
+            $pengajuUser = User::where('id', $inkubatorma->created_by)
+                ->whereNotNull('email')
+                ->first();
+            
+            if ($pengajuUser) {
+                $pengajuUser->notify(new InkubatormaStatusUpdateNotification($inkubatorma));
+            }
+        }
 
         $aksi = $this->mapAksiDariStatus($statusLama, $statusBaru);
 

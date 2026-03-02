@@ -277,6 +277,9 @@ Route::get('/sigap-inkubatorma', [SigapInkubatormaController::class, 'index'])
 
 Route::post('/sigap-inkubatorma/store', [SigapInkubatormaController::class, 'store'])
     ->name('sigap-inkubatorma.store');
+    
+Route::get('/sigap-inkubatorma/dashboard/print', [SigapInkubatormaController::class, 'printLaporan'])
+    ->name('sigap-inkubatorma.dashboard.print');
 
 Route::prefix('/sigap-inkubatorma')->group(function () {
 
