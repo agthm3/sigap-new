@@ -47,6 +47,7 @@ class Inkubatorma extends Model
         'verifikasi_at'   => 'datetime',
         'created_at'      => 'datetime',
         'updated_at'      => 'datetime',
+<<<<<<< HEAD
 
         'layanan_id' => 'array',
     ];
@@ -79,6 +80,14 @@ class Inkubatorma extends Model
         return collect($this->layanan_id)
             ->map(fn($id) => $map[$id] ?? $id)
             ->implode(', ');
+=======
+    ];
+
+    public function getLayananNamaAttribute(): string
+    {
+        $map = self::layananOptions();
+        return $map[$this->layanan_id] ?? '—';
+>>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
     }
 
     // =========================
