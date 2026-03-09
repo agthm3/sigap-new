@@ -196,6 +196,52 @@
           </div>
         </div>
       </div>
+{{-- Penelitian / Inovasi Terdahulu --}}
+<div class="bg-white border border-gray-200 rounded-2xl p-4">
+  <h2 class="font-semibold text-gray-800 mb-4">
+    Penelitian / Inovasi Terdahulu
+    <span class="text-xs text-gray-500 font-normal">(Minimal 3, Maksimal 5)</span>
+  </h2>
+
+  <div id="ref-wrapper" class="space-y-3">
+    @foreach($inovasi->referensiVideos as $i => $ref)
+      <div class="ref-item border rounded-lg p-3">
+        <input type="hidden" name="refs[{{ $i }}][id]" value="{{ $ref->id }}">
+
+        <input type="text"
+          name="refs[{{ $i }}][judul]"
+          value="{{ old("refs.$i.judul", $ref->judul) }}"
+          placeholder="Judul penelitian / inovasi"
+          class="w-full mb-2 rounded-lg border-gray-300">
+
+        <textarea
+          name="refs[{{ $i }}][deskripsi]"
+          rows="2"
+          placeholder="Deskripsi singkat"
+          class="w-full mb-2 rounded-lg border-gray-300"
+        >{{ old("refs.$i.deskripsi", $ref->deskripsi) }}</textarea>
+
+        <input type="url"
+          name="refs[{{ $i }}][url]"
+          value="{{ old("refs.$i.url", $ref->video_url) }}"
+          placeholder="Link YouTube / Website"
+          class="w-full rounded-lg border-gray-300">
+      </div>
+    @endforeach
+  </div>
+
+  <div class="flex gap-2 mt-3">
+    <button type="button" id="addRef"
+      class="px-3 py-1 text-sm border rounded hover:bg-gray-50">
+      + Tambah Referensi
+    </button>
+
+    <button type="button" id="removeRef"
+      class="px-3 py-1 text-sm border rounded hover:bg-gray-50">
+      − Hapus Terakhir
+    </button>
+  </div>
+</div>
 
 {{-- Lampiran (opsional) --}}
 <div class="bg-white border border-gray-200 rounded-2xl p-4">
@@ -286,4 +332,52 @@
     document.getElementById('hid_hasil').value   = qH.root.innerHTML;
   });
 </script>
+<script>
+let refIndex = {{ $inovasi->referensiVideos->count() }};
+const minRef = 3;
+const maxRef = 5;
+
+const refWrapper = document.getElementById('ref-wrapper');
+
+document.getElementById('addRef').addEventListener('click', () => {
+  if (refIndex >= maxRef) {
+    alert('Maksimal 5 referensi.');
+    return;
+  }
+
+  const div = document.createElement('div');
+  div.className = 'ref-item border rounded-lg p-3';
+  div.innerHTML = `
+    <input type="text"
+      name="refs[${refIndex}][judul]"
+      required
+      placeholder="Judul penelitian / inovasi"
+      class="w-full mb-2 rounded-lg border-gray-300">
+
+    <textarea
+      name="refs[${refIndex}][deskripsi]"
+      rows="2"
+      placeholder="Deskripsi singkat"
+      class="w-full mb-2 rounded-lg border-gray-300"></textarea>
+
+    <input type="url"
+      name="refs[${refIndex}][url]"
+      required
+      placeholder="Link YouTube / Website"
+      class="w-full rounded-lg border-gray-300">
+  `;
+  refWrapper.appendChild(div);
+  refIndex++;
+});
+
+document.getElementById('removeRef').addEventListener('click', () => {
+  if (refIndex <= minRef) {
+    alert('Minimal 3 referensi wajib ada.');
+    return;
+  }
+  refWrapper.lastElementChild.remove();
+  refIndex--;
+});
+</script>
+
 @endsection

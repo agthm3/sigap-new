@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Evidence;
+use App\Models\EvidenceFile;
+use App\Models\EvidenceGuide;
 use App\Models\Inovasi;
 use App\Repositories\EvidenceRepository;
 use App\Repositories\InovasiRepository;
@@ -28,7 +31,7 @@ class SigapInovasiController extends Controller
     /**
      * Daftar inovasi (terfilter per user kecuali admin).
      */
-    public function index(Request $request)
+    public function index(Request $request, EvidenceRepository $evidenceRepo)
     {
         $user = Auth::user();
 
@@ -40,9 +43,9 @@ class SigapInovasiController extends Controller
             'urusan'       => $request->get('f_urusan'),
             'sort'         => $request->get('sort','terbaru'),
         ];
-
+        $evidenceNoteTemplate = $evidenceRepo->evidenceChecklistText();
         $items = $this->repo->paginateForUser($user, $filters, 25);
-        return view('dashboard.inovasi.index', compact('filters', 'items'));
+        return view('dashboard.inovasi.index', compact('filters', 'items', 'evidenceNoteTemplate'));
     }
 
     public function konfigurasi()
@@ -162,18 +165,31 @@ class SigapInovasiController extends Controller
             'manfaat'               => ['nullable','string'],
             'hasil_inovasi'         => ['nullable','string'],
             'perkembangan_inovasi'  => ['nullable','string','max:255'],
+            'misi_walikota' => ['required','integer','between:1,7'],
+            'videos' => ['required','array','min:3','max:5'],
+            'videos.*.judul' => ['required','string','max:255'],
+            'videos.*.url' => ['required','url','max:500'],
+            'videos.*.deskripsi' => ['nullable','string'],
         ]);
 
         // set pemilik
         $data['user_id'] = Auth::id();
 
-        $this->repo->create(
+        $inovasi = $this->repo->create(
             $data,
             $r->file('anggaran'),
             $r->file('profil_bisnis'),
             $r->file('haki'),
             $r->file('penghargaan')
         );
+
+        foreach ($r->videos as $video) {
+            $inovasi->referensiVideos()->create([
+                'judul' => $video['judul'],
+                'deskripsi' => $video['deskripsi'] ?? null,
+                'video_url' => $video['url'],
+        ]);
+}
 
         return redirect()->route('sigap-inovasi.index')->with('success', 'Inovasi berhasil ditambahkan.');
     }
@@ -264,11 +280,11 @@ class SigapInovasiController extends Controller
                 'name'  => basename($f['path']),
             ];
         })->filter();
+        $referensiVideos = $inovasi->referensiVideos()->get();
 
         return view('dashboard.inovasi.show', compact(
             'inovasi','tInis','tUji','tTerap','progressPct',
-            'evItems','evTotal','evFilled','evFiles','mainFiles', 
-            'statusTeks', 'badgeColor', 'evMax'
+            'evItems','evTotal','evFilled','evFiles','mainFiles','referensiVideos'
         ));
     }
 
@@ -295,6 +311,9 @@ class SigapInovasiController extends Controller
     {
         $this->authorizeOwnerOrAdmin($inovasi);
 
+        /**
+         * 1. SIMPAN DATA EVIDENCE (PARAMETER)
+         */
         $paramIds   = $r->input('param_id', []);
         $labels     = $r->input('parameter_label', []);
         $weights    = $r->input('parameter_weight', []);
@@ -304,28 +323,70 @@ class SigapInovasiController extends Controller
         $rows = [];
         for ($no = 1; $no <= 20; $no++) {
             $rows[] = [
-                'no'                => $no,
-                'param_id'          => $paramIds[$no] ?? null,
-                'parameter_label'   => $labels[$no] ?? null,
-                'parameter_weight'  => $weights[$no] ?? null,
-                'deskripsi'         => $deskripsis[$no] ?? null,
-                'link_url'          => $linkUrls[$no] ?? null,
+                'no'               => $no,
+                'param_id'         => $paramIds[$no] ?? null,
+                'parameter_label'  => $labels[$no] ?? null,
+                'parameter_weight' => $weights[$no] ?? null,
+                'deskripsi'        => $deskripsis[$no] ?? null,
+                'link_url'         => $linkUrls[$no] ?? null,
             ];
         }
 
-        $files = [];
-        for ($no = 1; $no <= 20; $no++) {
-            if ($r->hasFile("file_{$no}")) {
-                $files[$no] = $r->file("file_{$no}");
+        // ✅ SIMPAN EVIDENCE SAJA
+        $evidenceRepo->upsertBulk($inovasi->id, $rows);
+
+        /**
+         * 2. HAPUS FILE YANG DITANDAI
+         */
+        $deleteFiles = $r->input('delete_files', []);
+        $evidenceRepo->deleteMarkedFiles($inovasi->id, $deleteFiles);
+
+        /**
+         * 3. SIMPAN DOKUMEN (docs)
+         */
+        $docs      = $r->input('docs', []);
+        $docFiles = $r->file('docs', []);
+
+        foreach ($docs as $no => $items) {
+
+            $evidence = Evidence::where('inovasi_id', $inovasi->id)
+                ->where('no', $no)
+                ->first();
+
+            if (!$evidence) continue;
+
+            foreach ($items as $idx => $meta) {
+
+                if (!isset($docFiles[$no][$idx]['file'])) continue;
+
+                $file = $docFiles[$no][$idx]['file'];
+
+                $path = $file->store(
+                    "inovasi/{$inovasi->id}/evidence/no-{$no}",
+                    'public'
+                );
+
+                EvidenceFile::create([
+                    'evidence_id'   => $evidence->id,
+                    'file_path'     => $path,
+                    'file_name'     => $file->getClientOriginalName(),
+                    'file_mime'     => $file->getClientMimeType(),
+                    'file_size'     => $file->getSize(),
+
+                    // METADATA
+                    'nomor_surat'   => $meta['nomor']   ?? null,
+                    'tanggal_surat' => $meta['tanggal'] ?? null,
+                    'tentang'       => $meta['tentang'] ?? null,
+                ]);
             }
         }
 
-        $evidenceRepo->upsertBulk($inovasi->id, $rows, $files);
-
         return redirect()
             ->route('evidence.form', $inovasi->id)
-            ->with('success','Evidence berhasil disimpan.');
+            ->with('success', 'Evidence berhasil disimpan.');
     }
+
+
 
     /**
      * Edit metadata inovasi (pemilik/admin).
@@ -370,6 +431,13 @@ class SigapInovasiController extends Controller
             'profil_bisnis'         => ['nullable','file','mimes:ppt,pptx,pdf','max:20480'],
             'haki'                  => ['nullable','file','mimes:pdf,jpg,jpeg,png','max:10240'],
             'penghargaan'           => ['nullable','file','mimes:pdf,jpg,jpeg,png','max:10240'],
+
+            'refs' => ['nullable','array','min:3','max:5'],
+            'refs.*.id' => ['nullable','integer'],
+            'refs.*.judul' => ['required','string','max:255'],
+            'refs.*.url' => ['required','url','max:500'],
+            'refs.*.deskripsi' => ['nullable','string'],
+
         ]);
 
         $this->repo->update(
@@ -380,6 +448,24 @@ class SigapInovasiController extends Controller
             $r->file('haki'),
             $r->file('penghargaan')
         );
+        $idsKeep = [];
+
+        foreach ($r->input('refs', []) as $ref) {
+            $video = $inovasi->referensiVideos()->updateOrCreate(
+                ['id' => $ref['id'] ?? null],
+                [
+                    'judul' => $ref['judul'],
+                    'deskripsi' => $ref['deskripsi'] ?? null,
+                    'video_url' => $ref['url'],
+                ]
+            );
+            $idsKeep[] = $video->id;
+        }
+
+        // hapus referensi yang tidak dikirim
+        $inovasi->referensiVideos()
+            ->whereNotIn('id', $idsKeep)
+            ->delete();
 
         return redirect()->route('sigap-inovasi.show',$id)->with('success','Metadata inovasi berhasil diperbarui.');
     }
@@ -418,6 +504,73 @@ class SigapInovasiController extends Controller
         if (!Auth::user()->hasRole('admin')) abort(403, 'Akses khusus admin/verifikator.');
     }
 
- 
-    
+    public function pedomanEvidence()
+    {
+        $guides = EvidenceGuide::all()->keyBy('no');
+
+       $items = collect(range(1, 20))->map(function ($no) use ($guides) {
+
+        $g = $guides->get($no);
+
+        return [
+            'id'        => $g?->id,
+            'no'        => $no,
+            'indikator' => $g?->indikator ?? "Evidence {$no}",
+            'deskripsi' => $g?->deskripsi ?? null,
+            'file_url'  => $g && $g->file_path
+                ? Storage::disk('public')->url($g->file_path)
+                : null,
+            'file_name' => $g?->file_name,
+        ];
+    });
+
+
+        return view('dashboard.inovasi.evidence-pedoman', compact('items'));
+    }
+
+    public function pedomanEvidenceSave(Request $r)
+    {
+        $this->authorizeAdmin();
+
+        foreach ($r->input('no', []) as $idx => $no) {
+
+            $guide = EvidenceGuide::firstOrNew(['no' => $no]);
+
+            $guide->indikator = $r->indikator[$idx] ?? $guide->indikator;
+            $guide->deskripsi = $r->deskripsi[$idx] ?? $guide->deskripsi;
+
+            if ($r->hasFile("file.$idx")) {
+                if ($guide->file_path) {
+                    Storage::disk('public')->delete($guide->file_path);
+                }
+
+                $file = $r->file("file.$idx");
+                $path = $file->store('evidence-pedoman', 'public');
+
+                $guide->file_path = $path;
+                $guide->file_name = $file->getClientOriginalName();
+            }
+
+            $guide->save();
+        }
+
+        return back()->with('success','Pedoman evidence berhasil disimpan.');
+    }
+
+    public function pedomanEvidenceDelete(EvidenceGuide $guide)
+    {
+        $this->authorizeAdmin();
+
+        if ($guide->file_path) {
+            Storage::disk('public')->delete($guide->file_path);
+        }
+
+        $guide->update([
+            'file_path' => null,
+            'file_name' => null,
+        ]);
+
+        return back()->with('success','File pedoman berhasil dihapus.');
+    }
+
 }

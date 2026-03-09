@@ -147,6 +147,22 @@ Route::prefix('/sigap-inovasi')->middleware('auth', 'role:inovator|admin')->grou
     Route::get   ('/sigap-inovasi/{id}/edit',  [SigapInovasiController::class, 'edit'])->name('sigap-inovasi.edit');
     Route::put   ('/sigap-inovasi/{id}',       [SigapInovasiController::class, 'update'])->name('sigap-inovasi.update');
     Route::delete('/sigap-inovasi/{id}',       [SigapInovasiController::class, 'destroy'])->name('sigap-inovasi.destroy');
+   
+    // === PEDOMAN EVIDENCE (GLOBAL) ===
+    Route::get('/pedoman-evidence',
+        [SigapInovasiController::class, 'pedomanEvidence']
+    )->name('evidence.pedoman');
+
+    Route::post('/pedoman-evidence',
+        [SigapInovasiController::class, 'pedomanEvidenceSave']
+    )->middleware('role:admin')
+    ->name('evidence.pedoman.save');
+
+    Route::delete(
+        '/pedoman-evidence/{guide}',
+        [SigapInovasiController::class, 'pedomanEvidenceDelete']
+    )->middleware('role:admin')
+    ->name('evidence.pedoman.delete');
 
 });
 
@@ -180,6 +196,8 @@ Route::put('/pegawai-profil', [PegawaiProfilController::class, 'update'])
 
 Route::delete('/pegawai-profil/avatar', [PegawaiProfilController::class, 'destroyAvatar'])
     ->middleware('auth')->name('pegawai.profil.avatar.destroy');
+Route::post('/pegawai/profil/avatar', [PegawaiProfilController::class, 'updateAvatar'])
+    ->name('pegawai.profil.avatar');
 
 //SIGAP KINERJA
 Route::get('/sigap-kinerja', [SigapKinerjaController::class, 'index'])->name('sigap-kinerja.index');
@@ -252,13 +270,23 @@ Route::middleware('auth')
 // (opsional) jika masih butuh JSON show:
 Route::get('/sigap-agenda/show',       [SigapAgendaController::class, 'show'])->name('sigap-agenda.show');     
 
+Route::get('/sigap-inkubatorma', [SigapInkubatormaController::class, 'index'])
+    ->name('sigap-inkubatorma.index'); // landing publik
 
+<<<<<<< HEAD
 // --- SIGAP Inkubatorma 
 Route::get('/sigap-inkubatorma', [SigapInkubatormaController::class, 'index'])
     ->name('sigap-inkubatorma.index'); // landing publik
 
 Route::post('/sigap-inkubatorma/store', [SigapInkubatormaController::class, 'store'])
     ->name('sigap-inkubatorma.store');
+    
+Route::get('/sigap-inkubatorma/dashboard/print', [SigapInkubatormaController::class, 'printLaporan'])
+    ->name('sigap-inkubatorma.dashboard.print');
+=======
+Route::post('/sigap-inkubatorma/store', [SigapInkubatormaController::class, 'store'])
+    ->name('sigap-inkubatorma.store');
+>>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
 
 Route::prefix('/sigap-inkubatorma')->group(function () {
 
@@ -266,11 +294,14 @@ Route::prefix('/sigap-inkubatorma')->group(function () {
     Route::get('/', [SigapInkubatormaController::class, 'index'])
         ->name('sigap-inkubatorma.index');
 
+<<<<<<< HEAD
     // ========== WAJIB LOGIN UNTUK SUBMIT ==========
     // Route::post('/store', [SigapInkubatormaController::class, 'store'])
     //     ->middleware('auth')
     //     ->name('sigap-inkubatorma.store');
 
+=======
+>>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
     // ========== AUTH AREA ==========
     Route::middleware('auth')->group(function () {
 
@@ -282,10 +313,17 @@ Route::prefix('/sigap-inkubatorma')->group(function () {
             ->name('sigap-inkubatorma.detail');
 
         Route::get('/employees/search', [SigapInkubatormaController::class, 'employeesSearch'])
+<<<<<<< HEAD
             ->middleware('role:admin|verifikator|employee')
             ->name('sigap-inkubatorma.employees.search');
 
         Route::middleware('role:admin|verifikator|employee')->group(function () {
+=======
+            ->middleware('role:admin|verifikator_inkubatorma|employee')
+            ->name('sigap-inkubatorma.employees.search');
+
+        Route::middleware('role:admin|verifikator_inkubatorma|employee')->group(function () {
+>>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
 
             Route::get('/{id}/verifikasi', [SigapInkubatormaController::class, 'verifikasi'])
                 ->whereNumber('id')
@@ -311,4 +349,8 @@ Route::prefix('/sigap-inkubatorma')->group(function () {
                 ->name('sigap-inkubatorma.destroy');
         });
     });
+<<<<<<< HEAD
 });
+=======
+});
+>>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)

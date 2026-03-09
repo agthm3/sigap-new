@@ -60,7 +60,10 @@ class EvidenceRepository
             $q->orderBy('sort_order')->orderBy('id');
         }])->orderBy('no')->get();
 
-        $byNo = Evidence::where('inovasi_id', $inovasiId)->get()->keyBy('no');
+       $byNo = Evidence::with('files')
+        ->where('inovasi_id', $inovasiId)
+        ->get()
+        ->keyBy('no');
 
         return $templates->map(function($t) use ($byNo) {
             /** @var \App\Models\Evidence|null $ev */
@@ -84,22 +87,25 @@ class EvidenceRepository
                 'deskripsi'       => $ev?->deskripsi,
                 'file_url'        => $ev?->file_path ? Storage::disk('public')->url($ev->file_path) : null,
                 'file_name'       => $ev?->file_name,
+                'files' => $ev
+                    ? $ev->files->map(fn($f) => [
+                        'id'            => (int) $f->id,
+                        'url'           => Storage::disk('public')->url($f->file_path),
+                        'name'          => $f->file_name,
+                        'size'          => $f->file_size,
+
+                        // ✅ METADATA SURAT
+                        'nomor_surat'   => $f->nomor_surat,
+                        'tanggal_surat' => $f->tanggal_surat,
+                        'tentang'       => $f->tentang,
+                    ])->values()->all()
+                    : [],
+
+
             ];
-        })->values()->all(); // ⬅️ array murni
+        })->values()->all(); 
     }
 
-    /**
-     * Simpan bulk 1..20 indikator sekaligus.
-     * $items: array of [
-     *   'no' => 1..20,
-     *   'param_id' => (optional) EvidenceTemplateParam id,
-     *   'parameter_label' => (jika tidak pakai param_id),
-     *   'parameter_weight' => (angka, jika tidak pakai param_id),
-     *   'deskripsi' => string|null,
-     *   'link_url' => string|null
-     * ]
-     * $files: array map no => UploadedFile (mis. [1 => UploadedFile, 5 => UploadedFile])
-     */
     public function upsertBulk(int $inovasiId, array $items, array $files = []): void
     {
         DB::transaction(function () use ($inovasiId, $items, $files) {
@@ -138,7 +144,7 @@ class EvidenceRepository
                     $fileSize = $f->getSize();
                 }
 
-                Evidence::updateOrCreate(
+                $evidence  = Evidence::updateOrCreate(
                     ['inovasi_id'=>$inovasiId,'no'=>$no],
                     [
                         'template_id'       => $tpl->id,
@@ -157,6 +163,19 @@ class EvidenceRepository
                         'file_size'         => $fileSize ?: DB::raw('file_size'),
                     ]
                 );
+
+                if (!empty($files[$no])) {
+                foreach ($files[$no] as $f) {
+                    $path = $f->store("inovasi/{$inovasiId}/evidence/no-{$no}", 'public');
+
+                    $evidence->files()->create([
+                        'file_path' => $path,
+                        'file_name' => $f->getClientOriginalName(),
+                        'file_mime' => $f->getClientMimeType(),
+                        'file_size' => $f->getSize(),
+                    ]);
+                }
+            }
             }
         });
     }
@@ -189,5 +208,41 @@ class EvidenceRepository
         }
         return (int) $total;
     }
+
+    public function evidenceChecklistText(): string
+    {
+        $rows = EvidenceTemplate::orderBy('no')->get(['no','indikator']);
+
+        $lines = [];
+        foreach ($rows as $r) {
+            $lines[] = "{$r->no}. {$r->indikator}:";
+        }
+
+        return "Mohon dilakukan perbaikan pada Evidence berikut:\n\n"
+            . implode("\n", $lines);
+    }
+    public function deleteMarkedFiles(int $inovasiId, array $deleteFiles): void
+    {
+        foreach ($deleteFiles as $no => $files) {
+            foreach ($files as $fileId => $flag) {
+                if ((int)$flag !== 1) continue;
+
+                $file = \App\Models\EvidenceFile::where('id', $fileId)
+                    ->whereHas('evidence', fn($q) =>
+                        $q->where('inovasi_id', $inovasiId)
+                        ->where('no', $no)
+                    )->first();
+
+                if (!$file) continue;
+
+                if ($file->file_path && Storage::disk('public')->exists($file->file_path)) {
+                    Storage::disk('public')->delete($file->file_path);
+                }
+
+                $file->delete();
+            }
+        }
+    }
+
 
 }

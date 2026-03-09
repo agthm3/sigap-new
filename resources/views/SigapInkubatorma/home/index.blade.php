@@ -11,6 +11,7 @@
 @section('content')
 
 @php
+<<<<<<< HEAD
     $selectedLayanan = old('layanan', $formData['layanan'] ?? []);
     $selectedLabel = '— Pilih maksimal 2 layanan —';
     if (!empty($selectedLayanan)) {
@@ -24,6 +25,13 @@
     //   if (!empty($selectedLayanan) && !empty($layananOptions[$selectedLayanan])) {
     //     $selectedLabel = $layananOptions[$selectedLayanan];
     //   }
+=======
+  $selectedLayanan = old('layanan', $formData['layanan'] ?? '');
+  $selectedLabel = '— Pilih salah satu —';
+  if (!empty($selectedLayanan) && !empty($layananOptions[$selectedLayanan])) {
+    $selectedLabel = $layananOptions[$selectedLayanan];
+  }
+>>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
 @endphp
 
 
@@ -136,9 +144,13 @@
                 </a>
                 </div>
 
+<<<<<<< HEAD
                 <form action="{{ route('sigap-inkubatorma.store') }}" 
                     method="post" 
                     class="mt-6 space-y-5">
+=======
+                <form action="{{ route('sigap-inkubatorma.store') }}" method="post" class="mt-6 space-y-5">
+>>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
                     @csrf
                     {{-- Nama Lengkap --}}
                     <div>
@@ -172,10 +184,17 @@
                         </label>
                       
                         {{-- Hidden select: untuk SUBMIT + REQUIRED --}}
+<<<<<<< HEAD
                         <select name="layanan[]" id="layananSelectNative" multiple required class="hidden">
                           <option value="">— Pilih salah satu —</option>
                           @foreach (($layananOptions ?? []) as $id => $nama)
                             <option value="{{ $id }}" @selected(in_array($id, $selectedLayanan ?? []))>{{ $nama }}</option>
+=======
+                        <select name="layanan" id="layananSelectNative" required class="hidden">
+                          <option value="">— Pilih salah satu —</option>
+                          @foreach (($layananOptions ?? []) as $id => $nama)
+                            <option value="{{ $id }}" @selected((string)$selectedLayanan === (string)$id)>{{ $nama }}</option>
+>>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
                           @endforeach
                         </select>
                       
@@ -193,9 +212,13 @@
                             <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z" clip-rule="evenodd"/>
                           </svg>
                         </button>
+<<<<<<< HEAD
 
                         <div id="selectedLayananContainer" class="flex flex-wrap gap-2 mt-2"></div>
 
+=======
+                      
+>>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
                         {{-- Panel dropdown --}}
                         <div id="layananPanel"
                              class="hidden absolute z-30 mt-2 w-full rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden">
@@ -211,7 +234,11 @@
                                       data-value="{{ $id }}"
                                       data-label="{{ $nama }}">
                                 <span class="truncate">{{ $nama }}</span>
+<<<<<<< HEAD
                                 <span class="text-maroon font-semibold {{ in_array($id, $selectedLayanan ?? []) ? '' : 'hidden' }}" data-check="{{ $id }}">✓</span>
+=======
+                                <span class="text-maroon font-semibold {{ ((string)$selectedLayanan === (string)$id) ? '' : 'hidden' }}" data-check="{{ $id }}">✓</span>
+>>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
                               </button>
                             @endforeach
                       
@@ -228,12 +255,20 @@
                                     data-value="lainnya"
                                     data-label="{{ $layananOptions['lainnya'] ?? 'Lainnya' }}">
                               <span class="truncate">{{ $layananOptions['lainnya'] ?? 'Lainnya' }}</span>
+<<<<<<< HEAD
                               <span class="text-maroon font-semibold {{ in_array($id, $selectedLayanan ?? []) ? '' : 'hidden' }}" data-check="lainnya">✓</span>
+=======
+                              <span class="text-maroon font-semibold {{ ((string)$selectedLayanan === 'lainnya') ? '' : 'hidden' }}" data-check="lainnya">✓</span>
+>>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
                             </button>
                       
                           </div>
                         </div>
+<<<<<<< HEAD
 
+=======
+                      
+>>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
                         @error('layanan')
                           <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                         @enderror
@@ -269,20 +304,32 @@
                     <!-- Keluhan -->
                     <div>
                         <label class="text-base font-semibold">Keluhan / Permasalahan <span class="text-red-600">*</span></label>
+<<<<<<< HEAD
                         <p class="mt-1 text-sm text-gray-600">Jelaskan Masalah yang Dihadapi</p>
                         <textarea name="keluhan" rows="3"
                             class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base focus:border-maroon focus:ring-2 focus:ring-maroon/30"
                             placeholder="Contoh: Tahun Inovasi = 2024&#10;Inovasi pengelolaan sampah berbasis digital mengalami kendala pada tahap implementasi di lapangan..." 
                             required>{{ old('keluhan', $formData['keluhan'] ?? '') }}</textarea>
                             <p id="catatanTahunInovasi" class="text-sm text-maroon font-semibold hidden">*Cantumkan Tahun Inovasi Anda</p>
+=======
+                        <textarea name="keluhan" rows="3"
+                            class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base focus:border-maroon focus:ring-2 focus:ring-maroon/30"
+                            placeholder="Jelaskan masalah yang dihadapi" required>{{ old('keluhan', $formData['keluhan'] ?? '') }}</textarea>
+>>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
                     </div>
                     <!-- Poin Asistensi -->
                     <div>
                         <label class="text-base font-semibold">Poin Asistensi yang Dibutuhkan <span class="text-red-600">*</span></label>
+<<<<<<< HEAD
                         <p class="mt-1 text-sm text-gray-600">Apa yang ingin didiskusikan / dibantu?</p>
                         <textarea name="poin_asistensi" rows="3"
                             class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base focus:border-maroon focus:ring-2 focus:ring-maroon/30"
                             placeholder="Contoh:&#10;- Review kelayakan inovasi&#10;- Penyusunan indikator inovasi daerah&#10;- Pendampingan pendaftaran HAKI" required>{{ old('poin_asistensi', $formData['poin_asistensi'] ?? '') }}</textarea>
+=======
+                        <textarea name="poin_asistensi" rows="3"
+                            class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base focus:border-maroon focus:ring-2 focus:ring-maroon/30"
+                            placeholder="Apa yang ingin didiskusikan / dibantu?" required>{{ old('poin_asistensi', $formData['poin_asistensi'] ?? '') }}</textarea>
+>>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
                     </div>
                     {{-- Tanggal dan Jam Usulan --}}
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -324,7 +371,13 @@
                         <label class="text-base font-semibold">
                             Target Personil Asistensi
                         </label>
+<<<<<<< HEAD
                         <p class="mt-1 text-sm text-gray-600">Kosongkan jika belum ada pilihan</p>
+=======
+                        <p class="text-xs text-gray-500">
+                            Kosongkan jika belum ada pilihan
+                        </p>
+>>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
 
                         <div class="relative">
                             <!-- INPUT -->
@@ -512,8 +565,12 @@
                 data-modal="schedule"
                 data-title="{{ $j->judul_konsultasi }}"
                 data-instansi="{{ $j->opd_unit }}"
+<<<<<<< HEAD
                 data-layanan="{{ $j->layanan_nama }}"
                 {{-- data-layanan="{{ $layananOptions[$j->layanan_id] ?? '-' }}" --}}
+=======
+                data-layanan="{{ $layananOptions[$j->layanan_id] ?? '-' }}"
+>>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
                 data-tanggal="{{ \Carbon\Carbon::parse($tanggalTampil)->translatedFormat('d M Y') }}"
                 data-jam="{{ \Carbon\Carbon::parse($jamTampil)->format('H:i') }} WITA"
                 data-mode="{{ $modeTampil }}"
@@ -683,7 +740,10 @@
         const panel  = document.getElementById('layananPanel');
         const label  = document.getElementById('layananBtnLabel');
         const native = document.getElementById('layananSelectNative');
+<<<<<<< HEAD
         const container = document.getElementById('selectedLayananContainer');
+=======
+>>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
 
         // 2. LOGIKA MODAL (POPUP)
         function openModalWithData(data, list = null) {
@@ -1034,6 +1094,7 @@
         // 6. DROPDOWN LAYANAN (BUAT FORM)
         const lainnyaWrap  = document.getElementById('layananLainnyaWrap');
         const lainnyaInput = document.getElementById('layanan_lainnya');
+<<<<<<< HEAD
         const catatanTahun = document.getElementById('catatanTahunInovasi');
 
         if (!wrap || !btn || !panel || !label || !native) return;
@@ -1212,6 +1273,77 @@
         //     ? (native.options[native.selectedIndex]?.textContent || initVal)
         //     : '— Pilih salah satu —';
         // setSelected(initVal, initText);
+=======
+
+        if (!wrap || !btn || !panel || !label || !native) return;
+
+        function openPanel()  { panel.classList.remove('hidden'); }
+        function closePanel() { panel.classList.add('hidden'); }
+
+        function toggleLainnya(val){
+        const show = (val === 'lainnya');
+        if (lainnyaWrap) lainnyaWrap.classList.toggle('hidden', !show);
+
+        if (lainnyaInput) {
+            // kalau show → wajib diisi
+            lainnyaInput.required = show;
+
+            // kalau user pindah dari "lainnya" ke opsi lain → kosongkan biar tidak nyangkut
+            if (!show) lainnyaInput.value = '';
+        }
+        }
+
+        function setSelected(value, text) {
+        // set native select value (yang akan terkirim)
+        native.value = value;
+
+        // update label
+        label.textContent = text || '— Pilih salah satu —';
+        label.classList.toggle('text-gray-500', !value);
+        label.classList.toggle('text-gray-900', !!value);
+
+        // update checkmarks
+        panel.querySelectorAll('[data-check]').forEach(el => {
+            el.classList.toggle('hidden', el.getAttribute('data-check') !== value);
+        });
+
+        // ✅ toggle input "lainnya"
+        toggleLainnya(value);
+        }
+
+        // Toggle
+        btn.addEventListener('click', () => {
+            if (panel.classList.contains('hidden')) openPanel();
+            else closePanel();
+        });
+
+        // Click option
+        panel.addEventListener('click', (e) => {
+            const opt = e.target.closest('[data-value]');
+            if (!opt) return;
+            const val = opt.getAttribute('data-value') || '';
+            const txt = opt.getAttribute('data-label') || '';
+            setSelected(val, txt);
+            closePanel();
+        });
+
+        // Close on outside click
+        document.addEventListener('click', (e) => {
+            if (!wrap.contains(e.target)) closePanel();
+        });
+
+        // Close on escape
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closePanel();
+        });
+
+        // Inisialisasi (biar checkmark dan label bener)
+        const initVal = native.value || '';
+        const initText = initVal
+            ? (native.options[native.selectedIndex]?.textContent || initVal)
+            : '— Pilih salah satu —';
+        setSelected(initVal, initText);
+>>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
 
     })();
 </script>

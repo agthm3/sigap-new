@@ -7,6 +7,23 @@
     .scrollbar-thin::-webkit-scrollbar-thumb{background:#e5e7eb;border-radius:8px}
     details[open] .chev { transform: rotate(180deg); }
   </style>
+<style>
+  /* select tetap normal */
+  .paramSelect {
+    max-width: 100%;
+  }
+
+  /* INI YANG PENTING */
+  .paramSelect option {
+    display: block;
+    max-width: 100vw;       /* jangan lebih lebar dari layar */
+    overflow-x: auto;       /* scroll ke samping */
+    white-space: nowrap;    /* tetap satu baris */
+  }
+</style>
+
+
+
 
   <section class="max-w-7xl mx-auto px-4 py-6">
     <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
@@ -23,10 +40,12 @@
       <div class="flex flex-wrap gap-2">
         <a href="{{ route('sigap-inovasi.show', $inovasi->id) }}"
            class="px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-sm">Kembali ke Detail</a>
-        <button form="evidenceForm"
+        <button id="btnSubmitEvidence"
+                form="evidenceForm"
                 class="px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 text-sm">
           Simpan Evidence
         </button>
+
       </div>
     </div>
 
@@ -53,11 +72,12 @@
               // dipakai untuk badge kanan saat load awal
               $preInfo  = $selectedLabel ?: '—';
               $preBobot = $selectedWeight ?: 0;
-              $accept = '';
-              if (preg_match('/Upload Video/i', $it['jenis_file'] ?? '')) $accept = '.mp4,.mov';
-              elseif (preg_match('/Foto\/Gambar/i', $it['jenis_file'] ?? '')) $accept = '.jpg,.jpeg,.png,.gif,.webp,.svg';
-              elseif (preg_match('/Dokumen\/Foto\/Gambar/i', $it['jenis_file'] ?? '')) $accept = '.pdf,.jpg,.jpeg,.png';
-              elseif (preg_match('/Dokumen PDF/i', $it['jenis_file'] ?? '')) $accept = '.pdf';
+              // $accept = '';
+              // if (preg_match('/Upload Video/i', $it['jenis_file'] ?? '')) $accept = '.mp4,.mov';
+              // elseif (preg_match('/Foto\/Gambar/i', $it['jenis_file'] ?? '')) $accept = '.jpg,.jpeg,.png,.gif,.webp,.svg';
+              // elseif (preg_match('/Dokumen\/Foto\/Gambar/i', $it['jenis_file'] ?? '')) $accept = '.pdf,.jpg,.jpeg,.png';
+              // elseif (preg_match('/Dokumen PDF/i', $it['jenis_file'] ?? '')) $accept = '.pdf';
+              $accept = '.pdf';
             @endphp
 
             <details class="bg-white border border-gray-200 rounded-2xl overflow-hidden" {{ $no <= 2 ? 'open' : '' }}>
@@ -88,8 +108,12 @@
               <div class="px-4 pb-4 pt-3 border-t bg-white">
                 <div class="grid md:grid-cols-2 gap-4">
                   <div class="rounded-lg border p-3">
-                    <p class="text-xs text-gray-500 mb-1">Jenis File yang diharapkan</p>
-                    <p class="text-sm font-medium text-gray-800">{{ $it['jenis_file'] ?? '-' }}</p>
+                    <p class="text-xs text-gray-500 mb-1">
+                      Jenis File yang diharapkan
+                    </p>
+                    <p class="text-sm font-medium text-gray-800">
+                      Dokumen PDF
+                    </p>
                   </div>
 
                   <div class="rounded-lg border p-3">
@@ -104,9 +128,16 @@
                           if ($selectedLabel && $selectedLabel === $p['label']) $sel = 'selected';
                           elseif (!$selectedLabel && $selectedWeight && $selectedWeight == $p['weight']) $sel = 'selected';
                         @endphp
-                        <option value="{{ $p['id'] }}" data-weight="{{ (int)$p['weight'] }}" data-label="{{ $p['label'] }}" {{ $sel }}>
+                        <option
+                          value="{{ $p['id'] }}"
+                          data-weight="{{ (int)$p['weight'] }}"
+                          data-label="{{ $p['label'] }}"
+                          title="{{ $p['label'] }}"
+                          {{ $sel }}
+                        >
                           {{ $p['label'] }}
                         </option>
+
                       @endforeach
                     </select>
                     {{-- Kalau mau support input manual, siapkan ini (opsional) --}}
@@ -124,14 +155,61 @@
                                value="{{ $it['deskripsi'] ?? '' }}">
                       </div>
                       <div>
-                        <input type="file" name="file_{{ $no }}" accept="{{ $accept }}"
-                               class="block w-full text-sm border rounded-lg file:mr-2 file:px-3 file:py-1.5 file:border-0 file:rounded-md file:bg-gray-100 hover:file:bg-gray-200">
-                        @if(!empty($it['file_url']))
-                          <div class="text-xs text-gray-600 mt-1">
-                            <span class="truncate">{{ $it['file_name'] ?? '' }}</span>
-                            • <a href="{{ $it['file_url'] }}" target="_blank" class="text-maroon underline">Lihat file</a>
-                          </div>
-                        @endif
+                      <button type="button"
+                        onclick="openDocModal({{ $no }})"
+                        class="px-3 py-2 rounded-md border text-sm hover:bg-gray-50">
+                        ➕ Tambah Dokumen
+                      </button>
+                      <div id="docList-{{ $no }}" class="mt-2 space-y-2"></div>
+                      @if(!empty($it['files']))
+                        <div class="mt-3 space-y-2">
+                          @foreach($it['files'] as $file)
+                            <div class="flex items-start gap-3 border rounded-lg px-3 py-2 text-xs"
+                                data-file-row>
+
+                              {{-- ICON --}}
+                              <span class="mt-0.5">📄</span>
+
+                              {{-- INFO --}}
+                              <div class="flex-1 min-w-0">
+                                <p class="font-semibold text-gray-800 truncate"
+                                  title="{{ $file['nomor_surat'] }}">
+                                  {{ $file['nomor_surat'] ?? '—' }}
+                                </p>
+
+                                <p class="text-gray-500">
+                                  {{ $file['tanggal_surat'] ?? '—' }}
+                                </p>
+
+                                <p class="text-gray-700 truncate"
+                                  title="{{ $file['tentang'] }}">
+                                  {{ \Illuminate\Support\Str::limit($file['tentang'] ?? '—', 20) }}
+                                </p>
+                              </div>
+
+                              {{-- AKSI --}}
+                              <div class="flex items-center gap-2 shrink-0">
+                                <a href="{{ $file['url'] }}"
+                                  target="_blank"
+                                  class="text-maroon underline">
+                                  View
+                                </a>
+
+                                <button type="button"
+                                        class="text-rose-600 hover:text-rose-800"
+                                        onclick="markFileDelete(this)">
+                                  🗑️
+                                </button>
+
+                                {{-- hidden flag delete --}}
+                                <input type="hidden"
+                                      name="delete_files[{{ $no }}][{{ $file['id'] }}]"
+                                      value="0">
+                              </div>
+                            </div>
+                          @endforeach
+                        </div>
+                      @endif
                       </div>
                     </div>
                     @if(!empty($it['hint']))
@@ -187,6 +265,65 @@
         </div>
       </aside>
     </div>
+
+
+    {{-- Loading Overlay --}}
+  <div id="uploadOverlay"
+      class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
+    <div class="bg-white rounded-xl px-6 py-5 flex items-center gap-4 shadow-xl">
+      <svg class="animate-spin h-6 w-6 text-maroon"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10"
+                stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor"
+              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+      </svg>
+      <div>
+        <p class="font-semibold text-gray-800">Mengunggah Evidence</p>
+        <p class="text-sm text-gray-500">Mohon tunggu, jangan menutup halaman…</p>
+      </div>
+    </div>
+  </div>
+<div id="docModal" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-black/40" onclick="closeDocModal()"></div>
+
+  <div class="relative bg-white rounded-xl max-w-md mx-auto mt-24 p-4">
+    <h3 class="font-semibold text-gray-800 mb-3">Tambah Dokumen Evidence</h3>
+
+    <input type="hidden" id="doc_no">
+
+    <label class="block mb-2">
+      <span class="text-sm">Nomor Surat / Dokumen</span>
+      <input id="doc_nomor" class="w-full border rounded px-2 py-1">
+    </label>
+
+    <label class="block mb-2">
+      <span class="text-sm">Tanggal Surat / Dokumen</span>
+      <input type="date" id="doc_tanggal" class="w-full border rounded px-2 py-1">
+    </label>
+
+    <label class="block mb-2">
+      <span class="text-sm">Tentang</span>
+      <input id="doc_tentang" class="w-full border rounded px-2 py-1">
+    </label>
+
+    <label class="block mb-3">
+      <span class="text-sm">File (PDF)</span>
+      <input type="file" id="doc_file" accept=".pdf">
+    </label>
+
+    <div class="flex justify-end gap-2">
+      <button onclick="closeDocModal()" class="px-3 py-1 border rounded">
+        Batal
+      </button>
+      <button onclick="addDoc()" class="px-3 py-1 bg-maroon text-white rounded">
+        Tambah
+      </button>
+    </div>
+  </div>
+</div>
+
   </section>
 @endsection
 
@@ -259,5 +396,104 @@
 
   // inisialisasi pertama (update badge sesuai preselect)
   recompute();
+</script>
+<script>
+  const form = document.getElementById('evidenceForm');
+  const overlay = document.getElementById('uploadOverlay');
+  const btnSubmit = document.getElementById('btnSubmitEvidence');
+
+  if (form) {
+    form.addEventListener('submit', function () {
+      // tampilkan overlay
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
+
+      // disable tombol supaya tidak double submit
+      if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.classList.add('opacity-70', 'cursor-not-allowed');
+        btnSubmit.textContent = 'Mengunggah...';
+      }
+    });
+  }
+</script>
+<script>
+  function markFileDelete(btn) {
+    const row = btn.closest('[data-file-row]');
+    const input = row.querySelector('input[type="hidden"]');
+
+    if (!row || !input) return;
+
+    const isDeleted = input.value === '1';
+
+    if (isDeleted) {
+      // UNDO
+      input.value = '0';
+      row.classList.remove('opacity-50', 'bg-rose-50');
+      btn.textContent = '🗑️';
+    } else {
+      // MARK DELETE
+      input.value = '1';
+      row.classList.add('opacity-50', 'bg-rose-50');
+      btn.textContent = '↩️';
+    }
+  }
+</script>
+
+<script>
+  let docCounter = 0;
+
+function openDocModal(no){
+  document.getElementById('doc_no').value = no;
+  document.getElementById('docModal').classList.remove('hidden');
+}
+
+function closeDocModal(){
+  document.getElementById('docModal').classList.add('hidden');
+}
+
+function addDoc(){
+  const no = document.getElementById('doc_no').value;
+
+  const nomor   = document.getElementById('doc_nomor').value;
+  const tanggal = document.getElementById('doc_tanggal').value;
+  const tentang = document.getElementById('doc_tentang').value;
+  const file    = document.getElementById('doc_file').files[0];
+
+  if(!nomor || !tanggal || !tentang || !file){
+    alert('Semua field wajib diisi');
+    return;
+  }
+
+  const idx = docCounter++;
+
+  const row = document.createElement('div');
+  row.className = 'border rounded p-2 text-sm flex justify-between items-center';
+
+  row.innerHTML = `
+    <div>
+      <p class="font-medium">${nomor}</p>
+      <p class="text-xs text-gray-600">${tentang} • ${tanggal}</p>
+    </div>
+
+    <button type="button" onclick="this.closest('div').remove()">🗑️</button>
+
+    <input type="hidden" name="docs[${no}][${idx}][nomor]" value="${nomor}">
+    <input type="hidden" name="docs[${no}][${idx}][tanggal]" value="${tanggal}">
+    <input type="hidden" name="docs[${no}][${idx}][tentang]" value="${tentang}">
+  `;
+
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.name = `docs[${no}][${idx}][file]`;
+  fileInput.files = document.getElementById('doc_file').files;
+  fileInput.hidden = true;
+
+  row.appendChild(fileInput);
+
+  document.getElementById(`docList-${no}`).appendChild(row);
+  closeDocModal();
+}
+
 </script>
 @endpush

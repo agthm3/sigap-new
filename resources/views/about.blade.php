@@ -121,7 +121,7 @@
       </header>
 
       <p class="mt-3 text-sm text-gray-700">
-Paling malas lihat website UI nda bagus, flow jelek... kayak tidak pernah saja dites, jadi kalau kamu  dapat UI yang tidak bagus atau flow yang tidak nyaman... langsung hubungi saya ya
+        p info loker sidejob
       </p>
 
       <ul class="mt-4 flex flex-wrap gap-2 text-xs">
@@ -131,8 +131,6 @@ Paling malas lihat website UI nda bagus, flow jelek... kayak tidak pernah saja d
       </ul>
 
       <div class="mt-5 flex items-center gap-2 flex-wrap">
-        <button class="dev-kudos px-3 py-1.5 rounded-lg bg-maroon text-white text-sm hover:bg-maroon-800" data-target="#kudos-1">Kirim Kudos 🫶</button>
-        <button class="dev-fun px-3 py-1.5 rounded-lg border border-maroon text-maroon text-sm hover:bg-maroon hover:text-white" data-target="#fun-1">Fun Fact 🎈</button>
         <a href="mailto:giga.makkasau@gmail.com" class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50">Email</a>
         <a href="https://wa.me/6285173231604" target="_blank" class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50">WhatsApp</a>
         <a href="https://github.com/agthm3" target="_blank" class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50">GitHub</a>
@@ -180,8 +178,6 @@ Paling malas lihat website UI nda bagus, flow jelek... kayak tidak pernah saja d
       </ul>
 
       <div class="mt-5 flex items-center gap-2 flex-wrap">
-        <button class="dev-kudos px-3 py-1.5 rounded-lg bg-maroon text-white text-sm hover:bg-maroon-800" data-target="#kudos-2">Kirim Kudos 🫶</button>
-        <button class="dev-fun px-3 py-1.5 rounded-lg border border-maroon text-maroon text-sm hover:bg-maroon hover:text-white" data-target="#fun-2">Fun Fact 🎈</button>
         <a href="mailto:email.partner@brida.makassar.go.id" class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50">Email</a>
         <a href="https://www.linkedin.com/in/your-profile" target="_blank" class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50">LinkedIn</a>
       </div>
@@ -279,38 +275,6 @@ Paling malas lihat website UI nda bagus, flow jelek... kayak tidak pernah saja d
   </div>
 </section>
 
-<!-- Mini Quiz: Seberapa SIGAP Kamu? -->
-<section class="max-w-7xl mx-auto px-4 py-10">
-  <div class="rounded-2xl border border-gray-200 p-6">
-    <div class="flex items-center justify-between gap-3">
-      <div>
-        <h2 class="text-2xl font-extrabold text-gray-900">Kuis Mini</h2>
-        <p class="text-sm text-gray-600">Jawab cepat. Nilai muncul dengan kejutan 🤫</p>
-      </div>
-      <button id="btn-start-quiz" class="px-4 py-2 rounded-lg bg-maroon text-white font-semibold hover:bg-maroon-800">Mulai</button>
-    </div>
-    <div id="quiz-area" class="mt-5 hidden">
-      <form id="quiz-form" class="space-y-4">
-        <div>
-          <p class="font-semibold text-sm">1) Dokumen “fix” itu...</p>
-          <label class="flex items-center gap-2 text-sm mt-1"><input type="radio" name="q1" value="b" class="accent-maroon"> Sudah disahkan & siap dipakai</label>
-          <label class="flex items-center gap-2 text-sm"><input type="radio" name="q1" value="a" class="accent-maroon"> Masih draf di WA grup</label>
-        </div>
-        <div>
-          <p class="font-semibold text-sm">2) Akses data pegawai sebaiknya...</p>
-          <label class="flex items-center gap-2 text-sm mt-1"><input type="radio" name="q2" value="b" class="accent-maroon"> Pakai kode & tercatat</label>
-          <label class="flex items-center gap-2 text-sm"><input type="radio" name="q2" value="a" class="accent-maroon"> Share bebas biar cepat</label>
-        </div>
-        <div>
-          <p class="font-semibold text-sm">3) Saat unduh dokumen, sistem...</p>
-          <label class="flex items-center gap-2 text-sm mt-1"><input type="radio" name="q3" value="b" class="accent-maroon"> Mencatat jejak unduh</label>
-          <label class="flex items-center gap-2 text-sm"><input type="radio" name="q3" value="a" class="accent-maroon"> Biarin aja, no log</label>
-        </div>
-        <button class="mt-2 px-4 py-2 rounded-lg bg-amber-300/90 text-maroon-900 font-semibold hover:bg-amber-200">Lihat Nilai</button>
-      </form>
-    </div>
-  </div>
-</section>
 
 <!-- FAQ Ringkas -->
 <section class="max-w-7xl mx-auto px-4 py-10">
