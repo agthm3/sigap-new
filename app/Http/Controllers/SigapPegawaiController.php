@@ -34,9 +34,35 @@ class SigapPegawaiController extends Controller
     public function edit(User $user)
     {
         $roles         = Role::where('guard_name','web')->pluck('name')->all();
+        
+        // ini untuk checklist (role yang dimiliki user)
         $userRoleNames = $user->getRoleNames()->all();
-        return view('dashboard.pegawai.edit', compact('user','roles','userRoleNames'));
+
+        // TAMBAHAN
+        // ini untuk tampilan label
+        $roleLabels = collect($roles)->mapWithKeys(fn($name) => [
+            $name => $this->roleLabel($name),
+        ])->toArray();
+        return view('dashboard.pegawai.edit', compact('user','roles','userRoleNames', 'roleLabels'));
     }
+
+    // TAMBAHAN
+    private function roleLabel(string $name): string
+{
+    // mapping khusus kalau ada yang memang harus “judul resmi”
+    $map = [
+        'admin' => 'Administrator',
+        'inovator' => 'Inovator',
+        'verificator' => 'Verifikator',
+        'employee' => 'Employee',
+        'researcher' => 'Researcher',
+        'user' => 'User',
+        'verifikator_inkubatorma' => 'Verifikator Inkubatorma',
+    ];
+
+    // fallback generik: ganti underscore jadi spasi + title case
+    return $map[$name] ?? str($name)->replace('_', ' ')->title()->toString();
+}
 
     public function update(Request $request, User $user)
     {

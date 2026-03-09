@@ -123,9 +123,9 @@
         <div class="lg:col-span-2">
             <div class="border border-gray-200 rounded-2xl p-7 shadow-sm">
                 <h2 class="text-2xl font-extrabold text-maroon">Form Pengajuan Jadwal</h2>
-                <p class="text-base text-gray-700 mt-2 leading-relaxed">
+                {{-- <p class="text-base text-gray-700 mt-2 leading-relaxed">
                     Silakan isi perlahan
-                </p>
+                </p> --}}
                 <div class="mt-4 rounded-xl bg-maroon/5 border border-maroon/15 p-4">
                     <p class="text-base text-gray-800">
                         <b>Butuh bantuan?</b> 
