@@ -139,8 +139,27 @@
       <tbody id="tbody" class="divide-y">
         @forelse ($inkubatormas as $row)
           @php
-            $layananKey = (string) ($row->layanan_id ?? '');
-            $layananLabel = $layananOptions[$layananKey] ?? '—';
+            // $layananKey = (string) ($row->layanan_id ?? '');
+            // $layananLabel = $layananOptions[$layananKey] ?? '—';
+
+            // Perbaiki lainnya di dashboard
+            $layananIds = $row->layanan_id ?? [];
+
+            if (!is_array($layananIds)) {
+                $layananIds = [$layananIds];
+            }
+
+            $layananLabel = collect($layananIds)
+                ->map(function ($id) use ($layananOptions, $row) {
+
+                    if ($id === 'lainnya' && !empty($row->layanan_lainnya)) {
+                        return ($layananOptions[$id] ?? 'Lainnya') . ' • ' . $row->layanan_lainnya;
+                    }
+
+                    return $layananOptions[$id] ?? $id;
+                })
+                ->implode(', ');
+
 
             $status  = $row->status ?? 'Menunggu';
             $canEdit = in_array($status, ['Menunggu', 'Akan Dijadwalkan'], true);
@@ -153,7 +172,7 @@
               data-judul="{{ $row->judul_konsultasi ?? '' }}"
               data-pengaju="{{ $row->nama_pengaju ?? '' }}"
               data-opd="{{ $row->opd_unit ?? '' }}"
-              data-layanan="{{ $layananKey }}"
+              data-layanan="{{ $layananLabel }}"
               data-status="{{ $row->status ?? '' }}"
               data-created="{{ optional($row->created_at)->format('Y-m-d') ?? '' }}">
 
@@ -169,10 +188,30 @@
               {{ $row->opd_unit ?? '—' }}
             </td>
 
-            <td class="px-5 py-4 whitespace-normal">
+            {{-- <td class="px-5 py-4 whitespace-normal">
               <span class="px-2 py-1 rounded bg-gray-100 text-gray-700 text-xs">
                 {{ $layananLabel }}
               </span>
+            </td> --}}
+
+            <td class="px-5 py-4 whitespace-normal">
+              <div class="flex flex-wrap gap-1">
+
+                @foreach ($layananIds as $id)
+                  @if($id !== 'lainnya')
+                    <span class="px-2 py-1 rounded bg-gray-100 text-gray-700 text-xs">
+                      {{ $layananOptions[$id] ?? $id }}
+                    </span>
+                  @endif
+                @endforeach
+
+                @if(in_array('lainnya', $layananIds) && $row->layanan_lainnya)
+                  <span class="px-2 py-1 rounded bg-maroon/10 text-maroon text-xs">
+                    Lainnya • {{ $row->layanan_lainnya }}
+                  </span>
+                @endif
+
+              </div>
             </td>
 
             <td class="px-5 py-4">
