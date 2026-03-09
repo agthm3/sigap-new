@@ -47,12 +47,38 @@ class Inkubatorma extends Model
         'verifikasi_at'   => 'datetime',
         'created_at'      => 'datetime',
         'updated_at'      => 'datetime',
+
+        'layanan_id' => 'array',
     ];
+
+    public static function layananOptions(): array
+    {
+        return [
+            'penjaringan_dan_kurasi_ide'      => 'Penjaringan dan Kurasi ide Inovasi',
+            'profil_inovasi'                 => 'Asistensi Penyusunan Profil Inovasi',
+            'indikator_daerah'               => 'Pengisian Satuan Indikator Inovasi Daerah',
+            'implementasi_dan_pilot_project' => 'Pendampingan Implementasi dan Pilot Project',
+            'video_inovasi'                  => 'Pembuatan Video Inovasi',
+            'kapasitas_sdm'                  => 'Penguatan Kapasitas SDM dan Inovator Riset',
+            'konsultasi_tata_kelola'         => 'Konsultasi Inovasi dan Tata Kelola',
+            'pembuatan_haki'                 => 'Pembuatan Hak Kekayaan Intelektual (HAKI) Inovasi',
+            'hasil_inovasi_riset'            => 'Pengajuan Hasil Inovasi dalam Pelaksanaan Riset',
+            'lainnya'                        => 'Lainnya',
+        ];
+    }
 
     public function getLayananNamaAttribute(): string
     {
         $map = self::layananOptions();
-        return $map[$this->layanan_id] ?? '—';
+        // return $map[$this->layanan_id] ?? '—';
+
+        if (!is_array($this->layanan_id)) {
+            return $map[$this->layanan_id] ?? '—';
+        }
+
+        return collect($this->layanan_id)
+            ->map(fn($id) => $map[$id] ?? $id)
+            ->implode(', ');
     }
 
     // =========================

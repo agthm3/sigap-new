@@ -11,11 +11,19 @@
 @section('content')
 
 @php
-  $selectedLayanan = old('layanan', $formData['layanan'] ?? '');
-  $selectedLabel = '— Pilih salah satu —';
-  if (!empty($selectedLayanan) && !empty($layananOptions[$selectedLayanan])) {
-    $selectedLabel = $layananOptions[$selectedLayanan];
-  }
+    $selectedLayanan = old('layanan', $formData['layanan'] ?? []);
+    $selectedLabel = '— Pilih maksimal 2 layanan —';
+    if (!empty($selectedLayanan)) {
+        $labels = collect($selectedLayanan)
+            ->map(fn($id) => $layananOptions[$id] ?? $id)
+            ->toArray();
+        
+        $selectedLabel = implode(', ', $labels);
+    }
+
+    //   if (!empty($selectedLayanan) && !empty($layananOptions[$selectedLayanan])) {
+    //     $selectedLabel = $layananOptions[$selectedLayanan];
+    //   }
 @endphp
 
 
@@ -128,7 +136,9 @@
                 </a>
                 </div>
 
-                <form action="{{ route('sigap-inkubatorma.store') }}" method="post" class="mt-6 space-y-5">
+                <form action="{{ route('sigap-inkubatorma.store') }}" 
+                    method="post" 
+                    class="mt-6 space-y-5">
                     @csrf
                     {{-- Nama Lengkap --}}
                     <div>
@@ -165,7 +175,7 @@
                         <select name="layanan[]" id="layananSelectNative" multiple required class="hidden">
                           <option value="">— Pilih salah satu —</option>
                           @foreach (($layananOptions ?? []) as $id => $nama)
-                            <option value="{{ $id }}" @selected((string)$selectedLayanan === (string)$id)>{{ $nama }}</option>
+                            <option value="{{ $id }}" @selected(in_array($id, $selectedLayanan ?? []))>{{ $nama }}</option>
                           @endforeach
                         </select>
                       
@@ -184,6 +194,8 @@
                           </svg>
                         </button>
 
+                        <div id="selectedLayananContainer" class="flex flex-wrap gap-2 mt-2"></div>
+
                         {{-- Panel dropdown --}}
                         <div id="layananPanel"
                              class="hidden absolute z-30 mt-2 w-full rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden">
@@ -199,7 +211,7 @@
                                       data-value="{{ $id }}"
                                       data-label="{{ $nama }}">
                                 <span class="truncate">{{ $nama }}</span>
-                                <span class="text-maroon font-semibold {{ ((string)$selectedLayanan === (string)$id) ? '' : 'hidden' }}" data-check="{{ $id }}">✓</span>
+                                <span class="text-maroon font-semibold {{ in_array($id, $selectedLayanan ?? []) ? '' : 'hidden' }}" data-check="{{ $id }}">✓</span>
                               </button>
                             @endforeach
                       
@@ -216,14 +228,12 @@
                                     data-value="lainnya"
                                     data-label="{{ $layananOptions['lainnya'] ?? 'Lainnya' }}">
                               <span class="truncate">{{ $layananOptions['lainnya'] ?? 'Lainnya' }}</span>
-                              <span class="text-maroon font-semibold {{ ((string)$selectedLayanan === 'lainnya') ? '' : 'hidden' }}" data-check="lainnya">✓</span>
+                              <span class="text-maroon font-semibold {{ in_array($id, $selectedLayanan ?? []) ? '' : 'hidden' }}" data-check="lainnya">✓</span>
                             </button>
                       
                           </div>
                         </div>
 
-                        <div id="selectedLayananContainer" class="flex flex-wrap gap-2 mt-2"></div>
-                        
                         @error('layanan')
                           <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                         @enderror
@@ -314,9 +324,7 @@
                         <label class="text-base font-semibold">
                             Target Personil Asistensi
                         </label>
-                        <p class="text-xs text-gray-500">
-                            Kosongkan jika belum ada pilihan
-                        </p>
+                        <p class="mt-1 text-sm text-gray-600">Kosongkan jika belum ada pilihan</p>
 
                         <div class="relative">
                             <!-- INPUT -->
@@ -504,8 +512,8 @@
                 data-modal="schedule"
                 data-title="{{ $j->judul_konsultasi }}"
                 data-instansi="{{ $j->opd_unit }}"
-                {{-- data-layanan="{{ $j->layanan_nama }}" --}}
-                data-layanan="{{ $layananOptions[$j->layanan_id] ?? '-' }}"
+                data-layanan="{{ $j->layanan_nama }}"
+                {{-- data-layanan="{{ $layananOptions[$j->layanan_id] ?? '-' }}" --}}
                 data-tanggal="{{ \Carbon\Carbon::parse($tanggalTampil)->translatedFormat('d M Y') }}"
                 data-jam="{{ \Carbon\Carbon::parse($jamTampil)->format('H:i') }} WITA"
                 data-mode="{{ $modeTampil }}"
@@ -1058,6 +1066,7 @@
             }
 
             updateUI();
+            panel.classList.add('hidden');
         });
 
         function updateUI() {
@@ -1099,12 +1108,11 @@
 
             // cek apakah harus tampilkan catatan tahun inovasi
             cekCatatanTahun();
-            cekLainnya();
+            toggleLainnya()
         }
 
-        // Cek tahun inovasi di keluhan
+        // Supaya muncul informasi untuk masukkan tahun inovasi di keluhan, kecuali di lainnya
         function cekCatatanTahun(){
-
             if(!catatanTahun) return;
 
             const adaSelainLainnya =
@@ -1114,17 +1122,35 @@
             catatanTahun.classList.toggle('hidden', !adaSelainLainnya);
         }
 
-        function toggleLainnya(){
-            if(!lainnyaWrap) return;
+        // function toggleLainnya(){
+            
+        //     if(!lainnyaWrap) return;
 
-            const adaLainnya = selectedValues.includes('lainnya');
+        //     const adaLainnya = selectedValues.includes('lainnya');
 
-            lainnyaWrap.classList.toggle('hidden', !adaLainnya);
+        //     lainnyaWrap.classList.toggle('hidden', !adaLainnya);
 
-            if(lainnyaInput){
-                lainnyaInput.required = adaLainnya;
+        //     if(lainnyaInput){
+        //         lainnyaInput.required = adaLainnya;
 
-                if(!adaLainnya){
+        //         if(!adaLainnya){
+        //             lainnyaInput.value = '';
+        //         }
+        //     }
+        // }
+
+        function toggleLainnya(val){
+            const show = selectedValues.includes('lainnya');
+            if (lainnyaWrap) {
+                lainnyaWrap.classList.toggle('hidden', !show);
+            }
+
+            if (lainnyaInput) {
+                // kalau show → wajib diisi
+                lainnyaInput.required = show;
+
+                // kalau user pindah dari "lainnya" ke opsi lain → kosongkan biar tidak nyangkut
+                if (!show) {
                     lainnyaInput.value = '';
                 }
             }

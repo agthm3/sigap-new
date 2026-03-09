@@ -153,7 +153,7 @@ class SigapInkubatormaController extends Controller
             'no_hp'        => ['required', 'string', 'max:20'],
             'nama_opd'     => ['required', 'string', 'max:255'],
 
-            'layanan' => ['required'],
+            'layanan' => ['required', 'array', 'max:2'],
             'layanan_lainnya' => ['nullable','string','max:255', 'required_if:layanan,lainnya'],
 
 
@@ -165,9 +165,10 @@ class SigapInkubatormaController extends Controller
             'mode'             => ['required', 'in:online,offline'],
 
             'pegawai_id'       => ['nullable', 'exists:users,id'],
+
         ]);
 
-        $layananLainnya = ($validated['layanan'] === 'lainnya')
+        $layananLainnya = in_array('lainnya', $validated['layanan'])
         ? ($validated['layanan_lainnya'] ?? null)
         : null;
 
