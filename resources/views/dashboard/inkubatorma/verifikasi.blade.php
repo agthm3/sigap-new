@@ -269,11 +269,6 @@
         </div>
       </div>
 
-    </section>
-
-    {{-- RIGHT --}}
-    <aside class="space-y-6">
-
       {{-- AKSI VERIFIKASI (FORM) --}}
       <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div class="px-5 py-4 border-b">
@@ -439,6 +434,11 @@
           </form>
         </div>
       </div>
+
+    </section>
+
+    {{-- RIGHT --}}
+    <aside class="space-y-6">
 
       {{-- TIMELINE (CARD) --}}
       <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
