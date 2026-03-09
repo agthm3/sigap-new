@@ -44,9 +44,16 @@
     }
   };
 
-  $layananKey   = (string) ($inkubatorma->layanan_id ?? '');
-  $layananLabel = $layananOptions[$layananKey] ?? '—';
-  if ($layananKey === 'lainnya' && !empty($inkubatorma->layanan_lainnya)) {
+  // $layananKey   = (string) ($inkubatorma->layanan_id ?? '');
+  // $layananLabel = $layananOptions[$layananKey] ?? '—';
+  // if ($layananKey === 'lainnya' && !empty($inkubatorma->layanan_lainnya)) {
+  //   $layananLabel .= ' • ' . $inkubatorma->layanan_lainnya;
+  // }
+
+  // Supaya bisa 2 layanan
+  $layananLabel = $inkubatorma->layanan_nama;
+
+  if (!empty($inkubatorma->layanan_lainnya)) {
     $layananLabel .= ' • ' . $inkubatorma->layanan_lainnya;
   }
 

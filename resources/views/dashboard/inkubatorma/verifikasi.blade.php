@@ -42,17 +42,37 @@
     }
   };
 
-  $layananKey   = (string) ($inkubatorma->layanan_id ?? '');
-  $layananBase  = $layananOptions[$layananKey] ?? '—';
+  // Supaya bisa 2 layanan
+  $layananIds = $inkubatorma->layanan_id ?? [];
 
-  // ✅ tampil seperti detail: "Lainnya • (input user)"
-  $layananLainnya = trim((string) ($inkubatorma->layanan_lainnya ?? ''));
-
-  if ($layananKey === 'lainnya' && $layananLainnya !== '') {
-    $layananLabel = $layananBase . ' • ' . $layananLainnya;
-  } else {
-    $layananLabel = $layananBase;
+  if (!is_array($layananIds)) {
+    $layananIds = [$layananIds];
   }
+
+  $layananLabels = collect($layananIds)
+    ->map(function ($id) use ($layananOptions, $inkubatorma) {
+
+      if ($id === 'lainnya' && !empty($inkubatorma->layanan_lainnya)) {
+        return ($layananOptions[$id] ?? 'Lainnya') . ' • ' . $inkubatorma->layanan_lainnya;
+      }
+
+      return $layananOptions[$id] ?? $id;
+    })
+    ->implode(', ');
+
+  $layananLabel = $layananLabels ?: '—';
+
+  // $layananKey   = (string) ($inkubatorma->layanan_id ?? '');
+  // $layananBase  = $layananOptions[$layananKey] ?? '—';
+
+  // // ✅ tampil seperti detail: "Lainnya • (input user)"
+  // $layananLainnya = trim((string) ($inkubatorma->layanan_lainnya ?? ''));
+
+  // if ($layananKey === 'lainnya' && $layananLainnya !== '') {
+  //   $layananLabel = $layananBase . ' • ' . $layananLainnya;
+  // } else {
+  //   $layananLabel = $layananBase;
+  // }
   // Untuk dropdown search PIC: tampilkan nama awal jika sudah ada PIC
   $initialPicId = old('pic_employee_id', $inkubatorma->pic_employee_id);
 
