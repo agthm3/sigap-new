@@ -36,19 +36,27 @@
   };
 
   // nilai terpilih (ambil dari old dulu, lalu DB)
-  $selectedLayanan = (string) old('layanan_id', $inkubatorma->layanan_id);
+  // supaya layanan bisa tersimpan 2
+  $selectedLayanan = old('layanan_id', $inkubatorma->layanan_id ?? []);
+
+  if (!is_array($selectedLayanan)) {
+      $selectedLayanan = [$selectedLayanan];
+  }
 
   // input layanan lainnya (ambil dari old dulu, lalu DB)
   $selectedLayananLainnya = (string) old('layanan_lainnya', $inkubatorma->layanan_lainnya);
 
   // label dropdown awal (mengikuti detail: "Lainnya • (input)")
   $selectedLabel = 'Pilih…';
-  if (!empty($selectedLayanan) && !empty($layananOptions[$selectedLayanan])) {
-    $selectedLabel = $layananOptions[$selectedLayanan];
+  if (!empty($selectedLayanan)) {
+      $labels = collect($selectedLayanan)
+          ->map(fn($id) => $layananOptions[$id] ?? $id)
+          ->toArray();
+      $selectedLabel = implode(', ', $labels);
 
-    if ($selectedLayanan === 'lainnya' && !empty($selectedLayananLainnya)) {
-      $selectedLabel .= ' • ' . $selectedLayananLainnya;
-    }
+      if (in_array('lainnya', $selectedLayanan) && !empty($selectedLayananLainnya)) {
+          $selectedLabel .= ' • ' . $selectedLayananLainnya;
+      }
   }
 @endphp
 
@@ -199,10 +207,10 @@
               <label class="text-xs font-semibold text-gray-600">Layanan <span class="text-red-600">*</span></label>
 
               {{-- Native select hidden untuk submit --}}
-              <select name="layanan_id" id="layananSelectNative" required class="hidden">
+              <select name="layanan_id[]" id="layananSelectNative" multiple required class="hidden">
                 <option value="">Pilih…</option>
                 @foreach(($layananOptions ?? []) as $id => $nama)
-                  <option value="{{ $id }}" @selected((string)$selectedLayanan === (string)$id)>{{ $nama }}</option>
+                  <option value="{{ $id }}" @selected(in_array($id, $selectedLayanan ?? []))>{{ $nama }}</option>
                 @endforeach
               </select>
 
@@ -221,6 +229,9 @@
                 </svg>
               </button>
 
+              {{-- Chip untuk tampilkan 2 layanan --}}
+              <div id="selectedLayananContainer" class="flex flex-wrap gap-2 mt-2"></div>
+
               {{-- Dropdown panel --}}
               <div id="layananPanel"
                    class="hidden absolute z-30 mt-2 w-full rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden">
@@ -235,7 +246,7 @@
                             data-value="{{ $id }}"
                             data-label="{{ $nama }}">
                       <span class="truncate">{{ $nama }}</span>
-                      <span class="text-maroon font-semibold {{ ((string)$selectedLayanan === (string)$id) ? '' : 'hidden' }}" data-check="{{ $id }}">✓</span>
+                      <span class="text-maroon font-semibold {{ in_array($id, $selectedLayanan ?? []) ? '' : 'hidden' }}" data-check="{{ $id }}">✓</span>
                     </button>
                   @endforeach
 
@@ -249,7 +260,7 @@
                           data-value="lainnya"
                           data-label="{{ $layananOptions['lainnya'] ?? 'Lainnya' }}">
                     <span class="truncate">{{ $layananOptions['lainnya'] ?? 'Lainnya' }}</span>
-                    <span class="text-maroon font-semibold {{ ((string)$selectedLayanan === 'lainnya') ? '' : 'hidden' }}" data-check="lainnya">✓</span>
+                    <span class="text-maroon font-semibold {{ in_array('lainnya', $selectedLayanan ?? []) ? '' : 'hidden' }}" data-check="lainnya">✓</span>
                   </button>
 
                 </div>
@@ -258,7 +269,7 @@
               @error('layanan_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
 
               {{-- Input tambahan kalau pilih "lainnya" --}}
-              <div id="layananLainnyaWrap" class="mt-3 {{ ((string)$selectedLayanan === 'lainnya') ? '' : 'hidden' }}">
+              <div id="layananLainnyaWrap" class="mt-3 {{ in_array('lainnya', $selectedLayanan ?? []) ? '' : 'hidden' }}">
                 <label class="text-xs font-semibold text-gray-600">Spesifikasi Lainnya <span class="text-red-600">*</span></label>
                 <input type="text"
                        name="layanan_lainnya"
@@ -449,6 +460,8 @@
   const lainnyaWrap = document.getElementById('layananLainnyaWrap');
   const lainnyaInput = document.getElementById('layanan_lainnya');
 
+  const layananOptions = @json($layananOptions);
+
   if (!wrap || !btn || !panel || !label || !native) return;
 
   function openPanel()  { panel.classList.remove('hidden'); }
@@ -511,21 +524,113 @@
   });
 
   // Inisialisasi awal: sync checkmark + visibility
-  const initVal = native.value || '';
-  updateLainnyaVisibility(initVal);
+  // const initVal = native.value || '';
+  // updateLainnyaVisibility(initVal);
 
-  if (initVal && initVal !== 'lainnya') {
-    const initText = native.options[native.selectedIndex]?.textContent || initVal;
-    setSelected(initVal, initText);
-  } else if (!initVal) {
-    setSelected('', 'Pilih…');
-  } else {
-    native.value = 'lainnya';
-    panel.querySelectorAll('[data-check]').forEach(el => {
-      el.classList.toggle('hidden', el.getAttribute('data-check') !== 'lainnya');
-    });
+  // if (initVal && initVal !== 'lainnya') {
+  //   const initText = native.options[native.selectedIndex]?.textContent || initVal;
+  //   setSelected(initVal, initText);
+  // } else if (!initVal) {
+  //   setSelected('', 'Pilih…');
+  // } else {
+  //   native.value = 'lainnya';
+  //   panel.querySelectorAll('[data-check]').forEach(el => {
+  //     el.classList.toggle('hidden', el.getAttribute('data-check') !== 'lainnya');
+  //   });
+  // }
+
+  // Supaya muncul 2 layanan di halaman edit
+  let selectedValues = @json($selectedLayanan ?? []);
+
+  function toggleLainnya(){
+    const show = selectedValues.includes('lainnya');
+
+    if(lainnyaWrap){
+        lainnyaWrap.classList.toggle('hidden', !show);
+    }
+
+    if(lainnyaInput){
+        lainnyaInput.required = show;
+
+        if(!show){
+            lainnyaInput.value = '';
+        }
+    }
   }
 
+  const container = document.getElementById('selectedLayananContainer');
+
+  function updateUI(){
+
+      // update native select
+      Array.from(native.options).forEach(opt => {
+          opt.selected = selectedValues.includes(opt.value);
+      });
+
+      // update label
+      label.textContent = selectedValues.length
+          ? selectedValues.map(v => layananOptions[v]).join(', ')
+          : 'Pilih maksimal 2 layanan';
+
+      // render chips
+      container.innerHTML = '';
+
+      selectedValues.forEach(val => {
+
+          const option = native.querySelector(`option[value="${val}"]`);
+          if(!option) return;
+
+          const chip = document.createElement('div');
+
+          chip.className =
+          "flex items-center gap-2 px-3 py-1 rounded-full bg-maroon/10 text-maroon text-sm font-semibold";
+
+          chip.innerHTML = `
+              ${option.textContent}
+              <button type="button" class="font-bold">×</button>
+          `;
+
+          chip.querySelector('button').onclick = () => {
+              selectedValues = selectedValues.filter(v => v !== val);
+              updateUI();
+          };
+
+          container.appendChild(chip);
+
+      });
+
+      toggleLainnya();
+  }
+
+  panel.addEventListener('click', (e)=>{
+
+      const opt = e.target.closest('[data-value]');
+      if(!opt) return;
+
+      const value = opt.dataset.value;
+
+      if(!selectedValues.includes(value)){
+
+          if(selectedValues.length >= 2){
+              alert('Maksimal 2 layanan');
+              return;
+          }
+
+          selectedValues.push(value);
+
+      }else{
+
+          selectedValues = selectedValues.filter(v => v !== value);
+
+      }
+
+      toggleLainnya();
+      updateUI();
+
+  });
+
+  updateUI();
+  toggleLainnya();
 })();
 </script>
 @endsection

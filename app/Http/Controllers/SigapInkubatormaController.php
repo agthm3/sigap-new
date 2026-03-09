@@ -308,10 +308,12 @@ class SigapInkubatormaController extends Controller
         $allowed = implode(',', array_keys($this->layananOptions()));
 
         $validated = $request->validate([
-            'layanan_id' => ['required', "in:$allowed"],
+            // Supaya bisa 2 layanan maksimal
+            'layanan_id' => ['required','array','max:2'],
+            'layanan_id.*' => ["in:$allowed"],
             'layanan_lainnya' => ['nullable','string','max:255', 'required_if:layanan_id,lainnya'],
-            'judul_konsultasi' => ['required', 'string', 'max:255'],
 
+            'judul_konsultasi' => ['required', 'string', 'max:255'],
             'nama_pengaju' => ['required', 'string', 'max:255'],
             'hp_pengaju'   => ['nullable', 'string', 'max:20'],
             'opd_unit'     => ['required', 'string', 'max:255'],
@@ -326,11 +328,11 @@ class SigapInkubatormaController extends Controller
         ]);
 
         $inkubatorma->layanan_id = $validated['layanan_id'];
-        $inkubatorma->layanan_lainnya = ($validated['layanan_id'] === 'lainnya')
+        $inkubatorma->layanan_lainnya = in_array('lainnya', $validated['layanan_id'])
             ? ($validated['layanan_lainnya'] ?? null)
             : null;
 
-        $inkubatorma->save();
+        // $inkubatorma->save();
 
         $inkubatorma->update($validated);
 
