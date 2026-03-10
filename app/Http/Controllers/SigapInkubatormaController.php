@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-<<<<<<< HEAD
 use App\Models\Inkubatorma;
 use App\Models\InkubatormaLog;
 use App\Models\User;
@@ -11,13 +10,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Notifications\InkubatormaPengajuanBaruNotification;
 use App\Notifications\InkubatormaStatusUpdateNotification;
-=======
-use App\Models\User;
-use App\Models\Inkubatorma;
-use Illuminate\Http\Request;
-use App\Models\InkubatormaLog;
-use Illuminate\Support\Facades\Auth;
->>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
 use Illuminate\Support\Facades\Schema;
 
 class SigapInkubatormaController extends Controller
@@ -120,7 +112,6 @@ class SigapInkubatormaController extends Controller
      */
     public function dashboard(Request $request)
     {
-<<<<<<< HEAD
         $user = Auth::user();
 
         // =========================
@@ -528,7 +519,6 @@ class SigapInkubatormaController extends Controller
             'line'            => $line,
             'printedAt'       => $now->translatedFormat('d F Y H:i') . ' WITA',
         ]);
-=======
         $inkubatormas = Inkubatorma::query()
             ->orderBy('created_at', 'desc')
             ->get();
@@ -559,7 +549,6 @@ class SigapInkubatormaController extends Controller
         $inkubatormas = $q->paginate($perPage)->withQueryString();
 
         return view('dashboard.inkubatorma.dashboard', compact('inkubatormas', 'layananOptions'));
->>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
     }
 
     /**
@@ -574,11 +563,7 @@ class SigapInkubatormaController extends Controller
             'no_hp'        => ['required', 'string', 'max:20'],
             'nama_opd'     => ['required', 'string', 'max:255'],
 
-<<<<<<< HEAD
             'layanan' => ['required', 'array', 'max:2'],
-=======
-            'layanan' => ['required'],
->>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
             'layanan_lainnya' => ['nullable','string','max:255', 'required_if:layanan,lainnya'],
 
 
@@ -590,16 +575,9 @@ class SigapInkubatormaController extends Controller
             'mode'             => ['required', 'in:online,offline'],
 
             'pegawai_id'       => ['nullable', 'exists:users,id'],
-<<<<<<< HEAD
-
         ]);
 
         $layananLainnya = in_array('lainnya', $validated['layanan'])
-=======
-        ]);
-
-        $layananLainnya = ($validated['layanan'] === 'lainnya')
->>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
         ? ($validated['layanan_lainnya'] ?? null)
         : null;
 
@@ -626,11 +604,7 @@ class SigapInkubatormaController extends Controller
         $newNumber = $lastNumber + 1;
         $kode = $prefix . str_pad((string) $newNumber, 4, '0', STR_PAD_LEFT);
 
-<<<<<<< HEAD
         $inkubatorma = Inkubatorma::create([
-=======
-        Inkubatorma::create([
->>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
             'kode' => $kode,
 
             // simpan string layanan ke layanan_id
@@ -658,7 +632,6 @@ class SigapInkubatormaController extends Controller
             'target_personil_usulan' => $targetPersonilNama,
         ]);
 
-<<<<<<< HEAD
         $verifikators = User::role('verifikator_inkubatorma')
             ->where('status', 'active')
             ->whereNotNull('email')
@@ -669,8 +642,6 @@ class SigapInkubatormaController extends Controller
             $verifikator->notify(new InkubatormaPengajuanBaruNotification($inkubatorma));
         }
 
-=======
->>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
         if (!auth()->check()) {
             session()->put('inkubatorma_form', $validated);
             // supaya kembali ke halaman inkubatorma
@@ -880,7 +851,6 @@ class SigapInkubatormaController extends Controller
 
         $inkubatorma->save();
 
-<<<<<<< HEAD
         if (!empty($inkubatorma->created_by)) {
             $pengajuUser = User::where('id', $inkubatorma->created_by)
                 ->whereNotNull('email')
@@ -891,8 +861,6 @@ class SigapInkubatormaController extends Controller
             }
         }
 
-=======
->>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
         $aksi = $this->mapAksiDariStatus($statusLama, $statusBaru);
 
         InkubatormaLog::create([
