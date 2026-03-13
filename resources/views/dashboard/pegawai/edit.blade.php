@@ -172,8 +172,15 @@ margin-top:6px;
           <span>Jenis Kelamin</span>
           <select name="jenis_kelamin" class="input">
           <option value="">-</option>
-          <option value="Laki-laki">Laki-laki</option>
-          <option value="Perempuan">Perempuan</option>
+          <option value="Laki-laki"
+          @selected(old('jenis_kelamin',$user->profile->jenis_kelamin ?? '')=='Laki-laki')>
+          Laki-laki
+          </option>
+
+          <option value="Perempuan"
+          @selected(old('jenis_kelamin',$user->profile->jenis_kelamin ?? '')=='Perempuan')>
+          Perempuan
+          </option>
           </select>
           </label>
 
@@ -195,10 +202,14 @@ margin-top:6px;
           <label>
           <span>Golongan Darah</span>
           <select name="golongan_darah" class="input">
-          <option>A</option>
-          <option>B</option>
-          <option>AB</option>
-          <option>O</option>
+          <option value="">-</option>
+
+          @foreach(['A','B','AB','O'] as $g)
+          <option value="{{ $g }}"
+          @selected(old('golongan_darah',$user->profile->golongan_darah ?? '')==$g)>
+          {{ $g }}
+          </option>
+          @endforeach
           </select>
           </label>
 
@@ -277,17 +288,20 @@ margin-top:6px;
 
           <label>
           <span>Masa Kerja (Tahun)</span>
-          <input type="number" name="masa_kerja_tahun" class="input">
+            <input type="number" name="masa_kerja_tahun" class="input"
+            value="{{ old('masa_kerja_tahun',$user->profile->masa_kerja_tahun ?? '') }}">
           </label>
 
           <label>
           <span>Masa Kerja (Bulan)</span>
-          <input type="number" name="masa_kerja_bulan" class="input">
+          <input type="number" name="masa_kerja_bulan" class="input"
+            value="{{ old('masa_kerja_bulan',$user->profile->masa_kerja_bulan ?? '') }}">
           </label>
 
           <label>
           <span>TMT Jabatan</span>
-          <input type="date" name="tmt_jabatan" class="input">
+          <input type="date" name="tmt_jabatan" class="input"
+          value="{{ old('tmt_jabatan',$user->profile->tmt_jabatan ?? '') }}">
           </label>
 
           <label>

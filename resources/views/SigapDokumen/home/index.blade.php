@@ -13,7 +13,7 @@
             SIGAP DOKUMEN - Temukan Dokumen Resmi BRIDA
           </h1>
           <p class="mt-2 text-sm sm:text-base text-gray-600">
-            Akses arsip terpusat: surat, SK, laporan, hingga dokumen privasi (dengan kontrol & log akses).
+            Akses arsip terpusat: surat, SK, laporan, hingga dokumen Pegawai (dengan kontrol & log akses).
           </p>
 
           <form class="mt-6 grid grid-cols-1 gap-4" action="{{ route('home.show') }}" method="GET">
@@ -245,6 +245,16 @@
             <h4 class="mt-4 font-semibold">SIGAP <span><strong class="text-maroon">AGENDA</strong></span></h4>
             <p class="mt-1 text-sm text-gray-600">
              Susun & publikasikan agenda resmi pejabat/unit. Tersedia label “Agenda telah diverifikasi melalui SIGAP AGENDA”, ringkasan siap salin, serta berbagi ke WhatsApp & tautan publik.
+          </div>
+        </a>
+        <a href="{{ route('sigap-inkubatorma.index') }}">
+          <div class="p-6 rounded-xl border border-gray-200 hover:shadow-lg transition">
+            <div class="w-10 h-10 rounded-lg bg-maroon/10 text-maroon flex items-center justify-center">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M12 2L3 7v7c0 5 4 9 9 9s9-4 9-9V7l-9-5z"/><path stroke-width="2" d="M9 14l2 2 4-4"/></svg>
+            </div>
+            <h4 class="mt-4 font-semibold">SIGAP <span><strong class="text-maroon">INKUBATORMA</strong></span></h4>
+            <p class="mt-1 text-sm text-gray-600">
+              Layanan pengajuan konsultasi inovasi dan riset bersama Badan Riset dan Inovasi Daerah Kota Makassar untuk membahas ide, penelitian, atau solusi atas permasalahan kota.
           </div>
         </a>
 
