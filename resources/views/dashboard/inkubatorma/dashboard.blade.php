@@ -22,14 +22,25 @@
 
 @section('content')
 @php
+  use App\Models\Inkubatorma;
+
   $me = auth()->user();
   $isAdmin = $me && $me->hasRole('admin');
   $isVerifikator = $me && $me->hasAnyRole(['verifikator_inkubatorma']);
   $isUser = $me && $me->hasRole('user');
 
-  $countMenunggu  = (int) ($ringkasanStatus['Menunggu'] ?? 0);
-  $countTerjadwal = (int) ($ringkasanStatus['Terjadwal'] ?? 0);
-  $countSelesai   = (int) ($ringkasanStatus['Selesai'] ?? 0);
+  $statusMenunggu           = Inkubatorma::STATUS_MENUNGGU ?? 'Menunggu';
+  $statusAkanDijadwalkan    = Inkubatorma::STATUS_AKAN_DIJADWALKAN ?? 'Akan Dijadwalkan';
+  $statusTerjadwal          = Inkubatorma::STATUS_TERJADWAL ?? 'Terjadwal';
+  $statusSesiKonsultasi     = Inkubatorma::STATUS_SESI_KONSULTASI ?? 'Sesi Konsultasi';
+  $statusDijadwalkanUlang   = Inkubatorma::STATUS_DIJADWALKAN_ULANG ?? 'Dijadwalkan Ulang';
+  $statusDitolak            = Inkubatorma::STATUS_DITOLAK ?? 'Ditolak';
+  $statusSelesai            = Inkubatorma::STATUS_SELESAI ?? 'Selesai';
+
+  $countMenunggu  = (int) ($ringkasanStatus[$statusMenunggu] ?? $ringkasanStatus['Menunggu'] ?? 0);
+  $countTerjadwal = (int) ($ringkasanStatus[$statusTerjadwal] ?? $ringkasanStatus['Terjadwal'] ?? 0);
+  $countSesi      = (int) ($ringkasanStatus[$statusSesiKonsultasi] ?? $ringkasanStatus['Sesi Konsultasi'] ?? 0);
+  $countSelesai   = (int) ($ringkasanStatus[$statusSelesai] ?? $ringkasanStatus['Selesai'] ?? 0);
 
   $lineLabels = $line['labels'] ?? [];
   $lineValues = $line['values'] ?? [];
@@ -160,6 +171,15 @@
 
         <div class="px-4 py-4 flex items-center justify-between">
           <div>
+            <p class="text-xs font-bold text-gray-500 uppercase">Sesi Konsultasi</p>
+            <p class="mt-1 text-sm text-gray-600">Konsultasi sedang berjalan.</p>
+          </div>
+          <div class="text-3xl font-extrabold text-gray-900">{{ $countSesi }}</div>
+        </div>
+        <div class="h-px bg-gray-200"></div>
+
+        <div class="px-4 py-4 flex items-center justify-between">
+          <div>
             <p class="text-xs font-bold text-gray-500 uppercase">Selesai</p>
             <p class="mt-1 text-sm text-gray-600">Konsultasi telah ditutup.</p>
           </div>
@@ -242,12 +262,13 @@
       <label class="text-xs font-semibold text-gray-600">Status</label>
       <select id="qStatus" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
         <option value="Semua">Semua</option>
-        <option value="Menunggu">Menunggu</option>
-        <option value="Akan Dijadwalkan">Akan Dijadwalkan</option>
-        <option value="Terjadwal">Terjadwal</option>
-        <option value="Dijadwalkan Ulang">Dijadwalkan Ulang</option>
-        <option value="Ditolak">Ditolak</option>
-        <option value="Selesai">Tutup/Selesai</option>
+        <option value="{{ $statusMenunggu }}">{{ $statusMenunggu }}</option>
+        <option value="{{ $statusAkanDijadwalkan }}">{{ $statusAkanDijadwalkan }}</option>
+        <option value="{{ $statusTerjadwal }}">{{ $statusTerjadwal }}</option>
+        <option value="{{ $statusSesiKonsultasi }}">{{ $statusSesiKonsultasi }}</option>
+        <option value="{{ $statusDijadwalkanUlang }}">{{ $statusDijadwalkanUlang }}</option>
+        <option value="{{ $statusDitolak }}">{{ $statusDitolak }}</option>
+        <option value="{{ $statusSelesai }}">Tutup/Selesai</option>
       </select>
     </div>
 
@@ -314,42 +335,32 @@
       <tbody id="tbody" class="divide-y">
         @forelse ($inkubatormas as $row)
           @php
-            // $layananKey = (string) ($row->layanan_id ?? '');
-            // $layananLabel = $layananOptions[$layananKey] ?? '—';
-
-            // Perbaiki lainnya di dashboard
             $layananIds = $row->layanan_id ?? [];
-
             if (!is_array($layananIds)) {
                 $layananIds = [$layananIds];
             }
 
             $layananLabel = collect($layananIds)
                 ->map(function ($id) use ($layananOptions, $row) {
-
                     if ($id === 'lainnya' && !empty($row->layanan_lainnya)) {
                         return ($layananOptions[$id] ?? 'Lainnya') . ' • ' . $row->layanan_lainnya;
                     }
-
                     return $layananOptions[$id] ?? $id;
                 })
                 ->implode(', ');
 
+            $layananFilterValue = implode('|', $layananIds);
 
-            if ($layananKey === 'lainnya' && !empty($row->layanan_lainnya)) {
-              $layananLabel = ($layananOptions['lainnya'] ?? 'Lainnya') . ' • (' . $row->layanan_lainnya . ')';
-            }
-
-            $status  = $row->status ?? 'Menunggu';
-            $canEdit = in_array($status, ['Menunggu', 'Akan Dijadwalkan'], true);
-            $canVerify = ($status !== 'Selesai');
+            $status = $row->status ?? $statusMenunggu;
+            $canEdit = in_array($status, [$statusMenunggu, $statusAkanDijadwalkan], true);
+            $canVerify = ($status !== $statusSelesai);
           @endphp
 
           <tr data-row
               data-judul="{{ $row->judul_konsultasi ?? '' }}"
               data-pengaju="{{ $row->nama_pengaju ?? '' }}"
               data-opd="{{ $row->opd_unit ?? '' }}"
-              data-layanan="{{ $layananLabel }}"
+              data-layanan="{{ $layananFilterValue }}"
               data-status="{{ $row->status ?? '' }}"
               data-created="{{ optional($row->created_at)->format('Y-m-d') ?? '' }}">
 
@@ -365,15 +376,8 @@
               {{ $row->opd_unit ?? '—' }}
             </td>
 
-            {{-- <td class="px-5 py-4 whitespace-normal">
-              <span class="px-2 py-1 rounded bg-gray-100 text-gray-700 text-xs">
-                {{ $layananLabel }}
-              </span>
-            </td> --}}
-
             <td class="px-5 py-4 whitespace-normal">
               <div class="flex flex-wrap gap-1">
-
                 @foreach ($layananIds as $id)
                   @if($id !== 'lainnya')
                     <span class="px-2 py-1 rounded bg-gray-100 text-gray-700 text-xs">
@@ -387,7 +391,6 @@
                     Lainnya • {{ $row->layanan_lainnya }}
                   </span>
                 @endif
-
               </div>
             </td>
 
@@ -671,7 +674,7 @@
 
       const matchText    = !text || judul.includes(text) || pengaju.includes(text) || opd.includes(text);
       const matchStatus  = (status === 'Semua') || (rowStatus === status);
-      const matchLayanan = (layanan === 'Semua') || (rowLayanan === layanan);
+      const matchLayanan = (layanan === 'Semua') || rowLayanan.split('|').includes(layanan);
 
       return matchText && matchStatus && matchLayanan;
     });

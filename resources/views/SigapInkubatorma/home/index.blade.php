@@ -144,7 +144,6 @@
                 </a>
                 </div>
 
-<<<<<<< HEAD
                 <form action="{{ route('sigap-inkubatorma.store') }}" 
                     method="post" 
                     class="mt-6 space-y-5">

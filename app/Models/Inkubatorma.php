@@ -4,12 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\InkubatormaRecord;
 
 class Inkubatorma extends Model
 {
     use HasFactory;
 
     protected $table = 'inkubatormas';
+
+    public const STATUS_MENUNGGU = 'Menunggu';
+    public const STATUS_AKAN_DIJADWALKAN = 'Akan Dijadwalkan';
+    public const STATUS_TERJADWAL = 'Terjadwal';
+    public const STATUS_SESI_KONSULTASI = 'Sesi Konsultasi';
+    public const STATUS_DIJADWALKAN_ULANG = 'Dijadwalkan Ulang';
+    public const STATUS_DITOLAK = 'Ditolak';
+    public const STATUS_SELESAI = 'Selesai';
 
     protected $fillable = [
         'kode',
@@ -47,7 +56,6 @@ class Inkubatorma extends Model
         'verifikasi_at'   => 'datetime',
         'created_at'      => 'datetime',
         'updated_at'      => 'datetime',
-<<<<<<< HEAD
 
         'layanan_id' => 'array',
     ];
@@ -68,6 +76,32 @@ class Inkubatorma extends Model
         ];
     }
 
+    public static function statusOptions(): array
+    {
+        return [
+            self::STATUS_MENUNGGU,
+            self::STATUS_AKAN_DIJADWALKAN,
+            self::STATUS_TERJADWAL,
+            self::STATUS_SESI_KONSULTASI,
+            self::STATUS_DIJADWALKAN_ULANG,
+            self::STATUS_DITOLAK,
+            self::STATUS_SELESAI,
+        ];
+    }
+
+    public static function statusBadgeMap(): array
+    {
+        return [
+            self::STATUS_MENUNGGU          => 'bg-yellow-100 text-yellow-700',
+            self::STATUS_AKAN_DIJADWALKAN  => 'bg-indigo-100 text-indigo-700',
+            self::STATUS_TERJADWAL         => 'bg-blue-100 text-blue-700',
+            self::STATUS_SESI_KONSULTASI   => 'bg-purple-100 text-purple-700',
+            self::STATUS_DIJADWALKAN_ULANG => 'bg-orange-100 text-orange-700',
+            self::STATUS_DITOLAK           => 'bg-red-100 text-red-700',
+            self::STATUS_SELESAI           => 'bg-gray-200 text-gray-700',
+        ];
+    }
+
     public function getLayananNamaAttribute(): string
     {
         $map = self::layananOptions();
@@ -80,14 +114,11 @@ class Inkubatorma extends Model
         return collect($this->layanan_id)
             ->map(fn($id) => $map[$id] ?? $id)
             ->implode(', ');
-=======
-    ];
+    }
 
-    public function getLayananNamaAttribute(): string
+    public function getStatusBadgeClassAttribute(): string
     {
-        $map = self::layananOptions();
-        return $map[$this->layanan_id] ?? '—';
->>>>>>> 6b2fdb7 (Add Sigap Inkubatorma features)
+        return self::statusBadgeMap()[$this->status] ?? 'bg-gray-100 text-gray-600';
     }
 
     // =========================
@@ -114,16 +145,9 @@ class Inkubatorma extends Model
         return $this->hasMany(InkubatormaLog::class, 'inkubatorma_id')->orderBy('created_at', 'asc');
     }
 
-    public function getStatusBadgeClassAttribute()
+    public function records()
     {
-        return match($this->status) {
-            'Menunggu' => 'bg-yellow-100 text-yellow-700',
-            'Akan Dijadwalkan' => 'bg-indigo-100 text-indigo-700',
-            'Terjadwal' => 'bg-blue-100 text-blue-700',
-            'Dijadwalkan Ulang' => 'bg-orange-100 text-orange-700',
-            'Ditolak' => 'bg-red-100 text-red-700',
-            'Selesai' => 'bg-gray-200 text-gray-700',
-            default => 'bg-gray-100 text-gray-600',
-        };
+        return $this->hasMany(InkubatormaRecord::class, 'inkubatorma_id')
+            ->latest();
     }
 }

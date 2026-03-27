@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Schema;
 class SigapInkubatormaController extends Controller
 {
     /**
-     * LIST LAYANAN STATIS (tidak pakai database)
+     * LIST LAYANAN 
      * value = yang disimpan di DB (string)
      * label = yang ditampilkan di UI
      */
@@ -35,6 +35,11 @@ class SigapInkubatormaController extends Controller
         ];
     }
 
+    private function statusOptions(): array
+    {
+        return Inkubatorma::statusOptions();
+    }
+
     /**
      * Landing page / index
      */
@@ -46,25 +51,26 @@ class SigapInkubatormaController extends Controller
         $jadwals = Inkubatorma::query()
         ->orderByRaw("
             CASE status
-                WHEN 'Terjadwal' THEN 1
-                WHEN 'Dijadwalkan Ulang' THEN 2
-                WHEN 'Menunggu' THEN 3
-                WHEN 'Akan Dijadwalkan' THEN 4
-                WHEN 'Selesai' THEN 5
-                WHEN 'Ditolak' THEN 6
-                ELSE 7
+                WHEN '" . Inkubatorma::STATUS_TERJADWAL . "' THEN 1
+                WHEN '" . Inkubatorma::STATUS_SESI_KONSULTASI . "' THEN 2
+                WHEN '" . Inkubatorma::STATUS_DIJADWALKAN_ULANG . "' THEN 3
+                WHEN '" . Inkubatorma::STATUS_MENUNGGU . "' THEN 4
+                WHEN '" . Inkubatorma::STATUS_AKAN_DIJADWALKAN . "' THEN 5
+                WHEN '" . Inkubatorma::STATUS_SELESAI . "' THEN 6
+                WHEN '" . Inkubatorma::STATUS_DITOLAK . "' THEN 7
+                ELSE 8
             END
         ")
         ->orderByRaw("
             CASE 
-                WHEN status IN ('Terjadwal','Dijadwalkan Ulang') 
+                WHEN status IN ('" . Inkubatorma::STATUS_TERJADWAL . "','" . Inkubatorma::STATUS_SESI_KONSULTASI . "','" . Inkubatorma::STATUS_DIJADWALKAN_ULANG . "')
                     THEN tanggal_final 
                 ELSE tanggal_usulan 
             END
         ")
         ->orderByRaw("
             CASE 
-                WHEN status IN ('Terjadwal','Dijadwalkan Ulang') 
+                WHEN status IN ('" . Inkubatorma::STATUS_TERJADWAL . "','" . Inkubatorma::STATUS_SESI_KONSULTASI . "','" . Inkubatorma::STATUS_DIJADWALKAN_ULANG . "')
                     THEN jam_final 
                 ELSE jam_usulan 
             END
@@ -73,27 +79,28 @@ class SigapInkubatormaController extends Controller
 
         // KHUSUS KALENDER
         $calendarJadwals = Inkubatorma::query()
-            ->whereIn('status', [
-                'Menunggu',
-                'Akan Dijadwalkan',
-                'Terjadwal',
-                'Dijadwalkan Ulang'
-            ])
-            ->orderByRaw("
-                CASE 
-                    WHEN status IN ('Terjadwal','Dijadwalkan Ulang') 
-                        THEN tanggal_final 
-                    ELSE tanggal_usulan 
-                END
-            ")
-            ->orderByRaw(" 
-                CASE 
-                    WHEN status IN ('Terjadwal','Dijadwalkan Ulang') 
-                        THEN jam_final 
-                    ELSE jam_usulan 
-                END 
-            ")
-            ->get();
+        ->whereIn('status', [
+            Inkubatorma::STATUS_MENUNGGU,
+            Inkubatorma::STATUS_AKAN_DIJADWALKAN,
+            Inkubatorma::STATUS_TERJADWAL,
+            Inkubatorma::STATUS_SESI_KONSULTASI,
+            Inkubatorma::STATUS_DIJADWALKAN_ULANG,
+        ])
+        ->orderByRaw("
+            CASE 
+                WHEN status IN ('" . Inkubatorma::STATUS_TERJADWAL . "','" . Inkubatorma::STATUS_SESI_KONSULTASI . "','" . Inkubatorma::STATUS_DIJADWALKAN_ULANG . "')
+                    THEN tanggal_final 
+                ELSE tanggal_usulan 
+            END
+        ")
+        ->orderByRaw("
+            CASE 
+                WHEN status IN ('" . Inkubatorma::STATUS_TERJADWAL . "','" . Inkubatorma::STATUS_SESI_KONSULTASI . "','" . Inkubatorma::STATUS_DIJADWALKAN_ULANG . "')
+                    THEN jam_final 
+                ELSE jam_usulan 
+            END
+        ")
+        ->get();
 
         // AMBIL PEGAWAI
         $employees = User::role('employee')
@@ -186,9 +193,9 @@ class SigapInkubatormaController extends Controller
             ->pluck('total', 'status');
 
         $ringkasanStatus = [
-            'Menunggu'  => (int) ($statusCounts['Menunggu'] ?? 0),
-            'Terjadwal' => (int) ($statusCounts['Terjadwal'] ?? 0),
-            'Selesai'   => (int) ($statusCounts['Selesai'] ?? 0),
+            Inkubatorma::STATUS_MENUNGGU  => (int) ($statusCounts[Inkubatorma::STATUS_MENUNGGU] ?? 0),
+            Inkubatorma::STATUS_TERJADWAL => (int) ($statusCounts[Inkubatorma::STATUS_TERJADWAL] ?? 0),
+            Inkubatorma::STATUS_SELESAI   => (int) ($statusCounts[Inkubatorma::STATUS_SELESAI] ?? 0),
         ];
 
         // =========================
@@ -391,9 +398,9 @@ class SigapInkubatormaController extends Controller
             ->pluck('total', 'status');
 
         $ringkasanStatus = [
-            'Menunggu'  => (int) ($statusCounts['Menunggu'] ?? 0),
-            'Terjadwal' => (int) ($statusCounts['Terjadwal'] ?? 0),
-            'Selesai'   => (int) ($statusCounts['Selesai'] ?? 0),
+            Inkubatorma::STATUS_MENUNGGU  => (int) ($statusCounts[Inkubatorma::STATUS_MENUNGGU] ?? 0),
+            Inkubatorma::STATUS_TERJADWAL => (int) ($statusCounts[Inkubatorma::STATUS_TERJADWAL] ?? 0),
+            Inkubatorma::STATUS_SELESAI   => (int) ($statusCounts[Inkubatorma::STATUS_SELESAI] ?? 0),
         ];
 
         // =========================
@@ -519,36 +526,6 @@ class SigapInkubatormaController extends Controller
             'line'            => $line,
             'printedAt'       => $now->translatedFormat('d F Y H:i') . ' WITA',
         ]);
-        $inkubatormas = Inkubatorma::query()
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        // dashboard blade butuh ini untuk label layanan (statis)
-        $layananOptions = $this->layananOptions();
-
-        $user = Auth::user();
-
-        // ambil per page dari query (?per_page=10/25/50)
-        $perPage = (int) $request->query('per_page', 10);
-        if (!in_array($perPage, [10, 25, 50], true)) {
-            $perPage = 10;
-        }
-
-        $q = Inkubatorma::query()->orderBy('created_at', 'desc');
-
-        // ===== ROLE FILTER (Spatie) =====
-        if ($user && $user->hasRole('admin') || $user->hasRole('verifikator_inkubatorma')) {
-            // Admin dan Verifikator lihat semua
-        }
-        else {
-            // User hanya lihat pengajuan yang dia buat (pakai kolom created_by yang ada di tabel)
-            $q->where('created_by', $user->id);
-        }
-
-        // paginate + keep query string
-        $inkubatormas = $q->paginate($perPage)->withQueryString();
-
-        return view('dashboard.inkubatorma.dashboard', compact('inkubatormas', 'layananOptions'));
     }
 
     /**
@@ -620,7 +597,7 @@ class SigapInkubatormaController extends Controller
             'tanggal_usulan'   => $validated['tanggal'],
             'jam_usulan'       => $validated['jam'],
             'metode_usulan'    => $validated['mode'],
-            'status'           => 'Menunggu',
+            'status'           => Inkubatorma::STATUS_MENUNGGU,
 
             // ✅ agar USER bisa lihat list miliknya
             'created_by'       => Auth::id(),
@@ -667,7 +644,7 @@ class SigapInkubatormaController extends Controller
             'logs',
         ])->findOrFail($id);
 
-        $status = $inkubatorma->status ?? 'Menunggu';
+        $status = $inkubatorma->status ?? Inkubatorma::STATUS_MENUNGGU;
         $layananOptions = $this->layananOptions();
 
         // ✅ TAMBAHAN: ambil semua verifikator inkubatorma (aktif)
@@ -682,8 +659,12 @@ class SigapInkubatormaController extends Controller
 
     private function canEditByStatus(?string $status): bool
     {
-        $status = $status ?? 'Menunggu';
-        return in_array($status, ['Menunggu', 'Akan Dijadwalkan'], true);
+        $status = $status ?? Inkubatorma::STATUS_MENUNGGU;
+
+        return in_array($status, [
+            Inkubatorma::STATUS_MENUNGGU,
+            Inkubatorma::STATUS_AKAN_DIJADWALKAN,
+        ], true);
     }
 
     /**
@@ -778,7 +759,7 @@ class SigapInkubatormaController extends Controller
             ->orderBy('name')
             ->get();
 
-        $status = $inkubatorma->status ?? 'Menunggu';
+        $status = $inkubatorma->status ?? Inkubatorma::STATUS_MENUNGGU;
         $layananOptions = $this->layananOptions();
 
         return view('dashboard.inkubatorma.verifikasi', compact('inkubatorma', 'employees', 'status', 'layananOptions'));
@@ -791,32 +772,28 @@ class SigapInkubatormaController extends Controller
     {
         $inkubatorma = Inkubatorma::findOrFail($id);
 
-        // ✅ NEW: kalau sudah ditutup (Selesai), tidak boleh verifikasi lagi
-        if (($inkubatorma->status ?? '') === 'Selesai') {
+        if (($inkubatorma->status ?? '') === Inkubatorma::STATUS_SELESAI) {
             return redirect()
                 ->route('sigap-inkubatorma.detail', $inkubatorma->id)
                 ->with('error', 'Pengajuan sudah ditutup. Verifikasi tidak bisa diubah lagi.');
         }
 
         $validated = $request->validate([
-            'status' => ['required', 'in:Menunggu,Akan Dijadwalkan,Terjadwal,Dijadwalkan Ulang,Ditolak,Selesai'],
+            'status' => ['required', 'in:' . implode(',', $this->statusOptions())],
 
-            // ✅ pindah ke users
-            'pic_employee_id' => ['nullable', 'exists:users,id'],
-
-            'tanggal_final'   => ['nullable', 'date'],
-            'jam_final'       => ['nullable', 'date_format:H:i'],
-            'metode_final'    => ['nullable', 'in:online,offline'],
+            'pic_employee_id'   => ['nullable', 'exists:users,id'],
+            'tanggal_final'     => ['nullable', 'date'],
+            'jam_final'         => ['nullable', 'date_format:H:i'],
+            'metode_final'      => ['nullable', 'in:online,offline'],
             'lokasi_link_final' => ['nullable', 'string', 'max:255'],
 
             'catatan_verifikator' => ['nullable', 'string'],
         ]);
 
-        $statusLama = $inkubatorma->status ?? 'Menunggu';
+        $statusLama = $inkubatorma->status ?? Inkubatorma::STATUS_MENUNGGU;
         $statusBaru = $validated['status'];
 
-        // Konfirmasi wajib jika menutup (Selesai)
-        if ($statusBaru === 'Selesai') {
+        if ($statusBaru === Inkubatorma::STATUS_SELESAI) {
             $confirm = strtoupper(trim((string) $request->input('close_confirm', '')));
             if ($confirm !== 'TUTUP') {
                 return back()
@@ -825,7 +802,13 @@ class SigapInkubatormaController extends Controller
             }
         }
 
-        $butuhJadwal = in_array($statusBaru, ['Terjadwal', 'Dijadwalkan Ulang', 'Selesai'], true);
+        $butuhJadwal = in_array($statusBaru, [
+            Inkubatorma::STATUS_TERJADWAL,
+            Inkubatorma::STATUS_SESI_KONSULTASI,
+            Inkubatorma::STATUS_DIJADWALKAN_ULANG,
+            Inkubatorma::STATUS_SELESAI,
+        ], true);
+
         if ($butuhJadwal) {
             if (empty($validated['tanggal_final']) || empty($validated['jam_final']) || empty($validated['metode_final'])) {
                 return back()
@@ -835,17 +818,12 @@ class SigapInkubatormaController extends Controller
         }
 
         $inkubatorma->status = $statusBaru;
-
         $inkubatorma->pic_employee_id   = $validated['pic_employee_id'] ?? null;
         $inkubatorma->tanggal_final     = $validated['tanggal_final'] ?? null;
         $inkubatorma->jam_final         = $validated['jam_final'] ?? null;
         $inkubatorma->metode_final      = $validated['metode_final'] ?? null;
         $inkubatorma->lokasi_link_final = $validated['lokasi_link_final'] ?? null;
-
         $inkubatorma->catatan_verifikator = $validated['catatan_verifikator'] ?? null;
-
-        // ✅ set verifikator dari user login (kalau kamu pakai auth)
-        // kalau belum pakai auth, biarkan null
         $inkubatorma->verifikator_employee_id = $validated['pic_employee_id'] ?? null;
         $inkubatorma->verifikasi_at = now();
 
@@ -855,7 +833,7 @@ class SigapInkubatormaController extends Controller
             $pengajuUser = User::where('id', $inkubatorma->created_by)
                 ->whereNotNull('email')
                 ->first();
-            
+
             if ($pengajuUser) {
                 $pengajuUser->notify(new InkubatormaStatusUpdateNotification($inkubatorma));
             }
@@ -873,8 +851,7 @@ class SigapInkubatormaController extends Controller
             'created_at'     => now(),
         ]);
 
-        // Kalau ditutup -> redirect ke detail
-        if ($statusBaru === 'Selesai') {
+        if ($statusBaru === Inkubatorma::STATUS_SELESAI) {
             return redirect()
                 ->route('sigap-inkubatorma.detail', $inkubatorma->id)
                 ->with('success', 'Konsultasi ditutup (Selesai).');
@@ -887,13 +864,31 @@ class SigapInkubatormaController extends Controller
 
     private function mapAksiDariStatus(string $dari, string $ke): string
     {
-        if ($ke === 'Akan Dijadwalkan') return 'APPROVE';
-        if ($ke === 'Terjadwal') return 'SET_SCHEDULE';
-        if ($ke === 'Dijadwalkan Ulang') return 'RESCHEDULE';
-        if ($ke === 'Ditolak') return 'REJECT';
-        if ($ke === 'Selesai') return 'CLOSE';
+        if ($ke === Inkubatorma::STATUS_AKAN_DIJADWALKAN) {
+            return 'APPROVE';
+        }
 
-        return 'APPROVE';
+        if ($ke === Inkubatorma::STATUS_TERJADWAL) {
+            return 'SET_SCHEDULE';
+        }
+
+        if ($ke === Inkubatorma::STATUS_SESI_KONSULTASI) {
+            return 'SESSION_STARTED';
+        }
+
+        if ($ke === Inkubatorma::STATUS_DIJADWALKAN_ULANG) {
+            return 'RESCHEDULE';
+        }
+
+        if ($ke === Inkubatorma::STATUS_DITOLAK) {
+            return 'REJECT';
+        }
+
+        if ($ke === Inkubatorma::STATUS_SELESAI) {
+            return 'CLOSE';
+        }
+
+        return 'UPDATE_STATUS';
     }
 
     public function destroy($id)

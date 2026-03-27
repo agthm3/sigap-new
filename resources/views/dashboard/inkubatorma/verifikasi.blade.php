@@ -2,10 +2,18 @@
 
 @section('content')
 @php
-  $status = $inkubatorma->status ?? 'Menunggu';
+  $statusMenunggu         = \App\Models\Inkubatorma::STATUS_MENUNGGU ?? 'Menunggu';
+  $statusAkanDijadwalkan  = \App\Models\Inkubatorma::STATUS_AKAN_DIJADWALKAN ?? 'Akan Dijadwalkan';
+  $statusTerjadwal        = \App\Models\Inkubatorma::STATUS_TERJADWAL ?? 'Terjadwal';
+  $statusSesiKonsultasi   = \App\Models\Inkubatorma::STATUS_SESI_KONSULTASI ?? 'Sesi Konsultasi';
+  $statusDijadwalkanUlang = \App\Models\Inkubatorma::STATUS_DIJADWALKAN_ULANG ?? 'Dijadwalkan Ulang';
+  $statusDitolak          = \App\Models\Inkubatorma::STATUS_DITOLAK ?? 'Ditolak';
+  $statusSelesai          = \App\Models\Inkubatorma::STATUS_SELESAI ?? 'Selesai';
+
+  $status = $inkubatorma->status ?? $statusMenunggu;
 
   // Jika sudah selesai, verifikasi dikunci
-  $isClosed = ($status === 'Selesai');
+  $isClosed = ($status === $statusSelesai);
 
   $metodeLabel = function ($val) {
     return match ($val) {
@@ -62,17 +70,6 @@
 
   $layananLabel = $layananLabels ?: '—';
 
-  // $layananKey   = (string) ($inkubatorma->layanan_id ?? '');
-  // $layananBase  = $layananOptions[$layananKey] ?? '—';
-
-  // // ✅ tampil seperti detail: "Lainnya • (input user)"
-  // $layananLainnya = trim((string) ($inkubatorma->layanan_lainnya ?? ''));
-
-  // if ($layananKey === 'lainnya' && $layananLainnya !== '') {
-  //   $layananLabel = $layananBase . ' • ' . $layananLainnya;
-  // } else {
-  //   $layananLabel = $layananBase;
-  // }
   // Untuk dropdown search PIC: tampilkan nama awal jika sudah ada PIC
   $initialPicId = old('pic_employee_id', $inkubatorma->pic_employee_id);
 
@@ -326,8 +323,16 @@
                 @disabled($isClosed)
                 class="mt-1 w-full rounded-lg border {{ $errors->has('status') ? 'border-red-400' : 'border-gray-300' }} px-3 py-2 text-sm focus:ring-maroon focus:border-maroon">
                 @php
-                  $opts = ['Menunggu','Akan Dijadwalkan','Terjadwal','Dijadwalkan Ulang','Ditolak','Selesai'];
-                  $selectedStatus = old('status', $inkubatorma->status ?? 'Menunggu');
+                  $opts = [
+                    $statusMenunggu,
+                    $statusAkanDijadwalkan,
+                    $statusTerjadwal,
+                    $statusSesiKonsultasi,
+                    $statusDijadwalkanUlang,
+                    $statusDitolak,
+                    $statusSelesai,
+                  ];
+                  $selectedStatus = old('status', $inkubatorma->status ?? $statusMenunggu);
                 @endphp
                 @foreach($opts as $opt)
                   <option value="{{ $opt }}" @selected($selectedStatus === $opt)>{{ $opt }}</option>
@@ -485,6 +490,11 @@
   // =========================
   // 1) Toggle Jadwal Final + Konfirmasi Tutup
   // =========================
+  const STATUS_TERJADWAL = @json($statusTerjadwal);
+  const STATUS_SESI_KONSULTASI = @json($statusSesiKonsultasi);
+  const STATUS_DIJADWALKAN_ULANG = @json($statusDijadwalkanUlang);
+  const STATUS_SELESAI = @json($statusSelesai);
+
   const statusSelect = document.getElementById('statusSelect');
   const noteToUser   = document.getElementById('noteToUser');
   const scheduleBox  = document.getElementById('scheduleBox');
@@ -492,15 +502,15 @@
   const closeInput   = document.getElementById('closeConfirmInput');
 
   function needSchedule(status) {
-    return ['Terjadwal', 'Dijadwalkan Ulang'].includes(status);
+    return [STATUS_TERJADWAL, STATUS_SESI_KONSULTASI, STATUS_DIJADWALKAN_ULANG].includes(status);
   }
 
   function needCloseConfirm(status) {
-    return status === 'Selesai';
+    return status === STATUS_SELESAI;
   }
 
   function applyBoxes() {
-    const st = statusSelect ? statusSelect.value : 'Menunggu';
+    const st = statusSelect ? statusSelect.value : @json($statusMenunggu);
 
     if (scheduleBox) {
       scheduleBox.style.display = needSchedule(st) ? '' : 'none';
@@ -521,7 +531,7 @@
   // =========================
   // 2) PIC Dropdown (SAMA seperti index: pakai list dari server)
   // =========================
-  const picList = @json($employees); // expected: [{id,name}, ...]
+  const picList = @json($employees);
   const picInput = document.getElementById('picInput');
   const picDropdown = document.getElementById('picDropdown');
   const picId = document.getElementById('pic_employee_id');
@@ -571,7 +581,6 @@
   picInput?.addEventListener('input', () => {
     const keyword = (picInput.value || '').toLowerCase().trim();
 
-    // reset dulu setiap user mengetik
     picId.value = '';
     picName.value = '';
     setClearVisible();
@@ -610,7 +619,6 @@
   statusSelect?.addEventListener('change', () => {
     const current = statusSelect.value;
 
-    // kalau status berubah, kosongkan catatan (biar catatan "per status")
     if (noteToUser && current !== lastStatus) {
       noteToUser.value = '';
     }
