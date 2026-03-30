@@ -17,6 +17,107 @@
   <style>
     body { font-family: Inter, system-ui, sans-serif; }
     tr[data-row] { transition: opacity .15s ease; }
+
+    .table-col-actions {
+      width: 180px;
+      min-width: 180px;
+    }
+
+    .action-group {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+      flex-wrap: nowrap;
+    }
+
+    .action-item {
+      position: relative;
+      display: inline-flex;
+      flex-shrink: 0;
+    }
+
+    .action-btn {
+      width: 30px;
+      height: 30px;
+      min-width: 30px;
+      min-height: 30px;
+      padding: 0;
+      border: none;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: opacity .15s ease, transform .1s ease;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .action-btn:hover {
+      opacity: 0.85;
+      transform: scale(1.07);
+    }
+
+    /* .action-btn svg {
+      width: 14px !important;
+      height: 14px !important;
+      max-width: 14px;
+      max-height: 14px;
+      display: block;
+      flex-shrink: 0;
+      pointer-events: none;
+    } */
+
+    .action-btn-disabled {
+      background: #e5e7eb !important;
+      color: #9ca3af !important;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* Warna per aksi */
+    .btn-detail   { background: #1e3a5f; color: #fff; }
+    .btn-verify   { background: #7a2222; color: #fff; }
+    .btn-record   { background: #0f766e; color: #fff; }
+    .btn-edit     { background: #f59e0b; color: #fff; }
+    .btn-delete   { background: #ef4444; color: #fff; }
+
+    /* Tooltip */
+    .action-tooltip {
+      position: absolute;
+      bottom: calc(100% + 7px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1f2937;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 9px;
+      border-radius: 7px;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      z-index: 99;
+      box-shadow: 0 4px 12px rgba(0,0,0,.15);
+      transition: opacity .15s ease, visibility .15s ease;
+    }
+
+    .action-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: #1f2937;
+    }
+
+    .action-item:hover .action-tooltip {
+      opacity: 1;
+      visibility: visible;
+    }
   </style>
 @endpush
 
@@ -339,7 +440,7 @@
             if (!is_array($layananIds)) {
                 $layananIds = [$layananIds];
             }
-
+          
             $layananLabel = collect($layananIds)
                 ->map(function ($id) use ($layananOptions, $row) {
                     if ($id === 'lainnya' && !empty($row->layanan_lainnya)) {
@@ -348,12 +449,14 @@
                     return $layananOptions[$id] ?? $id;
                 })
                 ->implode(', ');
-
+          
             $layananFilterValue = implode('|', $layananIds);
-
+          
             $status = $row->status ?? $statusMenunggu;
+          
             $canEdit = in_array($status, [$statusMenunggu, $statusAkanDijadwalkan], true);
             $canVerify = ($status !== $statusSelesai);
+            $canOpenRecord = ($status === $statusSesiKonsultasi);
           @endphp
 
           <tr data-row
@@ -400,54 +503,116 @@
               </span>
             </td>
 
-            <td class="px-5 py-4 text-right">
-              <div class="inline-flex items-center gap-2">
-                <a href="{{ route('sigap-inkubatorma.detail', ['id' => $row->id]) }}"
-                   class="px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-xs font-semibold hover:bg-gray-50">
-                  Detail
-                </a>
-
+            <td class="px-5 py-4 text-right align-middle" style="width:160px; min-width:160px;">
+              <div style="display:flex; align-items:center; justify-content:flex-end; gap:4px; flex-wrap:nowrap;">
+            
+                {{-- DETAIL --}}
+                <div style="position:relative; display:inline-flex;">
+                  <a href="{{ route('sigap-inkubatorma.detail', ['id' => $row->id]) }}"
+                     style="width:30px;height:30px;min-width:30px;border-radius:6px;background:#1e3a5f;color:#fff;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;transition:opacity .15s;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                  </a>
+                  <span style="position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px;white-space:nowrap;opacity:0;visibility:hidden;pointer-events:none;z-index:99;transition:opacity .15s;" class="tip">Detail</span>
+                </div>
+            
+                {{-- VERIFIKASI --}}
                 @if($isAdmin || $isVerifikator)
-                  @if($canVerify)
-                    <a href="{{ route('sigap-inkubatorma.verifikasi', ['id' => $row->id]) }}"
-                       class="px-3 py-1.5 rounded-lg border border-maroon text-maroon text-xs font-semibold hover:bg-maroon/5">
-                      Verifikasi
-                    </a>
-                  @else
-                    <button type="button" disabled
-                      class="px-3 py-1.5 rounded-lg bg-gray-200 text-gray-500 text-xs font-semibold cursor-not-allowed opacity-60">
-                      Verifikasi
-                    </button>
-                  @endif
+                  <div style="position:relative; display:inline-flex;">
+                    @if($canVerify)
+                      <a href="{{ route('sigap-inkubatorma.verifikasi', ['id' => $row->id]) }}"
+                         style="width:30px;height:30px;min-width:30px;border-radius:6px;background:#7a2222;color:#fff;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;transition:opacity .15s;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" xmlns="http://www.w3.org/2000/svg">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M21 12c0 4.97-4.03 9-9 9S3 16.97 3 12 7.03 3 12 3s9 4.03 9 9z"/>
+                        </svg>
+                      </a>
+                      <span style="position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px;white-space:nowrap;opacity:0;visibility:hidden;pointer-events:none;z-index:99;transition:opacity .15s;" class="tip">Verifikasi</span>
+                    @else
+                      <button type="button" disabled
+                         style="width:30px;height:30px;min-width:30px;border-radius:6px;background:#e5e7eb;color:#9ca3af;border:none;display:inline-flex;align-items:center;justify-content:center;cursor:not-allowed;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" xmlns="http://www.w3.org/2000/svg">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M21 12c0 4.97-4.03 9-9 9S3 16.97 3 12 7.03 3 12 3s9 4.03 9 9z"/>
+                        </svg>
+                      </button>
+                      <span style="position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px;white-space:nowrap;opacity:0;visibility:hidden;pointer-events:none;z-index:99;transition:opacity .15s;" class="tip">Selesai/nonaktif</span>
+                    @endif
+                  </div>
                 @endif
-
+            
+                {{-- RECORD --}}
+                @if($isAdmin || $isVerifikator || $isUser)
+                  <div style="position:relative; display:inline-flex;">
+                    @if($canOpenRecord)
+                      <a href="{{ route('sigap-inkubatorma.records', ['id' => $row->id]) }}"
+                         style="width:30px;height:30px;min-width:30px;border-radius:6px;background:#0f766e;color:#fff;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;transition:opacity .15s;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" xmlns="http://www.w3.org/2000/svg">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 16h6M9 8h6"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M5 3h10l4 4v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/>
+                        </svg>
+                      </a>
+                      <span style="position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px;white-space:nowrap;opacity:0;visibility:hidden;pointer-events:none;z-index:99;transition:opacity .15s;" class="tip">Record Konsultasi</span>
+                    @else
+                      <button type="button" disabled
+                         style="width:30px;height:30px;min-width:30px;border-radius:6px;background:#e5e7eb;color:#9ca3af;border:none;display:inline-flex;align-items:center;justify-content:center;cursor:not-allowed;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" xmlns="http://www.w3.org/2000/svg">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 16h6M9 8h6"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M5 3h10l4 4v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/>
+                        </svg>
+                      </button>
+                      <span style="position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px;white-space:nowrap;opacity:0;visibility:hidden;pointer-events:none;z-index:99;transition:opacity .15s;" class="tip">Aktif saat Sesi Konsultasi</span>
+                    @endif
+                  </div>
+                @endif
+            
+                {{-- EDIT --}}
                 @if($isAdmin || $isUser)
-                  @if($canEdit)
-                    <a href="{{ route('sigap-inkubatorma.edit', ['id' => $row->id]) }}"
-                      class="px-3 py-1.5 rounded-lg bg-maroon text-white text-xs font-semibold hover:opacity-90">
-                      Edit
-                    </a>
-                  @else
-                    <button type="button" disabled
-                      class="px-3 py-1.5 rounded-lg bg-gray-200 text-gray-500 text-xs font-semibold cursor-not-allowed">
-                      Edit
-                    </button>
-                  @endif
+                  <div style="position:relative; display:inline-flex;">
+                    @if($canEdit)
+                      <a href="{{ route('sigap-inkubatorma.edit', ['id' => $row->id]) }}"
+                         style="width:30px;height:30px;min-width:30px;border-radius:6px;background:#f59e0b;color:#fff;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;transition:opacity .15s;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" xmlns="http://www.w3.org/2000/svg">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 20h9"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                        </svg>
+                      </a>
+                      <span style="position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px;white-space:nowrap;opacity:0;visibility:hidden;pointer-events:none;z-index:99;transition:opacity .15s;" class="tip">Edit</span>
+                    @else
+                      <button type="button" disabled
+                         style="width:30px;height:30px;min-width:30px;border-radius:6px;background:#e5e7eb;color:#9ca3af;border:none;display:inline-flex;align-items:center;justify-content:center;cursor:not-allowed;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" xmlns="http://www.w3.org/2000/svg">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 20h9"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                        </svg>
+                      </button>
+                      <span style="position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px;white-space:nowrap;opacity:0;visibility:hidden;pointer-events:none;z-index:99;transition:opacity .15s;" class="tip">Edit nonaktif</span>
+                    @endif
+                  </div>
                 @endif
-
+            
+                {{-- HAPUS --}}
                 @if($isAdmin || $isUser)
-                  <form action="{{ route('sigap-inkubatorma.destroy', $row->id) }}"
-                        method="POST"
-                        onsubmit="return confirm('Yakin ingin menghapus data ini?')">
-                    @csrf
-                    @method('DELETE')
-
-                    <button type="submit"
-                            class="px-3 py-1.5 rounded-lg border border-red-600 text-red-600 text-xs hover:bg-red-600 hover:text-white transition">
-                      Hapus
-                    </button>
-                  </form>
+                  <div style="position:relative; display:inline-flex;">
+                    <form action="{{ route('sigap-inkubatorma.destroy', $row->id) }}" method="POST"
+                          onsubmit="return confirm('Yakin ingin menghapus data ini?')" style="display:inline-flex;">
+                      @csrf
+                      @method('DELETE')
+                      <button type="submit"
+                         style="width:30px;height:30px;min-width:30px;border-radius:6px;background:#ef4444;color:#fff;border:none;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity .15s;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" xmlns="http://www.w3.org/2000/svg">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+                        </svg>
+                      </button>
+                    </form>
+                    <span style="position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px;white-space:nowrap;opacity:0;visibility:hidden;pointer-events:none;z-index:99;transition:opacity .15s;" class="tip">Hapus</span>
+                  </div>
                 @endif
+            
               </div>
             </td>
           </tr>
@@ -776,5 +941,15 @@
     applyPeriod(active);
   });
 })();
+
+// Tooltip hover untuk .tip
+document.querySelectorAll('[style*="position:relative"]').forEach(wrap => {
+  const tip = wrap.querySelector('.tip');
+  if (!tip) return;
+  const btn = wrap.querySelector('a, button');
+  if (!btn) return;
+  btn.addEventListener('mouseenter', () => { tip.style.opacity='1'; tip.style.visibility='visible'; });
+  btn.addEventListener('mouseleave', () => { tip.style.opacity='0'; tip.style.visibility='hidden'; });
+});
 </script>
 @endpush

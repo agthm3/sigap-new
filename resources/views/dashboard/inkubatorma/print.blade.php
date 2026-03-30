@@ -617,32 +617,46 @@
         </thead>
         <tbody>
           @forelse($rows as $i => $row)
-            @php
-              $layananKey   = (string) ($row->layanan_id ?? '');
-              $layananLabel = $layananOptions[$layananKey] ?? '—';
-              if ($layananKey === 'lainnya' && !empty($row->layanan_lainnya)) {
-                $layananLabel = ($layananOptions['lainnya'] ?? 'Lainnya') . ' · ' . $row->layanan_lainnya;
-              }
-              $statusClass = match(strtolower($row->status ?? '')) {
-                'menunggu'  => 'badge-menunggu',
-                'terjadwal' => 'badge-terjadwal',
-                'selesai'   => 'badge-selesai',
-                default     => ''
-              };
-            @endphp
-            <tr>
-              <td class="row-num">{{ $i + 1 }}</td>
-              <td>{{ $row->judul_konsultasi ?? '—' }}</td>
-              <td>{{ $row->nama_pengaju ?? '—' }}</td>
-              <td>{{ $row->opd_unit ?? '—' }}</td>
-              <td>{{ $layananLabel }}</td>
-              <td>
-                <span class="badge {{ $statusClass }}">{{ $row->status ?? '—' }}</span>
-              </td>
-              <td style="font-size:10px; color:var(--slate)">
-                {{ $row->created_at ? \Carbon\Carbon::parse($row->created_at)->timezone('Asia/Makassar')->translatedFormat('d M Y H:i') . ' WITA' : '—' }}
-              </td>
-            </tr>
+          @php
+            $layananIds = $row->layanan_id ?? [];
+          
+            if (!is_array($layananIds)) {
+              $decoded = json_decode($layananIds, true);
+              $layananIds = is_array($decoded) ? $decoded : (empty($layananIds) ? [] : [$layananIds]);
+            }
+          
+            $layananLabel = collect($layananIds)
+              ->map(function ($id) use ($layananOptions, $row) {
+                if ($id === 'lainnya' && !empty($row->layanan_lainnya)) {
+                  return ($layananOptions['lainnya'] ?? 'Lainnya') . ' · ' . $row->layanan_lainnya;
+                }
+          
+                return $layananOptions[$id] ?? $id;
+              })
+              ->implode(', ');
+          
+            $layananLabel = $layananLabel ?: '—';
+          
+            $statusClass = match(strtolower($row->status ?? '')) {
+              'menunggu'  => 'badge-menunggu',
+              'terjadwal' => 'badge-terjadwal',
+              'selesai'   => 'badge-selesai',
+              default     => ''
+            };
+          @endphp
+          <tr>
+            <td class="row-num">{{ $i + 1 }}</td>
+            <td>{{ $row->judul_konsultasi ?? '—' }}</td>
+            <td>{{ $row->nama_pengaju ?? '—' }}</td>
+            <td>{{ $row->opd_unit ?? '—' }}</td>
+            <td>{{ $layananLabel }}</td>
+            <td>
+              <span class="badge {{ $statusClass }}">{{ $row->status ?? '—' }}</span>
+            </td>
+            <td style="font-size:10px; color:var(--slate)">
+              {{ $row->created_at ? \Carbon\Carbon::parse($row->created_at)->timezone('Asia/Makassar')->translatedFormat('d M Y H:i') . ' WITA' : '—' }}
+            </td>
+          </tr>
           @empty
             <tr><td colspan="7" class="muted">Belum ada data pengajuan.</td></tr>
           @endforelse

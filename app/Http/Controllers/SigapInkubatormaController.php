@@ -203,21 +203,47 @@ class SigapInkubatormaController extends Controller
         // =========================
         // 6) PIE: PERSEBARAN LAYANAN (dari FILTERED)
         // =========================
-        $layananCountsRaw = (clone $filtered)
-            ->reorder()
-            ->selectRaw('layanan_id, COUNT(*) as total')
-            ->groupBy('layanan_id')
-            ->pluck('total', 'layanan_id');
+        $layananRows = (clone $filtered)
+        ->reorder()
+        ->get(['layanan_id', 'layanan_lainnya']);
 
-        $pieLayanan = [];
-        foreach ($layananCountsRaw as $k => $v) {
-            $key = (string) $k;
-            $pieLayanan[] = [
-                'key'   => $key,
-                'label' => $layananOptions[$key] ?? $key,
-                'total' => (int) $v,
-            ];
+        $layananCounter = [];
+
+        foreach ($layananRows as $row) {
+        $ids = $row->layanan_id ?? [];
+
+        if (!is_array($ids)) {
+            $decoded = json_decode($ids, true);
+            $ids = is_array($decoded) ? $decoded : (empty($ids) ? [] : [$ids]);
         }
+
+        foreach ($ids as $id) {
+            $label = $layananOptions[$id] ?? (string) $id;
+
+            if ($id === 'lainnya' && !empty($row->layanan_lainnya)) {
+                $label = ($layananOptions['lainnya'] ?? 'Lainnya') . ' • ' . $row->layanan_lainnya;
+            }
+
+            if (!isset($layananCounter[$label])) {
+                $layananCounter[$label] = 0;
+            }
+
+            $layananCounter[$label]++;
+        }
+        }
+
+        arsort($layananCounter);
+
+        $pieLayanan = collect($layananCounter)
+        ->map(function ($total, $label) {
+            return [
+                'key'   => $label,
+                'label' => $label,
+                'total' => (int) $total,
+            ];
+        })
+        ->values()
+        ->all();
 
         // =========================
         // 7) BAR: TOP OPD (dari FILTERED)
@@ -406,32 +432,49 @@ class SigapInkubatormaController extends Controller
         ];
 
         // =========================
-        // 6) PERSEBARAN LAYANAN
+        // 6) PIE: PERSEBARAN LAYANAN (dari FILTERED)
         // =========================
-        $pieLayanan = (clone $filtered)
-            ->reorder()
-            ->selectRaw('layanan_id, COUNT(*) as total')
-            ->groupBy('layanan_id')
-            ->orderByDesc('total')
-            ->get()
-            ->map(function ($r) use ($layananOptions) {
-                return [
-                    'key'   => (string) $r->layanan_id,
-                    'label' => $layananOptions[$r->layanan_id] ?? (string) $r->layanan_id,
-                    'total' => (int) $r->total,
-                ];
-            })
-            ->values()
-            ->all();
+        $layananRows = (clone $filtered)
+        ->reorder()
+        ->get(['layanan_id', 'layanan_lainnya']);
 
-        // untuk tabel print versi layanan
-        $layananCounts = collect($pieLayanan)
-            ->map(fn ($r) => [
-                'label' => $r['label'],
-                'total' => $r['total'],
-            ])
-            ->values()
-            ->all();
+        $layananCounter = [];
+
+        foreach ($layananRows as $row) {
+        $ids = $row->layanan_id ?? [];
+
+        if (!is_array($ids)) {
+            $decoded = json_decode($ids, true);
+            $ids = is_array($decoded) ? $decoded : (empty($ids) ? [] : [$ids]);
+        }
+
+        foreach ($ids as $id) {
+            $label = $layananOptions[$id] ?? (string) $id;
+
+            if ($id === 'lainnya' && !empty($row->layanan_lainnya)) {
+                $label = ($layananOptions['lainnya'] ?? 'Lainnya') . ' • ' . $row->layanan_lainnya;
+            }
+
+            if (!isset($layananCounter[$label])) {
+                $layananCounter[$label] = 0;
+            }
+
+            $layananCounter[$label]++;
+        }
+        }
+
+        arsort($layananCounter);
+
+        $pieLayanan = collect($layananCounter)
+        ->map(function ($total, $label) {
+            return [
+                'key'   => $label,
+                'label' => $label,
+                'total' => (int) $total,
+            ];
+        })
+        ->values()
+        ->all();
 
         // =========================
         // 7) PERSEBARAN OPD
@@ -522,7 +565,7 @@ class SigapInkubatormaController extends Controller
             'month'           => $month,
             'periodeLabel'    => $periodeLabel,
             'ringkasanStatus' => $ringkasanStatus,
-            'layananCounts'   => $layananCounts,
+            'layananCounts'   => $pieLayanan,
             'pieLayanan'      => $pieLayanan,
             'opdCounts'       => $opdCounts,
             'line'            => $line,
