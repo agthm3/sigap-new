@@ -156,6 +156,7 @@
 
                 <form action="{{ route('sigap-inkubatorma.store') }}"
                     method="post"
+                    enctype="multipart/form-data"
                     class="mt-6 space-y-5">
                     @csrf
 
@@ -356,6 +357,39 @@
                         <div id="pegawaiDropdown"
                             class="absolute z-20 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-sm hidden max-h-52 overflow-y-auto">
                         </div>
+                    </div>
+
+                    {{-- Lampiran --}}
+                    <div>
+                        <label class="text-base font-semibold">
+                            Lampiran Surat / Permohonan <span class="text-red-600">*</span>
+                        </label>
+                        <p class="mt-1 text-sm text-gray-600">
+                            Upload surat permohonan (PDF/DOC/DOCX, maks. <strong>3 file</strong>, maks. 100MB/file)
+                        </p>
+
+                        <input type="file"
+                            name="lampiran[]"
+                            id="lampiranInput"
+                            multiple
+                            accept=".pdf,.doc,.docx"
+                            class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base
+                                file:mr-4 file:py-2 file:px-4
+                                file:rounded-lg file:border-0
+                                file:text-sm file:font-semibold
+                                file:bg-maroon file:text-white
+                                hover:file:bg-maroon-800">
+
+                        {{-- Chip nama file --}}
+                        <div id="lampiranChips" class="flex flex-wrap gap-2 mt-3"></div>
+                        <p id="lampiranError" class="mt-1 text-xs text-red-600 hidden">⚠ Maksimal 3 file diperbolehkan.</p>
+
+                        @error('lampiran')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                        @error('lampiran.*')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     {{-- Persetujuan --}}
@@ -667,6 +701,32 @@
     const label  = document.getElementById('layananBtnLabel');
     const native = document.getElementById('layananSelectNative');
     const container = document.getElementById('selectedLayananContainer');
+
+    // bisa 3 file
+    const input    = document.getElementById('lampiranInput');
+    const chips    = document.getElementById('lampiranChips');
+    const errorMsg = document.getElementById('lampiranError');
+    const MAX      = 3;
+    let selectedFiles = [];
+
+    input.addEventListener('change', function () {
+        errorMsg.classList.add('hidden');
+        const incoming = Array.from(this.files);
+
+        incoming.forEach(f => {
+            if (!selectedFiles.find(x => x.name === f.name)) {
+                selectedFiles.push(f);
+            }
+        });
+
+        if (selectedFiles.length > MAX) {
+            selectedFiles = selectedFiles.slice(0, MAX);
+            errorMsg.classList.remove('hidden');
+        }
+
+        syncInput();
+        renderChips();
+    });
 
     function openModalWithData(data, list = null) {
         function render(d) {
@@ -1097,6 +1157,37 @@
     });
 
     updateUI();
+
+    // Validasi max 3 file di frontend
+    function removeFile(name) {
+        selectedFiles = selectedFiles.filter(f => f.name !== name);
+        syncInput();
+        renderChips();
+    }
+
+    function syncInput() {
+        const dt = new DataTransfer();
+        selectedFiles.forEach(f => dt.items.add(f));
+        input.files = dt.files;
+    }
+
+    function renderChips() {
+        chips.innerHTML = '';
+        selectedFiles.forEach(file => {
+            const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+            const chip = document.createElement('div');
+            chip.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full bg-maroon/10 border border-maroon/20 text-sm text-maroon';
+            chip.innerHTML = `
+                <span class="max-w-[180px] truncate font-medium">📄 ${file.name}</span>
+                <span class="text-xs text-maroon/60">${sizeMB}MB</span>
+                <button type="button" data-name="${file.name}"
+                    class="ml-1 text-maroon/50 hover:text-red-500 font-bold text-lg leading-none">×</button>
+            `;
+            chip.querySelector('button').addEventListener('click', () => removeFile(file.name));
+            chips.appendChild(chip);
+        });
+    }
+
 })();
 </script>
 @endpush

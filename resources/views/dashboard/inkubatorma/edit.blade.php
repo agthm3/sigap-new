@@ -154,6 +154,7 @@
       <form id="formInkEdit"
             method="POST"
             action="{{ route('sigap-inkubatorma.update', $inkubatorma->id) }}"
+            enctype="multipart/form-data"
             class="space-y-6">
         @csrf
         @method('PUT')
@@ -302,6 +303,59 @@
               <textarea name="poin_asistensi" id="poin_asistensi" rows="4" required
                         class="mt-1 w-full rounded-lg border {{ $errors->has('poin_asistensi') ? 'border-red-400' : 'border-gray-300' }} px-3 py-2 text-sm focus:ring-maroon focus:border-maroon">{{ old('poin_asistensi', $inkubatorma->poin_asistensi) }}</textarea>
               @error('poin_asistensi') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+            </div>
+
+            {{-- LAMPIRAN --}}
+            <div>
+                <label class="text-xs font-semibold text-gray-600">Lampiran Dokumen</label>
+                <p class="mt-0.5 text-xs text-gray-400">Maks. 3 file total (PDF/DOC/DOCX). Hapus file lama atau tambah file baru.</p>
+
+                {{-- CHIP FILE YANG SUDAH ADA --}}
+                <div id="lampiranLamaContainer" class="flex flex-wrap gap-2 mt-2">
+                    @if(!empty($inkubatorma->lampiran))
+                        @foreach($inkubatorma->lampiran as $filePath)
+                            <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 border border-gray-300 text-xs text-gray-700"
+                                id="chip-lama-{{ $loop->index }}">
+                                <a href="{{ asset('storage/' . $filePath) }}" target="_blank"
+                                  class="max-w-[160px] truncate hover:underline">
+                                    📄 {{ basename($filePath) }}
+                                </a>
+                                {{-- hidden input agar path lama ikut terkirim, bisa di-disable saat hapus --}}
+                                <input type="hidden"
+                                      name="lampiran_lama[]"
+                                      value="{{ $filePath }}"
+                                      id="input-lama-{{ $loop->index }}">
+                                <button type="button"
+                                        onclick="hapusLampiran({{ $loop->index }}, '{{ $filePath }}')"
+                                        class="ml-1 text-gray-400 hover:text-red-500 font-bold text-base leading-none">×</button>
+                            </div>
+                        @endforeach
+                    @else
+                        <p class="text-xs text-gray-400 italic">Belum ada lampiran.</p>
+                    @endif
+                </div>
+
+                {{-- INPUT HAPUS (diisi via JS saat klik ×) --}}
+                <div id="hapusLampiranContainer"></div>
+
+                {{-- UPLOAD FILE BARU --}}
+                <input type="file"
+                      name="lampiran[]"
+                      id="lampiranEditInput"
+                      multiple
+                      accept=".pdf,.doc,.docx"
+                      class="mt-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm
+                              file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0
+                              file:text-xs file:font-semibold file:bg-maroon file:text-white
+                              hover:file:bg-maroon-800">
+
+                {{-- Chip file baru yang dipilih --}}
+                <div id="lampiranBaruChips" class="flex flex-wrap gap-2 mt-2"></div>
+                <p id="lampiranEditError" class="mt-1 text-xs text-red-600 hidden">⚠ Total lampiran tidak boleh lebih dari 3 file.</p>
+
+                @error('lampiran')
+                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                @enderror
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -631,6 +685,89 @@
 
   updateUI();
   toggleLainnya();
+
+  // ===== LAMPIRAN EDIT — FILE LAMA + FILE BARU =====
+  const hapusContainer = document.getElementById('hapusLampiranContainer');
+  const errorMsg       = document.getElementById('lampiranEditError');
+  const inputBaru      = document.getElementById('lampiranEditInput');
+  const chipsBaru      = document.getElementById('lampiranBaruChips');
+  const MAX            = 3;
+
+  // hitung file lama yang masih aktif (belum dihapus)
+  let jumlahLama = {{ count($inkubatorma->lampiran ?? []) }};
+  let selectedFiles = [];
+
+  // fungsi hapus file lama (dipanggil dari onclick di blade)
+  window.hapusLampiran = function (index, path) {
+    const chip = document.getElementById('chip-lama-' + index);
+    if (chip) chip.style.display = 'none';
+
+    const inputLama = document.getElementById('input-lama-' + index);
+    if (inputLama) inputLama.disabled = true;
+
+    const hidden = document.createElement('input');
+    hidden.type  = 'hidden';
+    hidden.name  = 'hapus_lampiran[]';
+    hidden.value = path;
+    hapusContainer.appendChild(hidden);
+
+    jumlahLama--;
+    errorMsg.classList.add('hidden');
+  };
+
+  if (inputBaru) {
+    inputBaru.addEventListener('change', function () {
+      errorMsg.classList.add('hidden');
+      const incoming = Array.from(this.files);
+
+      incoming.forEach(f => {
+        if (!selectedFiles.find(x => x.name === f.name)) {
+          selectedFiles.push(f);
+        }
+      });
+
+      const total = jumlahLama + selectedFiles.length;
+      if (total > MAX) {
+        const boleh = Math.max(0, MAX - jumlahLama);
+        selectedFiles = selectedFiles.slice(0, boleh);
+        errorMsg.classList.remove('hidden');
+      }
+
+      syncInput();
+      renderChipsBaru();
+    });
+  }
+
+  function removeNewFile(name) {
+    selectedFiles = selectedFiles.filter(f => f.name !== name);
+    syncInput();
+    renderChipsBaru();
+    errorMsg.classList.add('hidden');
+  }
+
+  function syncInput() {
+    if (!inputBaru) return;
+    const dt = new DataTransfer();
+    selectedFiles.forEach(f => dt.items.add(f));
+    inputBaru.files = dt.files;
+  }
+
+  function renderChipsBaru() {
+    if (!chipsBaru) return;
+    chipsBaru.innerHTML = '';
+    selectedFiles.forEach(file => {
+      const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+      const chip   = document.createElement('div');
+      chip.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full bg-maroon/10 border border-maroon/20 text-xs text-maroon';
+      chip.innerHTML = `
+        <span class="max-w-[160px] truncate font-medium">📄 ${file.name}</span>
+        <span class="text-maroon/60">${sizeMB}MB</span>
+        <button type="button" class="ml-1 text-maroon/50 hover:text-red-500 font-bold text-base leading-none">×</button>
+      `;
+      chip.querySelector('button').addEventListener('click', () => removeNewFile(file.name));
+      chipsBaru.appendChild(chip);
+    });
+  }
 })();
 </script>
 @endsection

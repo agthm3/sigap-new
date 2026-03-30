@@ -430,6 +430,29 @@
         </div>
       </div>
 
+      {{-- LAMPIRAN --}}
+      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div class="px-5 py-4 border-b">
+          <h3 class="font-semibold text-gray-800">Lampiran Dokumen</h3>
+          <p class="text-xs text-gray-500 mt-0.5">Dokumen yang diupload oleh pengaju</p>
+        </div>
+
+        <div class="p-5 text-sm">
+          @if(empty($inkubatorma->lampiran))
+            <p class="text-gray-500 italic">Tidak ada lampiran</p>
+          @else
+            <div class="flex flex-wrap gap-2">
+              @foreach($inkubatorma->lampiran as $file)
+                <a href="{{ asset('storage/' . $file) }}" target="_blank"
+                  class="px-3 py-2 rounded-lg border border-gray-300 text-xs font-semibold hover:bg-gray-50">
+                  📄 {{ basename($file) }}
+                </a>
+              @endforeach
+            </div>
+          @endif
+        </div>
+      </div>
+
     </section>
 
     {{-- RIGHT --}}

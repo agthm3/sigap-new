@@ -597,11 +597,28 @@ class SigapInkubatormaController extends Controller
             'mode'             => ['required', 'in:online,offline'],
 
             'pegawai_id'       => ['nullable', 'exists:users,id'],
+
+            'lampiran' => ['required','array','max:3'],
+            'lampiran.*' => ['file','mimes:pdf,doc,docx','max:102400'], // 100MB
         ]);
 
         $layananLainnya = in_array('lainnya', $validated['layanan'])
         ? ($validated['layanan_lainnya'] ?? null)
         : null;
+
+        $lampiranPaths = [];
+        if ($request->hasFile('lampiran')) {
+            foreach ($request->file('lampiran') as $file) {
+                // $path = $file->store('inkubatorma/lampiran', 'public');
+                // supaya nama file sesuai yg diupload
+                $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                $extension    = $file->getClientOriginalExtension();
+                $safeName     = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $originalName);
+                $uniqueName   = $safeName . '_' . time() . '_' . uniqid() . '.' . $extension;
+                $path = $file->storeAs('inkubatorma/lampiran', $uniqueName, 'public');
+                $lampiranPaths[] = $path;
+            }
+        }
 
         // ambil nama target personil dari users (kalau dipilih)
         $targetPersonilNama = null;
@@ -652,6 +669,8 @@ class SigapInkubatormaController extends Controller
             'pic_employee_id'  => $validated['pegawai_id'] ?? null,
 
             'target_personil_usulan' => $targetPersonilNama,
+            
+            'lampiran' => $lampiranPaths,
         ]);
 
         $verifikators = User::role('verifikator_inkubatorma')
@@ -778,6 +797,37 @@ class SigapInkubatormaController extends Controller
             : null;
 
         // $inkubatorma->save();
+
+        // Lampiran — GABUNG atau REPLACE
+        $lampiranLama = $inkubatorma->lampiran ?? [];
+
+        // Cek file yang mau dihapus (dikirim dari form sebagai hidden input)
+        $hapusFile = $request->input('hapus_lampiran', []);
+        if (!empty($hapusFile)) {
+            foreach ($hapusFile as $pathHapus) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($pathHapus);
+            }
+            $lampiranLama = array_values(array_filter(
+                $lampiranLama,
+                fn($p) => !in_array($p, $hapusFile)
+            ));
+        }
+
+        // Upload file baru
+        if ($request->hasFile('lampiran')) {
+            foreach ($request->file('lampiran') as $file) {
+                $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                $extension    = $file->getClientOriginalExtension();
+                $safeName     = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $originalName);
+                $uniqueName   = $safeName . '_' . time() . '_' . uniqid() . '.' . $extension;
+                $lampiranLama[] = $file->storeAs('inkubatorma/lampiran', $uniqueName, 'public');
+            }
+        }
+
+        // Batasi max 3
+        $lampiranPaths = array_slice(array_values($lampiranLama), 0, 3);
+
+        $validated['lampiran'] = $lampiranPaths;
 
         $inkubatorma->update($validated);
 

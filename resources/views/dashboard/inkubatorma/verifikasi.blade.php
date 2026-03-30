@@ -224,6 +224,24 @@
             <p class="mt-1 text-gray-700 leading-relaxed whitespace-pre-line">{{ $inkubatorma->poin_asistensi ?? '—' }}</p>
           </div>
 
+          {{-- Lampiran --}}
+          <div>
+            <p class="text-xs font-semibold text-gray-500">Lampiran</p>
+
+            @if(empty($inkubatorma->lampiran))
+              <p class="mt-1 text-gray-500 italic text-sm">Tidak ada lampiran</p>
+            @else
+              <div class="mt-2 flex flex-wrap gap-2">
+                @foreach($inkubatorma->lampiran as $file)
+                  <a href="{{ asset('storage/' . $file) }}" target="_blank"
+                    class="px-3 py-2 rounded-lg border border-gray-300 text-xs hover:bg-gray-50">
+                    📄 {{ basename($file) }}
+                  </a>
+                @endforeach
+              </div>
+            @endif
+          </div>
+
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="rounded-lg border border-gray-200 p-4 bg-gray-50">
               <p class="text-xs font-semibold text-gray-500">Tanggal Usulan</p>

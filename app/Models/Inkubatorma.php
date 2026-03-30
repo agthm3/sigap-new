@@ -34,6 +34,7 @@ class Inkubatorma extends Model
         'metode_usulan',
         'target_personil_usulan',
         'layanan_lainnya',
+        'lampiran',
 
         'status',
         'catatan_verifikator',
@@ -58,6 +59,7 @@ class Inkubatorma extends Model
         'updated_at'      => 'datetime',
 
         'layanan_id' => 'array',
+        'lampiran' => 'array',
     ];
 
     public static function layananOptions(): array
