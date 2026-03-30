@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\PegawaiKompetensi;
 use App\Models\User;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
@@ -34,14 +33,17 @@ class SigapPegawaiController extends Controller
 
     public function edit(User $user)
     {
-        $user->load(['profile','kompetensis']);
-
         $roles         = Role::where('guard_name','web')->pluck('name')->all();
         
         // ini untuk checklist (role yang dimiliki user)
         $userRoleNames = $user->getRoleNames()->all();
 
-        return view('dashboard.pegawai.edit', compact('user','roles','userRoleNames'));
+        // TAMBAHAN
+        // ini untuk tampilan label
+        $roleLabels = collect($roles)->mapWithKeys(fn($name) => [
+            $name => $this->roleLabel($name),
+        ])->toArray();
+        return view('dashboard.pegawai.edit', compact('user','roles','userRoleNames', 'roleLabels'));
     }
 
     // TAMBAHAN
@@ -76,26 +78,21 @@ class SigapPegawaiController extends Controller
             'password' => ['nullable','confirmed', \Illuminate\Validation\Rules\Password::defaults()],
             'roles'    => ['nullable','array'],
             'roles.*'  => ['string', Rule::in($validRoleNames)],
+            // ⬇️ foto profil
             'avatar'   => ['nullable','image','mimes:jpg,jpeg,png','max:2048'],
         ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | UPDATE USER
-        |--------------------------------------------------------------------------
-        */
         if (!empty($data['password'])) {
             $data['password'] = Hash::make($data['password']);
         } else {
             unset($data['password']);
         }
 
-        // upload avatar baru
+        // upload avatar baru (hapus lama jika ada)
         if ($request->hasFile('avatar')) {
             if ($user->profile_photo_path) {
                 Storage::disk('public')->delete($user->profile_photo_path);
             }
-
             $data['profile_photo_path'] = $request->file('avatar')->store('avatars','public');
         }
 
@@ -103,114 +100,6 @@ class SigapPegawaiController extends Controller
         unset($data['roles']);
 
         $this->repo->update($user, $data, $roles);
-
-        /*
-        |--------------------------------------------------------------------------
-        | UPDATE PROFILE
-        |--------------------------------------------------------------------------
-        */
-        $profileData = $request->only([
-            'nik',
-            'tempat_lahir',
-            'tanggal_lahir',
-            'jenis_kelamin',
-            'agama',
-            'status_perkawinan',
-            'golongan_darah',
-            'nip_baru',
-            'nip_lama',
-            'keterangan',
-
-            'status_pegawai',
-            'jabatan',
-            'golongan',
-            'tmt_pns',
-            'atasan_langsung',
-            'golongan_ruang',
-            'tmt_golongan',
-            'masa_kerja_tahun',
-            'masa_kerja_bulan',
-            'tmt_jabatan',
-            'eselon',
-            'jabatan_struktural',
-            'jabatan_fungsional',
-            'jabatan_teknis',
-            'unor',
-
-            'alamat_ktp',
-            'alamat_domisili',
-            'npwp',
-            'bpjs_kesehatan',
-            'bpjs_ketenagakerjaan',
-            'bank_nama',
-            'nomor_rekening',
-            'nama_rekening',
-
-            'nama_pasangan',
-            'pekerjaan_pasangan',
-            'jumlah_anak',
-            'kontak_darurat',
-
-            'pendidikan_terakhir',
-            'jurusan',
-            'tahun_lulus'
-        ]);
-
-        $user->profile()->updateOrCreate(
-            ['user_id' => $user->id],
-            $profileData
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | SIMPAN KOMPETENSI / SERTIFIKAT (FIX FILE TIDAK HILANG)
-        |--------------------------------------------------------------------------
-        */
-        if ($request->has('nama_sertifikat')) {
-
-            $files = $request->file('file_sertifikat', []);
-
-            foreach ($request->nama_sertifikat as $index => $nama) {
-
-                if (!$nama) continue;
-
-                $id = $request->kompetensi_id[$index] ?? null;
-
-                // fallback file lama dari hidden field
-                $filePath = $request->existing_file_path[$index] ?? null;
-                $fileName = $request->existing_file_name[$index] ?? null;
-                $fileMime = $request->existing_file_mime[$index] ?? null;
-
-                // kalau upload file baru → replace
-                if (isset($files[$index])) {
-
-                    $file = $files[$index];
-
-                    if ($filePath) {
-                        Storage::disk('public')->delete($filePath);
-                    }
-
-                    $filePath = $file->store('kompetensi','public');
-                    $fileName = $file->getClientOriginalName();
-                    $fileMime = $file->getMimeType();
-                }
-
-                // update atau create manual (AMAN)
-                $kompetensi = $id
-                    ? PegawaiKompetensi::find($id)
-                    : new PegawaiKompetensi();
-
-                $kompetensi->user_id           = $user->id;
-                $kompetensi->nama_sertifikat   = $nama;
-                $kompetensi->bidang_sertifikat = $request->bidang_sertifikat[$index] ?? null;
-                $kompetensi->tahun_sertifikat  = $request->tahun_sertifikat[$index] ?? null;
-                $kompetensi->file_path         = $filePath;
-                $kompetensi->file_name         = $fileName;
-                $kompetensi->file_mime         = $fileMime;
-
-                $kompetensi->save();
-            }
-        }
 
         return back()->with('success','Perubahan disimpan.');
     }

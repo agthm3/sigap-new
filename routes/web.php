@@ -275,7 +275,7 @@ Route::prefix('/sigap-inkubatorma')->group(function () {
         Route::get('/dashboard', [SigapInkubatormaController::class, 'dashboard'])
             ->name('sigap-inkubatorma.dashboard');
 
-        Route::get('/dashboard/print', [SigapInkubatormaController::class, 'printLaporan'])
+            Route::get('/dashboard/print', [SigapInkubatormaController::class, 'printLaporan'])
             ->middleware('role:admin')
             ->name('sigap-inkubatorma.dashboard.print');
 
@@ -312,5 +312,28 @@ Route::prefix('/sigap-inkubatorma')->group(function () {
                 ->whereNumber('id')
                 ->name('sigap-inkubatorma.destroy');
         });
+
+        Route::get('/{id}/records', [SigapInkubatormaController::class, 'records'])
+            ->whereNumber('id')
+            ->name('sigap-inkubatorma.records');
+
+        Route::post('/{id}/records', [SigapInkubatormaController::class, 'storeRecord'])
+            ->whereNumber('id')
+            ->name('sigap-inkubatorma.records.store');
+
+        Route::put('/{id}/records/{recordId}', [SigapInkubatormaController::class, 'updateRecord'])
+            ->whereNumber('id')
+            ->whereNumber('recordId')
+            ->name('sigap-inkubatorma.records.update');
+
+        Route::post('/{id}/records/{recordId}/upload-revision', [SigapInkubatormaController::class, 'uploadRecordRevision'])
+            ->whereNumber('id')
+            ->whereNumber('recordId')
+            ->name('sigap-inkubatorma.records.upload-revision');
+
+        Route::post('/{id}/records/{recordId}/confirm-finish', [SigapInkubatormaController::class, 'confirmRecordFinish'])
+            ->whereNumber('id')
+            ->whereNumber('recordId')
+            ->name('sigap-inkubatorma.records.confirm-finish');
     });
 });

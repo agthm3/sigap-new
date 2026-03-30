@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Inkubatorma;
 use App\Models\InkubatormaLog;
+use App\Models\InkubatormaRecord;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Notifications\InkubatormaPengajuanBaruNotification;
 use App\Notifications\InkubatormaStatusUpdateNotification;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 
 class SigapInkubatormaController extends Controller
 {
@@ -889,6 +891,181 @@ class SigapInkubatormaController extends Controller
         }
 
         return 'UPDATE_STATUS';
+    }
+
+    /**
+     * Halaman record konsultasi
+     */
+    public function records($id)
+    {
+        $inkubatorma = Inkubatorma::with([
+            'picUser',
+            'verifikatorUser',
+            'logs',
+            'records.creator',
+            'records.updater',
+        ])->findOrFail($id);
+
+        $user = Auth::user();
+        $status = $inkubatorma->status ?? Inkubatorma::STATUS_MENUNGGU;
+
+        // Hak akses:
+        // - admin / verifikator: boleh lihat semua
+        // - user: hanya miliknya sendiri
+        if ($user && !($user->hasRole('admin') || $user->hasRole('verifikator_inkubatorma'))) {
+            if ((int) $inkubatorma->created_by !== (int) $user->id) {
+                abort(403);
+            }
+        }
+
+        return view('dashboard.inkubatorma.records', [
+            'inkubatorma' => $inkubatorma,
+            'status'      => $status,
+            'isAdmin'     => $user?->hasRole('admin') ?? false,
+            'isVerifikator' => $user?->hasRole('verifikator_inkubatorma') ?? false,
+            'isUser'      => $user?->hasRole('user') ?? false,
+        ]);
+    }
+
+    /**
+     * Verifikator tambah record sesi / revisi
+     */
+    public function storeRecord(Request $request, $id)
+    {
+        $inkubatorma = Inkubatorma::findOrFail($id);
+        $user = Auth::user();
+
+        if (!$user || !($user->hasRole('admin') || $user->hasRole('verifikator_inkubatorma'))) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'meeting_notes'      => ['required', 'string'],
+            'revision_notes'     => ['nullable', 'string'],
+            'revision_status'    => ['required', 'in:none,needs_revision,resolved'],
+            'is_final_confirmation_ready' => ['nullable', 'boolean'],
+        ]);
+
+        InkubatormaRecord::create([
+            'inkubatorma_id'              => $inkubatorma->id,
+            'meeting_notes'               => $validated['meeting_notes'],
+            'revision_notes'              => $validated['revision_notes'] ?? null,
+            'revision_status'             => $validated['revision_status'],
+            'user_revision_file'          => null,
+            'user_revision_note'          => null,
+            'user_confirmed_finish'       => false,
+            'user_confirmed_finish_at'    => null,
+            'is_final_confirmation_ready' => (bool) ($validated['is_final_confirmation_ready'] ?? false),
+            'created_by'                  => $user->id,
+            'updated_by'                  => $user->id,
+        ]);
+
+        return redirect()
+            ->route('sigap-inkubatorma.records', $inkubatorma->id)
+            ->with('success', 'Record konsultasi berhasil ditambahkan.');
+    }
+
+    /**
+     * Verifikator update record
+     */
+    public function updateRecord(Request $request, $id, $recordId)
+    {
+        $inkubatorma = Inkubatorma::findOrFail($id);
+        $record = InkubatormaRecord::where('inkubatorma_id', $inkubatorma->id)->findOrFail($recordId);
+        $user = Auth::user();
+
+        if (!$user || !($user->hasRole('admin') || $user->hasRole('verifikator_inkubatorma'))) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'meeting_notes'      => ['required', 'string'],
+            'revision_notes'     => ['nullable', 'string'],
+            'revision_status'    => ['required', 'in:none,needs_revision,resolved'],
+            'is_final_confirmation_ready' => ['nullable', 'boolean'],
+        ]);
+
+        $record->update([
+            'meeting_notes'               => $validated['meeting_notes'],
+            'revision_notes'              => $validated['revision_notes'] ?? null,
+            'revision_status'             => $validated['revision_status'],
+            'is_final_confirmation_ready' => (bool) ($validated['is_final_confirmation_ready'] ?? false),
+            'updated_by'                  => $user->id,
+        ]);
+
+        return redirect()
+            ->route('sigap-inkubatorma.records', $inkubatorma->id)
+            ->with('success', 'Record konsultasi berhasil diperbarui.');
+    }
+
+    /**
+     * User upload file revisi ke record
+     */
+    public function uploadRecordRevision(Request $request, $id, $recordId)
+    {
+        $inkubatorma = Inkubatorma::findOrFail($id);
+        $record = InkubatormaRecord::where('inkubatorma_id', $inkubatorma->id)->findOrFail($recordId);
+        $user = Auth::user();
+
+        if (!$user || (int) $inkubatorma->created_by !== (int) $user->id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'user_revision_file' => ['required', 'file', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,rar,jpg,jpeg,png', 'max:10240'],
+            'user_revision_note' => ['nullable', 'string'],
+        ]);
+
+        $path = $request->file('user_revision_file')->store('inkubatorma/revisions', 'public');
+
+        // hapus file lama kalau ada
+        if (!empty($record->user_revision_file) && Storage::disk('public')->exists($record->user_revision_file)) {
+            Storage::disk('public')->delete($record->user_revision_file);
+        }
+
+        $record->update([
+            'user_revision_file' => $path,
+            'user_revision_note' => $validated['user_revision_note'] ?? null,
+            'updated_by'         => $user->id,
+        ]);
+
+        return redirect()
+            ->route('sigap-inkubatorma.records', $inkubatorma->id)
+            ->with('success', 'File revisi berhasil diunggah.');
+    }
+
+    /**
+     * User konfirmasi selesai
+     */
+    public function confirmRecordFinish(Request $request, $id, $recordId)
+    {
+        $inkubatorma = Inkubatorma::findOrFail($id);
+        $record = InkubatormaRecord::where('inkubatorma_id', $inkubatorma->id)->findOrFail($recordId);
+        $user = Auth::user();
+
+        if (!$user || (int) $inkubatorma->created_by !== (int) $user->id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'finish_confirm_code' => ['required', 'string'],
+        ]);
+
+        if (strtoupper(trim($validated['finish_confirm_code'])) !== 'SELESAI') {
+            return back()
+                ->withErrors(['finish_confirm_code' => 'Konfirmasi gagal. Ketik SELESAI untuk melanjutkan.'])
+                ->withInput();
+        }
+
+        $record->update([
+            'user_confirmed_finish'    => true,
+            'user_confirmed_finish_at' => now(),
+            'updated_by'               => $user->id,
+        ]);
+
+        return redirect()
+            ->route('sigap-inkubatorma.records', $inkubatorma->id)
+            ->with('success', 'Konfirmasi selesai berhasil dikirim ke verifikator.');
     }
 
     public function destroy($id)
