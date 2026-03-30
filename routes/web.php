@@ -331,9 +331,8 @@ Route::prefix('/sigap-inkubatorma')->group(function () {
             ->whereNumber('recordId')
             ->name('sigap-inkubatorma.records.upload-revision');
 
-        Route::post('/{id}/records/{recordId}/confirm-finish', [SigapInkubatormaController::class, 'confirmRecordFinish'])
+        Route::post('/{id}/records/confirm-finish', [SigapInkubatormaController::class, 'confirmRecordFinish'])
             ->whereNumber('id')
-            ->whereNumber('recordId')
             ->name('sigap-inkubatorma.records.confirm-finish');
     });
 });

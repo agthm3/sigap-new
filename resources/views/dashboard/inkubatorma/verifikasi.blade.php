@@ -415,7 +415,7 @@
                 <div>
                   <label class="text-xs font-semibold text-gray-600">Tanggal</label>
                   <input name="tanggal_final" id="finalDate" type="date"
-                    value="{{ old('tanggal_final', optional($inkubatorma->tanggal_final)->format('Y-m-d')) }}"
+                  value="{{ old('tanggal_final', optional($inkubatorma->tanggal_final)->format('Y-m-d') ?? optional($inkubatorma->tanggal_usulan)->format('Y-m-d')) }}"
                     @disabled($isClosed)
                     class="mt-1 w-full rounded-lg border {{ $errors->has('tanggal_final') ? 'border-red-400' : 'border-gray-300' }} px-3 py-2 text-sm">
                   @error('tanggal_final') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
@@ -423,7 +423,7 @@
                 <div>
                   <label class="text-xs font-semibold text-gray-600">Jam</label>
                   <input name="jam_final" id="finalTime" type="time"
-                    value="{{ old('jam_final', $timeValue($inkubatorma->jam_final)) }}"
+                  value="{{ old('jam_final', $timeValue($inkubatorma->jam_final) ?: $timeValue($inkubatorma->jam_usulan)) }}"
                     @disabled($isClosed)
                     class="mt-1 w-full rounded-lg border {{ $errors->has('jam_final') ? 'border-red-400' : 'border-gray-300' }} px-3 py-2 text-sm">
                   @error('jam_final') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
@@ -435,8 +435,8 @@
                 <select name="metode_final" id="finalMode"
                   @disabled($isClosed)
                   class="mt-1 w-full rounded-lg border {{ $errors->has('metode_final') ? 'border-red-400' : 'border-gray-300' }} px-3 py-2 text-sm">
-                  <option value="online"  @selected(old('metode_final', $inkubatorma->metode_final) === 'online')>Online</option>
-                  <option value="offline" @selected(old('metode_final', $inkubatorma->metode_final) === 'offline')>Tatap Muka (Offline)</option>
+                  <option value="online"  @selected(old('metode_final', $inkubatorma->metode_final ?? $inkubatorma->metode_usulan) === 'online')>Online</option>
+                  <option value="offline" @selected(old('metode_final', $inkubatorma->metode_final ?? $inkubatorma->metode_usulan) === 'offline')>Offline</option>
                 </select>
                 @error('metode_final') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
               </div>

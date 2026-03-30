@@ -456,7 +456,7 @@
           
             $canEdit = in_array($status, [$statusMenunggu, $statusAkanDijadwalkan], true);
             $canVerify = ($status !== $statusSelesai);
-            $canOpenRecord = ($status === $statusSesiKonsultasi);
+            $canOpenRecord = in_array($status, [$statusSesiKonsultasi, $statusSelesai], true);
           @endphp
 
           <tr data-row
@@ -545,27 +545,31 @@
             
                 {{-- RECORD --}}
                 @if($isAdmin || $isVerifikator || $isUser)
-                  <div style="position:relative; display:inline-flex;">
-                    @if($canOpenRecord)
-                      <a href="{{ route('sigap-inkubatorma.records', ['id' => $row->id]) }}"
-                         style="width:30px;height:30px;min-width:30px;border-radius:6px;background:#0f766e;color:#fff;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;transition:opacity .15s;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" xmlns="http://www.w3.org/2000/svg">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 16h6M9 8h6"/>
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M5 3h10l4 4v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/>
-                        </svg>
-                      </a>
-                      <span style="position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px;white-space:nowrap;opacity:0;visibility:hidden;pointer-events:none;z-index:99;transition:opacity .15s;" class="tip">Record Konsultasi</span>
-                    @else
-                      <button type="button" disabled
-                         style="width:30px;height:30px;min-width:30px;border-radius:6px;background:#e5e7eb;color:#9ca3af;border:none;display:inline-flex;align-items:center;justify-content:center;cursor:not-allowed;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" xmlns="http://www.w3.org/2000/svg">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 16h6M9 8h6"/>
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M5 3h10l4 4v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/>
-                        </svg>
-                      </button>
-                      <span style="position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px;white-space:nowrap;opacity:0;visibility:hidden;pointer-events:none;z-index:99;transition:opacity .15s;" class="tip">Aktif saat Sesi Konsultasi</span>
-                    @endif
-                  </div>
+                <div style="position:relative; display:inline-flex;">
+                  @if($canOpenRecord)
+                    <a href="{{ route('sigap-inkubatorma.records', ['id' => $row->id]) }}"
+                      style="width:30px;height:30px;min-width:30px;border-radius:6px;background:#0f766e;color:#fff;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;transition:opacity .15s;"
+                      onmouseenter="this.nextElementSibling.style.opacity='1';this.nextElementSibling.style.visibility='visible';"
+                      onmouseleave="this.nextElementSibling.style.opacity='0';this.nextElementSibling.style.visibility='hidden';">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 16h6M9 8h6"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 3h10l4 4v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/>
+                      </svg>
+                    </a>
+                    <span style="position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px;white-space:nowrap;opacity:0;visibility:hidden;pointer-events:none;z-index:99;transition:opacity .15s;">Record Konsultasi</span>
+                  @else
+                    <button type="button" disabled
+                      style="width:30px;height:30px;min-width:30px;border-radius:6px;background:#e5e7eb;color:#9ca3af;border:none;display:inline-flex;align-items:center;justify-content:center;cursor:not-allowed;"
+                      onmouseenter="this.nextElementSibling.style.opacity='1';this.nextElementSibling.style.visibility='visible';"
+                      onmouseleave="this.nextElementSibling.style.opacity='0';this.nextElementSibling.style.visibility='hidden';">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 16h6M9 8h6"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 3h10l4 4v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/>
+                      </svg>
+                    </button>
+                    <span style="position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px;white-space:nowrap;opacity:0;visibility:hidden;pointer-events:none;z-index:99;transition:opacity .15s;">Belum ada record</span>
+                  @endif
+                </div>
                 @endif
             
                 {{-- EDIT --}}

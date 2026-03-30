@@ -123,8 +123,25 @@
         {{-- LEFT --}}
         <section class="lg:col-span-2 space-y-6">
 
+            {{-- BANNER SELESAI (tampil untuk semua role kalau sudah closed) --}}
+            @if($isClosed)
+            <div class="rounded-xl border border-green-200 bg-green-50 p-5 flex items-start gap-3">
+                <div class="mt-0.5 h-5 w-5 shrink-0 text-green-600">
+                    <svg viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="font-semibold text-green-800">Konsultasi Telah Selesai</p>
+                    <p class="text-sm text-green-700 mt-0.5">
+                        Sesi konsultasi ini sudah ditutup. Riwayat record tetap bisa dilihat di bawah.
+                    </p>
+                </div>
+            </div>
+            @endif
+
             {{-- FORM VERIFIKATOR --}}
-            @if($isVerifikator || $isAdmin)
+            @if(($isVerifikator || $isAdmin) && !$isClosed)
                 <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
                     <div class="px-5 py-4 border-b">
                         <h3 class="font-semibold text-gray-800">Tambah Record</h3>
@@ -271,7 +288,7 @@
                             </div>
                         @else
                             <form method="POST"
-                                  action="{{ route('sigap-inkubatorma.records.confirm-finish', [$inkubatorma->id, $latestRecord?->id ?? 0]) }}"
+                                  action="{{ route('sigap-inkubatorma.records.confirm-finish', $inkubatorma->id) }}"
                                   class="space-y-4">
                                 @csrf
 

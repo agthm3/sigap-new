@@ -995,8 +995,7 @@ class SigapInkubatormaController extends Controller
             'picUser',
             'verifikatorUser',
             'logs',
-            'records.creator',
-            'records.updater',
+            'records.actor',
         ])->findOrFail($id);
 
         $user = Auth::user();
@@ -1033,24 +1032,42 @@ class SigapInkubatormaController extends Controller
         }
 
         $validated = $request->validate([
-            'meeting_notes'      => ['required', 'string'],
-            'revision_notes'     => ['nullable', 'string'],
-            'revision_status'    => ['required', 'in:none,needs_revision,resolved'],
-            'is_final_confirmation_ready' => ['nullable', 'boolean'],
+            'record_type'   => ['nullable', 'string', 'in:sesi_konsultasi,review_revisi,catatan_umum'],
+            'title'         => ['required', 'string', 'max:255'],
+            'content'       => ['required', 'string'],
+            'revision_note' => ['nullable', 'string'],
+            'attachment'    => ['nullable', 'file', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,rar,jpg,jpeg,png', 'max:10240'],
         ]);
 
+        // Handle file upload
+        $filePath = null;
+        $fileName = null;
+        $fileMime = null;
+
+        if ($request->hasFile('attachment') && $request->file('attachment')->isValid()) {
+            $file     = $request->file('attachment');
+            $filePath = $file->store('inkubatorma/records', 'public');
+            $fileName = $file->getClientOriginalName();
+            $fileMime = $file->getMimeType();
+        }
+
+        // Tentukan actor_role otomatis
+        $actorRole = 'verifikator';
+        if ($user->hasRole('admin')) {
+            $actorRole = 'admin';
+        }
+
         InkubatormaRecord::create([
-            'inkubatorma_id'              => $inkubatorma->id,
-            'meeting_notes'               => $validated['meeting_notes'],
-            'revision_notes'              => $validated['revision_notes'] ?? null,
-            'revision_status'             => $validated['revision_status'],
-            'user_revision_file'          => null,
-            'user_revision_note'          => null,
-            'user_confirmed_finish'       => false,
-            'user_confirmed_finish_at'    => null,
-            'is_final_confirmation_ready' => (bool) ($validated['is_final_confirmation_ready'] ?? false),
-            'created_by'                  => $user->id,
-            'updated_by'                  => $user->id,
+            'inkubatorma_id' => $inkubatorma->id,
+            'actor_id'       => $user->id,
+            'actor_role'     => $actorRole,
+            'record_type'    => $validated['record_type'] ?? 'sesi_konsultasi',
+            'title'          => $validated['title'],
+            'content'        => $validated['content'],
+            'revision_note'  => $validated['revision_note'] ?? null,
+            'file_path'      => $filePath,
+            'file_name'      => $fileName,
+            'file_mime'      => $fileMime,
         ]);
 
         return redirect()
@@ -1072,23 +1089,20 @@ class SigapInkubatormaController extends Controller
         }
 
         $validated = $request->validate([
-            'meeting_notes'      => ['required', 'string'],
-            'revision_notes'     => ['nullable', 'string'],
-            'revision_status'    => ['required', 'in:none,needs_revision,resolved'],
-            'is_final_confirmation_ready' => ['nullable', 'boolean'],
+            'title'         => ['required', 'string', 'max:255'],
+            'content'       => ['required', 'string'],
+            'revision_note' => ['nullable', 'string'],
         ]);
 
         $record->update([
-            'meeting_notes'               => $validated['meeting_notes'],
-            'revision_notes'              => $validated['revision_notes'] ?? null,
-            'revision_status'             => $validated['revision_status'],
-            'is_final_confirmation_ready' => (bool) ($validated['is_final_confirmation_ready'] ?? false),
-            'updated_by'                  => $user->id,
+            'title'         => $validated['title'],
+            'content'       => $validated['content'],
+            'revision_note' => $validated['revision_note'] ?? null,
         ]);
 
         return redirect()
             ->route('sigap-inkubatorma.records', $inkubatorma->id)
-            ->with('success', 'Record konsultasi berhasil diperbarui.');
+            ->with('success', 'Record berhasil diperbarui.');
     }
 
     /**
@@ -1097,29 +1111,34 @@ class SigapInkubatormaController extends Controller
     public function uploadRecordRevision(Request $request, $id, $recordId)
     {
         $inkubatorma = Inkubatorma::findOrFail($id);
-        $record = InkubatormaRecord::where('inkubatorma_id', $inkubatorma->id)->findOrFail($recordId);
         $user = Auth::user();
 
         if (!$user || (int) $inkubatorma->created_by !== (int) $user->id) {
             abort(403);
         }
 
-        $validated = $request->validate([
+        $request->validate([
             'user_revision_file' => ['required', 'file', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,rar,jpg,jpeg,png', 'max:10240'],
             'user_revision_note' => ['nullable', 'string'],
         ]);
 
-        $path = $request->file('user_revision_file')->store('inkubatorma/revisions', 'public');
+        $file     = $request->file('user_revision_file');
+        $filePath = $file->store('inkubatorma/revisions', 'public');
+        $fileName = $file->getClientOriginalName();
+        $fileMime = $file->getMimeType();
 
-        // hapus file lama kalau ada
-        if (!empty($record->user_revision_file) && Storage::disk('public')->exists($record->user_revision_file)) {
-            Storage::disk('public')->delete($record->user_revision_file);
-        }
-
-        $record->update([
-            'user_revision_file' => $path,
-            'user_revision_note' => $validated['user_revision_note'] ?? null,
-            'updated_by'         => $user->id,
+        // Simpan sebagai record baru bertipe upload_revisi
+        InkubatormaRecord::create([
+            'inkubatorma_id' => $inkubatorma->id,
+            'actor_id'       => $user->id,
+            'actor_role'     => 'user',
+            'record_type'    => 'upload_revisi',
+            'title'          => 'Upload Hasil Revisi',
+            'content'        => $request->input('user_revision_note') ?? 'User mengupload dokumen hasil revisi.',
+            'revision_note'  => null,
+            'file_path'      => $filePath,
+            'file_name'      => $fileName,
+            'file_mime'      => $fileMime,
         ]);
 
         return redirect()
@@ -1130,10 +1149,9 @@ class SigapInkubatormaController extends Controller
     /**
      * User konfirmasi selesai
      */
-    public function confirmRecordFinish(Request $request, $id, $recordId)
+    public function confirmRecordFinish(Request $request, $id) 
     {
         $inkubatorma = Inkubatorma::findOrFail($id);
-        $record = InkubatormaRecord::where('inkubatorma_id', $inkubatorma->id)->findOrFail($recordId);
         $user = Auth::user();
 
         if (!$user || (int) $inkubatorma->created_by !== (int) $user->id) {
@@ -1150,10 +1168,18 @@ class SigapInkubatormaController extends Controller
                 ->withInput();
         }
 
-        $record->update([
-            'user_confirmed_finish'    => true,
-            'user_confirmed_finish_at' => now(),
-            'updated_by'               => $user->id,
+        // Simpan sebagai record baru bertipe konfirmasi_selesai
+        InkubatormaRecord::create([
+            'inkubatorma_id' => $inkubatorma->id,
+            'actor_id'       => $user->id,
+            'actor_role'     => 'user',
+            'record_type'    => 'konfirmasi_selesai',
+            'title'          => 'Konfirmasi Selesai oleh User',
+            'content'        => 'User menyatakan konsultasi sudah selesai dan tidak memerlukan tindak lanjut.',
+            'revision_note'  => null,
+            'file_path'      => null,
+            'file_name'      => null,
+            'file_mime'      => null,
         ]);
 
         return redirect()
