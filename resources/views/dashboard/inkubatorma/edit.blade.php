@@ -352,6 +352,8 @@
                 {{-- Chip file baru yang dipilih --}}
                 <div id="lampiranBaruChips" class="flex flex-wrap gap-2 mt-2"></div>
                 <p id="lampiranEditError" class="mt-1 text-xs text-red-600 hidden">⚠ Total lampiran tidak boleh lebih dari 3 file.</p>
+                <p id="lampiranEditErrorFormat" class="mt-1 text-xs text-red-600 hidden">⚠ Hanya file PDF, DOC, atau DOCX yang diperbolehkan.</p>
+<p id="lampiranEditErrorSize" class="mt-1 text-xs text-red-600 hidden">⚠ Ukuran file tidak boleh melebihi 100MB.</p>
 
                 @error('lampiran')
                     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -693,6 +695,12 @@
   const chipsBaru      = document.getElementById('lampiranBaruChips');
   const MAX            = 3;
 
+  const errorFormat   = document.getElementById('lampiranEditErrorFormat');
+  const errorSize     = document.getElementById('lampiranEditErrorSize');
+  const formatAllowed = ['application/pdf', 'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+  const MAX_MB = 100;
+
   // hitung file lama yang masih aktif (belum dihapus)
   let jumlahLama = {{ count($inkubatorma->lampiran ?? []) }};
   let selectedFiles = [];
@@ -716,26 +724,42 @@
   };
 
   if (inputBaru) {
-    inputBaru.addEventListener('change', function () {
-      errorMsg.classList.add('hidden');
-      const incoming = Array.from(this.files);
+      inputBaru.addEventListener('change', function () {
+          errorMsg.classList.add('hidden');
+          errorFormat.classList.add('hidden');
+          errorSize.classList.add('hidden');
 
-      incoming.forEach(f => {
-        if (!selectedFiles.find(x => x.name === f.name)) {
-          selectedFiles.push(f);
-        }
+          const incoming = Array.from(this.files);
+          let adaFormatSalah = false;
+          let adaMelebihi    = false;
+
+          incoming.forEach(f => {
+              if (!formatAllowed.includes(f.type)) {
+                  adaFormatSalah = true;
+                  return;
+              }
+              if (f.size > MAX_MB * 1024 * 1024) {
+                  adaMelebihi = true;
+                  return;
+              }
+              if (!selectedFiles.find(x => x.name === f.name)) {
+                  selectedFiles.push(f);
+              }
+          });
+
+          if (adaFormatSalah) errorFormat.classList.remove('hidden');
+          if (adaMelebihi)    errorSize.classList.remove('hidden');
+
+          const total = jumlahLama + selectedFiles.length;
+          if (total > MAX) {
+              const boleh = Math.max(0, MAX - jumlahLama);
+              selectedFiles = selectedFiles.slice(0, boleh);
+              errorMsg.classList.remove('hidden');
+          }
+
+          syncInput();
+          renderChipsBaru();
       });
-
-      const total = jumlahLama + selectedFiles.length;
-      if (total > MAX) {
-        const boleh = Math.max(0, MAX - jumlahLama);
-        selectedFiles = selectedFiles.slice(0, boleh);
-        errorMsg.classList.remove('hidden');
-      }
-
-      syncInput();
-      renderChipsBaru();
-    });
   }
 
   function removeNewFile(name) {

@@ -383,6 +383,8 @@
                         {{-- Chip nama file --}}
                         <div id="lampiranChips" class="flex flex-wrap gap-2 mt-3"></div>
                         <p id="lampiranError" class="mt-1 text-xs text-red-600 hidden">⚠ Maksimal 3 file diperbolehkan.</p>
+                        <p id="lampiranErrorFormat" class="mt-1 text-xs text-red-600 hidden">⚠ Hanya file PDF, DOC, atau DOCX yang diperbolehkan.</p>
+                        <p id="lampiranErrorSize" class="mt-1 text-xs text-red-600 hidden">⚠ Ukuran file tidak boleh melebihi 100MB.</p>
 
                         @error('lampiran')
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -703,21 +705,42 @@
     const container = document.getElementById('selectedLayananContainer');
 
     // bisa 3 file
-    const input    = document.getElementById('lampiranInput');
-    const chips    = document.getElementById('lampiranChips');
-    const errorMsg = document.getElementById('lampiranError');
-    const MAX      = 3;
+    const input       = document.getElementById('lampiranInput');
+    const chips       = document.getElementById('lampiranChips');
+    const errorMsg    = document.getElementById('lampiranError');
+    const errorFormat = document.getElementById('lampiranErrorFormat');
+    const errorSize   = document.getElementById('lampiranErrorSize');
+    const MAX         = 3;
+    const formatAllowed = ['application/pdf', 'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const MAX_MB = 100;
     let selectedFiles = [];
 
     input.addEventListener('change', function () {
         errorMsg.classList.add('hidden');
+        errorFormat.classList.add('hidden');
+        errorSize.classList.add('hidden');
+
         const incoming = Array.from(this.files);
+        let adaFormatSalah = false;
+        let adaMelebihi    = false;
 
         incoming.forEach(f => {
+            if (!formatAllowed.includes(f.type)) {
+                adaFormatSalah = true;
+                return;
+            }
+            if (f.size > MAX_MB * 1024 * 1024) {
+                adaMelebihi = true;
+                return;
+            }
             if (!selectedFiles.find(x => x.name === f.name)) {
                 selectedFiles.push(f);
             }
         });
+
+        if (adaFormatSalah) errorFormat.classList.remove('hidden');
+        if (adaMelebihi)    errorSize.classList.remove('hidden');
 
         if (selectedFiles.length > MAX) {
             selectedFiles = selectedFiles.slice(0, MAX);
