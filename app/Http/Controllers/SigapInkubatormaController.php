@@ -195,9 +195,10 @@ class SigapInkubatormaController extends Controller
             ->pluck('total', 'status');
 
         $ringkasanStatus = [
-            Inkubatorma::STATUS_MENUNGGU  => (int) ($statusCounts[Inkubatorma::STATUS_MENUNGGU] ?? 0),
-            Inkubatorma::STATUS_TERJADWAL => (int) ($statusCounts[Inkubatorma::STATUS_TERJADWAL] ?? 0),
-            Inkubatorma::STATUS_SELESAI   => (int) ($statusCounts[Inkubatorma::STATUS_SELESAI] ?? 0),
+            Inkubatorma::STATUS_MENUNGGU        => (int) ($statusCounts[Inkubatorma::STATUS_MENUNGGU] ?? 0),
+            Inkubatorma::STATUS_TERJADWAL       => (int) ($statusCounts[Inkubatorma::STATUS_TERJADWAL] ?? 0),
+            Inkubatorma::STATUS_SESI_KONSULTASI => (int) ($statusCounts[Inkubatorma::STATUS_SESI_KONSULTASI] ?? 0),
+            Inkubatorma::STATUS_SELESAI         => (int) ($statusCounts[Inkubatorma::STATUS_SELESAI] ?? 0),
         ];
 
         // =========================
@@ -218,16 +219,17 @@ class SigapInkubatormaController extends Controller
         }
 
         foreach ($ids as $id) {
-            $label = $layananOptions[$id] ?? (string) $id;
-
-            if ($id === 'lainnya' && !empty($row->layanan_lainnya)) {
-                $label = ($layananOptions['lainnya'] ?? 'Lainnya') . ' • ' . $row->layanan_lainnya;
+            // Semua 'lainnya' dijadikan satu group, apapun isi layanan_lainnya-nya
+            if ($id === 'lainnya') {
+                $label = 'Lainnya';
+            } else {
+                $label = $layananOptions[$id] ?? (string) $id;
             }
-
+        
             if (!isset($layananCounter[$label])) {
                 $layananCounter[$label] = 0;
             }
-
+        
             $layananCounter[$label]++;
         }
         }
@@ -426,9 +428,10 @@ class SigapInkubatormaController extends Controller
             ->pluck('total', 'status');
 
         $ringkasanStatus = [
-            Inkubatorma::STATUS_MENUNGGU  => (int) ($statusCounts[Inkubatorma::STATUS_MENUNGGU] ?? 0),
-            Inkubatorma::STATUS_TERJADWAL => (int) ($statusCounts[Inkubatorma::STATUS_TERJADWAL] ?? 0),
-            Inkubatorma::STATUS_SELESAI   => (int) ($statusCounts[Inkubatorma::STATUS_SELESAI] ?? 0),
+            Inkubatorma::STATUS_MENUNGGU        => (int) ($statusCounts[Inkubatorma::STATUS_MENUNGGU] ?? 0),
+            Inkubatorma::STATUS_TERJADWAL       => (int) ($statusCounts[Inkubatorma::STATUS_TERJADWAL] ?? 0),
+            Inkubatorma::STATUS_SESI_KONSULTASI => (int) ($statusCounts[Inkubatorma::STATUS_SESI_KONSULTASI] ?? 0), // ← tambah ini
+            Inkubatorma::STATUS_SELESAI         => (int) ($statusCounts[Inkubatorma::STATUS_SELESAI] ?? 0),
         ];
 
         // =========================
@@ -449,16 +452,17 @@ class SigapInkubatormaController extends Controller
         }
 
         foreach ($ids as $id) {
-            $label = $layananOptions[$id] ?? (string) $id;
-
-            if ($id === 'lainnya' && !empty($row->layanan_lainnya)) {
-                $label = ($layananOptions['lainnya'] ?? 'Lainnya') . ' • ' . $row->layanan_lainnya;
+            // Semua 'lainnya' dijadikan satu group, apapun isi layanan_lainnya-nya
+            if ($id === 'lainnya') {
+                $label = 'Lainnya';
+            } else {
+                $label = $layananOptions[$id] ?? (string) $id;
             }
-
+        
             if (!isset($layananCounter[$label])) {
                 $layananCounter[$label] = 0;
             }
-
+        
             $layananCounter[$label]++;
         }
         }

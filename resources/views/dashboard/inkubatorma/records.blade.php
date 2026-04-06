@@ -37,13 +37,18 @@
         })
         ->implode(', ');
 
+    // Cari record terbaru dari verifikator (bukan dari user)
+    $latestVerifikatorRecord = $inkubatorma->records
+        ->whereIn('actor_role', ['admin', 'verifikator'])
+        ->whereIn('record_type', ['sesi_konsultasi', 'review_revisi'])
+        ->where(fn($r) => !empty($r->revision_note))
+        ->first();
+
     $latestRecord = $inkubatorma->records->first();
 
     $userCanUploadRevision = $isUser
         && !$isClosed
-        && $latestRecord
-        && in_array($latestRecord->record_type, ['sesi_konsultasi', 'review_revisi'], true)
-        && !empty($latestRecord->revision_note);
+        && $latestVerifikatorRecord !== null;  // cukup cek ada record verifikator dengan revision_note
 
     $userCanConfirmFinish = $isUser && !$isClosed;
 
@@ -234,14 +239,14 @@
 
                     <div class="p-5">
                         <form method="POST"
-                              action="{{ route('sigap-inkubatorma.records.upload-revision', [$inkubatorma->id, $latestRecord->id]) }}"
-                              enctype="multipart/form-data"
-                              class="space-y-4">
+                            action="{{ route('sigap-inkubatorma.records.upload-revision', [$inkubatorma->id, $latestVerifikatorRecord->id]) }}"
+                            enctype="multipart/form-data"
+                            class="space-y-4">
                             @csrf
 
                             <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
                                 <p class="font-semibold">Catatan revisi terbaru:</p>
-                                <p class="mt-1 whitespace-pre-line">{{ $latestRecord->revision_note }}</p>
+                                <p class="mt-1 whitespace-pre-line">{{ $latestVerifikatorRecord->revision_note }}</p>
                             </div>
 
                             <div>
