@@ -194,7 +194,8 @@
                             Pilih Layanan <span class="text-red-600">*</span>
                         </label>
 
-                        <select name="layanan[]" id="layananSelectNative" multiple required class="hidden">
+                       <select name="layanan[]" id="layananSelectNative" multiple required
+                            style="position:absolute; left:0; top:40px; width:100%; height:1px; opacity:0; pointer-events:none; overflow:hidden;">
                             @foreach (($layananOptions ?? []) as $id => $nama)
                                 <option value="{{ $id }}" @selected(in_array($id, $selectedLayanan ?? []))>{{ $nama }}</option>
                             @endforeach
@@ -379,6 +380,13 @@
                                 file:text-sm file:font-semibold
                                 file:bg-maroon file:text-white
                                 hover:file:bg-maroon-800">
+                        
+                        {{-- Dummy input untuk trigger validasi browser --}}
+                        <input type="text"
+                            id="lampiranDummy"
+                            tabindex="-1"
+                            aria-hidden="true"
+                            style="position:absolute; left:0; width:100%; height:1px; opacity:0; pointer-events:none; overflow:hidden;">
 
                         {{-- Chip nama file --}}
                         <div id="lampiranChips" class="flex flex-wrap gap-2 mt-3"></div>
@@ -715,6 +723,9 @@
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
     const MAX_MB = 100;
     let selectedFiles = [];
+    // input.setCustomValidity('Upload minimal 1 file lampiran.'); 
+    // const lampiranDummy = document.getElementById('lampiranDummy');
+    // lampiranDummy.setCustomValidity('Upload minimal 1 file lampiran.');
 
     input.addEventListener('change', function () {
         errorMsg.classList.add('hidden');
@@ -1133,6 +1144,11 @@
             opt.selected = selectedValues.includes(opt.value);
         });
 
+        // Beritahu browser valid/tidak
+        native.setCustomValidity(
+            selectedValues.length === 0 ? 'Pilih minimal 1 layanan.' : ''
+        );
+
         label.textContent = selectedValues.length
             ? selectedValues.map(v => layananOptions[v] ?? v).join(', ')
             : '— Pilih maksimal 2 layanan —';
@@ -1192,6 +1208,14 @@
         const dt = new DataTransfer();
         selectedFiles.forEach(f => dt.items.add(f));
         input.files = dt.files;
+
+        // Untuk alert input
+        input.setCustomValidity(
+            selectedFiles.length === 0 ? 'Upload minimal 1 file lampiran.' : ''
+        );
+        // lampiranDummy.setCustomValidity(
+        //     selectedFiles.length === 0 ? 'Upload minimal 1 file lampiran.' : ''
+        // );
     }
 
     function renderChips() {
@@ -1211,6 +1235,78 @@
         });
     }
 
+    // ====== VALIDASI SUBMIT ======
+    const form = document.querySelector('form[enctype="multipart/form-data"]');
+
+    form?.addEventListener('submit', function (e) {
+        syncInput(); // WAJIB biar file masuk ke input
+        
+        let firstError = null;
+
+        // --- CEK LAYANAN ---
+        const layananError = document.getElementById('layananValidasiError');
+        if (selectedValues.length === 0) {
+            e.preventDefault();
+            if (!layananError) {
+                const p = document.createElement('p');
+                p.id = 'layananValidasiError';
+                p.className = 'mt-1 text-xs text-red-600';
+                p.textContent = '⚠ Pilih minimal 1 layanan.';
+                document.getElementById('layananDropdownWrap')?.appendChild(p);
+            }
+            firstError = firstError ?? document.getElementById('layananDropdownWrap');
+        } else {
+            layananError?.remove();
+        }
+
+        // --- CEK LAYANAN LAINNYA ---
+        const lainnyaError = document.getElementById('lainnyaValidasiError');
+        if (selectedValues.includes('lainnya')) {
+            const lainnyaVal = document.getElementById('layanan_lainnya')?.value?.trim();
+            if (!lainnyaVal) {
+                e.preventDefault();
+                if (!lainnyaError) {
+                    const p = document.createElement('p');
+                    p.id = 'lainnyaValidasiError';
+                    p.className = 'mt-1 text-xs text-red-600';
+                    p.textContent = '⚠ Tuliskan spesifikasi layanan lainnya.';
+                    document.getElementById('layananLainnyaWrap')?.appendChild(p);
+                }
+                firstError = firstError ?? document.getElementById('layananLainnyaWrap');
+            } else {
+                lainnyaError?.remove();
+            }
+        } else {
+            lainnyaError?.remove();
+        }
+
+        // --- CEK LAMPIRAN ---
+        // const lampiranError2 = document.getElementById('lampiranValidasiError');
+        // if (selectedFiles.length === 0) {
+        //     e.preventDefault();
+        //     if (!lampiranError2) {
+        //         const p = document.createElement('p');
+        //         p.id = 'lampiranValidasiError';
+        //         p.className = 'mt-1 text-xs text-red-600';
+        //         p.textContent = '⚠ Upload minimal 1 file lampiran.';
+        //         document.getElementById('lampiranInput')?.parentElement.appendChild(p);
+        //     }
+        //     firstError = firstError ?? document.getElementById('lampiranInput');
+        // } else {
+        //     lampiranError2?.remove();
+        // }
+
+        // --- SCROLL KE ERROR PERTAMA ---
+        if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // 🔥 TRIGGER VALIDASI BROWSER
+        if (!this.checkValidity()) {
+            e.preventDefault();
+            this.reportValidity();
+        }
+    });
 })();
 </script>
 @endpush
