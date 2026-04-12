@@ -87,31 +87,31 @@
                 <div class="mt-8 space-y-6">
                     <div class="flex gap-4">
                         <div class="shrink-0 w-12 h-12 rounded-xl bg-maroon/10 text-maroon flex items-center justify-center">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.3-4.3M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></svg>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9l-4 4v-4H3a2 2 0 01-2-2V10a2 2 0 012-2h2M9 21V5a2 2 0 012-2h2a2 2 0 012 2v16"></path></svg>
                         </div>
                         <div>
-                            <h4 class="font-bold text-gray-900">Pencarian & Filter</h4>
-                            <p class="text-sm text-gray-600">Saring inovasi berdasarkan OPD, tahapan, dan program prioritas secara cepat.</p>
+                            <h4 class="font-bold text-gray-900">Konsultasi Eksklusif</h4>
+                            <p class="text-sm text-gray-600">Ajukan pertemuan tatap muka atau daring dengan tim ahli BRIDA untuk bedah ide inovasi Anda.</p>
                         </div>
                     </div>
 
                     <div class="flex gap-4">
                         <div class="shrink-0 w-12 h-12 rounded-xl bg-maroon/10 text-maroon flex items-center justify-center">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2L3 7v7c0 5 4 9 9 9s9-4 9-9V7l-9-5z"/><path stroke-width="2" d="M9 14l2 2 4-4"/></svg>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                         </div>
                         <div>
-                            <h4 class="font-bold text-gray-900">Tahapan & KPI</h4>
-                            <p class="text-sm text-gray-600">Pantau progres inovasi dari Inisiatif hingga Penerapan dengan indikator terukur.</p>
+                            <h4 class="font-bold text-gray-900">Penjadwalan Fleksibel</h4>
+                            <p class="text-sm text-gray-600">Pilih waktu dan personil pendamping yang sesuai dengan ketersediaan jadwal Anda secara real-time.</p>
                         </div>
                     </div>
 
                     <div class="flex gap-4">
                         <div class="shrink-0 w-12 h-12 rounded-xl bg-maroon/10 text-maroon flex items-center justify-center">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M3 6h18M7 6v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V6"/></svg>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
                         </div>
                         <div>
-                            <h4 class="font-bold text-gray-900">Evidence & Audit</h4>
-                            <p class="text-sm text-gray-600">Dokumentasi 20 indikator evidence dan log aktivitas untuk transparansi penuh.</p>
+                            <h4 class="font-bold text-gray-900">Log Aktivitas</h4>
+                            <p class="text-sm text-gray-600">Setiap riwayat konsultasi dan akses data privasi dicatat secara ketat demi keamanan data bersama.</p>
                         </div>
                     </div>
                 </div>
