@@ -366,7 +366,7 @@
                             Lampiran Surat / Permohonan <span class="text-red-600">*</span>
                         </label>
                         <p class="mt-1 text-sm text-gray-600">
-                            Upload surat permohonan (PDF/DOC/DOCX, maks. <strong>3 file</strong>, maks. 100MB/file)
+                            Upload surat permohonan (PDF/DOC/DOCX, maks. <strong>3 file</strong>, maks. 10MB/file)
                         </p>
 
                         <input type="file"
@@ -392,7 +392,7 @@
                         <div id="lampiranChips" class="flex flex-wrap gap-2 mt-3"></div>
                         <p id="lampiranError" class="mt-1 text-xs text-red-600 hidden">⚠ Maksimal 3 file diperbolehkan.</p>
                         <p id="lampiranErrorFormat" class="mt-1 text-xs text-red-600 hidden">⚠ Hanya file PDF, DOC, atau DOCX yang diperbolehkan.</p>
-                        <p id="lampiranErrorSize" class="mt-1 text-xs text-red-600 hidden">⚠ Ukuran file tidak boleh melebihi 100MB.</p>
+                        <p id="lampiranErrorSize" class="mt-1 text-xs text-red-600 hidden">⚠ Ukuran file tidak boleh melebihi 10MB.</p>
 
                         @error('lampiran')
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -721,7 +721,7 @@
     const MAX         = 3;
     const formatAllowed = ['application/pdf', 'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    const MAX_MB = 100;
+    const MAX_MB = 10;
     let selectedFiles = [];
     // input.setCustomValidity('Upload minimal 1 file lampiran.'); 
     // const lampiranDummy = document.getElementById('lampiranDummy');

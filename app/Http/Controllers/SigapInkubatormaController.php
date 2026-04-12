@@ -603,7 +603,7 @@ class SigapInkubatormaController extends Controller
             'pegawai_id'       => ['nullable', 'exists:users,id'],
 
             'lampiran' => ['required','array','max:3'],
-            'lampiran.*' => ['file','mimes:pdf,doc,docx','max:102400'], // 100MB
+            'lampiran.*' => ['file','mimes:pdf,doc,docx','max:10240'], // 10MB
         ]);
 
         $layananLainnya = in_array('lainnya', $validated['layanan'])
