@@ -76,60 +76,59 @@
 </section>
 
 <!-- FITUR -->
-<section id="fitur" class="py-14 bg-white">
+<section id="fitur" class="py-14 bg-white border-b border-gray-100">
     <div class="max-w-7xl mx-auto px-4">
-        <div class="text-center max-w-2xl mx-auto">
-            <h3 class="text-2xl sm:text-3xl font-extrabold text-maroon tracking-tight">Fitur Utama</h3>
-            <p class="mt-3 text-gray-600">Ekosistem pendampingan riset yang terukur untuk mencetak inovator unggul di Kota Makassar.</p>
-        </div>
+        <div class="grid lg:grid-cols-2 gap-12 items-stretch">
+            {{-- Fitur Utama --}}
+            <div class="flex flex-col justify-center">
+                <h3 class="text-2xl sm:text-3xl font-extrabold text-maroon tracking-tight">Fitur Utama</h3>
+                <p class="mt-3 text-gray-600">Ekosistem pendampingan riset yang terukur untuk mencetak inovator unggul di Kota Makassar.</p>
 
-        <div class="mt-10 grid md:grid-cols-3 gap-6">
-            <div class="p-6 rounded-xl border border-gray-200 hover:shadow-lg transition">
-                <div class="w-10 h-10 rounded-lg bg-maroon/10 text-maroon flex items-center justify-center">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9l-4 4v-4H3a2 2 0 01-2-2V10a2 2 0 012-2h2M9 21V5a2 2 0 012-2h2a2 2 0 012 2v16"></path></svg>
+                <div class="mt-8 space-y-6">
+                    <div class="flex gap-4">
+                        <div class="shrink-0 w-12 h-12 rounded-xl bg-maroon/10 text-maroon flex items-center justify-center">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.3-4.3M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></svg>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-900">Pencarian & Filter</h4>
+                            <p class="text-sm text-gray-600">Saring inovasi berdasarkan OPD, tahapan, dan program prioritas secara cepat.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <div class="shrink-0 w-12 h-12 rounded-xl bg-maroon/10 text-maroon flex items-center justify-center">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2L3 7v7c0 5 4 9 9 9s9-4 9-9V7l-9-5z"/><path stroke-width="2" d="M9 14l2 2 4-4"/></svg>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-900">Tahapan & KPI</h4>
+                            <p class="text-sm text-gray-600">Pantau progres inovasi dari Inisiatif hingga Penerapan dengan indikator terukur.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <div class="shrink-0 w-12 h-12 rounded-xl bg-maroon/10 text-maroon flex items-center justify-center">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M3 6h18M7 6v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V6"/></svg>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-900">Evidence & Audit</h4>
+                            <p class="text-sm text-gray-600">Dokumentasi 20 indikator evidence dan log aktivitas untuk transparansi penuh.</p>
+                        </div>
+                    </div>
                 </div>
-                <h4 class="mt-4 font-semibold text-gray-900">Konsultasi Eksklusif</h4>
-                <p class="mt-1 text-sm text-gray-600">Ajukan pertemuan tatap muka atau daring dengan tim ahli BRIDA untuk bedah ide inovasi Anda.</p>
             </div>
-
-            <div class="p-6 rounded-xl border border-gray-200 hover:shadow-lg transition">
-                <div class="w-10 h-10 rounded-lg bg-maroon/10 text-maroon flex items-center justify-center">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            {{-- Video --}}
+            <div class="relative">
+                <div class="aspect-w-16 aspect-h-9 rounded-2xl overflow-hidden shadow-2xl border-4 border-white">
+                    <iframe 
+                            class="w-full h-[300px] sm:h-[380px]"
+                            src="https://www.youtube.com/embed/VIDEO_ID" 
+                            title="Penjelasan SIGAP Inovasi" 
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen>
+                    </iframe>
                 </div>
-                <h4 class="mt-4 font-semibold text-gray-900">Penjadwalan Fleksibel</h4>
-                <p class="mt-1 text-sm text-gray-600">Pilih waktu dan personil pendamping yang sesuai dengan ketersediaan jadwal Anda secara real-time.</p>
-            </div>
-
-            <div class="p-6 rounded-xl border border-gray-200 hover:shadow-lg transition">
-                <div class="w-10 h-10 rounded-lg bg-maroon/10 text-maroon flex items-center justify-center">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                </div>
-                <h4 class="mt-4 font-semibold text-gray-900">Log Aktivitas Keamanan</h4>
-                <p class="mt-1 text-sm text-gray-600">Setiap riwayat konsultasi dan akses data privasi dicatat secara ketat demi keamanan data bersama.</p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- 3 LANGKAH MUDAH -->
-<section id="cara" class="py-12 bg-gray-50">
-    <div class="max-w-7xl mx-auto px-4">
-        <div class="max-w-2xl mx-auto text-center">
-            <h2 class="text-2xl sm:text-3xl font-extrabold text-maroon">3 Langkah Mudah</h2>
-        </div>
-
-        <div class="mt-8 grid md:grid-cols-3 gap-4">
-            <div class="rounded-2xl bg-white border border-gray-200 p-6">
-                <p class="text-sm font-semibold text-maroon">1) Isi Data Singkat</p>
-                <p class="mt-2 text-base text-gray-700">Nama, instansi, keperluan, dan pilih tanggal & jam.</p>
-            </div>
-            <div class="rounded-2xl bg-white border border-gray-200 p-6">
-                <p class="text-sm font-semibold text-maroon">2) Klik “Kirim”</p>
-                <p class="mt-2 text-base text-gray-700">Pengajuan masuk ke admin BRIDA untuk diperiksa.</p>
-            </div>
-            <div class="rounded-2xl bg-white border border-gray-200 p-6">
-                <p class="text-sm font-semibold text-maroon">3) Tunggu Konfirmasi</p>
-                <p class="mt-2 text-base text-gray-700">Admin menghubungi Anda (WhatsApp/telepon) untuk jadwal final.</p>
+                <div class="absolute -bottom-4 -right-4 w-24 h-24 bg-maroon/10 rounded-full -z-10"></div>
             </div>
         </div>
     </div>
@@ -523,7 +522,7 @@
             </div>
 
             <!-- LIST JADWAL -->
-            <div class="space-y-4 h-[845px] overflow-y-auto pr-2">
+            <div class="space-y-4 h-[1050px] overflow-y-auto pr-2">
                 @forelse ($jadwals as $j)
                     @php
                         $pakaiFinal = in_array($j->status, [
@@ -614,6 +613,30 @@
                         Belum ada jadwal tersedia.
                     </p>
                 @endforelse
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 3 LANGKAH MUDAH -->
+<section id="cara" class="py-12 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="max-w-2xl mx-auto text-center">
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-maroon">3 Langkah Mudah</h2>
+        </div>
+
+        <div class="mt-8 grid md:grid-cols-3 gap-4">
+            <div class="rounded-2xl bg-white border border-gray-200 p-6">
+                <p class="text-sm font-semibold text-maroon">1) Isi Data Singkat</p>
+                <p class="mt-2 text-base text-gray-700">Nama, instansi, keperluan, dan pilih tanggal & jam.</p>
+            </div>
+            <div class="rounded-2xl bg-white border border-gray-200 p-6">
+                <p class="text-sm font-semibold text-maroon">2) Klik “Kirim”</p>
+                <p class="mt-2 text-base text-gray-700">Pengajuan masuk ke admin BRIDA untuk diperiksa.</p>
+            </div>
+            <div class="rounded-2xl bg-white border border-gray-200 p-6">
+                <p class="text-sm font-semibold text-maroon">3) Tunggu Konfirmasi</p>
+                <p class="mt-2 text-base text-gray-700">Admin menghubungi Anda (WhatsApp/telepon) untuk jadwal final.</p>
             </div>
         </div>
     </div>
