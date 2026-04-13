@@ -11,10 +11,7 @@ class InkubatormaStatusUpdateNotification extends Notification
 {
     use Queueable;
 
-    public function __construct(
-        public Inkubatorma $inkubatorma,
-        public bool $isVerifikator = false,
-    ) {}
+    public function __construct(public Inkubatorma $inkubatorma) {}
 
     public function via(object $notifiable): array
     {
@@ -23,63 +20,48 @@ class InkubatormaStatusUpdateNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $detailUrl = route('sigap-inkubatorma.detail', ['id' => $this->inkubatorma->id]);
+        $detailUrl = 'https://sigap.brida.makassarkota.go.id/sigap-inkubatorma/' . $this->inkubatorma->id . '/detail';
 
-        $judul        = $this->inkubatorma->judul_konsultasi ?? '-';
-        $pengaju      = $this->inkubatorma->nama_pengaju ?? '-';
-        $opd          = $this->inkubatorma->opd_unit ?? '-';
-        $layanan      = $this->inkubatorma->layanan_nama ?? '-';
-        $status       = $this->inkubatorma->status ?? 'Menunggu';
+        $judul   = $this->inkubatorma->judul_konsultasi ?? '-';
+        $status  = $this->inkubatorma->status ?? '-';
+        $layanan = $this->inkubatorma->layanan_nama ?? '-';
 
-        $jadwalUsulan = '—';
-        if (!empty($this->inkubatorma->tanggal_usulan)) {
-            $jadwalUsulan = \Carbon\Carbon::parse($this->inkubatorma->tanggal_usulan)
-                            ->timezone('Asia/Makassar')
-                            ->translatedFormat('d F Y');
-            if (!empty($this->inkubatorma->jam_usulan)) {
-                $jadwalUsulan .= ' • ' . \Carbon\Carbon::parse($this->inkubatorma->jam_usulan)->format('H:i') . ' WITA';
+        // Jadwal final kalau sudah ada
+        $jadwalFinal = '—';
+        if (!empty($this->inkubatorma->tanggal_final)) {
+            $jadwalFinal = \Carbon\Carbon::parse($this->inkubatorma->tanggal_final)
+                ->timezone('Asia/Makassar')
+                ->translatedFormat('d F Y');
+            if (!empty($this->inkubatorma->jam_final)) {
+                $jadwalFinal .= ' • ' . \Carbon\Carbon::parse($this->inkubatorma->jam_final)->format('H:i') . ' WITA';
             }
         }
 
-        $metodeLabel = match($this->inkubatorma->metode_usulan ?? '') {
+        $metodeFinal = match($this->inkubatorma->metode_final ?? '') {
             'online'  => 'Online (Zoom/Meet)',
             'offline' => 'Tatap Muka (Offline)',
             default   => '—',
         };
 
-        if ($this->isVerifikator) {
-            // Email ke verifikator: kasih tau ada pengajuan baru yang perlu ditinjau
-            return (new MailMessage)
-                ->subject("[SIGAP Inkubatorma] Pengajuan Baru: {$judul}")
-                ->greeting('Halo, ' . ($notifiable->name ?? 'Verifikator') . '!')
-                ->line('Ada pengajuan konsultasi baru yang masuk dan perlu ditinjau:')
-                ->line('---')
-                ->line('**Judul Pengajuan:** ' . $judul)
-                ->line('**Pengaju:** ' . $pengaju)
-                ->line('**OPD / Unit:** ' . $opd)
-                ->line('**Layanan:** ' . $layanan)
-                ->line('**Usulan Jadwal:** ' . $jadwalUsulan)
-                ->line('**Metode Usulan:** ' . $metodeLabel)
-                ->line('**Status:** ' . $status)
-                ->action('Lihat Detail Pengajuan', $detailUrl)
-                ->line('Silakan login dan tinjau pengajuan tersebut secepatnya.')
-                ->salutation('Salam, Tim SIGAP BRIDA Kota Makassar');
-        }
-
-        // Email ke pengaju: konfirmasi pengajuan berhasil diterima
-        return (new MailMessage)
-            ->subject("[SIGAP Inkubatorma] Pengajuan Berhasil Dikirim: {$judul}")
+        $mail = (new MailMessage)
+            ->subject("[SIGAP Inkubatorma] Status Diperbarui: {$status} — {$judul}")
             ->greeting('Halo, ' . ($notifiable->name ?? 'Pengaju') . '!')
-            ->line('Pengajuan konsultasi Anda telah berhasil diterima oleh sistem SIGAP Inkubatorma.')
+            ->line('Ada pembaruan status pada pengajuan konsultasi Anda:')
             ->line('---')
             ->line('**Kode Pengajuan:** ' . ($this->inkubatorma->kode ?? '-'))
             ->line('**Judul Pengajuan:** ' . $judul)
             ->line('**Layanan:** ' . $layanan)
-            ->line('**Usulan Jadwal:** ' . $jadwalUsulan)
-            ->line('**Metode Usulan:** ' . $metodeLabel)
-            ->line('**Status saat ini:** ' . $status)
-            ->line('Tim verifikator BRIDA akan segera meninjau pengajuan Anda. Update selanjutnya akan dikirim melalui email ini.')
+            ->line('**Status Terbaru:** ' . $status)
+            ->line('**Jadwal Konsultasi:** ' . $jadwalFinal)
+            ->line('**Metode:** ' . $metodeFinal);
+
+        if (!empty($this->inkubatorma->catatan_verifikator)) {
+            $mail->line('**Catatan Verifikator:** ' . $this->inkubatorma->catatan_verifikator);
+        }
+
+        return $mail
             ->action('Lihat Detail Pengajuan', $detailUrl)
+            ->line('Silakan login untuk melihat detail pengajuan Anda.')
             ->salutation('Salam, Tim SIGAP BRIDA Kota Makassar');
     }
 

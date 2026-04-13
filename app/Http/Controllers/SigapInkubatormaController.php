@@ -6,11 +6,12 @@ use App\Models\Inkubatorma;
 use App\Models\InkubatormaLog;
 use App\Models\InkubatormaRecord;
 use App\Models\User;
+use App\Notifications\InkubatormaPengajuanBaruNotification;
+use App\Notifications\InkubatormaRecordNotification;
+use App\Notifications\InkubatormaStatusUpdateNotification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Notifications\InkubatormaPengajuanBaruNotification;
-use App\Notifications\InkubatormaStatusUpdateNotification;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
@@ -914,6 +915,10 @@ class SigapInkubatormaController extends Controller
             }
         }
 
+        $inkubatorma->status = $statusBaru;
+        $inkubatorma->catatan_verifikator = $validated['catatan_verifikator'] ?? null;
+        $inkubatorma->verifikasi_at = now();
+
         $butuhJadwal = in_array($statusBaru, [
             Inkubatorma::STATUS_TERJADWAL,
             Inkubatorma::STATUS_SESI_KONSULTASI,
@@ -924,20 +929,28 @@ class SigapInkubatormaController extends Controller
         if ($butuhJadwal) {
             if (empty($validated['tanggal_final']) || empty($validated['jam_final']) || empty($validated['metode_final'])) {
                 return back()
-                    ->withErrors(['tanggal_final' => 'Status ini membutuhkan Tanggal/Jam/Metode final.'])
+                    ->withErrors(['tanggal_final' => 'Status ini membutuhkan Tanggal, Jam, dan Metode final.'])
                     ->withInput();
             }
         }
 
-        $inkubatorma->status = $statusBaru;
-        $inkubatorma->pic_employee_id   = $validated['pic_employee_id'] ?? null;
-        $inkubatorma->tanggal_final     = $validated['tanggal_final'] ?? null;
-        $inkubatorma->jam_final         = $validated['jam_final'] ?? null;
-        $inkubatorma->metode_final      = $validated['metode_final'] ?? null;
-        $inkubatorma->lokasi_link_final = $validated['lokasi_link_final'] ?? null;
-        $inkubatorma->catatan_verifikator = $validated['catatan_verifikator'] ?? null;
-        $inkubatorma->verifikator_employee_id = $validated['pic_employee_id'] ?? null;
-        $inkubatorma->verifikasi_at = now();
+        if ($butuhJadwal) {
+            // Simpan jadwal & PIC hanya kalau status memang butuh jadwal
+            $inkubatorma->pic_employee_id         = $validated['pic_employee_id'] ?? null;
+            $inkubatorma->tanggal_final           = $validated['tanggal_final'] ?? null;
+            $inkubatorma->jam_final               = $validated['jam_final'] ?? null;
+            $inkubatorma->metode_final            = $validated['metode_final'] ?? null;
+            $inkubatorma->lokasi_link_final       = $validated['lokasi_link_final'] ?? null;
+            $inkubatorma->verifikator_employee_id = $validated['pic_employee_id'] ?? null;
+        } else {
+            // Status tidak butuh jadwal — reset semua field jadwal & PIC ke null
+            $inkubatorma->pic_employee_id         = null;
+            $inkubatorma->tanggal_final           = null;
+            $inkubatorma->jam_final               = null;
+            $inkubatorma->metode_final            = null;
+            $inkubatorma->lokasi_link_final       = null;
+            $inkubatorma->verifikator_employee_id = null;
+        }
 
         $inkubatorma->save();
 
@@ -1074,7 +1087,7 @@ class SigapInkubatormaController extends Controller
             $actorRole = 'admin';
         }
 
-        InkubatormaRecord::create([
+        $record = InkubatormaRecord::create([
             'inkubatorma_id' => $inkubatorma->id,
             'actor_id'       => $user->id,
             'actor_role'     => $actorRole,
@@ -1086,6 +1099,31 @@ class SigapInkubatormaController extends Controller
             'file_name'      => $fileName,
             'file_mime'      => $fileMime,
         ]);
+
+        // Tentukan tipe notif dan siapa yang dinotif
+        $pengajuUser = \App\Models\User::where('id', $inkubatorma->created_by)
+            ->whereNotNull('email')->first();
+
+        $verifikators = \App\Models\User::role('verifikator_inkubatorma')
+            ->where('status', 'active')
+            ->whereNotNull('email')->get();
+
+        $recordType   = $validated['record_type'] ?? 'sesi_konsultasi';
+        $adaRevisi    = !empty($validated['revision_note']);
+
+        if ($recordType === 'sesi_konsultasi' && $pengajuUser) {
+            $tipe = $adaRevisi
+                ? InkubatormaRecordNotification::TIPE_SESI_ADA_REVISI
+                : InkubatormaRecordNotification::TIPE_SESI_TANPA_REVISI;
+            $pengajuUser->notify(new InkubatormaRecordNotification($inkubatorma, $record, $tipe));
+        }
+
+        if ($recordType === 'review_revisi' && $pengajuUser) {
+            $tipe = $adaRevisi
+                ? InkubatormaRecordNotification::TIPE_REVIEW_ADA_REVISI
+                : InkubatormaRecordNotification::TIPE_REVIEW_AMAN;
+            $pengajuUser->notify(new InkubatormaRecordNotification($inkubatorma, $record, $tipe));
+        }
 
         return redirect()
             ->route('sigap-inkubatorma.records', $inkubatorma->id)
@@ -1145,7 +1183,7 @@ class SigapInkubatormaController extends Controller
         $fileMime = $file->getMimeType();
 
         // Simpan sebagai record baru bertipe upload_revisi
-        InkubatormaRecord::create([
+        $record = InkubatormaRecord::create([
             'inkubatorma_id' => $inkubatorma->id,
             'actor_id'       => $user->id,
             'actor_role'     => 'user',
@@ -1157,6 +1195,18 @@ class SigapInkubatormaController extends Controller
             'file_name'      => $fileName,
             'file_mime'      => $fileMime,
         ]);
+
+        $verifikators = User::role('verifikator_inkubatorma')
+            ->where('status', 'active')
+            ->whereNotNull('email')
+            ->select('id', 'name', 'email')
+            ->get();
+
+        foreach ($verifikators as $verifikator) {
+            $verifikator->notify(new InkubatormaRecordNotification(
+                $inkubatorma, $record, InkubatormaRecordNotification::TIPE_UPLOAD_REVISI
+            ));
+        }
 
         return redirect()
             ->route('sigap-inkubatorma.records', $inkubatorma->id)
@@ -1186,7 +1236,7 @@ class SigapInkubatormaController extends Controller
         }
 
         // Simpan sebagai record baru bertipe konfirmasi_selesai
-        InkubatormaRecord::create([
+        $record = InkubatormaRecord::create([
             'inkubatorma_id' => $inkubatorma->id,
             'actor_id'       => $user->id,
             'actor_role'     => 'user',
@@ -1198,6 +1248,18 @@ class SigapInkubatormaController extends Controller
             'file_name'      => null,
             'file_mime'      => null,
         ]);
+
+        $verifikators = User::role('verifikator_inkubatorma')
+            ->where('status', 'active')
+            ->whereNotNull('email')
+            ->select('id', 'name', 'email')
+            ->get();
+
+        foreach ($verifikators as $verifikator) {
+            $verifikator->notify(new InkubatormaRecordNotification(
+                $inkubatorma, $record, InkubatormaRecordNotification::TIPE_KONFIRMASI_SELESAI
+            ));
+        }
 
         return redirect()
             ->route('sigap-inkubatorma.records', $inkubatorma->id)
