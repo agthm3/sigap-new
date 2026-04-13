@@ -180,7 +180,8 @@
 
                     {{-- Nama OPD/Unit --}}
                     <div>
-                        <label class="text-base font-semibold">Nama OPD/Unit <span class="text-red-600">*</span></label>
+                        <label class="text-base font-semibold">Instansi / OPD / Komunitas <span class="text-red-600">*</span></label>
+                        <p class="mt-1 text-sm text-gray-500">Nama dinas, perusahaan, komunitas, atau instansi asal Anda</p>
                         <input type="text" name="nama_opd" required
                             value="{{ old('nama_opd', $formData['nama_opd'] ?? '') }}"
                             class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base focus:border-maroon focus:ring-2 focus:ring-maroon/30"
@@ -281,7 +282,7 @@
                     <!-- Keluhan -->
                     <div>
                         <label class="text-base font-semibold">Keluhan / Permasalahan <span class="text-red-600">*</span></label>
-                        <p class="mt-1 text-sm text-gray-600">Jelaskan masalah yang dihadapi</p>
+                        <p class="mt-1 text-sm text-gray-600">Ceritakan latar belakang inovasi atau masalah yang sedang dihadapi</p>
                         <textarea name="keluhan" rows="3"
                             class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base focus:border-maroon focus:ring-2 focus:ring-maroon/30"
                             placeholder="Contoh: Tahun Inovasi = 2024&#10;Inovasi pengelolaan sampah berbasis digital mengalami kendala pada tahap implementasi di lapangan..."
@@ -292,7 +293,7 @@
                     <!-- Poin Asistensi -->
                     <div>
                         <label class="text-base font-semibold">Poin Asistensi yang Dibutuhkan <span class="text-red-600">*</span></label>
-                        <p class="mt-1 text-sm text-gray-600">Apa yang ingin didiskusikan / dibantu?</p>
+                        <p class="mt-1 text-sm text-gray-600">Tuliskan poin-poin yang ingin didiskusikan atau dibantu dalam sesi konsultasi ini</p>
                         <textarea name="poin_asistensi" rows="3"
                             class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base focus:border-maroon focus:ring-2 focus:ring-maroon/30"
                             placeholder="Contoh:&#10;- Review kelayakan inovasi&#10;- Penyusunan indikator inovasi daerah&#10;- Pendampingan pendaftaran HAKI"
@@ -300,34 +301,49 @@
                     </div>
 
                     {{-- Tanggal dan Jam Usulan --}}
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="text-base font-semibold">Tanggal Usulan <span class="text-red-600">*</span></label>
-                            <input type="date" name="tanggal" required
-                                value="{{ old('tanggal', $formData['tanggal'] ?? '') }}"
-                                class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base focus:border-maroon focus:ring-2 focus:ring-maroon/30">
-                        </div>
-                        <div>
-                            <label class="text-base font-semibold">Jam Usulan (WITA) <span class="text-red-600">*</span></label>
-                            <input name="jam" id="jam" type="time" required
-                                value="{{ old('jam', $formData['jam'] ?? '') }}"
-                                class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base focus:border-maroon focus:ring-2 focus:ring-maroon/30">
+                    <div>
+                        <p class="text-base font-semibold">Kapan Anda ingin bertemu? <span class="text-red-600">*</span></p>
+                        <p class="mt-1 text-sm text-gray-500">
+                            Pilih tanggal dan jam yang Anda inginkan. Tim BRIDA akan konfirmasi atau menyesuaikan jadwal dengan ketersediaan.
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                            <div>
+                                <label class="text-sm font-semibold text-gray-700">Tanggal</label>
+                                <input type="date" name="tanggal" id="tanggal" required
+                                    value="{{ old('tanggal', $formData['tanggal'] ?? '') }}"
+                                    class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base focus:border-maroon focus:ring-2 focus:ring-maroon/30">
+                            </div>
+                            <div>
+                                <label class="text-sm font-semibold text-gray-700">Jam (WITA)</label>
+                                <input name="jam" id="jam" type="time" required
+                                    min="08:00"
+                                    max="16:00"
+                                    value="{{ old('jam', $formData['jam'] ?? '') }}"
+                                    class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base focus:border-maroon focus:ring-2 focus:ring-maroon/30">
+                            </div>
                         </div>
                     </div>
 
                     {{-- Cara Pertemuan --}}
                     <div>
-                        <p class="text-base font-semibold">Cara Pertemuan <span class="text-red-600">*</span></p>
+                        <p class="text-base font-semibold">Bagaimana cara bertemu? <span class="text-red-600">*</span></p>
+                        <p class="mt-1 text-sm text-gray-500">Pilih sesuai kenyamanan Anda. Bisa disesuaikan kembali saat konfirmasi.</p>
                         <div class="mt-2 grid sm:grid-cols-2 gap-3">
-                            <label class="flex items-center gap-3 border border-gray-300 rounded-xl px-4 py-3 cursor-pointer">
-                                <input type="radio" name="mode" value="offline" required class="h-5 w-5"
+                            <label class="flex items-center gap-3 border border-gray-300 rounded-xl px-4 py-3 cursor-pointer hover:border-maroon transition">
+                                <input type="radio" name="mode" value="offline" required class="h-5 w-5 accent-maroon"
                                     {{ old('mode', $formData['mode'] ?? '') == 'offline' ? 'checked' : '' }}>
-                                <span class="text-base">Tatap muka</span>
+                                <div>
+                                    <span class="text-base font-semibold block">Tatap Muka</span>
+                                    <span class="text-xs text-gray-500">Langsung di kantor BRIDA</span>
+                                </div>
                             </label>
-                            <label class="flex items-center gap-3 border border-gray-300 rounded-xl px-4 py-3 cursor-pointer">
-                                <input type="radio" name="mode" value="online" required class="h-5 w-5"
+                            <label class="flex items-center gap-3 border border-gray-300 rounded-xl px-4 py-3 cursor-pointer hover:border-maroon transition">
+                                <input type="radio" name="mode" value="online" required class="h-5 w-5 accent-maroon"
                                     {{ old('mode', $formData['mode'] ?? '') == 'online' ? 'checked' : '' }}>
-                                <span class="text-base">Online (Zoom/Meet)</span>
+                                <div>
+                                    <span class="text-base font-semibold block">Online</span>
+                                    <span class="text-xs text-gray-500">Via Zoom atau Google Meet</span>
+                                </div>
                             </label>
                         </div>
                     </div>
@@ -335,9 +351,9 @@
                     <!-- Target Personil -->
                     <div class="relative">
                         <label class="text-base font-semibold">
-                            Target Personil Asistensi
+                            Pilih Personil BRIDA yang Ingin Ditemui (Opsional)
                         </label>
-                        <p class="mt-1 text-sm text-gray-600">Kosongkan jika belum ada pilihan</p>
+                        <p class="mt-1 text-sm text-gray-600">Ketersediaan pegawai yang dipilih akan disesuaikan dan dikonfirmasi oleh tim BRIDA</p>
 
                         <div class="relative">
                             <input id="pegawaiInput" type="text"
@@ -366,6 +382,15 @@
                         </label>
                         <p class="mt-1 text-sm text-gray-600">
                             Upload surat permohonan (PDF/DOC/DOCX, maks. <strong>3 file</strong>, maks. 10MB/file)
+                        </p>
+                        <p class="mt-1 text-sm text-gray-600">
+                            Belum punya surat?
+                            <a href="https://drive.google.com/LINK_TEMPLATE_KAMU"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               class="text-maroon font-semibold underline underline-offset-2 hover:opacity-75">
+                                Download template surat di sini
+                            </a>
                         </p>
 
                         <input type="file"
@@ -642,6 +667,77 @@
     </div>
 </section>
 
+{{-- PANDUAN PENGGUNAAN — tambahkan ini setelahnya --}}
+<section class="py-12 bg-white border-t border-gray-100">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="max-w-2xl mx-auto text-center mb-8">
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-maroon">Panduan Penggunaan</h2>
+            <p class="mt-2 text-gray-600 text-base">
+                Baca panduan lengkap sebelum mengajukan konsultasi ke BRIDA.
+            </p>
+        </div>
+
+        {{-- PDF Viewer --}}
+        <div class="max-w-4xl mx-auto">
+            <div class="rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                {{-- Header card --}}
+                <div class="flex items-center justify-between px-5 py-4 bg-gray-50 border-b border-gray-200">
+                    <div class="flex items-center gap-3">
+                        <div class="h-9 w-9 rounded-lg bg-maroon/10 text-maroon flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-800">Panduan Penggunaan SIGAP Inkubatorma</p>
+                            <p class="text-xs text-gray-500">Dokumen PDF</p>
+                        </div>
+                    </div>
+
+                    <a href="{{ asset('storage/panduan/panduan-sigap-inkubatorma.pdf') }}"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-maroon text-white text-sm font-semibold hover:opacity-90 shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        Download
+                    </a>
+                </div>
+
+                {{-- PDF embed — tampil di desktop --}}
+                <div class="hidden sm:block bg-gray-100">
+                    <iframe
+                        src="{{ asset('storage/panduan/panduan-sigap-inkubatorma.pdf') }}"
+                        class="w-full"
+                        style="height: 600px;"
+                        type="application/pdf">
+                    </iframe>
+                </div>
+
+                {{-- Mobile: tidak embed, cukup tombol buka/download --}}
+                <div class="sm:hidden px-5 py-6 text-center bg-gray-50">
+                    <p class="text-sm text-gray-600 mb-4">
+                        Buka panduan di tab baru untuk membaca atau mengunduh dokumen PDF.
+                    </p>
+                    <a href="{{ asset('storage/panduan/panduan-sigap-inkubatorma.pdf') }}"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-maroon text-white text-sm font-semibold hover:opacity-90">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                        </svg>
+                        Buka Panduan PDF
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <!-- MODAL -->
 <div id="scheduleModal"
     class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/40">
@@ -734,6 +830,16 @@
     const label  = document.getElementById('layananBtnLabel');
     const native = document.getElementById('layananSelectNative');
     const container = document.getElementById('selectedLayananContainer');
+
+    // Set tanggal minimum = hari ini
+    const tanggalInput = document.getElementById('tanggal');
+    if (tanggalInput) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        tanggalInput.min = `${yyyy}-${mm}-${dd}`;
+    }
 
     // bisa 3 file
     const input       = document.getElementById('lampiranInput');
@@ -1324,7 +1430,7 @@
             firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
-        // 🔥 TRIGGER VALIDASI BROWSER
+        // TRIGGER VALIDASI BROWSER
         if (!this.checkValidity()) {
             e.preventDefault();
             this.reportValidity();

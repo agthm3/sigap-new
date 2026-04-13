@@ -50,7 +50,6 @@ class InkubatormaRecord extends Model
             'upload_revisi'     => 'Upload Revisi',
             'review_revisi'     => 'Review Revisi',
             'konfirmasi_selesai'=> 'Konfirmasi Selesai',
-            'catatan_umum'      => 'Catatan Umum',
             default             => 'Record',
         };
     }

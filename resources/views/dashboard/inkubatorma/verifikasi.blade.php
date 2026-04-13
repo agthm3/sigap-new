@@ -125,25 +125,48 @@
   {{-- SUMMARY (4 cards) --}}
   <div class="grid grid-cols-1 gap-6 items-start">
 
-    {{-- 4 Summary Cards --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    {{-- SUMMARY --}}
+    {{-- Desktop: 4 card grid | Mobile: 1 card ringkas --}}
 
+    {{-- Mobile only --}}
+    <div class="sm:hidden bg-white rounded-xl border border-gray-200 px-4 py-3 space-y-2 text-sm">
+      <div class="flex items-center justify-between">
+        <span class="text-gray-500">Kode</span>
+        <span class="font-extrabold text-maroon">{{ $inkubatorma->kode ?? '—' }}</span>
+      </div>
+      <div class="h-px bg-gray-100"></div>
+      <div class="flex items-center justify-between">
+        <span class="text-gray-500">Pengaju</span>
+        <span class="font-semibold text-gray-800 text-right max-w-[60%] truncate">{{ $inkubatorma->nama_pengaju ?? '—' }}</span>
+      </div>
+      <div class="h-px bg-gray-100"></div>
+      <div class="flex items-center justify-between">
+        <span class="text-gray-500">Diajukan</span>
+        <span class="font-semibold text-gray-800">
+          {{ $inkubatorma->created_at ? \Carbon\Carbon::parse($inkubatorma->created_at)->timezone('Asia/Makassar')->format('d M Y • H:i') . ' WITA' : '—' }}
+        </span>
+      </div>
+      <div class="h-px bg-gray-100"></div>
+      <div class="flex items-center justify-between">
+        <span class="text-gray-500">Update</span>
+        <span class="font-semibold text-gray-800">
+          {{ $inkubatorma->updated_at ? \Carbon\Carbon::parse($inkubatorma->updated_at)->timezone('Asia/Makassar')->format('d M Y • H:i') . ' WITA' : '—' }}
+        </span>
+      </div>
+    </div>
+
+    {{-- Desktop only --}}
+    <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div class="bg-white rounded-xl border border-gray-200 p-5">
         <p class="text-sm text-gray-500">Kode Pengajuan</p>
-        <p class="mt-1 text-xl font-extrabold text-maroon">
-          {{ $inkubatorma->kode ?? '—' }}
-        </p>
+        <p class="mt-1 text-xl font-extrabold text-maroon">{{ $inkubatorma->kode ?? '—' }}</p>
         <p class="mt-1 text-xs text-gray-500">Identitas pengajuan</p>
       </div>
-
       <div class="bg-white rounded-xl border border-gray-200 p-5">
         <p class="text-sm text-gray-500">Nama Pengaju</p>
-        <p class="mt-1 text-xl font-extrabold text-maroon">
-          {{ $inkubatorma->nama_pengaju ?? '—' }}
-        </p>
+        <p class="mt-1 text-xl font-extrabold text-maroon">{{ $inkubatorma->nama_pengaju ?? '—' }}</p>
         <p class="mt-1 text-xs text-gray-500">Pemohon/instansi</p>
       </div>
-
       <div class="bg-white rounded-xl border border-gray-200 p-5">
         <p class="text-sm text-gray-500">Diajukan</p>
         <p class="mt-1 text-xl font-extrabold text-maroon">
@@ -153,7 +176,6 @@
           {{ $inkubatorma->created_at ? \Carbon\Carbon::parse($inkubatorma->created_at)->timezone('Asia/Makassar')->format('H:i') . ' WITA' : '—' }}
         </p>
       </div>
-
       <div class="bg-white rounded-xl border border-gray-200 p-5">
         <p class="text-sm text-gray-500">Terakhir Update</p>
         <p class="mt-1 text-xl font-extrabold text-maroon">
@@ -163,7 +185,6 @@
           {{ $inkubatorma->updated_at ? \Carbon\Carbon::parse($inkubatorma->updated_at)->timezone('Asia/Makassar')->format('H:i') . ' WITA' : '—' }}
         </p>
       </div>
-
     </div>
   </div>
 

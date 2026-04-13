@@ -127,6 +127,11 @@ class Inkubatorma extends Model
     // RELATIONSHIPS
     // =========================
 
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
     public function picUser()
     {
         return $this->belongsTo(User::class, 'pic_employee_id');

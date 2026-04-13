@@ -2,8 +2,19 @@
 
 @section('content')
 @php
-  // Status final: Menunggu, Akan Dijadwalkan, Terjadwal, Dijadwalkan Ulang, Ditolak, Selesai
-  $status = $inkubatorma->status ?? 'Menunggu';
+  use App\Models\Inkubatorma;
+
+  // Status final:
+  // Menunggu, Akan Dijadwalkan, Terjadwal, Sesi Konsultasi, Dijadwalkan Ulang, Ditolak, Selesai
+  $statusMenunggu         = Inkubatorma::STATUS_MENUNGGU ?? 'Menunggu';
+  $statusAkanJadwal       = Inkubatorma::STATUS_AKAN_DIJADWALKAN ?? 'Akan Dijadwalkan';
+  $statusTerjadwal        = Inkubatorma::STATUS_TERJADWAL ?? 'Terjadwal';
+  $statusSesiKonsultasi   = Inkubatorma::STATUS_SESI_KONSULTASI ?? 'Sesi Konsultasi';
+  $statusJadwalUlang      = Inkubatorma::STATUS_DIJADWALKAN_ULANG ?? 'Dijadwalkan Ulang';
+  $statusDitolak          = Inkubatorma::STATUS_DITOLAK ?? 'Ditolak';
+  $statusSelesai          = Inkubatorma::STATUS_SELESAI ?? 'Selesai';
+
+  $status = $inkubatorma->status ?? $statusMenunggu;
 
   // helper tampilkan metode (enum online/offline)
   $metodeLabel = function ($val) {
@@ -44,13 +55,7 @@
     }
   };
 
-  // $layananKey   = (string) ($inkubatorma->layanan_id ?? '');
-  // $layananLabel = $layananOptions[$layananKey] ?? '—';
-  // if ($layananKey === 'lainnya' && !empty($inkubatorma->layanan_lainnya)) {
-  //   $layananLabel .= ' • ' . $inkubatorma->layanan_lainnya;
-  // }
-
-  // Supaya bisa 2 layanan
+  // Supaya bisa multi layanan
   $layananLabel = $inkubatorma->layanan_nama;
 
   if (!empty($inkubatorma->layanan_lainnya)) {
@@ -59,16 +64,48 @@
 
   // Modal "Hubungi Verifikator" (khusus sisi user)
   $isUser = auth()->check() && auth()->user()->hasRole('user');
+
+  // Tampilkan blok jadwal final jika memang sudah pernah dijadwalkan / sedang sesi / selesai
+  $showFinalSchedule = (
+    $inkubatorma->tanggal_final ||
+    $inkubatorma->jam_final ||
+    $inkubatorma->metode_final ||
+    $inkubatorma->pic_employee_id ||
+    in_array($status, [$statusTerjadwal, $statusSesiKonsultasi, $statusJadwalUlang, $statusSelesai], true)
+  );
 @endphp
+
+<style>
+  @media print {
+    @page { size: A4 portrait; margin: 14mm; }
+
+    /* sembunyikan elemen navigasi & tombol */
+    nav, header, footer, aside,
+    .no-print,
+    #btnHubungiVerif,
+    #modalVerif,
+    a[href*="dashboard"] { display: none !important; }
+
+    /* reset layout jadi full width */
+    main { max-width: 100% !important; padding: 0 !important; }
+    .lg\:col-span-2 { grid-column: span 3 !important; }
+    .lg\:grid-cols-3 { grid-template-columns: 1fr !important; }
+
+    /* munculkan aside (timeline) yang biasanya di kanan */
+    aside { display: block !important; }
+
+    /* pastikan card tidak terpotong antar halaman */
+    .rounded-xl, .bg-white { break-inside: avoid; page-break-inside: avoid; }
+  }
+</style>
 
 <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
 
-  {{-- HEADER (style seperti contoh) --}}
+  {{-- HEADER --}}
   <div class="flex items-start justify-between gap-4">
     <div>
       <div class="flex items-center gap-2 text-sm text-gray-500">
         <span class="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-maroon text-white">
-          {{-- icon home/back --}}
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 11l9-8 9 8v10a2 2 0 0 1-2 2h-4v-7H9v7H5a2 2 0 0 1-2-2V11z"/>
           </svg>
@@ -86,6 +123,15 @@
          class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm font-semibold hover:bg-gray-50">
         ← Kembali
       </a>
+    
+      <button onclick="window.print()"
+              class="px-4 py-2 rounded-lg bg-maroon text-white text-sm font-semibold hover:opacity-90 flex items-center gap-2">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 9V2h12v7"/><rect x="6" y="17" width="12" height="5" rx="1"/>
+          <path d="M6 13H4a2 2 0 0 0-2 2v4h4v-4h12v4h4v-4a2 2 0 0 0-2-2h-2"/>
+        </svg>
+        Print Detail
+      </button>
     </div>
   </div>
 
@@ -97,52 +143,69 @@
     ])
   </div>
 
-  {{-- SUMMARY (4 cards) --}}
-  <div class="grid grid-cols-1 gap-6 items-start">
+  {{-- SUMMARY --}}
+  {{-- Desktop: 4 card grid | Mobile: 1 card ringkas --}}
 
-    {{-- 4 Summary Cards --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-
-      <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <p class="text-sm text-gray-500">Kode Pengajuan</p>
-        <p class="mt-1 text-xl font-extrabold text-maroon">
-          {{ $inkubatorma->kode ?? '—' }}
-        </p>
-        <p class="mt-1 text-xs text-gray-500">Identitas pengajuan</p>
-      </div>
-
-      <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <p class="text-sm text-gray-500">Nama Pengaju</p>
-        <p class="mt-1 text-xl font-extrabold text-maroon">
-          {{ $inkubatorma->nama_pengaju ?? '—' }}
-        </p>
-        <p class="mt-1 text-xs text-gray-500">Pemohon/instansi</p>
-      </div>
-
-      <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <p class="text-sm text-gray-500">Diajukan</p>
-        <p class="mt-1 text-xl font-extrabold text-maroon">
-          {{ $inkubatorma->created_at ? \Carbon\Carbon::parse($inkubatorma->created_at)->timezone('Asia/Makassar')->format('d M Y') : '—' }}
-        </p>
-        <p class="mt-1 text-xs text-maroon">
-          {{ $inkubatorma->created_at ? \Carbon\Carbon::parse($inkubatorma->created_at)->timezone('Asia/Makassar')->format('H:i') . ' WITA' : '—' }}
-        </p>
-      </div>
-
-      <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <p class="text-sm text-gray-500">Terakhir Update</p>
-        <p class="mt-1 text-xl font-extrabold text-maroon">
-          {{ $inkubatorma->updated_at ? \Carbon\Carbon::parse($inkubatorma->updated_at)->timezone('Asia/Makassar')->format('d M Y') : '—' }}
-        </p>
-        <p class="mt-1 text-xs text-maroon">
-          {{ $inkubatorma->updated_at ? \Carbon\Carbon::parse($inkubatorma->updated_at)->timezone('Asia/Makassar')->format('H:i') . ' WITA' : '—' }}
-        </p>
-      </div>
-
+  {{-- Mobile only --}}
+  <div class="sm:hidden bg-white rounded-xl border border-gray-200 px-4 py-3 space-y-2 text-sm">
+    <div class="flex items-center justify-between">
+      <span class="text-gray-500">Kode</span>
+      <span class="font-extrabold text-maroon">{{ $inkubatorma->kode ?? '—' }}</span>
+    </div>
+    <div class="h-px bg-gray-100"></div>
+    <div class="flex items-center justify-between">
+      <span class="text-gray-500">Pengaju</span>
+      <span class="font-semibold text-gray-800 text-right max-w-[60%] truncate">{{ $inkubatorma->nama_pengaju ?? '—' }}</span>
+    </div>
+    <div class="h-px bg-gray-100"></div>
+    <div class="flex items-center justify-between">
+      <span class="text-gray-500">Diajukan</span>
+      <span class="font-semibold text-gray-800">
+        {{ $inkubatorma->created_at ? \Carbon\Carbon::parse($inkubatorma->created_at)->timezone('Asia/Makassar')->format('d M Y • H:i') . ' WITA' : '—' }}
+      </span>
+    </div>
+    <div class="h-px bg-gray-100"></div>
+    <div class="flex items-center justify-between">
+      <span class="text-gray-500">Update</span>
+      <span class="font-semibold text-gray-800">
+        {{ $inkubatorma->updated_at ? \Carbon\Carbon::parse($inkubatorma->updated_at)->timezone('Asia/Makassar')->format('d M Y • H:i') . ' WITA' : '—' }}
+      </span>
     </div>
   </div>
 
-  {{-- FEEDBACK VERIFIKATOR (khusus detail) --}}
+  {{-- Desktop only --}}
+  <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white rounded-xl border border-gray-200 p-5">
+      <p class="text-sm text-gray-500">Kode Pengajuan</p>
+      <p class="mt-1 text-xl font-extrabold text-maroon">{{ $inkubatorma->kode ?? '—' }}</p>
+      <p class="mt-1 text-xs text-gray-500">Identitas pengajuan</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-5">
+      <p class="text-sm text-gray-500">Nama Pengaju</p>
+      <p class="mt-1 text-xl font-extrabold text-maroon">{{ $inkubatorma->nama_pengaju ?? '—' }}</p>
+      <p class="mt-1 text-xs text-gray-500">Pemohon/instansi</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-5">
+      <p class="text-sm text-gray-500">Diajukan</p>
+      <p class="mt-1 text-xl font-extrabold text-maroon">
+        {{ $inkubatorma->created_at ? \Carbon\Carbon::parse($inkubatorma->created_at)->timezone('Asia/Makassar')->format('d M Y') : '—' }}
+      </p>
+      <p class="mt-1 text-xs text-maroon">
+        {{ $inkubatorma->created_at ? \Carbon\Carbon::parse($inkubatorma->created_at)->timezone('Asia/Makassar')->format('H:i') . ' WITA' : '—' }}
+      </p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-5">
+      <p class="text-sm text-gray-500">Terakhir Update</p>
+      <p class="mt-1 text-xl font-extrabold text-maroon">
+        {{ $inkubatorma->updated_at ? \Carbon\Carbon::parse($inkubatorma->updated_at)->timezone('Asia/Makassar')->format('d M Y') : '—' }}
+      </p>
+      <p class="mt-1 text-xs text-maroon">
+        {{ $inkubatorma->updated_at ? \Carbon\Carbon::parse($inkubatorma->updated_at)->timezone('Asia/Makassar')->format('H:i') . ' WITA' : '—' }}
+      </p>
+    </div>
+  </div>
+
+  {{-- FEEDBACK VERIFIKATOR --}}
   <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
     <div class="px-5 py-4 border-b flex items-center justify-between">
       <div>
@@ -172,7 +235,7 @@
           </p>
 
           <div class="mt-3 text-xs text-gray-500">
-            {{ $inkubatorma->verifikatorEmployee?->name ?? 'Verifikator' }}
+            {{ $inkubatorma->verifikatorUser?->name ?? 'Verifikator' }}
             • {{ $inkubatorma->verifikasi_at ? \Carbon\Carbon::parse($inkubatorma->verifikasi_at)->timezone('Asia/Makassar')->format('d M Y • H:i') . ' WITA' : '—' }}
           </div>
         </div>
@@ -201,34 +264,27 @@
           </div>
         </div>
 
-        {{-- MODAL (FIX: backdrop full blur + responsive sizing) --}}
         <div id="modalVerif" class="hidden" style="position:fixed; inset:0; z-index:9999;">
-          {{-- backdrop (FIX: full cover + blur) --}}
           <div id="modalBackdrop"
                style="position:fixed; inset:0;"
                class="bg-black/50 backdrop-blur-sm">
           </div>
 
-          {{-- center wrapper (FIX: padding responsive) --}}
           <div class="absolute inset-0 flex items-start sm:items-center justify-center p-4 sm:p-6">
-            {{-- modal shell (FIX: responsive width + max height) --}}
             <div class="relative w-full max-w-3xl lg:max-w-5xl rounded-[28px] border-4 border-gray-300 bg-white shadow-2xl overflow-hidden"
                  style="max-height:85vh;">
-              {{-- HEADER (maroon gradient) --}}
               <div class="relative px-6 sm:px-8 py-6 sm:py-7 text-white"
                    style="background: radial-gradient(1200px 500px at 20% -10%, rgba(255,255,255,.18), transparent 55%),
                           linear-gradient(135deg, #7a2222 0%, #5f1717 60%, #3f0f0f 100%);">
                 <p class="text-sm opacity-90">Layanan Bantuan</p>
                 <h3 class="text-2xl sm:text-4xl font-extrabold leading-tight">Informasi Kontak Verifikator</h3>
 
-                {{-- close button --}}
                 <button type="button" id="btnCloseVerif"
                         class="absolute right-4 top-4 sm:right-6 sm:top-6 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 grid place-items-center">
                   <span class="text-2xl leading-none">×</span>
                 </button>
               </div>
 
-              {{-- BODY (scrollable) --}}
               <div class="overflow-y-auto px-6 sm:px-8 py-6" style="max-height:calc(85vh - 92px);">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   @forelse(($verifikators ?? []) as $v)
@@ -323,7 +379,6 @@
         })();
         </script>
       @endif
-      {{-- ===== END TAMBAHAN ===== --}}
 
       {{-- DATA PENGAJU --}}
       <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -394,8 +449,8 @@
             </div>
           </div>
 
-          {{-- Jika sudah ada jadwal final (hasil verifikasi) --}}
-          @if($inkubatorma->tanggal_final || $inkubatorma->jam_final || $inkubatorma->metode_final || $inkubatorma->pic_employee_id)
+          {{-- Jika sudah ada jadwal final / sudah masuk fase jadwal --}}
+          @if($showFinalSchedule)
             <div class="pt-2">
               <h4 class="font-semibold text-gray-800">Jadwal & PIC Final</h4>
 
@@ -407,47 +462,24 @@
                     {{ $inkubatorma->jam_final ? '• ' . $fmtTime($inkubatorma->jam_final) : '' }}
                   </p>
                 </div>
-  
+
                 <div class="rounded-xl border border-gray-200 p-5 bg-white">
                   <p class="text-xs font-semibold text-gray-500">Status tersimpan</p>
                   <p class="mt-1 font-semibold text-gray-900">{{ $status }}</p>
                 </div>
-  
+
                 <div class="rounded-xl border border-gray-200 p-5 bg-white">
                   <p class="text-xs font-semibold text-gray-500">Metode & Lokasi/Link</p>
                   <p class="mt-1 font-semibold text-gray-900">
                     {{ $metodeLabel($inkubatorma->metode_final) }} • {{ $inkubatorma->lokasi_link_final ?? '—' }}
                   </p>
                 </div>
-  
+
                 <div class="rounded-xl border border-gray-200 p-5 bg-white">
                   <p class="text-xs font-semibold text-gray-500">PIC</p>
                   <p class="mt-1 font-semibold text-gray-900">{{ $inkubatorma->verifikatorUser?->name ?? '—' }}</p>
                 </div>
               </div>
-            </div>
-          @endif
-        </div>
-      </div>
-
-      {{-- LAMPIRAN --}}
-      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div class="px-5 py-4 border-b">
-          <h3 class="font-semibold text-gray-800">Lampiran Dokumen</h3>
-          <p class="text-xs text-gray-500 mt-0.5">Dokumen yang diupload oleh pengaju</p>
-        </div>
-
-        <div class="p-5 text-sm">
-          @if(empty($inkubatorma->lampiran))
-            <p class="text-gray-500 italic">Tidak ada lampiran</p>
-          @else
-            <div class="flex flex-wrap gap-2">
-              @foreach($inkubatorma->lampiran as $file)
-                <a href="{{ asset('storage/' . $file) }}" target="_blank"
-                  class="px-3 py-2 rounded-lg border border-gray-300 text-xs font-semibold hover:bg-gray-50">
-                  📄 {{ basename($file) }}
-                </a>
-              @endforeach
             </div>
           @endif
         </div>
