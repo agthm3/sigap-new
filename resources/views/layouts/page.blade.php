@@ -92,7 +92,36 @@
           </ul>
         </div>
       </div>
+      {{-- Dropdown Profil BRIDA --}}
+      <div x-data="{open:false}" @keydown.escape.window="open=false" class="relative">
+        <button
+          @mouseenter="open=true" 
+          @mouseleave="open=false" 
+          @click="open=!open"
+          class="inline-flex items-center gap-1 hover:text-maroon focus:outline-none"
+        >
+          Profil BRIDA
+          <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
 
+        <div
+          x-show="open"
+          @mouseenter="open=true"
+          @mouseleave="open=false"
+          x-transition.origin.top.left
+          class="absolute top-full left-0 mt-2 w-56 rounded-lg bg-white border border-gray-200 shadow-lg z-50"
+        >
+          <ul class="py-2 text-sm text-gray-700">
+            <li><a href="{{ route('profil.struktur') }}" class="block px-4 py-2 hover:bg-gray-100">Struktur Organisasi</a></li>
+            <li><a href="{{ route('profil.visimisi') }}" class="block px-4 py-2 hover:bg-gray-100">Visi & Misi</a></li>
+            <li><a href="{{ route('profil.berita') }}" class="block px-4 py-2 hover:bg-gray-100">Berita BRIDA</a></li>
+            <li><a href="{{ route('profil.tentang') }}" class="block px-4 py-2 hover:bg-gray-100">Tentang BRIDA</a></li>
+            <li><a href="{{ route('profil.kontak') }}" class="block px-4 py-2 hover:bg-gray-100">Kontak</a></li>
+          </ul>
+        </div>
+      </div>
       {{-- Link lain --}}
       <a href="#fitur" class="hover:text-maroon">Fitur</a>
       <a href="#bagaimana" class="hover:text-maroon">Cara Kerja</a>
@@ -156,7 +185,25 @@
           </ul>
         </div>
       </div>
+      {{-- Accordion Profil BRIDA --}}
+      <div x-data="{ open:false }" class="border rounded-lg">
+        <button @click="open=!open" class="w-full flex items-center justify-between px-4 py-3">
+          <span class="font-semibold text-gray-800">Profil BRIDA</span>
+          <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
 
+        <div x-show="open" x-transition x-collapse class="border-t">
+          <ul class="py-2 text-gray-700">
+            <li><a href="{{ route('profil.struktur') }}" class="block px-4 py-2 hover:bg-gray-50">Struktur Organisasi</a></li>
+            <li><a href="{{ route('profil.visimisi') }}" class="block px-4 py-2 hover:bg-gray-50">Visi & Misi</a></li>
+            <li><a href="{{ route('profil.berita') }}" class="block px-4 py-2 hover:bg-gray-50">Berita BRIDA</a></li>
+            <li><a href="{{ route('profil.tentang') }}" class="block px-4 py-2 hover:bg-gray-50">Tentang BRIDA</a></li>
+            <li><a href="{{ route('profil.kontak') }}" class="block px-4 py-2 hover:bg-gray-50">Kontak</a></li>
+          </ul>
+        </div>
+      </div>
       {{-- Link biasa --}}
       <a href="#fitur" class="block px-4 py-2 rounded-md hover:bg-gray-50">Fitur</a>
       <a href="#bagaimana" class="block px-4 py-2 rounded-md hover:bg-gray-50">Cara Kerja</a>

@@ -21,14 +21,17 @@ use App\Http\Controllers\PegawaiProfilController;
 use App\Http\Controllers\PegawaiProfileController;
 use App\Http\Controllers\PegawaiPublicController;
 use App\Http\Controllers\PersonalDocumentController;
+use App\Http\Controllers\ProfileOrganisasiController;
 use App\Http\Controllers\RewardController;
 use App\Http\Controllers\RisetController;
+use App\Http\Controllers\SertifikatController;
 use App\Http\Controllers\SigapAgendaController;
 use App\Http\Controllers\SigapAutoController;
 use App\Http\Controllers\SigapFormatController;
 use App\Http\Controllers\SigapKinerjaController;
 use App\Http\Controllers\SigapRisetController;
 use App\Http\Controllers\SigapInkubatormaController;
+use App\Http\Controllers\SigapSertifikatController;
 
 // --- Public
 Route::get('/',      [HomeController::class, 'index'])->name('home');
@@ -147,6 +150,22 @@ Route::prefix('/sigap-inovasi')->middleware('auth', 'role:inovator|admin')->grou
     Route::get   ('/sigap-inovasi/{id}/edit',  [SigapInovasiController::class, 'edit'])->name('sigap-inovasi.edit');
     Route::put   ('/sigap-inovasi/{id}',       [SigapInovasiController::class, 'update'])->name('sigap-inovasi.update');
     Route::delete('/sigap-inovasi/{id}',       [SigapInovasiController::class, 'destroy'])->name('sigap-inovasi.destroy');
+   
+    // === PEDOMAN EVIDENCE (GLOBAL) ===
+    Route::get('/pedoman-evidence',
+        [SigapInovasiController::class, 'pedomanEvidence']
+    )->name('evidence.pedoman');
+
+    Route::post('/pedoman-evidence',
+        [SigapInovasiController::class, 'pedomanEvidenceSave']
+    )->middleware('role:admin')
+    ->name('evidence.pedoman.save');
+
+    Route::delete(
+        '/pedoman-evidence/{guide}',
+        [SigapInovasiController::class, 'pedomanEvidenceDelete']
+    )->middleware('role:admin')
+    ->name('evidence.pedoman.delete');
 
 });
 
@@ -180,6 +199,8 @@ Route::put('/pegawai-profil', [PegawaiProfilController::class, 'update'])
 
 Route::delete('/pegawai-profil/avatar', [PegawaiProfilController::class, 'destroyAvatar'])
     ->middleware('auth')->name('pegawai.profil.avatar.destroy');
+Route::post('/pegawai/profil/avatar', [PegawaiProfilController::class, 'updateAvatar'])
+    ->name('pegawai.profil.avatar');
 
 //SIGAP KINERJA
 Route::get('/sigap-kinerja', [SigapKinerjaController::class, 'index'])->name('sigap-kinerja.index');
@@ -336,3 +357,45 @@ Route::prefix('/sigap-inkubatorma')->group(function () {
             ->name('sigap-inkubatorma.records.confirm-finish');
     });
 });
+
+Route::get('/profil-struktur', [ProfileOrganisasiController::class, 'struktur'])->name('profil.struktur');
+Route::get('/profil-visi-misi', [ProfileOrganisasiController::class, 'visiMisi'])->name('profil.visimisi');
+Route::get('/profil-berita', [ProfileOrganisasiController::class, 'berita'])->name('profil.berita');
+Route::get('/profil-tentang', [ProfileOrganisasiController::class, 'tentang'])->name('profil.tentang');
+Route::get('/profil-kontak', [ProfileOrganisasiController::class, 'kontak'])->name('profil.kontak');
+
+
+Route::get('/dashboard-sertifikat', [SertifikatController::class, 'index'])
+    ->middleware('auth')
+    ->name('sigap-sertifikat.dashboard');
+    Route::prefix('sertifikat-kegiatan')
+->middleware('auth')
+->group(function () {
+Route::post('/store', [SertifikatController::class, 'store'])
+        ->name('sertifikat-kegiatan.store');
+
+});
+Route::middleware('auth')->group(function(){
+
+Route::get('/sertifikat-kegiatan/{id}',
+[SertifikatController::class,'show'])
+->name('sertifikat.show');
+
+Route::post('/sertifikat/store',
+[SertifikatController::class,'storeSertifikat'])
+->name('sertifikat.store');
+
+});
+
+Route::get('/sertifikat', [SigapSertifikatController::class, 'index'])->name('sigap-sertifikat.index');
+Route::post('/sertifikat/verifikasi', [SigapSertifikatController::class,'verifikasi'])
+->name('sigap-sertifikat.verifikasi');
+Route::post('/sertifikat/import',
+[SertifikatController::class,'importExcel'])
+->name('sertifikat.import');
+Route::get('/sertifikat/template',
+[SertifikatController::class,'downloadTemplate'])
+->name('sertifikat.template');
+Route::get('/sertifikat/view/{id}',
+[SigapSertifikatController::class,'view'])
+->name('sigap-sertifikat.view');

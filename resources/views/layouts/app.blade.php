@@ -228,6 +228,45 @@
         </div>
       @endhasanyrole
       @hasanyrole('admin|employee')
+      <!-- SIGAP SERTIFIKAT -->
+      <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">
+        SIGAP SERTIFIKAT
+      </div>
+
+      <!-- Toggle -->
+      <button id="sertifikatToggle"
+              class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-left">
+        <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <rect x="3" y="4" width="18" height="16" rx="2" stroke-width="2"/>
+          <path d="M7 8h10M7 12h10M7 16h6" stroke-width="2"/>
+        </svg>
+
+        <span class="font-medium">SIGAP Sertifikat</span>
+
+        <svg id="sertifikatCaret"
+            class="w-4 h-4 ml-auto transition-transform duration-200"
+            viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-width="2" d="M6 9l6 6 6-6"/>
+        </svg>
+      </button>
+
+      <!-- Dropdown -->
+      <div id="sertifikatMenu" class="ml-3 mt-1 space-y-1 hidden">
+
+        <a href="{{ route('sigap-sertifikat.dashboard') }}"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+          {{ request()->routeIs('sigap-sertifikat.dashboard') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" d="M3 10l9-7 9 7v8a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V12H9v6a2 2 0 0 1-2 2H3z"/>
+          </svg>
+
+          Dashboard Sertifikat
+        </a>
+
+      </div>
+      @endhasanyrole
+      @hasanyrole('admin|employee')
         <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">SIGAP FORMAT</div>
 
         <!-- Toggle -->
@@ -465,7 +504,35 @@ formatToggle?.addEventListener('click', () => {
   localStorage.setItem(FORMAT_KEY, willOpen ? '1' : '0');
 });
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", function(){
 
+  const sertifikatToggle = document.getElementById('sertifikatToggle');
+  const sertifikatMenu   = document.getElementById('sertifikatMenu');
+  const sertifikatCaret  = document.getElementById('sertifikatCaret');
+
+  const SERTIFIKAT_KEY = 'sb_sertifikat_open';
+
+  const isOpenSaved = localStorage.getItem(SERTIFIKAT_KEY) === '1';
+
+  if (isOpenSaved && sertifikatMenu && sertifikatCaret) {
+    sertifikatMenu.classList.remove('hidden');
+    sertifikatCaret.classList.add('rotate-180');
+  }
+
+  sertifikatToggle?.addEventListener('click', () => {
+
+    const willOpen = sertifikatMenu.classList.contains('hidden');
+
+    sertifikatMenu.classList.toggle('hidden');
+    sertifikatCaret.classList.toggle('rotate-180', willOpen);
+
+    localStorage.setItem(SERTIFIKAT_KEY, willOpen ? '1' : '0');
+
+  });
+
+});
+</script>
 
     @stack('scripts')
 </body>
