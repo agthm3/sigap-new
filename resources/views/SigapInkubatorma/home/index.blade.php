@@ -383,6 +383,15 @@
                         <p class="mt-1 text-sm text-gray-600">
                             Upload surat permohonan (PDF/DOC/DOCX, maks. <strong>3 file</strong>, maks. 10MB/file)
                         </p>
+                        <p class="mt-1 text-sm text-gray-600">
+                            Belum punya surat?
+                            <a href="https://drive.google.com/LINK_TEMPLATE_KAMU"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               class="text-maroon font-semibold underline underline-offset-2 hover:opacity-75">
+                                Download template surat di sini
+                            </a>
+                        </p>
 
                         <input type="file"
                             name="lampiran[]"
@@ -653,6 +662,77 @@
             <div class="rounded-2xl bg-white border border-gray-200 p-6">
                 <p class="text-sm font-semibold text-maroon">3) Tunggu Konfirmasi</p>
                 <p class="mt-2 text-base text-gray-700">Admin menghubungi Anda (WhatsApp/telepon) untuk jadwal final.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+{{-- PANDUAN PENGGUNAAN — tambahkan ini setelahnya --}}
+<section class="py-12 bg-white border-t border-gray-100">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="max-w-2xl mx-auto text-center mb-8">
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-maroon">Panduan Penggunaan</h2>
+            <p class="mt-2 text-gray-600 text-base">
+                Baca panduan lengkap sebelum mengajukan konsultasi ke BRIDA.
+            </p>
+        </div>
+
+        {{-- PDF Viewer --}}
+        <div class="max-w-4xl mx-auto">
+            <div class="rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                {{-- Header card --}}
+                <div class="flex items-center justify-between px-5 py-4 bg-gray-50 border-b border-gray-200">
+                    <div class="flex items-center gap-3">
+                        <div class="h-9 w-9 rounded-lg bg-maroon/10 text-maroon flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-800">Panduan Penggunaan SIGAP Inkubatorma</p>
+                            <p class="text-xs text-gray-500">Dokumen PDF</p>
+                        </div>
+                    </div>
+
+                    <a href="{{ asset('storage/panduan/panduan-sigap-inkubatorma.pdf') }}"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-maroon text-white text-sm font-semibold hover:opacity-90 shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        Download
+                    </a>
+                </div>
+
+                {{-- PDF embed — tampil di desktop --}}
+                <div class="hidden sm:block bg-gray-100">
+                    <iframe
+                        src="{{ asset('storage/panduan/panduan-sigap-inkubatorma.pdf') }}"
+                        class="w-full"
+                        style="height: 600px;"
+                        type="application/pdf">
+                    </iframe>
+                </div>
+
+                {{-- Mobile: tidak embed, cukup tombol buka/download --}}
+                <div class="sm:hidden px-5 py-6 text-center bg-gray-50">
+                    <p class="text-sm text-gray-600 mb-4">
+                        Buka panduan di tab baru untuk membaca atau mengunduh dokumen PDF.
+                    </p>
+                    <a href="{{ asset('storage/panduan/panduan-sigap-inkubatorma.pdf') }}"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-maroon text-white text-sm font-semibold hover:opacity-90">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                        </svg>
+                        Buka Panduan PDF
+                    </a>
+                </div>
             </div>
         </div>
     </div>
