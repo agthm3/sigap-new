@@ -685,12 +685,12 @@ class SigapInkubatormaController extends Controller
 
         // Kirim ke semua verifikator
         foreach ($verifikators as $verifikator) {
-            $verifikator->notify(new InkubatormaPengajuanBaruNotification($inkubatorma, isVerifikator: true));
+            $verifikator->notify(new InkubatormaPengajuanBaruNotification($inkubatorma, true));
         }
 
         // Kirim konfirmasi ke pengaju
-        if (auth()->check() && auth()->user()->email) {
-            auth()->user()->notify(new InkubatormaPengajuanBaruNotification($inkubatorma, isVerifikator: false));
+        if (auth()->user()->email) {
+            auth()->user()->notify(new InkubatormaPengajuanBaruNotification($inkubatorma, false));
         }
 
         if (!auth()->check()) {
