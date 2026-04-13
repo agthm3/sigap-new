@@ -277,7 +277,7 @@
               <p class="mt-1 font-semibold text-gray-800">{{ $metodeLabel($inkubatorma->metode_usulan) }}</p>
             </div>
             <div class="rounded-lg border border-gray-200 p-4 bg-gray-50">
-              <p class="text-xs font-semibold text-gray-500">Target Personil (opsional)</p>
+              <p class="text-xs font-semibold text-gray-500">Target Personil Asistensi (opsional)</p>
               <p class="mt-1 font-semibold text-gray-800">{{ $inkubatorma->target_personil_usulan ?? '—' }}</p>
             </div>
           </div>
@@ -286,7 +286,7 @@
           <div class="pt-2">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-base font-semibold text-gray-800">Jadwal & PIC (Final)</p>
+                <p class="text-base font-semibold text-gray-800">Jadwal (Final)</p>
                 <p class="text-xs text-gray-500 mt-0.5">Terisi jika sudah diset oleh verifikator</p>
               </div>
               @php
@@ -316,7 +316,7 @@
               </div>
 
               <div class="rounded-xl border border-gray-200 p-5 bg-white">
-                <p class="text-xs font-semibold text-gray-500">PIC</p>
+                <p class="text-xs font-semibold text-gray-500">Personel Asistensi</p>
                 <p class="mt-1 font-semibold text-gray-900">{{ $inkubatorma->verifikatorUser?->name ?? '—' }}</p>
               </div>
             </div>

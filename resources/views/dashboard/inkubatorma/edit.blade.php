@@ -362,7 +362,7 @@
               </div>
 
               <div class="relative">
-                <label class="text-xs font-semibold text-gray-600">Target Personil (opsional)</label>
+                <label class="text-xs font-semibold text-gray-600">Target Personil Asistensi (opsional)</label>
 
                 <input id="pegawaiInput" type="text"
                        autocomplete="off"

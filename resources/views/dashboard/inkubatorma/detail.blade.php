@@ -444,7 +444,7 @@
               <p class="mt-1 font-semibold text-gray-800">{{ $metodeLabel($inkubatorma->metode_usulan) }}</p>
             </div>
             <div class="rounded-lg border border-gray-200 p-4 bg-gray-50">
-              <p class="text-xs font-semibold text-gray-500">Target Personil (opsional)</p>
+              <p class="text-xs font-semibold text-gray-500">Target Personil Asistensi (opsional)</p>
               <p class="mt-1 font-semibold text-gray-800">{{ $inkubatorma->target_personil_usulan ?? '—' }}</p>
             </div>
           </div>
@@ -452,7 +452,7 @@
           {{-- Jika sudah ada jadwal final / sudah masuk fase jadwal --}}
           @if($showFinalSchedule)
             <div class="pt-2">
-              <h4 class="font-semibold text-gray-800">Jadwal & PIC Final</h4>
+              <h4 class="font-semibold text-gray-800">Jadwal Final</h4>
 
               <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="rounded-xl border border-gray-200 p-5 bg-white">
@@ -476,7 +476,7 @@
                 </div>
 
                 <div class="rounded-xl border border-gray-200 p-5 bg-white">
-                  <p class="text-xs font-semibold text-gray-500">PIC</p>
+                  <p class="text-xs font-semibold text-gray-500">Personil Asistensi</p>
                   <p class="mt-1 font-semibold text-gray-900">{{ $inkubatorma->verifikatorUser?->name ?? '—' }}</p>
                 </div>
               </div>
