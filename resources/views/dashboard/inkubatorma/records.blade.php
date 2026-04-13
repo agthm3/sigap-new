@@ -55,7 +55,6 @@
     $recordTypeOptions = [
         'sesi_konsultasi'    => 'Sesi Konsultasi',
         'review_revisi'      => 'Review Revisi',
-        'catatan_umum'       => 'Catatan Umum',
     ];
 @endphp
 
@@ -74,9 +73,9 @@
         </div>
 
         <div class="flex flex-wrap gap-2">
-            <a href="{{ route('sigap-inkubatorma.detail', $inkubatorma->id) }}"
+            <a href="{{ route('sigap-inkubatorma.dashboard') }}"
                class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm font-semibold hover:bg-gray-50">
-                ← Kembali ke Detail
+                ← Kembali
             </a>
 
             @if($isVerifikator || $isAdmin)
@@ -97,25 +96,45 @@
     </div>
 
     {{-- INFO SINGKAT --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    {{-- Mobile only --}}
+    <div class="sm:hidden bg-white rounded-xl border border-gray-200 px-4 py-3 space-y-2 text-sm">
+        <div class="flex items-center justify-between">
+        <span class="text-gray-500">Kode Pengajuan</span>
+        <span class="font-extrabold text-maroon">{{ $inkubatorma->kode ?? '—' }}</span>
+        </div>
+        <div class="h-px bg-gray-100"></div>
+        <div class="flex items-center justify-between">
+            <span class="text-gray-500">Judul</span>
+            <span class="font-semibold text-gray-800 text-right max-w-[60%] truncate">{{ $inkubatorma->judul_konsultasi ?? '—' }}</span>
+        </div>
+        <div class="flex items-center justify-between">
+        <span class="text-gray-500">Pengaju</span>
+        <span class="font-semibold text-gray-800 text-right max-w-[60%] truncate">{{ $inkubatorma->nama_pengaju ?? '—' }}</span>
+        </div>
+        <div class="h-px bg-gray-100"></div>
+        <div class="flex items-center justify-between">
+        <span class="text-gray-500">Layanan</span>
+        <span class="font-semibold text-gray-800 text-right max-w-[60%] truncate">{{ $layananLabel ?: '—' }}</span>
+        </div>
+    </div>
+
+    {{-- Desktop only --}}
+    <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-white rounded-xl border border-gray-200 p-5">
             <p class="text-sm text-gray-500">Kode Pengajuan</p>
             <p class="mt-1 text-xl font-extrabold text-maroon">{{ $inkubatorma->kode ?? '—' }}</p>
             <p class="mt-1 text-xs text-gray-500">Identitas pengajuan</p>
         </div>
-
         <div class="bg-white rounded-xl border border-gray-200 p-5">
             <p class="text-sm text-gray-500">Judul</p>
             <p class="mt-1 text-base font-extrabold text-maroon">{{ $inkubatorma->judul_konsultasi ?? '—' }}</p>
             <p class="mt-1 text-xs text-gray-500">Topik konsultasi</p>
         </div>
-
         <div class="bg-white rounded-xl border border-gray-200 p-5">
             <p class="text-sm text-gray-500">Pengaju</p>
             <p class="mt-1 text-base font-extrabold text-maroon">{{ $inkubatorma->nama_pengaju ?? '—' }}</p>
             <p class="mt-1 text-xs text-gray-500">{{ $inkubatorma->opd_unit ?? '—' }}</p>
         </div>
-
         <div class="bg-white rounded-xl border border-gray-200 p-5">
             <p class="text-sm text-gray-500">Layanan</p>
             <p class="mt-1 text-sm font-semibold text-gray-800">{{ $layananLabel ?: '—' }}</p>
@@ -151,7 +170,7 @@
                     <div class="px-5 py-4 border-b">
                         <h3 class="font-semibold text-gray-800">Tambah Record</h3>
                         <p class="text-xs text-gray-500 mt-0.5">
-                            Digunakan untuk mencatat hasil sesi konsultasi, review revisi, atau catatan umum.
+                            Digunakan untuk mencatat hasil sesi konsultasi atau review revisi dari pengaju.
                         </p>
                     </div>
 

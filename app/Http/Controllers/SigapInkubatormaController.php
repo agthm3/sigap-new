@@ -683,8 +683,14 @@ class SigapInkubatormaController extends Controller
             ->select('id', 'name', 'email')
             ->get();
 
+        // Kirim ke semua verifikator
         foreach ($verifikators as $verifikator) {
-            $verifikator->notify(new InkubatormaPengajuanBaruNotification($inkubatorma));
+            $verifikator->notify(new InkubatormaPengajuanBaruNotification($inkubatorma, isVerifikator: true));
+        }
+
+        // Kirim konfirmasi ke pengaju
+        if (auth()->check() && auth()->user()->email) {
+            auth()->user()->notify(new InkubatormaPengajuanBaruNotification($inkubatorma, isVerifikator: false));
         }
 
         if (!auth()->check()) {
@@ -694,11 +700,18 @@ class SigapInkubatormaController extends Controller
             return redirect()->route('login');
         }
 
+        // Ambil email user yang sedang login
+        $userEmail = auth()->user()->email;
+        $kodePengajuan = $inkubatorma->kode; 
+
         session()->forget('inkubatorma_form');
+
+        // Pesan Berhasil
+        $success_message = "Pengajuan konsultasi Anda berhasil dikirim! Update selanjutnya akan diinfokan melalui email: {$userEmail}";
 
         return redirect()
             ->route('sigap-inkubatorma.dashboard')
-            ->with('success', 'Pengajuan berhasil dikirim');
+            ->with('success', $success_message);
     }
 
     /**
@@ -1036,7 +1049,7 @@ class SigapInkubatormaController extends Controller
         }
 
         $validated = $request->validate([
-            'record_type'   => ['nullable', 'string', 'in:sesi_konsultasi,review_revisi,catatan_umum'],
+            'record_type'   => ['nullable', 'string', 'in:sesi_konsultasi,review_revisi'],
             'title'         => ['required', 'string', 'max:255'],
             'content'       => ['required', 'string'],
             'revision_note' => ['nullable', 'string'],

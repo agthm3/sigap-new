@@ -175,13 +175,11 @@
       + Isi Form Pengajuan
     </a>
 
-    @if($isAdmin)
-      <a href="{{ route('sigap-inkubatorma.dashboard.print', request()->query()) }}"
-         target="_blank"
-         class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm font-semibold hover:bg-gray-50">
-        Print Laporan
-      </a>
-    @endif
+    <a href="{{ route('sigap-inkubatorma.dashboard.print', request()->query()) }}"
+        target="_blank"
+        class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm font-semibold hover:bg-gray-50">
+      Export Laporan
+    </a>
   </div>
 </section>
 
@@ -233,6 +231,8 @@
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 items-stretch">
+
+    {{-- RINGKASAN STATUS --}}
     <div class="bg-white rounded-2xl border border-gray-200 p-5 h-full">
       <div class="flex items-start justify-between gap-4">
         <div>
@@ -243,15 +243,35 @@
             Total pengajuan berdasarkan status utama.
           </p>
         </div>
-
         <div class="h-10 w-10 rounded-xl bg-maroon/10 text-maroon flex items-center justify-center shrink-0">
           <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
             <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v6H2v-6zM8 3a1 1 0 011-1h2a1 1 0 011 1v14H8V3zM14 7a1 1 0 011-1h2a1 1 0 011 1v10h-4V7z"/>
           </svg>
         </div>
       </div>
-
-      <div class="mt-5 rounded-xl border border-gray-200 overflow-hidden">
+  
+      {{-- Mobile: grid 2x2 --}}
+      <div class="mt-4 grid grid-cols-2 gap-3 lg:hidden">
+        <div class="rounded-xl border border-gray-200 p-3 text-center">
+          <p class="text-xs font-bold text-gray-500 uppercase">Menunggu</p>
+          <p class="text-3xl font-extrabold text-gray-900 mt-1">{{ $countMenunggu }}</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 p-3 text-center">
+          <p class="text-xs font-bold text-gray-500 uppercase">Terjadwal</p>
+          <p class="text-3xl font-extrabold text-gray-900 mt-1">{{ $countTerjadwal }}</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 p-3 text-center">
+          <p class="text-xs font-bold text-gray-500 uppercase">Sesi</p>
+          <p class="text-3xl font-extrabold text-gray-900 mt-1">{{ $countSesi }}</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 p-3 text-center">
+          <p class="text-xs font-bold text-gray-500 uppercase">Selesai</p>
+          <p class="text-3xl font-extrabold text-gray-900 mt-1">{{ $countSelesai }}</p>
+        </div>
+      </div>
+  
+      {{-- Desktop: list rows --}}
+      <div class="mt-5 rounded-xl border border-gray-200 overflow-hidden hidden lg:block">
         <div class="px-4 py-4 flex items-center justify-between">
           <div>
             <p class="text-xs font-bold text-gray-500 uppercase">Menunggu</p>
@@ -260,7 +280,7 @@
           <div class="text-3xl font-extrabold text-gray-900">{{ $countMenunggu }}</div>
         </div>
         <div class="h-px bg-gray-200"></div>
-
+  
         <div class="px-4 py-4 flex items-center justify-between">
           <div>
             <p class="text-xs font-bold text-gray-500 uppercase">Terjadwal</p>
@@ -269,7 +289,7 @@
           <div class="text-3xl font-extrabold text-gray-900">{{ $countTerjadwal }}</div>
         </div>
         <div class="h-px bg-gray-200"></div>
-
+  
         <div class="px-4 py-4 flex items-center justify-between">
           <div>
             <p class="text-xs font-bold text-gray-500 uppercase">Sesi Konsultasi</p>
@@ -278,7 +298,7 @@
           <div class="text-3xl font-extrabold text-gray-900">{{ $countSesi }}</div>
         </div>
         <div class="h-px bg-gray-200"></div>
-
+  
         <div class="px-4 py-4 flex items-center justify-between">
           <div>
             <p class="text-xs font-bold text-gray-500 uppercase">Selesai</p>
@@ -288,7 +308,8 @@
         </div>
       </div>
     </div>
-
+  
+    {{-- CHART: JUMLAH PENGAJUAN --}}
     <div class="bg-white rounded-2xl border border-gray-200 p-5 lg:col-span-2">
       <div class="flex items-start justify-between gap-3">
         <div>
@@ -303,14 +324,15 @@
             @endif
           </p>
         </div>
-        <span class="text-xs text-gray-400">Updated: {{ $updatedLabel }}</span>
+        <span class="text-xs text-gray-400 shrink-0">Updated: {{ $updatedLabel }}</span>
       </div>
-
-      <div class="mt-4 h-[420px]">
+  
+      <div class="mt-4 h-[220px] lg:h-[420px]">
         <canvas id="chartSubmissions" class="w-full h-full"></canvas>
       </div>
     </div>
-
+  
+    {{-- CHART: PERSEBARAN LAYANAN --}}
     <div class="bg-white rounded-2xl border border-gray-200 p-5">
       <div class="flex items-start justify-between gap-3">
         <div>
@@ -318,9 +340,9 @@
           <p class="text-xs text-gray-500">Distribusi jenis layanan.</p>
         </div>
       </div>
-
+  
       @if(count($pieLabels))
-        <div class="mt-4 h-[420px]">
+        <div class="mt-4 h-[260px] lg:h-[420px]">
           <canvas id="chartLayanan" class="w-full h-full"></canvas>
         </div>
       @else
@@ -329,7 +351,8 @@
         </div>
       @endif
     </div>
-
+  
+    {{-- CHART: PERSEBARAN OPD --}}
     <div class="bg-white rounded-2xl border border-gray-200 p-5 lg:col-span-4">
       <div class="flex items-start justify-between gap-3">
         <div>
@@ -337,9 +360,9 @@
           <p class="text-xs text-gray-500">Top 10 OPD/Unit yang paling sering mengajukan.</p>
         </div>
       </div>
-
+  
       @if(count($opdLabels))
-        <div class="mt-4 h-[380px]">
+        <div class="mt-4 h-[220px] lg:h-[380px]">
           <canvas id="chartOpd" class="w-full h-full"></canvas>
         </div>
       @else
@@ -348,6 +371,7 @@
         </div>
       @endif
     </div>
+  
   </div>
 </section>
 

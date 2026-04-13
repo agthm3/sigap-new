@@ -180,7 +180,8 @@
 
                     {{-- Nama OPD/Unit --}}
                     <div>
-                        <label class="text-base font-semibold">Nama OPD/Unit <span class="text-red-600">*</span></label>
+                        <label class="text-base font-semibold">Instansi / OPD / Komunitas <span class="text-red-600">*</span></label>
+                        <p class="mt-1 text-sm text-gray-500">Nama dinas, perusahaan, komunitas, atau instansi asal Anda</p>
                         <input type="text" name="nama_opd" required
                             value="{{ old('nama_opd', $formData['nama_opd'] ?? '') }}"
                             class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base focus:border-maroon focus:ring-2 focus:ring-maroon/30"
@@ -281,7 +282,7 @@
                     <!-- Keluhan -->
                     <div>
                         <label class="text-base font-semibold">Keluhan / Permasalahan <span class="text-red-600">*</span></label>
-                        <p class="mt-1 text-sm text-gray-600">Jelaskan masalah yang dihadapi</p>
+                        <p class="mt-1 text-sm text-gray-600">Ceritakan latar belakang inovasi atau masalah yang sedang dihadapi</p>
                         <textarea name="keluhan" rows="3"
                             class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base focus:border-maroon focus:ring-2 focus:ring-maroon/30"
                             placeholder="Contoh: Tahun Inovasi = 2024&#10;Inovasi pengelolaan sampah berbasis digital mengalami kendala pada tahap implementasi di lapangan..."
@@ -292,7 +293,7 @@
                     <!-- Poin Asistensi -->
                     <div>
                         <label class="text-base font-semibold">Poin Asistensi yang Dibutuhkan <span class="text-red-600">*</span></label>
-                        <p class="mt-1 text-sm text-gray-600">Apa yang ingin didiskusikan / dibantu?</p>
+                        <p class="mt-1 text-sm text-gray-600">Tuliskan poin-poin yang ingin didiskusikan atau dibantu dalam sesi konsultasi ini</p>
                         <textarea name="poin_asistensi" rows="3"
                             class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base focus:border-maroon focus:ring-2 focus:ring-maroon/30"
                             placeholder="Contoh:&#10;- Review kelayakan inovasi&#10;- Penyusunan indikator inovasi daerah&#10;- Pendampingan pendaftaran HAKI"
@@ -300,34 +301,49 @@
                     </div>
 
                     {{-- Tanggal dan Jam Usulan --}}
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="text-base font-semibold">Tanggal Usulan <span class="text-red-600">*</span></label>
-                            <input type="date" name="tanggal" required
-                                value="{{ old('tanggal', $formData['tanggal'] ?? '') }}"
-                                class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base focus:border-maroon focus:ring-2 focus:ring-maroon/30">
-                        </div>
-                        <div>
-                            <label class="text-base font-semibold">Jam Usulan (WITA) <span class="text-red-600">*</span></label>
-                            <input name="jam" id="jam" type="time" required
-                                value="{{ old('jam', $formData['jam'] ?? '') }}"
-                                class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base focus:border-maroon focus:ring-2 focus:ring-maroon/30">
+                    <div>
+                        <p class="text-base font-semibold">Kapan Anda ingin bertemu? <span class="text-red-600">*</span></p>
+                        <p class="mt-1 text-sm text-gray-500">
+                            Pilih tanggal dan jam yang Anda inginkan. Tim BRIDA akan konfirmasi atau menyesuaikan jadwal dengan ketersediaan.
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                            <div>
+                                <label class="text-sm font-semibold text-gray-700">Tanggal</label>
+                                <input type="date" name="tanggal" id="tanggal" required
+                                    value="{{ old('tanggal', $formData['tanggal'] ?? '') }}"
+                                    class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base focus:border-maroon focus:ring-2 focus:ring-maroon/30">
+                            </div>
+                            <div>
+                                <label class="text-sm font-semibold text-gray-700">Jam (WITA)</label>
+                                <input name="jam" id="jam" type="time" required
+                                    min="08:00"
+                                    max="16:00"
+                                    value="{{ old('jam', $formData['jam'] ?? '') }}"
+                                    class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base focus:border-maroon focus:ring-2 focus:ring-maroon/30">
+                            </div>
                         </div>
                     </div>
 
                     {{-- Cara Pertemuan --}}
                     <div>
-                        <p class="text-base font-semibold">Cara Pertemuan <span class="text-red-600">*</span></p>
+                        <p class="text-base font-semibold">Bagaimana cara bertemu? <span class="text-red-600">*</span></p>
+                        <p class="mt-1 text-sm text-gray-500">Pilih sesuai kenyamanan Anda. Bisa disesuaikan kembali saat konfirmasi.</p>
                         <div class="mt-2 grid sm:grid-cols-2 gap-3">
-                            <label class="flex items-center gap-3 border border-gray-300 rounded-xl px-4 py-3 cursor-pointer">
-                                <input type="radio" name="mode" value="offline" required class="h-5 w-5"
+                            <label class="flex items-center gap-3 border border-gray-300 rounded-xl px-4 py-3 cursor-pointer hover:border-maroon transition">
+                                <input type="radio" name="mode" value="offline" required class="h-5 w-5 accent-maroon"
                                     {{ old('mode', $formData['mode'] ?? '') == 'offline' ? 'checked' : '' }}>
-                                <span class="text-base">Tatap muka</span>
+                                <div>
+                                    <span class="text-base font-semibold block">Tatap Muka</span>
+                                    <span class="text-xs text-gray-500">Langsung di kantor BRIDA</span>
+                                </div>
                             </label>
-                            <label class="flex items-center gap-3 border border-gray-300 rounded-xl px-4 py-3 cursor-pointer">
-                                <input type="radio" name="mode" value="online" required class="h-5 w-5"
+                            <label class="flex items-center gap-3 border border-gray-300 rounded-xl px-4 py-3 cursor-pointer hover:border-maroon transition">
+                                <input type="radio" name="mode" value="online" required class="h-5 w-5 accent-maroon"
                                     {{ old('mode', $formData['mode'] ?? '') == 'online' ? 'checked' : '' }}>
-                                <span class="text-base">Online (Zoom/Meet)</span>
+                                <div>
+                                    <span class="text-base font-semibold block">Online</span>
+                                    <span class="text-xs text-gray-500">Via Zoom atau Google Meet</span>
+                                </div>
                             </label>
                         </div>
                     </div>
@@ -335,9 +351,9 @@
                     <!-- Target Personil -->
                     <div class="relative">
                         <label class="text-base font-semibold">
-                            Target Personil Asistensi
+                            Pilih Personil BRIDA yang Ingin Ditemui (Opsional)
                         </label>
-                        <p class="mt-1 text-sm text-gray-600">Kosongkan jika belum ada pilihan</p>
+                        <p class="mt-1 text-sm text-gray-600">Ketersediaan pegawai yang dipilih akan disesuaikan dan dikonfirmasi oleh tim BRIDA</p>
 
                         <div class="relative">
                             <input id="pegawaiInput" type="text"
@@ -734,6 +750,16 @@
     const label  = document.getElementById('layananBtnLabel');
     const native = document.getElementById('layananSelectNative');
     const container = document.getElementById('selectedLayananContainer');
+
+    // Set tanggal minimum = hari ini
+    const tanggalInput = document.getElementById('tanggal');
+    if (tanggalInput) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        tanggalInput.min = `${yyyy}-${mm}-${dd}`;
+    }
 
     // bisa 3 file
     const input       = document.getElementById('lampiranInput');
@@ -1324,7 +1350,7 @@
             firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
-        // 🔥 TRIGGER VALIDASI BROWSER
+        // TRIGGER VALIDASI BROWSER
         if (!this.checkValidity()) {
             e.preventDefault();
             this.reportValidity();

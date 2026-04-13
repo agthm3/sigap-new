@@ -2,8 +2,15 @@
 
 @section('content')
 @php
-  // Status final: Menunggu, Akan Dijadwalkan, Terjadwal, Dijadwalkan Ulang, Ditolak, Selesai
-  $status = $inkubatorma->status ?? 'Menunggu';
+
+  use App\Models\Inkubatorma;
+
+  // Status final:
+  // Menunggu, Akan Dijadwalkan, Terjadwal, Sesi Konsultasi, Dijadwalkan Ulang, Ditolak, Selesai
+  $statusMenunggu       = Inkubatorma::STATUS_MENUNGGU ?? 'Menunggu';
+  $statusSesiKonsultasi = Inkubatorma::STATUS_SESI_KONSULTASI ?? 'Sesi Konsultasi';
+
+  $status = $inkubatorma->status ?? $statusMenunggu;
 
   // format date aman untuk tampilan
   $fmtDate = function ($date, $format = 'd M Y') {
@@ -90,46 +97,65 @@
     ])
   </div>
 
-  {{-- SUMMARY (4 cards) --}}
-  <div class="grid grid-cols-1 gap-6 items-start">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+  {{-- SUMMARY --}}
+  {{-- Desktop: 4 card grid | Mobile: 1 card ringkas --}}
 
-      <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <p class="text-sm text-gray-500">Kode Pengajuan</p>
-        <p class="mt-1 text-xl font-extrabold text-maroon">
-          {{ $inkubatorma->kode ?? '—' }}
-        </p>
-        <p class="mt-1 text-xs text-gray-500">Identitas pengajuan</p>
-      </div>
+  {{-- Mobile only --}}
+  <div class="sm:hidden bg-white rounded-xl border border-gray-200 px-4 py-3 space-y-2 text-sm">
+    <div class="flex items-center justify-between">
+      <span class="text-gray-500">Kode</span>
+      <span class="font-extrabold text-maroon">{{ $inkubatorma->kode ?? '—' }}</span>
+    </div>
+    <div class="h-px bg-gray-100"></div>
+    <div class="flex items-center justify-between">
+      <span class="text-gray-500">Pengaju</span>
+      <span class="font-semibold text-gray-800 text-right max-w-[60%] truncate">{{ $inkubatorma->nama_pengaju ?? '—' }}</span>
+    </div>
+    <div class="h-px bg-gray-100"></div>
+    <div class="flex items-center justify-between">
+      <span class="text-gray-500">Diajukan</span>
+      <span class="font-semibold text-gray-800">
+        {{ $inkubatorma->created_at ? \Carbon\Carbon::parse($inkubatorma->created_at)->timezone('Asia/Makassar')->format('d M Y • H:i') . ' WITA' : '—' }}
+      </span>
+    </div>
+    <div class="h-px bg-gray-100"></div>
+    <div class="flex items-center justify-between">
+      <span class="text-gray-500">Update</span>
+      <span class="font-semibold text-gray-800">
+        {{ $inkubatorma->updated_at ? \Carbon\Carbon::parse($inkubatorma->updated_at)->timezone('Asia/Makassar')->format('d M Y • H:i') . ' WITA' : '—' }}
+      </span>
+    </div>
+  </div>
 
-      <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <p class="text-sm text-gray-500">Nama Pengaju</p>
-        <p class="mt-1 text-xl font-extrabold text-maroon">
-          {{ $inkubatorma->nama_pengaju ?? '—' }}
-        </p>
-        <p class="mt-1 text-xs text-gray-500">Pemohon/instansi</p>
-      </div>
-
-      <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <p class="text-sm text-gray-500">Diajukan</p>
-        <p class="mt-1 text-xl font-extrabold text-maroon">
-          {{ $inkubatorma->created_at ? \Carbon\Carbon::parse($inkubatorma->created_at)->timezone('Asia/Makassar')->format('d M Y') : '—' }}
-        </p>
-        <p class="mt-1 text-xs text-maroon">
-          {{ $inkubatorma->created_at ? \Carbon\Carbon::parse($inkubatorma->created_at)->timezone('Asia/Makassar')->format('H:i') . ' WITA' : '—' }}
-        </p>
-      </div>
-
-      <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <p class="text-sm text-gray-500">Terakhir Update</p>
-        <p class="mt-1 text-xl font-extrabold text-maroon">
-          {{ $inkubatorma->updated_at ? \Carbon\Carbon::parse($inkubatorma->updated_at)->timezone('Asia/Makassar')->format('d M Y') : '—' }}
-        </p>
-        <p class="mt-1 text-xs text-maroon">
-          {{ $inkubatorma->updated_at ? \Carbon\Carbon::parse($inkubatorma->updated_at)->timezone('Asia/Makassar')->format('H:i') . ' WITA' : '—' }}
-        </p>
-      </div>
-
+  {{-- Desktop only --}}
+  <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white rounded-xl border border-gray-200 p-5">
+      <p class="text-sm text-gray-500">Kode Pengajuan</p>
+      <p class="mt-1 text-xl font-extrabold text-maroon">{{ $inkubatorma->kode ?? '—' }}</p>
+      <p class="mt-1 text-xs text-gray-500">Identitas pengajuan</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-5">
+      <p class="text-sm text-gray-500">Nama Pengaju</p>
+      <p class="mt-1 text-xl font-extrabold text-maroon">{{ $inkubatorma->nama_pengaju ?? '—' }}</p>
+      <p class="mt-1 text-xs text-gray-500">Pemohon/instansi</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-5">
+      <p class="text-sm text-gray-500">Diajukan</p>
+      <p class="mt-1 text-xl font-extrabold text-maroon">
+        {{ $inkubatorma->created_at ? \Carbon\Carbon::parse($inkubatorma->created_at)->timezone('Asia/Makassar')->format('d M Y') : '—' }}
+      </p>
+      <p class="mt-1 text-xs text-maroon">
+        {{ $inkubatorma->created_at ? \Carbon\Carbon::parse($inkubatorma->created_at)->timezone('Asia/Makassar')->format('H:i') . ' WITA' : '—' }}
+      </p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-5">
+      <p class="text-sm text-gray-500">Terakhir Update</p>
+      <p class="mt-1 text-xl font-extrabold text-maroon">
+        {{ $inkubatorma->updated_at ? \Carbon\Carbon::parse($inkubatorma->updated_at)->timezone('Asia/Makassar')->format('d M Y') : '—' }}
+      </p>
+      <p class="mt-1 text-xs text-maroon">
+        {{ $inkubatorma->updated_at ? \Carbon\Carbon::parse($inkubatorma->updated_at)->timezone('Asia/Makassar')->format('H:i') . ' WITA' : '—' }}
+      </p>
     </div>
   </div>
 
@@ -154,7 +180,6 @@
       <form id="formInkEdit"
             method="POST"
             action="{{ route('sigap-inkubatorma.update', $inkubatorma->id) }}"
-            enctype="multipart/form-data"
             class="space-y-6">
         @csrf
         @method('PUT')
@@ -303,61 +328,6 @@
               <textarea name="poin_asistensi" id="poin_asistensi" rows="4" required
                         class="mt-1 w-full rounded-lg border {{ $errors->has('poin_asistensi') ? 'border-red-400' : 'border-gray-300' }} px-3 py-2 text-sm focus:ring-maroon focus:border-maroon">{{ old('poin_asistensi', $inkubatorma->poin_asistensi) }}</textarea>
               @error('poin_asistensi') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-            </div>
-
-            {{-- LAMPIRAN --}}
-            <div>
-                <label class="text-xs font-semibold text-gray-600">Lampiran Dokumen</label>
-                <p class="mt-0.5 text-xs text-gray-400">Maks. 3 file total (PDF/DOC/DOCX). Hapus file lama atau tambah file baru.</p>
-
-                {{-- CHIP FILE YANG SUDAH ADA --}}
-                <div id="lampiranLamaContainer" class="flex flex-wrap gap-2 mt-2">
-                    @if(!empty($inkubatorma->lampiran))
-                        @foreach($inkubatorma->lampiran as $filePath)
-                            <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 border border-gray-300 text-xs text-gray-700"
-                                id="chip-lama-{{ $loop->index }}">
-                                <a href="{{ asset('storage/' . $filePath) }}" target="_blank"
-                                  class="max-w-[160px] truncate hover:underline">
-                                    📄 {{ basename($filePath) }}
-                                </a>
-                                {{-- hidden input agar path lama ikut terkirim, bisa di-disable saat hapus --}}
-                                <input type="hidden"
-                                      name="lampiran_lama[]"
-                                      value="{{ $filePath }}"
-                                      id="input-lama-{{ $loop->index }}">
-                                <button type="button"
-                                        onclick="hapusLampiran({{ $loop->index }}, '{{ $filePath }}')"
-                                        class="ml-1 text-gray-400 hover:text-red-500 font-bold text-base leading-none">×</button>
-                            </div>
-                        @endforeach
-                    @else
-                        <p class="text-xs text-gray-400 italic">Belum ada lampiran.</p>
-                    @endif
-                </div>
-
-                {{-- INPUT HAPUS (diisi via JS saat klik ×) --}}
-                <div id="hapusLampiranContainer"></div>
-
-                {{-- UPLOAD FILE BARU --}}
-                <input type="file"
-                      name="lampiran[]"
-                      id="lampiranEditInput"
-                      multiple
-                      accept=".pdf,.doc,.docx"
-                      class="mt-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm
-                              file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0
-                              file:text-xs file:font-semibold file:bg-maroon file:text-white
-                              hover:file:bg-maroon-800">
-
-                {{-- Chip file baru yang dipilih --}}
-                <div id="lampiranBaruChips" class="flex flex-wrap gap-2 mt-2"></div>
-                <p id="lampiranEditError" class="mt-1 text-xs text-red-600 hidden">⚠ Total lampiran tidak boleh lebih dari 3 file.</p>
-                <p id="lampiranEditErrorFormat" class="mt-1 text-xs text-red-600 hidden">⚠ Hanya file PDF, DOC, atau DOCX yang diperbolehkan.</p>
-<p id="lampiranEditErrorSize" class="mt-1 text-xs text-red-600 hidden">⚠ Ukuran file tidak boleh melebihi 100MB.</p>
-
-                @error('lampiran')
-                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                @enderror
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -687,111 +657,6 @@
 
   updateUI();
   toggleLainnya();
-
-  // ===== LAMPIRAN EDIT — FILE LAMA + FILE BARU =====
-  const hapusContainer = document.getElementById('hapusLampiranContainer');
-  const errorMsg       = document.getElementById('lampiranEditError');
-  const inputBaru      = document.getElementById('lampiranEditInput');
-  const chipsBaru      = document.getElementById('lampiranBaruChips');
-  const MAX            = 3;
-
-  const errorFormat   = document.getElementById('lampiranEditErrorFormat');
-  const errorSize     = document.getElementById('lampiranEditErrorSize');
-  const formatAllowed = ['application/pdf', 'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-  const MAX_MB = 100;
-
-  // hitung file lama yang masih aktif (belum dihapus)
-  let jumlahLama = {{ count($inkubatorma->lampiran ?? []) }};
-  let selectedFiles = [];
-
-  // fungsi hapus file lama (dipanggil dari onclick di blade)
-  window.hapusLampiran = function (index, path) {
-    const chip = document.getElementById('chip-lama-' + index);
-    if (chip) chip.style.display = 'none';
-
-    const inputLama = document.getElementById('input-lama-' + index);
-    if (inputLama) inputLama.disabled = true;
-
-    const hidden = document.createElement('input');
-    hidden.type  = 'hidden';
-    hidden.name  = 'hapus_lampiran[]';
-    hidden.value = path;
-    hapusContainer.appendChild(hidden);
-
-    jumlahLama--;
-    errorMsg.classList.add('hidden');
-  };
-
-  if (inputBaru) {
-      inputBaru.addEventListener('change', function () {
-          errorMsg.classList.add('hidden');
-          errorFormat.classList.add('hidden');
-          errorSize.classList.add('hidden');
-
-          const incoming = Array.from(this.files);
-          let adaFormatSalah = false;
-          let adaMelebihi    = false;
-
-          incoming.forEach(f => {
-              if (!formatAllowed.includes(f.type)) {
-                  adaFormatSalah = true;
-                  return;
-              }
-              if (f.size > MAX_MB * 1024 * 1024) {
-                  adaMelebihi = true;
-                  return;
-              }
-              if (!selectedFiles.find(x => x.name === f.name)) {
-                  selectedFiles.push(f);
-              }
-          });
-
-          if (adaFormatSalah) errorFormat.classList.remove('hidden');
-          if (adaMelebihi)    errorSize.classList.remove('hidden');
-
-          const total = jumlahLama + selectedFiles.length;
-          if (total > MAX) {
-              const boleh = Math.max(0, MAX - jumlahLama);
-              selectedFiles = selectedFiles.slice(0, boleh);
-              errorMsg.classList.remove('hidden');
-          }
-
-          syncInput();
-          renderChipsBaru();
-      });
-  }
-
-  function removeNewFile(name) {
-    selectedFiles = selectedFiles.filter(f => f.name !== name);
-    syncInput();
-    renderChipsBaru();
-    errorMsg.classList.add('hidden');
-  }
-
-  function syncInput() {
-    if (!inputBaru) return;
-    const dt = new DataTransfer();
-    selectedFiles.forEach(f => dt.items.add(f));
-    inputBaru.files = dt.files;
-  }
-
-  function renderChipsBaru() {
-    if (!chipsBaru) return;
-    chipsBaru.innerHTML = '';
-    selectedFiles.forEach(file => {
-      const sizeMB = (file.size / 1024 / 1024).toFixed(2);
-      const chip   = document.createElement('div');
-      chip.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full bg-maroon/10 border border-maroon/20 text-xs text-maroon';
-      chip.innerHTML = `
-        <span class="max-w-[160px] truncate font-medium">📄 ${file.name}</span>
-        <span class="text-maroon/60">${sizeMB}MB</span>
-        <button type="button" class="ml-1 text-maroon/50 hover:text-red-500 font-bold text-base leading-none">×</button>
-      `;
-      chip.querySelector('button').addEventListener('click', () => removeNewFile(file.name));
-      chipsBaru.appendChild(chip);
-    });
-  }
 })();
 </script>
 @endsection

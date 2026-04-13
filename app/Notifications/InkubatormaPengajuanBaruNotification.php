@@ -24,16 +24,44 @@ class InkubatormaPengajuanBaruNotification extends Notification
     {
         $detailUrl = route('sigap-inkubatorma.detail', ['id' => $this->inkubatorma->id]);
 
+        $judul   = $this->inkubatorma->judul_konsultasi ?? '-';
+        $pengaju = $this->inkubatorma->nama_pengaju ?? '-';
+        $opd     = $this->inkubatorma->opd_unit ?? '-';
+        $layanan = $this->inkubatorma->layanan_nama ?? '-';
+        $status  = $this->inkubatorma->status ?? 'Menunggu';
+
+        // Tanggal & jam usulan dari pengaju
+        $jadwalUsulan = '—';
+        if (!empty($this->inkubatorma->tanggal_usulan)) {
+            $jadwalUsulan = \Carbon\Carbon::parse($this->inkubatorma->tanggal_usulan)
+                            ->timezone('Asia/Makassar')
+                            ->translatedFormat('d F Y');
+            if (!empty($this->inkubatorma->jam_usulan)) {
+                $jadwalUsulan .= ' • ' . \Carbon\Carbon::parse($this->inkubatorma->jam_usulan)->format('H:i') . ' WITA';
+            }
+        }
+
+        $metodeLabel = match($this->inkubatorma->metode_usulan ?? '') {
+            'online'  => 'Online (Zoom/Meet)',
+            'offline' => 'Tatap Muka (Offline)',
+            default   => '—',
+        };
+
         return (new MailMessage)
-            ->subject('Pengajuan Baru SIGAP Inkubatorma')
-            ->greeting('Halo, ' . ($notifiable->name ?? 'Verifikator') . ',')
-            ->line('Ada pengajuan konsultasi baru di SIGAP Inkubatorma.')
-            ->line('Judul: ' . ($this->inkubatorma->judul_konsultasi ?? '-'))
-            ->line('Pengaju: ' . ($this->inkubatorma->nama_pengaju ?? '-'))
-            ->line('OPD/Unit: ' . ($this->inkubatorma->opd_unit ?? '-'))
-            ->line('Status: ' . ($this->inkubatorma->status ?? 'Menunggu'))
+            ->subject("[SIGAP Inkubatorma] Pengajuan Baru: {$judul}")
+            ->greeting('Halo, ' . ($notifiable->name ?? 'Verifikator') . '!')
+            ->line('Ada pengajuan konsultasi baru yang masuk dan perlu ditinjau:')
+            ->line('---')
+            ->line('**Judul Pengajuan:** ' . $judul)
+            ->line('**Pengaju:** ' . $pengaju)
+            ->line('**OPD / Unit:** ' . $opd)
+            ->line('**Layanan:** ' . $layanan)
+            ->line('**Usulan Jadwal:** ' . $jadwalUsulan)
+            ->line('**Metode Usulan:** ' . $metodeLabel)
+            ->line('**Status:** ' . $status)
             ->action('Lihat Detail Pengajuan', $detailUrl)
-            ->line('Silakan login untuk meninjau pengajuan tersebut.');
+            ->line('Silakan login dan tinjau pengajuan tersebut secepatnya.')
+            ->salutation('Salam, Tim SIGAP BRIDA Kota Makassar');
     }
 
     public function toArray(object $notifiable): array

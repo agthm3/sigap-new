@@ -8,6 +8,8 @@
    * ])
    */
 
+  $userEmail = optional($inkubatorma->creator)->email ?? 'email pendaftar';
+
   $statusMenunggu         = \App\Models\Inkubatorma::STATUS_MENUNGGU ?? 'Menunggu';
   $statusAkanDijadwalkan  = \App\Models\Inkubatorma::STATUS_AKAN_DIJADWALKAN ?? 'Akan Dijadwalkan';
   $statusTerjadwal        = \App\Models\Inkubatorma::STATUS_TERJADWAL ?? 'Terjadwal';
@@ -79,49 +81,49 @@
       'widget'   => 'bg-yellow-50 border-yellow-200',
       'iconWrap' => 'bg-yellow-100 text-yellow-700',
       'icon'     => $icons[$statusMenunggu],
-      'sub'      => 'Menunggu verifikasi admin/verifikator',
+      'sub'      => "Menunggu verifikasi admin. Pembaruan status akan dikirim ke email: <strong>$userEmail</strong>. Mohon cek inbox atau folder spam Anda secara berkala.",
     ],
 
     $statusAkanDijadwalkan => [
       'widget'   => 'bg-indigo-50 border-indigo-200',
       'iconWrap' => 'bg-indigo-100 text-indigo-700',
       'icon'     => $icons[$statusAkanDijadwalkan],
-      'sub'      => 'Disetujui, menunggu admin memilih jadwal & PIC',
+      'sub'      => "Disetujui, menunggu admin memilih jadwal & PIC. Pembaruan status akan dikirim ke email: <strong>$userEmail</strong>. Mohon cek inbox atau folder spam Anda secara berkala.",
     ],
 
     $statusTerjadwal => [
       'widget'   => 'bg-blue-50 border-blue-200',
       'iconWrap' => 'bg-blue-100 text-blue-700',
       'icon'     => $icons[$statusTerjadwal],
-      'sub'      => 'Tanggal konsultasi & PIC sudah ditetapkan',
+      'sub'      => "Tanggal konsultasi & PIC sudah ditetapkan. Pembaruan status akan dikirim ke email: <strong>$userEmail</strong>. Mohon cek inbox atau folder spam Anda secara berkala.",
     ],
 
     $statusSesiKonsultasi => [
       'widget'   => 'bg-purple-50 border-purple-200',
       'iconWrap' => 'bg-purple-100 text-purple-700',
       'icon'     => $icons[$statusSesiKonsultasi],
-      'sub'      => 'Sesi konsultasi sedang berjalan / tindak lanjut revisi berlangsung',
+      'sub'      => "Sesi konsultasi sedang berjalan / tindak lanjut revisi berlangsung. Pembaruan status akan dikirim ke email: <strong>$userEmail</strong>. Mohon cek inbox atau folder spam Anda secara berkala.",
     ],
 
     $statusDijadwalkanUlang => [
       'widget'   => 'bg-orange-50 border-orange-200',
       'iconWrap' => 'bg-orange-100 text-orange-700',
       'icon'     => $icons[$statusDijadwalkanUlang],
-      'sub'      => 'Admin mengajukan penjadwalan ulang',
+      'sub'      => "Admin mengajukan penjadwalan ulang. Pembaruan status akan dikirim ke email: <strong>$userEmail</strong>. Mohon cek inbox atau folder spam Anda secara berkala.",
     ],
 
     $statusDitolak => [
       'widget'   => 'bg-red-50 border-red-200',
       'iconWrap' => 'bg-red-100 text-red-700',
       'icon'     => $icons[$statusDitolak],
-      'sub'      => 'Pengajuan ditolak',
+      'sub'      => "Pengajuan ditolak.",
     ],
 
     $statusSelesai => [
       'widget'   => 'bg-gray-50 border-gray-200',
       'iconWrap' => 'bg-gray-200 text-gray-700',
       'icon'     => $icons[$statusSelesai],
-      'sub'      => 'Konsultasi ditutup dan proses telah selesai',
+      'sub'      => "Konsultasi ditutup dan proses telah selesai",
     ],
   ];
 
@@ -136,6 +138,6 @@
   <div class="leading-tight">
     <p class="text-xs font-semibold text-gray-600">Status</p>
     <p class="mt-1 text-sm font-extrabold text-gray-900">{{ $normalizedStatus }}</p>
-    <p class="mt-1 text-[11px] text-gray-700">{{ $cfg['sub'] }}</p>
+    <p class="mt-1 text-xs text-gray-600 leading-normal">{!! $cfg['sub'] !!}</p>
   </div>
 </div>
