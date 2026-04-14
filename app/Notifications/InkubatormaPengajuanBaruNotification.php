@@ -11,9 +11,11 @@ class InkubatormaPengajuanBaruNotification extends Notification
 {
     use Queueable;
 
-    public function __construct(public Inkubatorma $inkubatorma)
-    {
-    }
+    public function __construct(
+        public Inkubatorma $inkubatorma,
+        public bool $isVerifikator = false,
+    ) {}
+    
 
     public function via(object $notifiable): array
     {

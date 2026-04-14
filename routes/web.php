@@ -297,7 +297,7 @@ Route::prefix('/sigap-inkubatorma')->group(function () {
             ->name('sigap-inkubatorma.dashboard');
 
             Route::get('/dashboard/print', [SigapInkubatormaController::class, 'printLaporan'])
-            ->middleware('role:admin')
+            ->middleware('role:admin|verifikator_inkubatorma|user')
             ->name('sigap-inkubatorma.dashboard.print');
 
         Route::get('/{id}/detail', [SigapInkubatormaController::class, 'detail'])

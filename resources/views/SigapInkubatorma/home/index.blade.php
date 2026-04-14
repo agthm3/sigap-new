@@ -121,7 +121,7 @@
                 <div class="aspect-w-16 aspect-h-9 rounded-2xl overflow-hidden shadow-2xl border-4 border-white">
                     <iframe 
                             class="w-full h-[300px] sm:h-[380px]"
-                            src="https://www.youtube.com/embed/VIDEO_ID" 
+                            src="https://www.youtube.com/embed/DOUC9yEuskg" 
                             title="Penjelasan SIGAP Inovasi" 
                             frameborder="0" 
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -385,7 +385,7 @@
                         </p>
                         <p class="mt-1 text-sm text-gray-600">
                             Belum punya surat?
-                            <a href="https://drive.google.com/LINK_TEMPLATE_KAMU"
+                            <a href="https://drive.google.com/drive/folders/19yJ2sLh1Y5Eck4g6CMYRVmdWPr-tcQiw?usp=sharing"
                                target="_blank"
                                rel="noopener noreferrer"
                                class="text-maroon font-semibold underline underline-offset-2 hover:opacity-75">
@@ -547,7 +547,7 @@
             </div>
 
             <!-- LIST JADWAL -->
-            <div class="space-y-4 h-[1050px] overflow-y-auto pr-2">
+            <div class="space-y-4 h-[1300px] overflow-y-auto pr-2">
                 @forelse ($jadwals as $j)
                     @php
                         $pakaiFinal = in_array($j->status, [
@@ -1003,14 +1003,6 @@
     const now = new Date();
     let viewYear = now.getFullYear();
     let viewMonth = now.getMonth();
-
-    if (events.length && events[0].dateISO) {
-        const parts = events[0].dateISO.split('-');
-        if (parts.length === 3) {
-            viewYear = parseInt(parts[0]);
-            viewMonth = parseInt(parts[1]) - 1;
-        }
-    }
 
     function pad2(n){ return String(n).padStart(2,'0'); }
     function toISODate(y,m,d){ return `${y}-${pad2(m+1)}-${pad2(d)}`; }

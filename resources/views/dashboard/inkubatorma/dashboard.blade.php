@@ -175,11 +175,13 @@
       + Isi Form Pengajuan
     </a>
 
-    <a href="{{ route('sigap-inkubatorma.dashboard.print', request()->query()) }}"
-        target="_blank"
-        class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm font-semibold hover:bg-gray-50">
-      Export Laporan
-    </a>
+    @if($isAdmin || $isVerifikator || $isUser)
+      <a href="{{ route('sigap-inkubatorma.dashboard.print', request()->query()) }}"
+         target="_blank"
+         class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm font-semibold hover:bg-gray-50">
+        Export Laporan
+      </a>
+    @endif
   </div>
 </section>
 
