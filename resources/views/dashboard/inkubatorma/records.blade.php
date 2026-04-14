@@ -63,7 +63,7 @@
         && !$reviewAman
         && !$sudahKonfirmasi;
 
-    $userCanConfirmFinish = $isUser && !$isClosed && !$sudahKonfirmasi;
+    $userCanConfirmFinish = $isUser && !$isClosed && !$sudahKonfirmasi && !$userCanUploadRevision && $latestVerifikatorRecord !== null;
 
     $recordTypeOptions = [
         'sesi_konsultasi' => 'Sesi Konsultasi',

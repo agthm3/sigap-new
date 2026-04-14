@@ -695,7 +695,7 @@
                         </div>
                     </div>
 
-                    <a href="{{ asset('storage/panduan/panduan-sigap-inkubatorma.pdf') }}"
+                    <a href="{{ asset('storage/inkubatorma/panduan/panduan-sigap-inkubatorma.pdf') }}"
                        target="_blank"
                        rel="noopener noreferrer"
                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-maroon text-white text-sm font-semibold hover:opacity-90 shrink-0">
@@ -710,7 +710,7 @@
                 {{-- PDF embed — tampil di desktop --}}
                 <div class="hidden sm:block bg-gray-100">
                     <iframe
-                        src="{{ asset('storage/panduan/panduan-sigap-inkubatorma.pdf') }}"
+                        src="{{ asset('storage/inkubatorma/panduan/panduan-sigap-inkubatorma.pdf') }}"
                         class="w-full"
                         style="height: 600px;"
                         type="application/pdf">
