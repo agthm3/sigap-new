@@ -91,6 +91,12 @@
     $set($steps, 3, 'current', 'Saat ini', null, 'Menunggu pelaksanaan sesi konsultasi sesuai jadwal.');
   }
 
+  if ($normalizedStatus === 'Sesi Konsultasi') {
+    $set($steps, 1, 'done', 'Terverifikasi');
+    $set($steps, 2, 'done', 'Jadwal ditetapkan');
+    $set($steps, 3, 'current', 'Saat ini', null, 'Sesi konsultasi sedang berlangsung sesuai jadwal yang ditetapkan.');
+  }
+
   if ($normalizedStatus === 'Dijadwalkan Ulang') {
     $set($steps, 1, 'done', 'Terverifikasi');
     $set($steps, 2, 'current', 'Saat ini', 'Penjadwalan ulang diminta',
@@ -118,37 +124,37 @@
 
   // Color helpers (dot & line)
   $dotClass = function($state) use ($normalizedStatus) {
-    if ($state === 'done') return 'bg-green-600';
-    if ($state === 'cancelled') return 'bg-gray-300';
-    if ($state === 'next') return 'bg-gray-300';
+      if ($state === 'done') return 'bg-green-600';
+      if ($state === 'cancelled') return 'bg-gray-300';
+      if ($state === 'next') return 'bg-gray-300';
 
-    // current
-    return match ($normalizedStatus) {
-      'Menunggu' => 'bg-yellow-400',
-      'Akan Dijadwalkan' => 'bg-indigo-500',
-      'Terjadwal' => 'bg-blue-500',
-      'Dijadwalkan Ulang' => 'bg-orange-500',
-      'Ditolak' => 'bg-red-500',
-      'Tutup' => 'bg-gray-600',
-      default => 'bg-yellow-400',
-    };
+      return match ($normalizedStatus) {
+          'Menunggu'          => 'bg-yellow-400',
+          'Akan Dijadwalkan'  => 'bg-indigo-500',
+          'Terjadwal'         => 'bg-blue-500',
+          'Sesi Konsultasi'   => 'bg-purple-500',  // ← tambah ini
+          'Dijadwalkan Ulang' => 'bg-orange-500',
+          'Ditolak'           => 'bg-red-500',
+          'Tutup'             => 'bg-gray-600',
+          default             => 'bg-yellow-400',
+      };
   };
 
   $lineClass = function($state) use ($normalizedStatus) {
-    if ($state === 'done') return 'bg-green-600';
-    if ($state === 'cancelled') return 'bg-gray-200';
-    if ($state === 'next') return 'bg-gray-200';
+      if ($state === 'done') return 'bg-green-600';
+      if ($state === 'cancelled') return 'bg-gray-200';
+      if ($state === 'next') return 'bg-gray-200';
 
-    // current
-    return match ($normalizedStatus) {
-      'Menunggu' => 'bg-yellow-300',
-      'Akan Dijadwalkan' => 'bg-indigo-300',
-      'Terjadwal' => 'bg-blue-300',
-      'Dijadwalkan Ulang' => 'bg-orange-300',
-      'Ditolak' => 'bg-red-300',
-      'Tutup' => 'bg-gray-400',
-      default => 'bg-yellow-300',
-    };
+      return match ($normalizedStatus) {
+          'Menunggu'          => 'bg-yellow-300',
+          'Akan Dijadwalkan'  => 'bg-indigo-300',
+          'Terjadwal'         => 'bg-blue-300',
+          'Sesi Konsultasi'   => 'bg-purple-300',  // ← tambah ini
+          'Dijadwalkan Ulang' => 'bg-orange-300',
+          'Ditolak'           => 'bg-red-300',
+          'Tutup'             => 'bg-gray-400',
+          default             => 'bg-yellow-300',
+      };
   };
 
   $badgeHtml = function($state) {

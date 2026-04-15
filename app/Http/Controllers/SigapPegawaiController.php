@@ -37,6 +37,8 @@ class SigapPegawaiController extends Controller
         $user->load(['profile','kompetensis']);
 
         $roles         = Role::where('guard_name','web')->pluck('name')->all();
+        
+        // ini untuk checklist (role yang dimiliki user)
         $userRoleNames = $user->getRoleNames()->all();
 
         return view('dashboard.pegawai.edit', compact('user','roles','userRoleNames'));

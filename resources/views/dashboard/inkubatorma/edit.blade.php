@@ -2,8 +2,15 @@
 
 @section('content')
 @php
-  // Status final: Menunggu, Akan Dijadwalkan, Terjadwal, Dijadwalkan Ulang, Ditolak, Selesai
-  $status = $inkubatorma->status ?? 'Menunggu';
+
+  use App\Models\Inkubatorma;
+
+  // Status final:
+  // Menunggu, Akan Dijadwalkan, Terjadwal, Sesi Konsultasi, Dijadwalkan Ulang, Ditolak, Selesai
+  $statusMenunggu       = Inkubatorma::STATUS_MENUNGGU ?? 'Menunggu';
+  $statusSesiKonsultasi = Inkubatorma::STATUS_SESI_KONSULTASI ?? 'Sesi Konsultasi';
+
+  $status = $inkubatorma->status ?? $statusMenunggu;
 
   // format date aman untuk tampilan
   $fmtDate = function ($date, $format = 'd M Y') {
@@ -36,19 +43,27 @@
   };
 
   // nilai terpilih (ambil dari old dulu, lalu DB)
-  $selectedLayanan = (string) old('layanan_id', $inkubatorma->layanan_id);
+  // supaya layanan bisa tersimpan 2
+  $selectedLayanan = old('layanan_id', $inkubatorma->layanan_id ?? []);
+
+  if (!is_array($selectedLayanan)) {
+      $selectedLayanan = [$selectedLayanan];
+  }
 
   // input layanan lainnya (ambil dari old dulu, lalu DB)
   $selectedLayananLainnya = (string) old('layanan_lainnya', $inkubatorma->layanan_lainnya);
 
   // label dropdown awal (mengikuti detail: "Lainnya • (input)")
   $selectedLabel = 'Pilih…';
-  if (!empty($selectedLayanan) && !empty($layananOptions[$selectedLayanan])) {
-    $selectedLabel = $layananOptions[$selectedLayanan];
+  if (!empty($selectedLayanan)) {
+      $labels = collect($selectedLayanan)
+          ->map(fn($id) => $layananOptions[$id] ?? $id)
+          ->toArray();
+      $selectedLabel = implode(', ', $labels);
 
-    if ($selectedLayanan === 'lainnya' && !empty($selectedLayananLainnya)) {
-      $selectedLabel .= ' • ' . $selectedLayananLainnya;
-    }
+      if (in_array('lainnya', $selectedLayanan) && !empty($selectedLayananLainnya)) {
+          $selectedLabel .= ' • ' . $selectedLayananLainnya;
+      }
   }
 @endphp
 
@@ -82,46 +97,65 @@
     ])
   </div>
 
-  {{-- SUMMARY (4 cards) --}}
-  <div class="grid grid-cols-1 gap-6 items-start">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+  {{-- SUMMARY --}}
+  {{-- Desktop: 4 card grid | Mobile: 1 card ringkas --}}
 
-      <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <p class="text-sm text-gray-500">Kode Pengajuan</p>
-        <p class="mt-1 text-xl font-extrabold text-maroon">
-          {{ $inkubatorma->kode ?? '—' }}
-        </p>
-        <p class="mt-1 text-xs text-gray-500">Identitas pengajuan</p>
-      </div>
+  {{-- Mobile only --}}
+  <div class="sm:hidden bg-white rounded-xl border border-gray-200 px-4 py-3 space-y-2 text-sm">
+    <div class="flex items-center justify-between">
+      <span class="text-gray-500">Kode</span>
+      <span class="font-extrabold text-maroon">{{ $inkubatorma->kode ?? '—' }}</span>
+    </div>
+    <div class="h-px bg-gray-100"></div>
+    <div class="flex items-center justify-between">
+      <span class="text-gray-500">Pengaju</span>
+      <span class="font-semibold text-gray-800 text-right max-w-[60%] truncate">{{ $inkubatorma->nama_pengaju ?? '—' }}</span>
+    </div>
+    <div class="h-px bg-gray-100"></div>
+    <div class="flex items-center justify-between">
+      <span class="text-gray-500">Diajukan</span>
+      <span class="font-semibold text-gray-800">
+        {{ $inkubatorma->created_at ? \Carbon\Carbon::parse($inkubatorma->created_at)->timezone('Asia/Makassar')->format('d M Y • H:i') . ' WITA' : '—' }}
+      </span>
+    </div>
+    <div class="h-px bg-gray-100"></div>
+    <div class="flex items-center justify-between">
+      <span class="text-gray-500">Update</span>
+      <span class="font-semibold text-gray-800">
+        {{ $inkubatorma->updated_at ? \Carbon\Carbon::parse($inkubatorma->updated_at)->timezone('Asia/Makassar')->format('d M Y • H:i') . ' WITA' : '—' }}
+      </span>
+    </div>
+  </div>
 
-      <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <p class="text-sm text-gray-500">Nama Pengaju</p>
-        <p class="mt-1 text-xl font-extrabold text-maroon">
-          {{ $inkubatorma->nama_pengaju ?? '—' }}
-        </p>
-        <p class="mt-1 text-xs text-gray-500">Pemohon/instansi</p>
-      </div>
-
-      <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <p class="text-sm text-gray-500">Diajukan</p>
-        <p class="mt-1 text-xl font-extrabold text-maroon">
-          {{ $inkubatorma->created_at ? \Carbon\Carbon::parse($inkubatorma->created_at)->timezone('Asia/Makassar')->format('d M Y') : '—' }}
-        </p>
-        <p class="mt-1 text-xs text-maroon">
-          {{ $inkubatorma->created_at ? \Carbon\Carbon::parse($inkubatorma->created_at)->timezone('Asia/Makassar')->format('H:i') . ' WITA' : '—' }}
-        </p>
-      </div>
-
-      <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <p class="text-sm text-gray-500">Terakhir Update</p>
-        <p class="mt-1 text-xl font-extrabold text-maroon">
-          {{ $inkubatorma->updated_at ? \Carbon\Carbon::parse($inkubatorma->updated_at)->timezone('Asia/Makassar')->format('d M Y') : '—' }}
-        </p>
-        <p class="mt-1 text-xs text-maroon">
-          {{ $inkubatorma->updated_at ? \Carbon\Carbon::parse($inkubatorma->updated_at)->timezone('Asia/Makassar')->format('H:i') . ' WITA' : '—' }}
-        </p>
-      </div>
-
+  {{-- Desktop only --}}
+  <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white rounded-xl border border-gray-200 p-5">
+      <p class="text-sm text-gray-500">Kode Pengajuan</p>
+      <p class="mt-1 text-xl font-extrabold text-maroon">{{ $inkubatorma->kode ?? '—' }}</p>
+      <p class="mt-1 text-xs text-gray-500">Identitas pengajuan</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-5">
+      <p class="text-sm text-gray-500">Nama Pengaju</p>
+      <p class="mt-1 text-xl font-extrabold text-maroon">{{ $inkubatorma->nama_pengaju ?? '—' }}</p>
+      <p class="mt-1 text-xs text-gray-500">Pemohon/instansi</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-5">
+      <p class="text-sm text-gray-500">Diajukan</p>
+      <p class="mt-1 text-xl font-extrabold text-maroon">
+        {{ $inkubatorma->created_at ? \Carbon\Carbon::parse($inkubatorma->created_at)->timezone('Asia/Makassar')->format('d M Y') : '—' }}
+      </p>
+      <p class="mt-1 text-xs text-maroon">
+        {{ $inkubatorma->created_at ? \Carbon\Carbon::parse($inkubatorma->created_at)->timezone('Asia/Makassar')->format('H:i') . ' WITA' : '—' }}
+      </p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-5">
+      <p class="text-sm text-gray-500">Terakhir Update</p>
+      <p class="mt-1 text-xl font-extrabold text-maroon">
+        {{ $inkubatorma->updated_at ? \Carbon\Carbon::parse($inkubatorma->updated_at)->timezone('Asia/Makassar')->format('d M Y') : '—' }}
+      </p>
+      <p class="mt-1 text-xs text-maroon">
+        {{ $inkubatorma->updated_at ? \Carbon\Carbon::parse($inkubatorma->updated_at)->timezone('Asia/Makassar')->format('H:i') . ' WITA' : '—' }}
+      </p>
     </div>
   </div>
 
@@ -199,10 +233,10 @@
               <label class="text-xs font-semibold text-gray-600">Layanan <span class="text-red-600">*</span></label>
 
               {{-- Native select hidden untuk submit --}}
-              <select name="layanan_id" id="layananSelectNative" required class="hidden">
+              <select name="layanan_id[]" id="layananSelectNative" multiple required class="hidden">
                 <option value="">Pilih…</option>
                 @foreach(($layananOptions ?? []) as $id => $nama)
-                  <option value="{{ $id }}" @selected((string)$selectedLayanan === (string)$id)>{{ $nama }}</option>
+                  <option value="{{ $id }}" @selected(in_array($id, $selectedLayanan ?? []))>{{ $nama }}</option>
                 @endforeach
               </select>
 
@@ -221,6 +255,9 @@
                 </svg>
               </button>
 
+              {{-- Chip untuk tampilkan 2 layanan --}}
+              <div id="selectedLayananContainer" class="flex flex-wrap gap-2 mt-2"></div>
+
               {{-- Dropdown panel --}}
               <div id="layananPanel"
                    class="hidden absolute z-30 mt-2 w-full rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden">
@@ -235,7 +272,7 @@
                             data-value="{{ $id }}"
                             data-label="{{ $nama }}">
                       <span class="truncate">{{ $nama }}</span>
-                      <span class="text-maroon font-semibold {{ ((string)$selectedLayanan === (string)$id) ? '' : 'hidden' }}" data-check="{{ $id }}">✓</span>
+                      <span class="text-maroon font-semibold {{ in_array($id, $selectedLayanan ?? []) ? '' : 'hidden' }}" data-check="{{ $id }}">✓</span>
                     </button>
                   @endforeach
 
@@ -249,7 +286,7 @@
                           data-value="lainnya"
                           data-label="{{ $layananOptions['lainnya'] ?? 'Lainnya' }}">
                     <span class="truncate">{{ $layananOptions['lainnya'] ?? 'Lainnya' }}</span>
-                    <span class="text-maroon font-semibold {{ ((string)$selectedLayanan === 'lainnya') ? '' : 'hidden' }}" data-check="lainnya">✓</span>
+                    <span class="text-maroon font-semibold {{ in_array('lainnya', $selectedLayanan ?? []) ? '' : 'hidden' }}" data-check="lainnya">✓</span>
                   </button>
 
                 </div>
@@ -258,7 +295,7 @@
               @error('layanan_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
 
               {{-- Input tambahan kalau pilih "lainnya" --}}
-              <div id="layananLainnyaWrap" class="mt-3 {{ ((string)$selectedLayanan === 'lainnya') ? '' : 'hidden' }}">
+              <div id="layananLainnyaWrap" class="mt-3 {{ in_array('lainnya', $selectedLayanan ?? []) ? '' : 'hidden' }}">
                 <label class="text-xs font-semibold text-gray-600">Spesifikasi Lainnya <span class="text-red-600">*</span></label>
                 <input type="text"
                        name="layanan_lainnya"
@@ -325,7 +362,7 @@
               </div>
 
               <div class="relative">
-                <label class="text-xs font-semibold text-gray-600">Target Personil (opsional)</label>
+                <label class="text-xs font-semibold text-gray-600">Target Personil Asistensi (opsional)</label>
 
                 <input id="pegawaiInput" type="text"
                        autocomplete="off"
@@ -449,6 +486,8 @@
   const lainnyaWrap = document.getElementById('layananLainnyaWrap');
   const lainnyaInput = document.getElementById('layanan_lainnya');
 
+  const layananOptions = @json($layananOptions);
+
   if (!wrap || !btn || !panel || !label || !native) return;
 
   function openPanel()  { panel.classList.remove('hidden'); }
@@ -511,21 +550,113 @@
   });
 
   // Inisialisasi awal: sync checkmark + visibility
-  const initVal = native.value || '';
-  updateLainnyaVisibility(initVal);
+  // const initVal = native.value || '';
+  // updateLainnyaVisibility(initVal);
 
-  if (initVal && initVal !== 'lainnya') {
-    const initText = native.options[native.selectedIndex]?.textContent || initVal;
-    setSelected(initVal, initText);
-  } else if (!initVal) {
-    setSelected('', 'Pilih…');
-  } else {
-    native.value = 'lainnya';
-    panel.querySelectorAll('[data-check]').forEach(el => {
-      el.classList.toggle('hidden', el.getAttribute('data-check') !== 'lainnya');
-    });
+  // if (initVal && initVal !== 'lainnya') {
+  //   const initText = native.options[native.selectedIndex]?.textContent || initVal;
+  //   setSelected(initVal, initText);
+  // } else if (!initVal) {
+  //   setSelected('', 'Pilih…');
+  // } else {
+  //   native.value = 'lainnya';
+  //   panel.querySelectorAll('[data-check]').forEach(el => {
+  //     el.classList.toggle('hidden', el.getAttribute('data-check') !== 'lainnya');
+  //   });
+  // }
+
+  // Supaya muncul 2 layanan di halaman edit
+  let selectedValues = @json($selectedLayanan ?? []);
+
+  function toggleLainnya(){
+    const show = selectedValues.includes('lainnya');
+
+    if(lainnyaWrap){
+        lainnyaWrap.classList.toggle('hidden', !show);
+    }
+
+    if(lainnyaInput){
+        lainnyaInput.required = show;
+
+        if(!show){
+            lainnyaInput.value = '';
+        }
+    }
   }
 
+  const container = document.getElementById('selectedLayananContainer');
+
+  function updateUI(){
+
+      // update native select
+      Array.from(native.options).forEach(opt => {
+          opt.selected = selectedValues.includes(opt.value);
+      });
+
+      // update label
+      label.textContent = selectedValues.length
+          ? selectedValues.map(v => layananOptions[v]).join(', ')
+          : 'Pilih maksimal 2 layanan';
+
+      // render chips
+      container.innerHTML = '';
+
+      selectedValues.forEach(val => {
+
+          const option = native.querySelector(`option[value="${val}"]`);
+          if(!option) return;
+
+          const chip = document.createElement('div');
+
+          chip.className =
+          "flex items-center gap-2 px-3 py-1 rounded-full bg-maroon/10 text-maroon text-sm font-semibold";
+
+          chip.innerHTML = `
+              ${option.textContent}
+              <button type="button" class="font-bold">×</button>
+          `;
+
+          chip.querySelector('button').onclick = () => {
+              selectedValues = selectedValues.filter(v => v !== val);
+              updateUI();
+          };
+
+          container.appendChild(chip);
+
+      });
+
+      toggleLainnya();
+  }
+
+  panel.addEventListener('click', (e)=>{
+
+      const opt = e.target.closest('[data-value]');
+      if(!opt) return;
+
+      const value = opt.dataset.value;
+
+      if(!selectedValues.includes(value)){
+
+          if(selectedValues.length >= 2){
+              alert('Maksimal 2 layanan');
+              return;
+          }
+
+          selectedValues.push(value);
+
+      }else{
+
+          selectedValues = selectedValues.filter(v => v !== value);
+
+      }
+
+      toggleLainnya();
+      updateUI();
+
+  });
+
+  updateUI();
+  toggleLainnya();
 })();
 </script>
 @endsection

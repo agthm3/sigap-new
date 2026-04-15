@@ -26,6 +26,29 @@ class EvidenceRepository
         ];
     }
 
+    public function maxTotalWeight(): int
+    {
+        // 1. Ambil semua template beserta parameter yang sort_order-nya paling atas (paling bagus)
+        $templates = EvidenceTemplate::with(['params' => function($q) {
+            $q->orderBy('sort_order', 'asc');
+        }])->get();
+
+        $multipliers = $this->evidenceMultipliers();
+        $maxTotal = 0;
+
+        foreach ($templates as $t) {
+            $no = (int) $t->no;
+            // Ambil weight dari parameter pertama (sort_order terkecil)
+            $bestParam = $t->params->first();
+            $maxRawWeight = $bestParam ? (int) $bestParam->weight : 0;
+            
+            // Kalikan dengan multiplier indikator tersebut
+            $maxTotal += $this->weightedScoreFor($no, $maxRawWeight);
+        }
+
+        return $maxTotal;
+    }
+
     private function weightedScoreFor(int $no, int $rawWeight): int
     {
         $mult = $this->evidenceMultipliers()[$no] ?? 1;

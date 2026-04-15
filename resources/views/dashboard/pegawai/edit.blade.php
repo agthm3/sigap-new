@@ -122,7 +122,8 @@ margin-top:6px;
                 <input type="checkbox" name="roles[]" value="{{ $r }}"
                        class="rounded border-gray-300 text-maroon focus:ring-maroon"
                        @checked(in_array($r, old('roles',$userRoleNames)))>
-                <span>{{ ucfirst($r) }}</span>
+                <span>{{ $roleLabels[$r] ?? $r }}</span>
+                {{-- <span>{{ ucfirst($r) }}</span> --}}
               </label>
             @endforeach
           </div>

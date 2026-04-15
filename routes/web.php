@@ -271,7 +271,7 @@ Route::middleware('auth')
     ->name('api.users.search');
 
 // (opsional) jika masih butuh JSON show:
-Route::get('/sigap-agenda/show',       [SigapAgendaController::class, 'show'])->name('sigap-agenda.show');    
+Route::get('/sigap-agenda/show',       [SigapAgendaController::class, 'show'])->name('sigap-agenda.show');     
 
 Route::get('/sigap-inkubatorma', [SigapInkubatormaController::class, 'index'])
     ->name('sigap-inkubatorma.index'); // landing publik
@@ -285,11 +285,20 @@ Route::prefix('/sigap-inkubatorma')->group(function () {
     Route::get('/', [SigapInkubatormaController::class, 'index'])
         ->name('sigap-inkubatorma.index');
 
+    // ========== WAJIB LOGIN UNTUK SUBMIT ==========
+    // Route::post('/store', [SigapInkubatormaController::class, 'store'])
+    //     ->middleware('auth')
+    //     ->name('sigap-inkubatorma.store');
+
     // ========== AUTH AREA ==========
     Route::middleware('auth')->group(function () {
 
         Route::get('/dashboard', [SigapInkubatormaController::class, 'dashboard'])
             ->name('sigap-inkubatorma.dashboard');
+
+            Route::get('/dashboard/print', [SigapInkubatormaController::class, 'printLaporan'])
+            ->middleware('role:admin|verifikator_inkubatorma|user')
+            ->name('sigap-inkubatorma.dashboard.print');
 
         Route::get('/{id}/detail', [SigapInkubatormaController::class, 'detail'])
             ->whereNumber('id')
@@ -324,9 +333,30 @@ Route::prefix('/sigap-inkubatorma')->group(function () {
                 ->whereNumber('id')
                 ->name('sigap-inkubatorma.destroy');
         });
+
+        Route::get('/{id}/records', [SigapInkubatormaController::class, 'records'])
+            ->whereNumber('id')
+            ->name('sigap-inkubatorma.records');
+
+        Route::post('/{id}/records', [SigapInkubatormaController::class, 'storeRecord'])
+            ->whereNumber('id')
+            ->name('sigap-inkubatorma.records.store');
+
+        Route::put('/{id}/records/{recordId}', [SigapInkubatormaController::class, 'updateRecord'])
+            ->whereNumber('id')
+            ->whereNumber('recordId')
+            ->name('sigap-inkubatorma.records.update');
+
+        Route::post('/{id}/records/{recordId}/upload-revision', [SigapInkubatormaController::class, 'uploadRecordRevision'])
+            ->whereNumber('id')
+            ->whereNumber('recordId')
+            ->name('sigap-inkubatorma.records.upload-revision');
+
+        Route::post('/{id}/records/confirm-finish', [SigapInkubatormaController::class, 'confirmRecordFinish'])
+            ->whereNumber('id')
+            ->name('sigap-inkubatorma.records.confirm-finish');
     });
 });
-
 
 Route::get('/profil-struktur', [ProfileOrganisasiController::class, 'struktur'])->name('profil.struktur');
 Route::get('/profil-visi-misi', [ProfileOrganisasiController::class, 'visiMisi'])->name('profil.visimisi');

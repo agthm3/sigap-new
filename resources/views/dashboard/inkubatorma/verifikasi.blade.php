@@ -2,10 +2,18 @@
 
 @section('content')
 @php
-  $status = $inkubatorma->status ?? 'Menunggu';
+  $statusMenunggu         = \App\Models\Inkubatorma::STATUS_MENUNGGU ?? 'Menunggu';
+  $statusAkanDijadwalkan  = \App\Models\Inkubatorma::STATUS_AKAN_DIJADWALKAN ?? 'Akan Dijadwalkan';
+  $statusTerjadwal        = \App\Models\Inkubatorma::STATUS_TERJADWAL ?? 'Terjadwal';
+  $statusSesiKonsultasi   = \App\Models\Inkubatorma::STATUS_SESI_KONSULTASI ?? 'Sesi Konsultasi';
+  $statusDijadwalkanUlang = \App\Models\Inkubatorma::STATUS_DIJADWALKAN_ULANG ?? 'Dijadwalkan Ulang';
+  $statusDitolak          = \App\Models\Inkubatorma::STATUS_DITOLAK ?? 'Ditolak';
+  $statusSelesai          = \App\Models\Inkubatorma::STATUS_SELESAI ?? 'Selesai';
+
+  $status = $inkubatorma->status ?? $statusMenunggu;
 
   // Jika sudah selesai, verifikasi dikunci
-  $isClosed = ($status === 'Selesai');
+  $isClosed = ($status === $statusSelesai);
 
   $metodeLabel = function ($val) {
     return match ($val) {
@@ -42,17 +50,26 @@
     }
   };
 
-  $layananKey   = (string) ($inkubatorma->layanan_id ?? '');
-  $layananBase  = $layananOptions[$layananKey] ?? '—';
+  // Supaya bisa 2 layanan
+  $layananIds = $inkubatorma->layanan_id ?? [];
 
-  // ✅ tampil seperti detail: "Lainnya • (input user)"
-  $layananLainnya = trim((string) ($inkubatorma->layanan_lainnya ?? ''));
-
-  if ($layananKey === 'lainnya' && $layananLainnya !== '') {
-    $layananLabel = $layananBase . ' • ' . $layananLainnya;
-  } else {
-    $layananLabel = $layananBase;
+  if (!is_array($layananIds)) {
+    $layananIds = [$layananIds];
   }
+
+  $layananLabels = collect($layananIds)
+    ->map(function ($id) use ($layananOptions, $inkubatorma) {
+
+      if ($id === 'lainnya' && !empty($inkubatorma->layanan_lainnya)) {
+        return ($layananOptions[$id] ?? 'Lainnya') . ' • ' . $inkubatorma->layanan_lainnya;
+      }
+
+      return $layananOptions[$id] ?? $id;
+    })
+    ->implode(', ');
+
+  $layananLabel = $layananLabels ?: '—';
+
   // Untuk dropdown search PIC: tampilkan nama awal jika sudah ada PIC
   $initialPicId = old('pic_employee_id', $inkubatorma->pic_employee_id);
 
@@ -108,25 +125,48 @@
   {{-- SUMMARY (4 cards) --}}
   <div class="grid grid-cols-1 gap-6 items-start">
 
-    {{-- 4 Summary Cards --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    {{-- SUMMARY --}}
+    {{-- Desktop: 4 card grid | Mobile: 1 card ringkas --}}
 
+    {{-- Mobile only --}}
+    <div class="sm:hidden bg-white rounded-xl border border-gray-200 px-4 py-3 space-y-2 text-sm">
+      <div class="flex items-center justify-between">
+        <span class="text-gray-500">Kode</span>
+        <span class="font-extrabold text-maroon">{{ $inkubatorma->kode ?? '—' }}</span>
+      </div>
+      <div class="h-px bg-gray-100"></div>
+      <div class="flex items-center justify-between">
+        <span class="text-gray-500">Pengaju</span>
+        <span class="font-semibold text-gray-800 text-right max-w-[60%] truncate">{{ $inkubatorma->nama_pengaju ?? '—' }}</span>
+      </div>
+      <div class="h-px bg-gray-100"></div>
+      <div class="flex items-center justify-between">
+        <span class="text-gray-500">Diajukan</span>
+        <span class="font-semibold text-gray-800">
+          {{ $inkubatorma->created_at ? \Carbon\Carbon::parse($inkubatorma->created_at)->timezone('Asia/Makassar')->format('d M Y • H:i') . ' WITA' : '—' }}
+        </span>
+      </div>
+      <div class="h-px bg-gray-100"></div>
+      <div class="flex items-center justify-between">
+        <span class="text-gray-500">Update</span>
+        <span class="font-semibold text-gray-800">
+          {{ $inkubatorma->updated_at ? \Carbon\Carbon::parse($inkubatorma->updated_at)->timezone('Asia/Makassar')->format('d M Y • H:i') . ' WITA' : '—' }}
+        </span>
+      </div>
+    </div>
+
+    {{-- Desktop only --}}
+    <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div class="bg-white rounded-xl border border-gray-200 p-5">
         <p class="text-sm text-gray-500">Kode Pengajuan</p>
-        <p class="mt-1 text-xl font-extrabold text-maroon">
-          {{ $inkubatorma->kode ?? '—' }}
-        </p>
+        <p class="mt-1 text-xl font-extrabold text-maroon">{{ $inkubatorma->kode ?? '—' }}</p>
         <p class="mt-1 text-xs text-gray-500">Identitas pengajuan</p>
       </div>
-
       <div class="bg-white rounded-xl border border-gray-200 p-5">
         <p class="text-sm text-gray-500">Nama Pengaju</p>
-        <p class="mt-1 text-xl font-extrabold text-maroon">
-          {{ $inkubatorma->nama_pengaju ?? '—' }}
-        </p>
+        <p class="mt-1 text-xl font-extrabold text-maroon">{{ $inkubatorma->nama_pengaju ?? '—' }}</p>
         <p class="mt-1 text-xs text-gray-500">Pemohon/instansi</p>
       </div>
-
       <div class="bg-white rounded-xl border border-gray-200 p-5">
         <p class="text-sm text-gray-500">Diajukan</p>
         <p class="mt-1 text-xl font-extrabold text-maroon">
@@ -136,7 +176,6 @@
           {{ $inkubatorma->created_at ? \Carbon\Carbon::parse($inkubatorma->created_at)->timezone('Asia/Makassar')->format('H:i') . ' WITA' : '—' }}
         </p>
       </div>
-
       <div class="bg-white rounded-xl border border-gray-200 p-5">
         <p class="text-sm text-gray-500">Terakhir Update</p>
         <p class="mt-1 text-xl font-extrabold text-maroon">
@@ -146,7 +185,6 @@
           {{ $inkubatorma->updated_at ? \Carbon\Carbon::parse($inkubatorma->updated_at)->timezone('Asia/Makassar')->format('H:i') . ' WITA' : '—' }}
         </p>
       </div>
-
     </div>
   </div>
 
@@ -207,6 +245,24 @@
             <p class="mt-1 text-gray-700 leading-relaxed whitespace-pre-line">{{ $inkubatorma->poin_asistensi ?? '—' }}</p>
           </div>
 
+          {{-- Lampiran --}}
+          <div>
+            <p class="text-xs font-semibold text-gray-500">Lampiran</p>
+
+            @if(empty($inkubatorma->lampiran))
+              <p class="mt-1 text-gray-500 italic text-sm">Tidak ada lampiran</p>
+            @else
+              <div class="mt-2 flex flex-wrap gap-2">
+                @foreach($inkubatorma->lampiran as $file)
+                  <a href="{{ asset('storage/' . $file) }}" target="_blank"
+                    class="px-3 py-2 rounded-lg border border-gray-300 text-xs hover:bg-gray-50">
+                    📄 {{ basename($file) }}
+                  </a>
+                @endforeach
+              </div>
+            @endif
+          </div>
+
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="rounded-lg border border-gray-200 p-4 bg-gray-50">
               <p class="text-xs font-semibold text-gray-500">Tanggal Usulan</p>
@@ -221,7 +277,7 @@
               <p class="mt-1 font-semibold text-gray-800">{{ $metodeLabel($inkubatorma->metode_usulan) }}</p>
             </div>
             <div class="rounded-lg border border-gray-200 p-4 bg-gray-50">
-              <p class="text-xs font-semibold text-gray-500">Target Personil (opsional)</p>
+              <p class="text-xs font-semibold text-gray-500">Target Personil Asistensi (opsional)</p>
               <p class="mt-1 font-semibold text-gray-800">{{ $inkubatorma->target_personil_usulan ?? '—' }}</p>
             </div>
           </div>
@@ -230,7 +286,7 @@
           <div class="pt-2">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-base font-semibold text-gray-800">Jadwal & PIC (Final)</p>
+                <p class="text-base font-semibold text-gray-800">Jadwal (Final)</p>
                 <p class="text-xs text-gray-500 mt-0.5">Terisi jika sudah diset oleh verifikator</p>
               </div>
               @php
@@ -260,7 +316,7 @@
               </div>
 
               <div class="rounded-xl border border-gray-200 p-5 bg-white">
-                <p class="text-xs font-semibold text-gray-500">PIC</p>
+                <p class="text-xs font-semibold text-gray-500">Personel Asistensi</p>
                 <p class="mt-1 font-semibold text-gray-900">{{ $inkubatorma->verifikatorUser?->name ?? '—' }}</p>
               </div>
             </div>
@@ -268,11 +324,6 @@
 
         </div>
       </div>
-
-    </section>
-
-    {{-- RIGHT --}}
-    <aside class="space-y-6">
 
       {{-- AKSI VERIFIKASI (FORM) --}}
       <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -311,8 +362,16 @@
                 @disabled($isClosed)
                 class="mt-1 w-full rounded-lg border {{ $errors->has('status') ? 'border-red-400' : 'border-gray-300' }} px-3 py-2 text-sm focus:ring-maroon focus:border-maroon">
                 @php
-                  $opts = ['Menunggu','Akan Dijadwalkan','Terjadwal','Dijadwalkan Ulang','Ditolak','Selesai'];
-                  $selectedStatus = old('status', $inkubatorma->status ?? 'Menunggu');
+                  $opts = [
+                    $statusMenunggu,
+                    $statusAkanDijadwalkan,
+                    $statusTerjadwal,
+                    $statusSesiKonsultasi,
+                    $statusDijadwalkanUlang,
+                    $statusDitolak,
+                    $statusSelesai,
+                  ];
+                  $selectedStatus = old('status', $inkubatorma->status ?? $statusMenunggu);
                 @endphp
                 @foreach($opts as $opt)
                   <option value="{{ $opt }}" @selected($selectedStatus === $opt)>{{ $opt }}</option>
@@ -377,7 +436,7 @@
                 <div>
                   <label class="text-xs font-semibold text-gray-600">Tanggal</label>
                   <input name="tanggal_final" id="finalDate" type="date"
-                    value="{{ old('tanggal_final', optional($inkubatorma->tanggal_final)->format('Y-m-d')) }}"
+                  value="{{ old('tanggal_final', optional($inkubatorma->tanggal_final)->format('Y-m-d') ?? optional($inkubatorma->tanggal_usulan)->format('Y-m-d')) }}"
                     @disabled($isClosed)
                     class="mt-1 w-full rounded-lg border {{ $errors->has('tanggal_final') ? 'border-red-400' : 'border-gray-300' }} px-3 py-2 text-sm">
                   @error('tanggal_final') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
@@ -385,7 +444,7 @@
                 <div>
                   <label class="text-xs font-semibold text-gray-600">Jam</label>
                   <input name="jam_final" id="finalTime" type="time"
-                    value="{{ old('jam_final', $timeValue($inkubatorma->jam_final)) }}"
+                  value="{{ old('jam_final', $timeValue($inkubatorma->jam_final) ?: $timeValue($inkubatorma->jam_usulan)) }}"
                     @disabled($isClosed)
                     class="mt-1 w-full rounded-lg border {{ $errors->has('jam_final') ? 'border-red-400' : 'border-gray-300' }} px-3 py-2 text-sm">
                   @error('jam_final') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
@@ -397,8 +456,8 @@
                 <select name="metode_final" id="finalMode"
                   @disabled($isClosed)
                   class="mt-1 w-full rounded-lg border {{ $errors->has('metode_final') ? 'border-red-400' : 'border-gray-300' }} px-3 py-2 text-sm">
-                  <option value="online"  @selected(old('metode_final', $inkubatorma->metode_final) === 'online')>Online</option>
-                  <option value="offline" @selected(old('metode_final', $inkubatorma->metode_final) === 'offline')>Tatap Muka (Offline)</option>
+                  <option value="online"  @selected(old('metode_final', $inkubatorma->metode_final ?? $inkubatorma->metode_usulan) === 'online')>Online</option>
+                  <option value="offline" @selected(old('metode_final', $inkubatorma->metode_final ?? $inkubatorma->metode_usulan) === 'offline')>Offline</option>
                 </select>
                 @error('metode_final') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
               </div>
@@ -440,6 +499,11 @@
         </div>
       </div>
 
+    </section>
+
+    {{-- RIGHT --}}
+    <aside class="space-y-6">
+
       {{-- TIMELINE (CARD) --}}
       <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div class="px-5 py-4 border-b">
@@ -465,6 +529,11 @@
   // =========================
   // 1) Toggle Jadwal Final + Konfirmasi Tutup
   // =========================
+  const STATUS_TERJADWAL = @json($statusTerjadwal);
+  const STATUS_SESI_KONSULTASI = @json($statusSesiKonsultasi);
+  const STATUS_DIJADWALKAN_ULANG = @json($statusDijadwalkanUlang);
+  const STATUS_SELESAI = @json($statusSelesai);
+
   const statusSelect = document.getElementById('statusSelect');
   const noteToUser   = document.getElementById('noteToUser');
   const scheduleBox  = document.getElementById('scheduleBox');
@@ -472,15 +541,15 @@
   const closeInput   = document.getElementById('closeConfirmInput');
 
   function needSchedule(status) {
-    return ['Terjadwal', 'Dijadwalkan Ulang'].includes(status);
+    return [STATUS_TERJADWAL, STATUS_SESI_KONSULTASI, STATUS_DIJADWALKAN_ULANG].includes(status);
   }
 
   function needCloseConfirm(status) {
-    return status === 'Selesai';
+    return status === STATUS_SELESAI;
   }
 
   function applyBoxes() {
-    const st = statusSelect ? statusSelect.value : 'Menunggu';
+    const st = statusSelect ? statusSelect.value : @json($statusMenunggu);
 
     if (scheduleBox) {
       scheduleBox.style.display = needSchedule(st) ? '' : 'none';
@@ -501,7 +570,7 @@
   // =========================
   // 2) PIC Dropdown (SAMA seperti index: pakai list dari server)
   // =========================
-  const picList = @json($employees); // expected: [{id,name}, ...]
+  const picList = @json($employees);
   const picInput = document.getElementById('picInput');
   const picDropdown = document.getElementById('picDropdown');
   const picId = document.getElementById('pic_employee_id');
@@ -551,7 +620,6 @@
   picInput?.addEventListener('input', () => {
     const keyword = (picInput.value || '').toLowerCase().trim();
 
-    // reset dulu setiap user mengetik
     picId.value = '';
     picName.value = '';
     setClearVisible();
@@ -590,7 +658,6 @@
   statusSelect?.addEventListener('change', () => {
     const current = statusSelect.value;
 
-    // kalau status berubah, kosongkan catatan (biar catatan "per status")
     if (noteToUser && current !== lastStatus) {
       noteToUser.value = '';
     }

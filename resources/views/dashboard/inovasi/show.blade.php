@@ -178,7 +178,15 @@
   <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
     <div class="card rounded-2xl border bg-white p-4">
       <p class="text-xs text-gray-500">Skor Evidence</p>
-      <p class="mt-1 text-2xl font-extrabold text-maroon">{{ $evTotal }}</p>
+      <div class="flex items-center justify-between w-full gap-2 mt-1">
+        <p class="mt-1 text-2xl font-extrabold text-maroon">{{ $evTotal }}<span class="text-maroon opacity-80 text-xl">/{{ $evMax }}</span></p>
+        <span class="mt-1 inline-flex items-center rounded-md px-2 py-1 text-xs font-medium {{ $badgeColor }}">{{ $statusTeks }}</span>
+      </div>
+      {{-- <p class="mt-1 rounded-lg text-xs font-bold {{ $badgeColor }}">{{ $statusTeks }}</p> --}}
+      {{-- <div class="flex items-center gap-2 mt-1">
+        <p class="mt-1 text-2xl font-extrabold text-maroon">{{ $evTotal }}</p>
+        <span class="px-2 mt-1 rounded-lg text-2xl font-bold {{ $badgeColor }}">{{ $statusTeks }}</span>
+      </div> --}}
       <p class="text-xs text-gray-500 mt-1">{{ $evFilled }}/20 indikator terisi</p>
     </div>
     <div class="card rounded-2xl border bg-white p-4">
