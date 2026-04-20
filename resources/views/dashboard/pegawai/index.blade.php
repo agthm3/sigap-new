@@ -14,6 +14,45 @@
       </div>
     </div>
   </section>
+  <!-- Modal Export -->
+  <div id="exportModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 w-full max-w-lg">
+      <h2 class="text-lg font-bold mb-4">Export Data Pegawai</h2>
+
+      <form method="GET" action="{{ route('sigap-pegawai.export') }}">
+        
+        <div class="mb-3">
+          <label class="text-sm">Role</label>
+          <select name="role" class="w-full border rounded p-2">
+            <option value="">Semua</option>
+            @foreach($roles as $role)
+              <option value="{{ $role }}">{{ $role }}</option>
+            @endforeach
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="text-sm">Unit</label>
+          <input type="text" name="unit" class="w-full border rounded p-2" placeholder="Contoh: TI">
+        </div>
+
+        <div class="mb-3">
+          <label class="text-sm">Status</label>
+          <select name="status" class="w-full border rounded p-2">
+            <option value="">Semua</option>
+            <option value="active">Aktif</option>
+            <option value="inactive">Nonaktif</option>
+          </select>
+        </div>
+
+        <div class="flex justify-end gap-2 mt-4">
+          <button type="button" id="closeModal" class="px-3 py-2 border rounded">Batal</button>
+          <button type="submit" class="px-3 py-2 bg-maroon text-white rounded">Export</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
 
   <!-- Filters -->
   <section class="max-w-7xl mx-auto px-4 mt-4">
@@ -39,9 +78,9 @@
           <label class="text-sm font-semibold text-gray-700">Role</label>
           <select id="f_role" name="role" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
             <option value="">Semua</option>
-            <option>admin</option>
-            <option>verifikator</option>
-            <option>pegawai</option>
+              @foreach($roles as $role)
+                <option value="{{ $role }}">{{ $role }}</option>
+              @endforeach
           </select>
         </div>
         <div>
@@ -170,3 +209,27 @@
     </div>
   </section>
 @endsection
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const btn = document.getElementById('btnExport');
+    const close = document.getElementById('closeModal');
+    const modal = document.getElementById('exportModal');
+
+    if (btn) {
+        btn.onclick = function () {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+    }
+
+    if (close) {
+        close.onclick = function () {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+    }
+
+});
+</script>

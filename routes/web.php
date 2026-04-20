@@ -104,6 +104,9 @@ Route::post  ('/sigap-pegawai/users',    [RegisteredUserController::class, 'admi
 Route::get   ('/sigap-pegawai/{user}/edit', [SigapPegawaiController::class, 'edit'])->name('sigap-pegawai.edit');
 Route::put   ('/sigap-pegawai/{user}',      [SigapPegawaiController::class, 'update'])->name('sigap-pegawai.update');
 Route::delete('/sigap-pegawai/{user}',      [SigapPegawaiController::class, 'destroy'])->name('sigap-pegawai.destroy');
+//Export user
+Route::get('/sigap-pegawai/export', [SigapPegawaiController::class, 'export'])
+    ->name('sigap-pegawai.export');
 
 // hapus avatar (middleware milikmu tetap)
 Route::delete('/sigap-pegawai/{user}/avatar', [SigapPegawaiController::class,'destroyAvatar'])

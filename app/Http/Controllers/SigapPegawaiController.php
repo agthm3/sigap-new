@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\PegawaiExport;
+use Illuminate\Support\Facades\Log;
 
 class SigapPegawaiController extends Controller
 {
@@ -211,4 +214,18 @@ class SigapPegawaiController extends Controller
         $this->repo->delete($user);
         return redirect()->route('sigap-pegawai.index')->with('success','User dihapus.');
     }
+
+    public function export(Request $request)
+    {
+        $filters = $request->only(['role','unit','status']);
+        Log::info('Export Pegawai', [
+            'user_id' => auth()->id(),
+            'user_name' => auth()->user()->name,
+            'filters' => $filters,
+            'ip' => request()->ip(),
+        ]);
+
+        return Excel::download(new PegawaiExport($filters), 'pegawai.xlsx');
+    }
+ 
 }
