@@ -16,6 +16,7 @@ use App\Http\Controllers\Dashboard\EvidenceConfigController;
 use App\Http\Controllers\SigapPegawaiController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\FormatController;
+use App\Http\Controllers\InovasiReviewController;
 use App\Http\Controllers\page\PegawaiPublicController as PagePegawaiPublicController;
 use App\Http\Controllers\PegawaiProfilController;
 use App\Http\Controllers\PegawaiProfileController;
@@ -25,12 +26,14 @@ use App\Http\Controllers\ProfileOrganisasiController;
 use App\Http\Controllers\RewardController;
 use App\Http\Controllers\RisetController;
 use App\Http\Controllers\SertifikatController;
+use App\Http\Controllers\SigapAbsensiController;
 use App\Http\Controllers\SigapAgendaController;
 use App\Http\Controllers\SigapAutoController;
 use App\Http\Controllers\SigapFormatController;
 use App\Http\Controllers\SigapKinerjaController;
 use App\Http\Controllers\SigapRisetController;
 use App\Http\Controllers\SigapInkubatormaController;
+use App\Http\Controllers\SigapPpdController;
 use App\Http\Controllers\SigapSertifikatController;
 
 // --- Public
@@ -170,6 +173,25 @@ Route::prefix('/sigap-inovasi')->middleware('auth', 'role:inovator|admin')->grou
     )->middleware('role:admin')
     ->name('evidence.pedoman.delete');
 
+    Route::post('{id}/review/evidence', [InovasiReviewController::class, 'storeEvidenceReview'])
+     ->name('inovasi.review.evidence.store');
+
+    Route::post('sigap-inovasi/pedoman-metadata', [SigapInovasiController::class, 'pedomanMetaSave'])
+     ->name('evidence.pedoman.meta.save');
+
+});
+
+
+//Route Invasi Review
+Route::middleware(['auth'])->group(function () {
+
+    Route::get('/inovasi/{id}/review', [InovasiReviewController::class, 'form'])
+        ->name('inovasi.review');
+
+    Route::post('/inovasi/{id}/review', [InovasiReviewController::class, 'store'])
+        ->name('inovasi.review.store');
+    Route::get('/inovasi/{id}/review-result', [InovasiReviewController::class, 'reviewResult'])
+    ->name('inovasi.review.result');
 });
 
 
@@ -402,3 +424,49 @@ Route::get('/sertifikat/template',
 Route::get('/sertifikat/view/{id}',
 [SigapSertifikatController::class,'view'])
 ->name('sigap-sertifikat.view');
+
+
+Route::get('/sigap-absensi', function () {
+    return view('SigapAbsensi.home.index');
+})->name('sigap-absensi.home');
+
+Route::middleware(['auth'])->group(function () {
+    Route::prefix('sigap-absensi')->name('sigap-absensi.')->group(function () {
+
+        Route::middleware('role:employee|admin')->group(function () {
+            Route::get('/masuk', [SigapAbsensiController::class, 'index'])->name('index');
+            Route::post('/store', [SigapAbsensiController::class, 'store'])->name('store');
+        });
+
+        Route::middleware('role:admin|verificator_absensi')->group(function () {
+            Route::get('/dashboard', [SigapAbsensiController::class, 'dashboard'])->name('dashboard');
+            Route::get('/rekap-harian', [SigapAbsensiController::class, 'rekapHarian'])->name('rekap-harian');
+            Route::get('/rekap-mingguan', [SigapAbsensiController::class, 'rekapMingguan'])->name('rekap-mingguan');
+            Route::get('/rekap-bulanan', [SigapAbsensiController::class, 'rekapBulanan'])->name('rekap-bulanan');
+
+            Route::get('/{absensi}/edit', [SigapAbsensiController::class, 'edit'])->name('edit');
+            Route::put('/{absensi}', [SigapAbsensiController::class, 'update'])->name('update');
+        });
+    });
+
+    Route::get('/sigap-absensi/rekap-harian/export-pdf', [SigapAbsensiController::class, 'exportRekapHarianPdf'])
+        ->middleware('role:admin|verificator_absensi')
+        ->name('sigap-absensi.rekap-harian.pdf');
+});
+
+
+Route::get('/sigap-ppd', [SigapPpdController::class, 'publicIndex'])
+    ->name('sigap-ppd.public');
+Route::middleware('auth')->group(function () {
+    Route::prefix('sigap-ppd/dashboard')->name('sigap-ppd.')->group(function () {
+        Route::get('/', [SigapPpdController::class, 'index'])->name('index');
+        Route::get('/create', [SigapPpdController::class, 'create'])->name('create')->middleware('role:admin|verif_ppd');
+        Route::post('/', [SigapPpdController::class, 'store'])->name('store')->middleware('role:admin|verif_ppd');
+
+        Route::get('/{kegiatan}', [SigapPpdController::class, 'show'])->name('show');
+        Route::get('/{kegiatan}/export-pdf', [SigapPpdController::class, 'exportPdf'])->name('export-pdf');
+
+        Route::post('/lembar/{lembar}', [SigapPpdController::class, 'storeLembar'])->name('lembar.store');
+        Route::post('/{kegiatan}/status', [SigapPpdController::class, 'updateStatus'])->name('status')->middleware('role:admin|verif_ppd');
+    });
+});

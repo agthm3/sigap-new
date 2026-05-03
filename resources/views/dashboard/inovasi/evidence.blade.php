@@ -216,6 +216,54 @@
                       <p class="text-[11px] text-gray-500 mt-2">{{ $it['hint'] }}</p>
                     @endif
                   </div>
+
+                  {{-- ── HASIL REVIEW EVIDENCE (dari reviewer) ── --}}
+                  @if(isset($evReviews[$no]) && $evReviews[$no]->isNotEmpty())
+                    @php
+                      $reviewsForNo = $evReviews[$no];
+                      // Prioritas: tolak > revisi > accept
+                      if ($reviewsForNo->contains('status','tolak'))        $evStatus = 'tolak';
+                      elseif ($reviewsForNo->contains('status','revisi'))   $evStatus = 'revisi';
+                      elseif ($reviewsForNo->every(fn($r)=>$r->status==='accept')) $evStatus = 'accept';
+                      else $evStatus = null;
+
+                      $evStatusCss = match($evStatus) {
+                        'accept' => 'border-emerald-300 bg-emerald-50',
+                        'revisi' => 'border-amber-300   bg-amber-50',
+                        'tolak'  => 'border-rose-300    bg-rose-50',
+                        default  => '',
+                      };
+                      $evStatusBadge = match($evStatus) {
+                        'accept' => ['✅ Disetujui', 'bg-emerald-100 text-emerald-700'],
+                        'revisi' => ['✏️ Perlu Revisi', 'bg-amber-100 text-amber-700'],
+                        'tolak'  => ['❌ Ditolak', 'bg-rose-100 text-rose-700'],
+                        default  => ['—', 'bg-gray-100 text-gray-600'],
+                      };
+                    @endphp
+
+                    <div class="md:col-span-2 rounded-lg border-2 p-3 {{ $evStatusCss }}">
+                      <div class="flex items-center gap-2 mb-2">
+                        <p class="text-xs font-semibold text-gray-700">Hasil Review</p>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full font-medium {{ $evStatusBadge[1] }}">
+                          {{ $evStatusBadge[0] }}
+                        </span>
+                      </div>
+
+                      {{-- Komentar tiap reviewer --}}
+                      <div class="space-y-2">
+                        @foreach($reviewsForNo as $evRev)
+                          @if(!empty($evRev->comment))
+                            <div class="flex gap-2 text-xs">
+                              <span class="shrink-0 font-semibold text-gray-600">
+                                👤 {{ $evRev->reviewer?->name ?? 'Reviewer' }}:
+                              </span>
+                              <span class="text-gray-700">{{ $evRev->comment }}</span>
+                            </div>
+                          @endif
+                        @endforeach
+                      </div>
+                    </div>
+                  @endif
                 </div>
               </div>
             </details>

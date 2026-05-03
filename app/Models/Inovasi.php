@@ -57,6 +57,19 @@ class Inovasi extends Model
     {
         return $this->hasMany(InovasiReferensiVideo::class);
     }
+    public function reviews()
+    {
+        return $this->hasMany(InovasiReview::class);
+    }
+    public function reviewItems()
+    {
+        return $this->hasMany(\App\Models\InovasiReviewItem::class, 'inovasi_id');
+    }
+
+    public function evidenceReviewItems()
+    {
+        return $this->hasMany(EvidenceReviewItem::class);
+    }
 
     public function verifikator() { return $this->belongsTo(User::class, 'asistensi_by'); }
 }

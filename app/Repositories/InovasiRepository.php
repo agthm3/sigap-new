@@ -74,13 +74,14 @@ class InovasiRepository
                   ->orWhere('opd_unit', 'like', "%{$kw}%");
             });
         }
-
+        if (!empty($filters['asistensi_status'])) {
+         $q->where('asistensi_status', $filters['asistensi_status']);
+        }
         if (!empty($filters['urusan']))    $q->where('urusan_pemerintah', $filters['urusan']);
         if (!empty($filters['inisiator'])) $q->where('inisiator_daerah', $filters['inisiator']);
 
-        if (!empty($filters['tahap']) && !empty($filters['tahap_status'])) {
-            // saat ini satu kolom tahap_inovasi
-            $q->where('tahap_inovasi', $filters['tahap_status']);
+        if (!empty($filters['tahap'])) {
+            $q->where('tahap_inovasi', $filters['tahap']);
         }
 
         if (($filters['sort'] ?? 'terbaru') === 'judul') {
@@ -116,8 +117,8 @@ class InovasiRepository
         if (!empty($filters['urusan']))    $q->where('urusan_pemerintah', $filters['urusan']);
         if (!empty($filters['inisiator'])) $q->where('inisiator_daerah', $filters['inisiator']);
 
-        if (!empty($filters['tahap']) && !empty($filters['tahap_status'])) {
-            $q->where('tahap_inovasi', $filters['tahap_status']);
+        if (!empty($filters['tahap_status'])) {
+            $q->where('tahap_status', $filters['tahap_status']);
         }
 
         if (($filters['sort'] ?? 'terbaru') === 'judul') {

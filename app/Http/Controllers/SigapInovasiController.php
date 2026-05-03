@@ -6,6 +6,7 @@ use App\Models\Evidence;
 use App\Models\EvidenceFile;
 use App\Models\EvidenceGuide;
 use App\Models\Inovasi;
+use App\Models\InovasiReviewItem;
 use App\Repositories\EvidenceRepository;
 use App\Repositories\InovasiRepository;
 use Illuminate\Http\Request;
@@ -37,14 +38,42 @@ class SigapInovasiController extends Controller
 
         $filters = [
             'q'            => $request->get('q'),
-            'inisiator'    => $request->get('f_inisiator'),
-            'tahap'        => $request->get('f_tahap_inovasi'),
             'tahap_status' => $request->get('f_tahap_status'),
-            'urusan'       => $request->get('f_urusan'),
             'sort'         => $request->get('sort','terbaru'),
-        ];
+            'tahap' => $request->get('tahap'),
+            'urusan' => $request->get('urusan'),
+            'inisiator' => $request->get('inisiator'),
+            'asistensi_status' => $request->get('asistensi_status'),
+        ];  
+        
+
         $evidenceNoteTemplate = $evidenceRepo->evidenceChecklistText();
         $items = $this->repo->paginateForUser($user, $filters, 25);
+
+        if (!empty($filters['asistensi_status'])) {
+        $items->setCollection(
+            $items->getCollection()->filter(function ($inv) use ($filters) {
+
+                $reviewItems = $inv->reviewItems ?? collect();
+
+                if ($reviewItems->contains('status', 'tolak')) {
+                    $status = 'Ditolak';
+                } elseif ($reviewItems->contains('status', 'revisi')) {
+                    $status = 'Revisi';
+                } elseif ($reviewItems->isNotEmpty() && $reviewItems->every(fn($r) => $r->status === 'accept')) {
+                    $status = 'Disetujui';
+                } else {
+                    $status = $inv->asistensi_status ?? 'Menunggu Verifikasi';
+                }
+
+                return $status === $filters['asistensi_status'];
+            })
+        );
+    }
+
+        // Eager load reviewItems untuk ditampilkan di kolom inovator
+        $items->load(['reviewItems', 'evidenceReviewItems']);
+        // dd($filters);
         return view('dashboard.inovasi.index', compact('filters', 'items', 'evidenceNoteTemplate'));
     }
 
@@ -144,55 +173,55 @@ class SigapInovasiController extends Controller
      * Simpan inovasi baru.
      */
     public function store(Request $r)
-    {
-        $data = $r->validate([
-            'judul'                 => ['required','string','max:255'],
-            'opd_unit'              => ['nullable','string','max:255'],
-            'inisiator_daerah'      => ['nullable','string','max:255'],
-            'inisiator_nama'        => ['nullable','string','max:255'],
-            'koordinat'             => ['nullable','string','max:255'],
-            'klasifikasi'           => ['nullable','string','max:255'],
-            'jenis_inovasi'         => ['nullable','string','max:255'],
-            'bentuk_inovasi_daerah' => ['nullable','string','max:255'],
-            'asta_cipta'            => ['nullable','string','max:255'],
-            'program_prioritas'     => ['nullable','string','max:255'],
-            'urusan_pemerintah'     => ['nullable','string','max:255'],
-            'waktu_uji_coba'        => ['nullable','date'],
-            'waktu_penerapan'       => ['nullable','date'],
-            'tahap_inovasi'         => ['nullable','string','max:50'],
-            'rancang_bangun'        => ['nullable','string'],
-            'tujuan'                => ['nullable','string'],
-            'manfaat'               => ['nullable','string'],
-            'hasil_inovasi'         => ['nullable','string'],
-            'perkembangan_inovasi'  => ['nullable','string','max:255'],
-            'misi_walikota' => ['required','integer','between:1,7'],
-            'videos' => ['required','array','min:3','max:5'],
-            'videos.*.judul' => ['required','string','max:255'],
-            'videos.*.url' => ['required','url','max:500'],
-            'videos.*.deskripsi' => ['nullable','string'],
-        ]);
+        {
+            $data = $r->validate([
+                'judul'                 => ['required','string','max:255'],
+                'opd_unit'              => ['nullable','string','max:255'],
+                'inisiator_daerah'      => ['nullable','string','max:255'],
+                'inisiator_nama'        => ['nullable','string','max:255'],
+                'koordinat'             => ['nullable','string','max:255'],
+                'klasifikasi'           => ['nullable','string','max:255'],
+                'jenis_inovasi'         => ['nullable','string','max:255'],
+                'bentuk_inovasi_daerah' => ['nullable','string','max:255'],
+                'asta_cipta'            => ['nullable','string','max:255'],
+                'program_prioritas'     => ['nullable','string','max:255'],
+                'urusan_pemerintah'     => ['nullable','string','max:255'],
+                'waktu_uji_coba'        => ['nullable','date'],
+                'waktu_penerapan'       => ['nullable','date'],
+                'tahap_inovasi'         => ['nullable','string','max:50'],
+                'rancang_bangun'        => ['nullable','string'],
+                'tujuan'                => ['nullable','string'],
+                'manfaat'               => ['nullable','string'],
+                'hasil_inovasi'         => ['nullable','string'],
+                'perkembangan_inovasi'  => ['nullable','string','max:255'],
+                'misi_walikota' => ['required','integer','between:1,7'],
+                'videos' => ['required','array','min:3','max:5'],
+                'videos.*.judul' => ['required','string','max:255'],
+                'videos.*.url' => ['required','url','max:500'],
+                'videos.*.deskripsi' => ['nullable','string'],
+            ]);
 
-        // set pemilik
-        $data['user_id'] = Auth::id();
+            // set pemilik
+            $data['user_id'] = Auth::id();
 
-        $inovasi = $this->repo->create(
-            $data,
-            $r->file('anggaran'),
-            $r->file('profil_bisnis'),
-            $r->file('haki'),
-            $r->file('penghargaan')
-        );
+            $inovasi = $this->repo->create(
+                $data,
+                $r->file('anggaran'),
+                $r->file('profil_bisnis'),
+                $r->file('haki'),
+                $r->file('penghargaan')
+            );
 
-        foreach ($r->videos as $video) {
-            $inovasi->referensiVideos()->create([
-                'judul' => $video['judul'],
-                'deskripsi' => $video['deskripsi'] ?? null,
-                'video_url' => $video['url'],
-        ]);
-}
-
-        return redirect()->route('sigap-inovasi.index')->with('success', 'Inovasi berhasil ditambahkan.');
+            foreach ($r->videos as $video) {
+                $inovasi->referensiVideos()->create([
+                    'judul' => $video['judul'],
+                    'deskripsi' => $video['deskripsi'] ?? null,
+                    'video_url' => $video['url'],
+            ]);
     }
+
+            return redirect()->route('sigap-inovasi.index')->with('success', 'Inovasi berhasil ditambahkan.');
+        }
 
     /**
      * Hapus inovasi (pemilik/admin).
@@ -301,7 +330,16 @@ class SigapInovasiController extends Controller
             !empty($i['selected_label']) || (($i['selected_weight'] ?? 0) > 0)
         )->count();
 
-        return view('dashboard.inovasi.evidence', compact('inovasi','items','totalWeight','doneCount'));
+        // ── Ambil semua review evidence untuk inovasi ini ──
+        $evReviews = \App\Models\EvidenceReviewItem::where('inovasi_id', $inovasi->id)
+            ->with('reviewer')
+            ->get()
+            ->groupBy('no');  // key: no (1–20), value: collection of reviews
+
+        return view('dashboard.inovasi.evidence', compact(
+            'inovasi','items','totalWeight','doneCount',
+            'evReviews'   // ← baru
+        ));
     }
 
     /**
@@ -395,8 +433,22 @@ class SigapInovasiController extends Controller
     {
         $inovasi = $this->repo->find($id);
         $this->authorizeOwnerOrAdmin($inovasi);
+    // ambil semua review
+        $reviews = InovasiReviewItem::where('inovasi_id', $id)
+            ->with('reviewer')
+            ->get();
 
-        return view('dashboard.inovasi.edit', compact('inovasi'));
+        // group by field
+        $reviewByField = $reviews->groupBy('field');
+
+        // group reviewer
+        $reviewers = $reviews->groupBy('reviewer_id');
+
+        return view('dashboard.inovasi.edit', compact(
+            'inovasi',
+            'reviewByField',
+            'reviewers'
+        ));
     }
 
     /**
@@ -506,26 +558,79 @@ class SigapInovasiController extends Controller
 
     public function pedomanEvidence()
     {
+        // ── Evidence (20 indikator) ──
         $guides = EvidenceGuide::all()->keyBy('no');
 
-       $items = collect(range(1, 20))->map(function ($no) use ($guides) {
+        $evidenceItems = collect(range(1, 20))->map(function ($no) use ($guides) {
+            $g = $guides->get($no);
+            return [
+                'id'        => $g?->id,
+                'no'        => $no,
+                'indikator' => $g?->indikator ?? "Evidence {$no}",
+                'deskripsi' => $g?->deskripsi ?? null,
+                'file_url'  => $g && $g->file_path
+                    ? Storage::disk('public')->url($g->file_path)
+                    : null,
+                'file_name' => $g?->file_name,
+                'video_url' => $g?->video_url ?? null,  // kolom baru (nullable)
+            ];
+        });
 
-        $g = $guides->get($no);
-
-        return [
-            'id'        => $g?->id,
-            'no'        => $no,
-            'indikator' => $g?->indikator ?? "Evidence {$no}",
-            'deskripsi' => $g?->deskripsi ?? null,
-            'file_url'  => $g && $g->file_path
-                ? Storage::disk('public')->url($g->file_path)
-                : null,
-            'file_name' => $g?->file_name,
+        // ── Metadata (field-field inovasi) ──
+        $metadataItems = [
+            ['key'=>'judul',               'label'=>'Judul Inovasi',               'deskripsi'=>'Tuliskan nama inovasi secara singkat, jelas, dan deskriptif.'],
+            ['key'=>'opd_unit',            'label'=>'OPD/Unit',                    'deskripsi'=>'Nama Organisasi Perangkat Daerah atau unit kerja pengusul inovasi.'],
+            ['key'=>'inisiator_daerah',    'label'=>'Inisiator (Daerah)',           'deskripsi'=>'Pilih jenis inisiator: OPD, Unit Kerja, atau Kolaborasi.'],
+            ['key'=>'inisiator_nama',      'label'=>'Nama Inisiator',              'deskripsi'=>'Nama lengkap individu atau tim yang menjadi penggagas inovasi.'],
+            ['key'=>'koordinat',           'label'=>'Koordinat',                   'deskripsi'=>'Koordinat lokasi penerapan inovasi dalam format latitude,longitude.'],
+            ['key'=>'klasifikasi',         'label'=>'Klasifikasi Inovasi',         'deskripsi'=>'Pilih klasifikasi: Inovasi Perangkat Daerah, Desa/Kelurahan, atau Masyarakat.'],
+            ['key'=>'jenis_inovasi',       'label'=>'Jenis Inovasi',               'deskripsi'=>'Pilih jenis inovasi: Digital atau Non Digital.'],
+            ['key'=>'bentuk_inovasi_daerah','label'=>'Bentuk Inovasi Daerah',      'deskripsi'=>'Pilih bentuk: Pelayanan Publik, Tata Kelola Pemerintahan, atau lainnya.'],
+            ['key'=>'asta_cipta',          'label'=>'Asta Cipta',                  'deskripsi'=>'Pilih program Asta Cipta yang relevan dengan inovasi.'],
+            ['key'=>'program_prioritas',   'label'=>'Program Prioritas Walikota',  'deskripsi'=>'Pilih program prioritas Walikota yang didukung inovasi ini.'],
+            ['key'=>'misi_walikota',       'label'=>'Misi Walikota',               'deskripsi'=>'Pilih misi Walikota (1-7) yang paling relevan dengan inovasi.'],
+            ['key'=>'urusan_pemerintah',   'label'=>'Urusan Pemerintah',           'deskripsi'=>'Pilih urusan pemerintahan yang menjadi lingkup inovasi.'],
+            ['key'=>'waktu_uji_coba',      'label'=>'Waktu Uji Coba',             'deskripsi'=>'Tanggal mulai uji coba inovasi dilakukan.'],
+            ['key'=>'waktu_penerapan',     'label'=>'Waktu Penerapan',             'deskripsi'=>'Tanggal mulai inovasi diterapkan secara resmi.'],
+            ['key'=>'perkembangan_inovasi','label'=>'Perkembangan Inovasi',        'deskripsi'=>'Apakah sudah ada perkembangan nyata dari inovasi ini?'],
+            ['key'=>'rancang_bangun',      'label'=>'Rancang Bangun',              'deskripsi'=>'Jelaskan desain dan arsitektur inovasi secara detail (min. 300 karakter).'],
+            ['key'=>'tujuan',              'label'=>'Tujuan Inovasi',              'deskripsi'=>'Uraikan tujuan utama yang ingin dicapai melalui inovasi ini.'],
+            ['key'=>'manfaat',             'label'=>'Manfaat Inovasi',             'deskripsi'=>'Jelaskan manfaat konkret bagi masyarakat dan pemerintah.'],
+            ['key'=>'hasil_inovasi',       'label'=>'Hasil Inovasi',               'deskripsi'=>'Deskripsikan output dan outcome nyata dari penerapan inovasi.'],
+            ['key'=>'videos',              'label'=>'Referensi Penelitian/Video',   'deskripsi'=>'Cantumkan minimal 3 dan maksimal 5 referensi penelitian atau video terkait inovasi.'],
+            ['key'=>'anggaran',            'label'=>'Dokumen Anggaran',            'deskripsi'=>'Upload dokumen anggaran dalam format PDF (maks. 10MB).'],
+            ['key'=>'profil_bisnis',       'label'=>'Profil Bisnis',               'deskripsi'=>'Upload profil bisnis dalam format PPT atau PDF (maks. 20MB).'],
+            ['key'=>'haki',                'label'=>'Dokumen HAKI',                'deskripsi'=>'Upload dokumen Hak Atas Kekayaan Intelektual jika ada.'],
+            ['key'=>'penghargaan',         'label'=>'Penghargaan',                 'deskripsi'=>'Upload dokumen penghargaan yang pernah diterima inovasi ini.'],
         ];
-    });
 
+        // Ambil video_url dari tabel pedoman_metadata (buat tabel baru atau gunakan config)
+        // Untuk sementara bisa simpan di config atau session
+        // Kita pakai model baru: InovasiPedomanMeta
+        $pedomanMeta = \App\Models\InovasiPedomanMeta::all()->keyBy('field_key');
 
-        return view('dashboard.inovasi.evidence-pedoman', compact('items'));
+        return view('dashboard.inovasi.evidence-pedoman', compact(
+            'evidenceItems',
+            'metadataItems',
+            'pedomanMeta',
+        ));
+    }
+
+    public function pedomanMetaSave(Request $r)
+    {
+        $this->authorizeAdmin();
+
+        foreach ($r->input('meta', []) as $key => $data) {
+            \App\Models\InovasiPedomanMeta::updateOrCreate(
+                ['field_key' => $key],
+                [
+                    'deskripsi' => $data['deskripsi'] ?? null,
+                    'video_url' => $data['video_url'] ?? null,
+                ]
+            );
+        }
+
+        return back()->with('success', 'Pedoman metadata berhasil disimpan.');
     }
 
     public function pedomanEvidenceSave(Request $r)
@@ -533,20 +638,17 @@ class SigapInovasiController extends Controller
         $this->authorizeAdmin();
 
         foreach ($r->input('no', []) as $idx => $no) {
-
             $guide = EvidenceGuide::firstOrNew(['no' => $no]);
-
             $guide->indikator = $r->indikator[$idx] ?? $guide->indikator;
             $guide->deskripsi = $r->deskripsi[$idx] ?? $guide->deskripsi;
+            $guide->video_url = $r->video_url[$idx] ?? $guide->video_url; // ← tambah ini
 
             if ($r->hasFile("file.$idx")) {
                 if ($guide->file_path) {
                     Storage::disk('public')->delete($guide->file_path);
                 }
-
                 $file = $r->file("file.$idx");
                 $path = $file->store('evidence-pedoman', 'public');
-
                 $guide->file_path = $path;
                 $guide->file_name = $file->getClientOriginalName();
             }
@@ -554,7 +656,7 @@ class SigapInovasiController extends Controller
             $guide->save();
         }
 
-        return back()->with('success','Pedoman evidence berhasil disimpan.');
+        return back()->with('success', 'Pedoman evidence berhasil disimpan.');
     }
 
     public function pedomanEvidenceDelete(EvidenceGuide $guide)

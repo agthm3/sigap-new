@@ -17,5 +17,6 @@ class DatabaseSeeder extends Seeder
         $this->call(EvidenceTemplateSeeder::class);
         $this->call(AdminUserSeeder::class);
         $this->call(RolesAndPermissionsSeeder::class);
+        $this->call(InovasiReviewTemplateSeeder::class);
     }
 }

@@ -60,7 +60,7 @@
       <form class="grid lg:grid-cols-6 gap-3" method="GET" action="{{ route('sigap-inovasi.index') }}">
         <div>
           <label class="text-sm font-semibold text-gray-700">Tahapan Inovasi</label>
-          <select name="f_tahap" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+          <select name="tahap" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
             <option value="">Semua</option>
             @foreach(['Inisiatif','Uji Coba','Penerapan'] as $opt)
               <option value="{{ $opt }}" @selected(($filters['tahap'] ?? '')==$opt)>{{ $opt }}</option>
@@ -69,7 +69,7 @@
         </div>
         <div>
           <label class="text-sm font-semibold text-gray-700">Jenis Urusan</label>
-          <select name="f_urusan" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+          <select name="urusan" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
             <option value="">Semua</option>
             @foreach(['Kesehatan','Pendidikan','Air Bersih','Transportasi'] as $opt)
               <option value="{{ $opt }}" @selected(($filters['urusan'] ?? '')==$opt)>{{ $opt }}</option>
@@ -78,7 +78,7 @@
         </div>
         <div>
           <label class="text-sm font-semibold text-gray-700">Inisiator</label>
-          <select name="f_inisiator" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+          <select name="inisiator" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
             <option value="">Semua</option>
             @foreach(['OPD','Unit Kerja','Kolaborasi'] as $opt)
               <option value="{{ $opt }}" @selected(($filters['inisiator'] ?? '')==$opt)>{{ $opt }}</option>
@@ -88,7 +88,7 @@
 
         <div>
           <label class="text-sm font-semibold text-gray-700">Tahap Inovasi</label>
-          <select name="f_tahap_inovasi" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+          <select name="tahap_inovasi" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
             <option value="">Semua</option>
             @foreach(['Inisiatif','Uji Coba','Penerapan'] as $opt)
               <option value="{{ $opt }}" @selected(($filters['tahap_inovasi'] ?? '')==$opt)>{{ $opt }}</option>
@@ -97,14 +97,27 @@
         </div>
         <div>
           <label class="text-sm font-semibold text-gray-700">Status Tahap</label>
-          <select name="f_tahap_status" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+          <select name="tahap_status" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
             <option value="">Semua</option>
             @foreach(['Belum','Berjalan','Selesai'] as $opt)
               <option value="{{ $opt }}" @selected(($filters['tahap_status'] ?? '')==$opt)>{{ $opt }}</option>
             @endforeach
           </select>
         </div>
-
+        <div>
+        <label class="text-sm font-semibold text-gray-700">Status Asistensi</label>
+          <select name="asistensi_status"
+            class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+            
+            <option value="">Semua</option>
+            @foreach(['Menunggu Verifikasi','Disetujui','Revisi','Dikembalikan','Ditolak'] as $opt)
+              <option value="{{ $opt }}"
+                @selected(($filters['asistensi_status'] ?? '')==$opt)>
+                {{ $opt }}
+              </option>
+            @endforeach
+          </select>
+        </div>
         <div class="lg:col-span-6 grid md:grid-cols-3 gap-3 pt-1">
           <div class="md:col-span-2">
             <label class="text-sm font-semibold text-gray-700">Pencarian</label>
@@ -155,8 +168,7 @@
           <col class="w-[12%]" />  <!-- Inisiator -->
           <col class="w-[10%]" />  <!-- Tahap Inovasi -->
           <col class="w-[12%]" />  <!-- OPD/Unit -->
-          <col class="w-[10%]" />  <!-- Review -->
-          <col class="w-[12%]" />  <!-- Asistensi -->
+          <col class="w-[18%]" />  <!-- Asistensi/Review -->
           <col class="w-[16%]" />  <!-- Aksi -->
         </colgroup>
           <thead>
@@ -166,13 +178,10 @@
               <th class="px-4 py-3">Inisiator</th>
               <th class="px-4 py-3">Tahap Inovasi</th>
               <th class="px-4 py-3">OPD/Unit</th>
-              {{-- <th class="px-4 py-3">
-                <span class="inline-flex items-center gap-2">
-                  Ai Review
-                  <span class="ai-hdr-badge" aria-hidden="true" title="AI ready"></span>
-                </span>
-              </th> --}}
               <th class="px-4 py-3">Asistensi</th>
+              @hasanyrole('admin|verificator_inovasi')
+              <th class="px-4 py-3">Status</th>
+              @endhasanyrole
               <th class="px-4 py-3">Aksi</th>
             </tr>
           </thead>
@@ -202,60 +211,165 @@
                   </div>
                 </td>
                 <td class="px-4 py-3">{{ $inv->opd_unit ?? '-' }}</td>
-                {{-- <td class="px-4 py-3"><p class="p-2 bg-yellow-100 text-black">-Coming Soon-</p></td> --}}
-            <td class="px-4 py-3">
-                @role('admin')
-                  <form
-                    action="{{ route('sigap-inovasi.asistensi', $inv->id) }}"
-                    method="POST"
-                    class="flex flex-col gap-2 sm:flex-row sm:items-center"
-                    id="asst-form-{{ $inv->id }}"
-                    data-modal-title="Asistensi: {{ $inv->judul }}"
-                    data-modal-action="{{ route('sigap-inovasi.asistensi', $inv->id) }}"
-                  >
-                    @csrf
-                    <select
-                      name="status"
-                      id="asst-status-{{ $inv->id }}"
-                      class="text-sm rounded-md border-gray-300 focus:border-maroon focus:ring-maroon"
-                    >
-                      @foreach(['Pending','Disetujui','Dikembalikan','Revisi','Ditolak'] as $st)
-                        <option value="{{ $st }}" @selected(($inv->asistensi_status ?? 'Menunggu Verifikasi') === $st)>{{ $st }}</option>
-                      @endforeach
-                    </select>
+                {{-- ══ KOLOM ASISTENSI — dibedakan per role ══ --}}
+                <td class="px-4 py-3">
 
-                    {{-- catatan akan diisi dari modal --}}
-                    <input type="hidden" name="note" id="asst-note-hidden-{{ $inv->id }}" value="">
-
-                    <button type="submit" class="px-3 py-1.5 rounded-md bg-maroon text-white text-xs hover:bg-maroon-800">
-                      Simpan
-                    </button>
-                  </form>
-
-                  {{-- hint terakhir --}}
-                  @if(!empty($inv->asistensi_status) || !empty($inv->asistensi_note))
-                    <div class="mt-1 text-[11px] text-gray-600">
-                      Terakhir:
-                      <span class="font-medium">{{ $inv->asistensi_status ?? '—' }}</span>
-                      @if(!empty($inv->asistensi_note))
-                        • <span class="line-clamp-1" title="{{ $inv->asistensi_note }}">{{ \Illuminate\Support\Str::limit($inv->asistensi_note, 80) }}</span>
-                      @endif
-                    </div>
+                  @hasanyrole('admin|verificator_inovasi')
+                  {{-- ── ADMIN: hanya tombol Review ── --}}
+                  <a href="{{ route('inovasi.review', $inv->id) }}"
+                    class="inline-block px-3 py-1.5 rounded-md border border-maroon text-maroon text-xs
+                            hover:bg-maroon hover:text-white transition text-center">
+                    Review
+                  </a>
+                  @if(!empty($inv->asistensi_note))
+                    <p class="text-[10px] text-gray-500 mt-1 line-clamp-2" title="{{ $inv->asistensi_note }}">
+                      💬 {{ \Illuminate\Support\Str::limit($inv->asistensi_note, 60) }}
+                    </p>
                   @endif
-                @else
-                  <span class="px-2 py-1 rounded text-xs
-                    @class([
-                      'bg-gray-100 text-gray-700' => ($inv->asistensi_status ?? 'Menunggu Verifikasi') === 'Menunggu Verifikasi',
-                      'bg-emerald-50 text-emerald-700' => ($inv->asistensi_status ?? '') === 'Disetujui',
-                      'bg-amber-50 text-amber-700' => in_array(($inv->asistensi_status ?? ''), ['Revisi','Dikembalikan']),
-                      'bg-rose-50 text-rose-700' => ($inv->asistensi_status ?? '') === 'Ditolak',
-                    ])"
-                    @if(!empty($inv->asistensi_note)) title="{{ $inv->asistensi_note }}" @endif
-                  >
-                    {{ $inv->asistensi_status ?? 'Menunggu Verifikasi' }}
-                  </span>
-                @endrole
-              </td>
+
+                  @else
+                  @php
+                  // ── Review Metadata ──
+                  $reviewItems = $inv->reviewItems ?? collect();
+
+                  $hasRevisi = $reviewItems->contains('status', 'revisi');
+                  $hasTolak  = $reviewItems->contains('status', 'tolak');
+                  $hasAccept = $reviewItems->isNotEmpty()
+                              && $reviewItems->every(fn($r) => $r->status === 'accept');
+
+                  if ($hasTolak)      { $rvStatus = 'Ditolak';       $rvCss = 'bg-rose-50 text-rose-700'; }
+                  elseif ($hasRevisi) { $rvStatus = 'Revisi';         $rvCss = 'bg-amber-50 text-amber-700'; }
+                  elseif ($hasAccept) { $rvStatus = 'Disetujui';      $rvCss = 'bg-emerald-50 text-emerald-700'; }
+                  else                { $rvStatus = 'Menunggu Review'; $rvCss = 'bg-gray-100 text-gray-600'; }
+
+                  $acceptField = $reviewItems->groupBy('field')
+                                  ->filter(fn($g) => $g->every(fn($r) => $r->status === 'accept'))->count();
+                  $revisiField = $reviewItems->groupBy('field')
+                                  ->filter(fn($g) => $g->contains('status','revisi'))->count();
+                  $tolakField  = $reviewItems->groupBy('field')
+                                  ->filter(fn($g) => $g->contains('status','tolak'))->count();
+
+                  // ── Review Evidence ──
+                  $evItems = $inv->evidenceReviewItems ?? collect();
+
+                  $evHasTolak  = $evItems->contains('status', 'tolak');
+                  $evHasRevisi = $evItems->contains('status', 'revisi');
+                  $evHasAccept = $evItems->isNotEmpty()
+                                && $evItems->every(fn($r) => $r->status === 'accept');
+
+                  if ($evHasTolak)      { $evStatus = 'Ditolak';       $evCss = 'bg-rose-50 text-rose-700'; }
+                  elseif ($evHasRevisi) { $evStatus = 'Revisi';         $evCss = 'bg-amber-50 text-amber-700'; }
+                  elseif ($evHasAccept) { $evStatus = 'Disetujui';      $evCss = 'bg-emerald-50 text-emerald-700'; }
+                  else                  { $evStatus = 'Belum Direview'; $evCss = 'bg-gray-100 text-gray-500'; }
+
+                  $evAccept = $evItems->where('status','accept')->groupBy('no')->count();
+                  $evRevisi = $evItems->where('status','revisi')->groupBy('no')->count();
+                  $evTolak  = $evItems->where('status','tolak')->groupBy('no')->count();
+
+                  // ── Status Asistensi ──
+                  $astStatus = $inv->asistensi_status ?? 'Menunggu Verifikasi';
+                  $astCss    = match($astStatus) {
+                    'Disetujui'              => 'bg-emerald-50 text-emerald-700',
+                    'Revisi', 'Dikembalikan' => 'bg-amber-50 text-amber-700',
+                    'Ditolak'                => 'bg-rose-50 text-rose-700',
+                    default                  => 'bg-gray-100 text-gray-600',
+                  };
+                @endphp
+
+                <div class="flex flex-col gap-2">
+
+                  {{-- ── METADATA REVIEW ── --}}
+                  <div>
+                    <p class="text-[9px] text-gray-400 uppercase tracking-wide mb-0.5">Metadata</p>
+                    <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold {{ $rvCss }}">
+                      {{ $rvStatus }}
+                    </span>
+                    @if($reviewItems->isNotEmpty())
+                      <div class="flex flex-wrap gap-1 mt-1">
+                        @if($acceptField > 0)
+                          <span class="px-1.5 py-0.5 rounded text-[9px] bg-emerald-50 text-emerald-700 font-medium">✅ {{ $acceptField }}</span>
+                        @endif
+                        @if($revisiField > 0)
+                          <span class="px-1.5 py-0.5 rounded text-[9px] bg-amber-50 text-amber-700 font-medium">✏️ {{ $revisiField }}</span>
+                        @endif
+                        @if($tolakField > 0)
+                          <span class="px-1.5 py-0.5 rounded text-[9px] bg-rose-50 text-rose-700 font-medium">❌ {{ $tolakField }}</span>
+                        @endif
+                      </div>
+                    @endif
+                  </div>
+
+                  {{-- ── EVIDENCE REVIEW ── --}}
+                  <div>
+                    <p class="text-[9px] text-gray-400 uppercase tracking-wide mb-0.5">Evidence</p>
+                    <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold {{ $evCss }}">
+                      {{ $evStatus }}
+                    </span>
+                    @if($evItems->isNotEmpty())
+                      <div class="flex flex-wrap gap-1 mt-1">
+                        @if($evAccept > 0)
+                          <span class="px-1.5 py-0.5 rounded text-[9px] bg-emerald-50 text-emerald-700 font-medium">✅ {{ $evAccept }}</span>
+                        @endif
+                        @if($evRevisi > 0)
+                          <span class="px-1.5 py-0.5 rounded text-[9px] bg-amber-50 text-amber-700 font-medium">✏️ {{ $evRevisi }}</span>
+                        @endif
+                        @if($evTolak > 0)
+                          <span class="px-1.5 py-0.5 rounded text-[9px] bg-rose-50 text-rose-700 font-medium">❌ {{ $evTolak }}</span>
+                        @endif
+                        <span class="px-1.5 py-0.5 rounded text-[9px] bg-gray-100 text-gray-500">
+                          {{ $evItems->groupBy('no')->count() }}/20
+                        </span>
+                      </div>
+                    @endif
+                  </div>
+
+                  {{-- ── STATUS ASISTENSI ── --}}
+                  <div class="border-t border-gray-100 pt-1.5">
+                    <p class="text-[9px] text-gray-400 uppercase tracking-wide mb-0.5">Asistensi</p>
+                    <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium {{ $astCss }}"
+                          @if(!empty($inv->asistensi_note)) title="{{ $inv->asistensi_note }}" @endif>
+                      {{ $astStatus }}
+                    </span>
+                    @if(!empty($inv->asistensi_note))
+                      <p class="text-[10px] text-gray-400 line-clamp-1 mt-0.5" title="{{ $inv->asistensi_note }}">
+                        💬 {{ \Illuminate\Support\Str::limit($inv->asistensi_note, 40) }}
+                      </p>
+                    @endif
+                  </div>
+
+                </div>
+                  @endrole
+
+                </td>
+
+          @hasanyrole('admin|verificator_inovasi')
+          <td class="px-4 py-3">
+            @php
+              $reviewItems = $inv->reviewItems ?? collect();
+
+              if ($reviewItems->contains('status', 'tolak')) {
+                $status = 'Ditolak';
+              } elseif ($reviewItems->contains('status', 'revisi')) {
+                $status = 'Revisi';
+              } elseif ($reviewItems->isNotEmpty() && $reviewItems->every(fn($r) => $r->status === 'accept')) {
+                $status = 'Disetujui';
+              } else {
+                $status = $inv->asistensi_status ?? 'Menunggu Verifikasi';
+              }
+
+              $css = match($status) {
+                'Disetujui'              => 'bg-emerald-50 text-emerald-700',
+                'Revisi', 'Dikembalikan' => 'bg-amber-50 text-amber-700',
+                'Ditolak'                => 'bg-rose-50 text-rose-700',
+                default                  => 'bg-gray-100 text-gray-600',
+              };
+            @endphp
+
+            <span class="px-2 py-0.5 rounded-full text-xs font-medium {{ $css }}">
+              {{ $status }}
+            </span>
+          </td>
+          @endhasanyrole
 
                 <td class="px-4 py-3">
                   <div class="flex flex-wrap gap-2">
@@ -275,6 +389,7 @@
                         <path stroke-width="2" d="M3 7a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
                         </svg>
                     </button></a>
+
 
                        <!-- Tooltip -->
                     <div
