@@ -25,14 +25,18 @@ class SigapPegawaiController extends Controller
         $users   = $this->repo->paginateWithFilters($filters, $perPage);
         $roles   = Role::where('guard_name','web')->pluck('name')->all();
 
-        return view('dashboard.pegawai.index', compact('users','filters','roles'));
+        $unitCategories = config('unit.categories');
+
+        return view('dashboard.pegawai.index', compact('users','filters','roles', 'unitCategories'));
     }
 
     public function create()
     {
-        // Form create tetap submit ke route('register'), tapi kita kirim daftar roles untuk checkbox
         $roles = Role::where('guard_name','web')->pluck('name')->all();
-        return view('dashboard.pegawai.create', compact('roles'));
+
+        $unitCategories = config('unit.categories');
+
+        return view('dashboard.pegawai.create', compact('roles', 'unitCategories'));
     }
 
     public function edit(User $user)
@@ -43,8 +47,9 @@ class SigapPegawaiController extends Controller
         
         // ini untuk checklist (role yang dimiliki user)
         $userRoleNames = $user->getRoleNames()->all();
+        $unitCategories = config('unit.categories');
 
-        return view('dashboard.pegawai.edit', compact('user','roles','userRoleNames'));
+        return view('dashboard.pegawai.edit', compact('user','roles','userRoleNames', 'unitCategories'));
     }
 
     public function update(Request $request, User $user)
