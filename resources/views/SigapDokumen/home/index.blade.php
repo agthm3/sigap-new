@@ -257,6 +257,24 @@
               Layanan pengajuan konsultasi inovasi dan riset bersama Badan Riset dan Inovasi Daerah Kota Makassar untuk membahas ide, penelitian, atau solusi atas permasalahan kota.
           </div>
         </a>
+        <a href="{{ route('sigap-absensi.home') }}">
+          <div class="p-6 rounded-xl border border-gray-200 hover:shadow-lg transition">
+            <div class="w-10 h-10 rounded-lg bg-maroon/10 text-maroon flex items-center justify-center">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-width="2" d="M12 8v4l3 3"/>
+                <circle cx="12" cy="12" r="9" stroke-width="2"/>
+              </svg>
+            </div>
+
+            <h4 class="mt-4 font-semibold">
+              SIGAP <span><strong class="text-maroon">ABSENSI</strong></span>
+            </h4>
+
+            <p class="mt-1 text-sm text-gray-600">
+              Absensi pegawai berbasis kamera depan, GPS, radius Balaikota Makassar, watermark maroon, dan rekap PDF untuk admin/verificator.
+            </p>
+          </div>
+        </a>
 
 
       </div>

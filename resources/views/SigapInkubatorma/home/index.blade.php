@@ -171,7 +171,7 @@
                     {{-- Nomor Whatsapp --}}
                     <div>
                         <label class="text-base font-semibold">Nomor WhatsApp / HP <span class="text-red-600">*</span></label>
-                        <input type="tel" name="no_hp" required inputmode="tel"
+                        <input type="number" name="no_hp" required inputmode="tel"
                             value="{{ old('no_hp', $formData['no_hp'] ?? '') }}"
                             class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base focus:border-maroon focus:ring-2 focus:ring-maroon/30"
                             placeholder="Contoh: 08xxxxxxxxxx">
@@ -378,14 +378,14 @@
                     {{-- Lampiran --}}
                     <div>
                         <label class="text-base font-semibold">
-                            Lampiran Surat / Permohonan <span class="text-red-600">*</span>
+                            Lampiran Surat / Permohonan 
                         </label>
                         <p class="mt-1 text-sm text-gray-600">
                             Upload surat permohonan (PDF/DOC/DOCX, maks. <strong>3 file</strong>, maks. 10MB/file)
                         </p>
                         <p class="mt-1 text-sm text-gray-600">
                             Belum punya surat?
-                            <a href="https://drive.google.com/drive/folders/19yJ2sLh1Y5Eck4g6CMYRVmdWPr-tcQiw?usp=sharing"
+                            <a href="https://drive.google.com/drive/folders/1uthn68iIfKAN-Yv1nqtMI0NqAupq0Fmk?usp=sharing"
                                target="_blank"
                                rel="noopener noreferrer"
                                class="text-maroon font-semibold underline underline-offset-2 hover:opacity-75">
@@ -1330,9 +1330,7 @@
         input.files = dt.files;
 
         // Untuk alert input
-        input.setCustomValidity(
-            selectedFiles.length === 0 ? 'Upload minimal 1 file lampiran.' : ''
-        );
+       input.setCustomValidity('');
         // lampiranDummy.setCustomValidity(
         //     selectedFiles.length === 0 ? 'Upload minimal 1 file lampiran.' : ''
         // );

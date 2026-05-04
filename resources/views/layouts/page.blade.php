@@ -89,6 +89,8 @@
             <li><a href="{{ route('sigap-kinerja.index') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Kinerja</a></li>
             <li><a href="{{ route('sigap-agenda.index') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Agenda</a></li>
             <li><a href="{{ route('sigap-inkubatorma.index') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Inkubatorma</a></li>
+            <li><a href="{{ route('sigap-absensi.home') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Absensi</a></li>
+            <li><a href="{{ route('sigap-ppd.public') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP PPD</a></li>
           </ul>
         </div>
       </div>
@@ -182,6 +184,8 @@
             <li><a href="{{ route('sigap-kinerja.index') }}" class="block px-4 py-2 hover:bg-gray-50">SIGAP Kinerja</a></li>
             <li><a href="{{ route('sigap-agenda.index') }}" class="block px-4 py-2 hover:bg-gray-50">SIGAP Agenda</a></li>
             <li><a href="{{ route('sigap-inkubatorma.index') }}" class="block px-4 py-2 hover:bg-gray-50">SIGAP Inkubatorma</a></li>
+            <li><a href="{{ route('sigap-absensi.home') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Absensi</a></li>
+            <li><a href="{{ route('sigap-ppd.public') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP PPD</a></li>
           </ul>
         </div>
       </div>

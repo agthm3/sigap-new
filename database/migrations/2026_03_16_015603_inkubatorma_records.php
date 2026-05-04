@@ -33,7 +33,7 @@ return new class extends Migration
                 'upload_revisi',
                 'review_revisi',
                 'konfirmasi_selesai',
-            ])->default('catatan_umum');
+            ])->default('sesi_konsultasi');
 
             $table->string('title')->nullable();
             $table->longText('content')->nullable();
