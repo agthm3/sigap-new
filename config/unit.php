@@ -9,6 +9,7 @@ return [
         'SKPD (DINAS/BADAN)',
         'SETDA',
         'Pegawai BRIDA',
+        'PUSKESMAS',
         'USER',
     ],
 ];
