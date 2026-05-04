@@ -82,12 +82,12 @@
                    placeholder="19910505 201501 1 010" required>
           </label>
           <label class="block">
-            <span class="text-sm font-semibold text-gray-700">Unit</span>
+            <span class="text-sm font-semibold text-gray-700">Kategori</span>
             <select name="unit" id="unit" required
                     class="mt-1.5 w-full rounded-lg p-2 border border-gray-300 focus:border-maroon focus:ring-maroon">
-              <option value="">Pilih unit</option>
-              @foreach (['Sekretariat A','Bidang Riset','TI','Keuangan','Humas'] as $u)
-                <option value="{{ $u }}" @selected(old('unit')===$u)>{{ $u }}</option>
+              <option value="">Pilih kategori</option>
+              @foreach ($unitCategories as $kategori)
+                <option value="{{ $kategori }}" @selected(old('unit') === $kategori)>{{ $kategori }}</option>
               @endforeach
             </select>
           </label>

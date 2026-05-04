@@ -33,7 +33,12 @@
 
         <div class="mb-3">
           <label class="text-sm">Unit</label>
-          <input type="text" name="unit" class="w-full border rounded p-2" placeholder="Contoh: TI">
+          <select name="unit" class="w-full border rounded p-2">
+          <option value="">Semua</option>
+          @foreach ($unitCategories as $kategori)
+            <option value="{{ $kategori }}">{{ $kategori }}</option>
+          @endforeach
+        </select>
         </div>
 
         <div class="mb-3">
@@ -65,13 +70,14 @@
         </div>
         <div>
           <label class="text-sm font-semibold text-gray-700">Unit</label>
-          <select id="f_unit" name="unit" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+          <select id="f_unit" name="unit"
+                  class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
             <option value="">Semua</option>
-            <option>Sekretariat A</option>
-            <option>Bidang Riset</option>
-            <option>TI</option>
-            <option>Keuangan</option>
-            <option>Humas</option>
+            @foreach ($unitCategories as $kategori)
+              <option value="{{ $kategori }}" @selected(request('unit') == $kategori)>
+                {{ $kategori }}
+              </option>
+            @endforeach
           </select>
         </div>
         <div>

@@ -74,10 +74,15 @@ margin-top:6px;
                    class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
           </label>
           <label class="block">
-            <span class="text-sm font-semibold text-gray-700">Unit</span>
-            <input name="unit" type="text"
-                   value="{{ old('unit',$user->unit) }}"
-                   class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+            <span class="text-sm font-semibold text-gray-700">Kategori</span>
+            <select name="unit" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+              <option value="">Pilih kategori</option>
+              @foreach ($unitCategories as $kategori)
+                <option value="{{ $kategori }}" @selected(old('unit', $user->unit) === $kategori)>
+                  {{ $kategori }}
+                </option>
+              @endforeach
+            </select>
           </label>
         </div>
 
@@ -539,7 +544,7 @@ margin-top:6px;
           <div class="flex justify-between"><dt class="text-gray-600">Nama</dt><dd class="font-medium">{{ $user->name }}</dd></div>
           <div class="flex justify-between"><dt class="text-gray-600">Username</dt><dd class="font-medium">{{ $user->username }}</dd></div>
           <div class="flex justify-between"><dt class="text-gray-600">Email</dt><dd class="font-medium">{{ $user->email }}</dd></div>
-          <div class="flex justify-between"><dt class="text-gray-600">Unit</dt><dd class="font-medium">{{ $user->unit ?: '—' }}</dd></div>
+          <div class="flex justify-between"><dt class="text-gray-600">Kategori</dt><dd class="font-medium">{{ $user->unit ?: '—' }}</dd></div>
           <div class="flex justify-between"><dt class="text-gray-600">Role</dt><dd class="font-medium">{{ implode(', ', $userRoleNames) ?: '—' }}</dd></div>
         </dl>
       </div>
