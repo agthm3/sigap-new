@@ -89,8 +89,21 @@
           <form id="loginForm" class="mt-6 grid grid-cols-1 gap-4" action="{{ route('login') }}" method="POST" >
             @csrf
             <label class="block">
-              <span class="text-sm font-semibold text-gray-700">Email</span>
-              <input id="email" name="email" type="text" required class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="nama@brida.mks.go.id / user.unit">
+              <span class="text-sm font-semibold text-gray-700">Email / NIP</span>
+              <div class="relative mt-1.5">
+                <input
+                  id="login"
+                  name="login"
+                  type="text"
+                  value="{{ old('login') }}"
+                  required
+                  autofocus
+                  class="w-full border p-2 rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon"
+                  placeholder="Masukkan email atau NIP"
+                  autocomplete="username"
+                >
+              </div>
+              <x-input-error :messages="$errors->get('login')" class="mt-2" />
             </label>
 
             <label class="block">

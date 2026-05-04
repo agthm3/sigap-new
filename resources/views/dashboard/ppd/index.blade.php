@@ -91,6 +91,21 @@
                   Buka
                 </a>
 
+                @role('admin|verif_ppd')
+                <form action="{{ route('sigap-ppd.destroy', $item->id) }}"
+                      method="POST"
+                      class="form-delete inline">
+                  @csrf
+                  @method('DELETE')
+
+                  <button type="button"
+                          class="btn-delete px-3 py-1.5 rounded border border-red-500 text-red-600 text-xs hover:bg-red-600 hover:text-white"
+                          data-judul="{{ $item->judul }}">
+                    Hapus
+                  </button>
+                </form>
+                @endrole
+
                 <a href="{{ route('sigap-ppd.export-pdf', $item->id) }}"
                   class="px-3 py-1.5 rounded border border-maroon text-maroon text-xs hover:bg-maroon hover:text-white">
                   Export PDF
@@ -133,3 +148,35 @@
   {{ $kegiatans->links() }}
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  document.querySelectorAll('.btn-delete').forEach(function(btn) {
+    btn.addEventListener('click', function () {
+
+      const form = this.closest('form');
+      const judul = this.dataset.judul;
+
+      Swal.fire({
+        title: 'Hapus Kegiatan?',
+        html: `Kegiatan <b>${judul}</b> akan dihapus permanen!`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#b91c1c',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Ya, Hapus',
+        cancelButtonText: 'Batal'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          form.submit();
+        }
+      });
+
+    });
+  });
+
+});
+</script>
+@endpush

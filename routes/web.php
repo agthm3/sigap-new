@@ -464,9 +464,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [SigapPpdController::class, 'store'])->name('store')->middleware('role:admin|verif_ppd');
 
         Route::get('/{kegiatan}', [SigapPpdController::class, 'show'])->name('show');
-        Route::get('/{kegiatan}/export-pdf', [SigapPpdController::class, 'exportPdf'])->name('export-pdf');
+        Route::get('/{kegiatan}/export-pdf/{user?}', [SigapPpdController::class, 'exportPdf'])->name('export-pdf');
 
         Route::post('/lembar/{lembar}', [SigapPpdController::class, 'storeLembar'])->name('lembar.store');
         Route::post('/{kegiatan}/status', [SigapPpdController::class, 'updateStatus'])->name('status')->middleware('role:admin|verif_ppd');
+        Route::delete('/{kegiatan}', [SigapPpdController::class, 'destroy'])->name('destroy')->middleware('role:admin|verif_ppd');
     });
 });

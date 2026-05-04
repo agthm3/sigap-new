@@ -22,17 +22,10 @@
     </p>
   </div>
 
-  <div class="flex flex-wrap gap-2">
-    <a href="{{ route('sigap-ppd.index') }}"
-       class="px-4 py-2 rounded-xl border border-gray-300 text-sm font-semibold hover:bg-gray-50">
-      Kembali
-    </a>
-
-    <a href="{{ route('sigap-ppd.export-pdf', $kegiatan->id) }}"
-       class="px-4 py-2 rounded-xl bg-maroon text-white text-sm font-semibold hover:bg-maroon-800">
-      Export PDF
-    </a>
-  </div>
+  <a href="{{ route('sigap-ppd.index') }}"
+     class="px-4 py-2 rounded-xl border border-gray-300 text-sm font-semibold hover:bg-gray-50">
+    Kembali
+  </a>
 </section>
 
 <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
@@ -110,7 +103,7 @@
       @endphp
 
       <div class="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-        <div class="px-4 py-3 border-b bg-gray-50 flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+        <div class="px-4 py-3 border-b bg-gray-50 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
             <h3 class="font-semibold text-gray-900">
               {{ $pegawai->name ?? 'Pegawai' }}
@@ -120,8 +113,15 @@
             </p>
           </div>
 
-          <div class="text-xs text-gray-500">
-            Total lembar: <span class="font-semibold text-gray-900">{{ $lembarGroup->count() }}</span>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs text-gray-500">
+              Total lembar: <span class="font-semibold text-gray-900">{{ $lembarGroup->count() }}</span>
+            </span>
+
+            <a href="{{ route('sigap-ppd.export-pdf', ['kegiatan' => $kegiatan->id, 'user' => $pegawai->id]) }}"
+               class="px-3 py-1.5 rounded border border-maroon text-maroon text-xs hover:bg-maroon hover:text-white">
+              Export PDF
+            </a>
           </div>
         </div>
 
@@ -178,20 +178,20 @@
                           </label>
 
                           <input type="file"
-                                name="foto_{{ $i }}"
-                                accept="image/*"
-                                data-preview-target="{{ $previewId }}"
-                                data-placeholder-target="{{ $placeholderId }}"
-                                class="ppd-photo-input block w-full text-sm text-gray-700 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-maroon file:text-white hover:file:bg-maroon-800">
+                                 name="foto_{{ $i }}"
+                                 accept="image/*"
+                                 data-preview-target="{{ $previewId }}"
+                                 data-placeholder-target="{{ $placeholderId }}"
+                                 class="ppd-photo-input block w-full text-sm text-gray-700 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-maroon file:text-white hover:file:bg-maroon-800">
 
                           <div class="mt-3">
                             <img id="{{ $previewId }}"
-                                src="{{ $foto ? asset('storage/' . $foto->foto_path) : '' }}"
-                                class="w-full h-32 object-cover rounded-xl border border-gray-200 bg-white {{ $foto ? '' : 'hidden' }}"
-                                alt="preview foto {{ $i }}">
+                                 src="{{ $foto ? asset('storage/' . $foto->foto_path) : '' }}"
+                                 class="w-full h-32 object-cover rounded-xl border border-gray-200 bg-white {{ $foto ? '' : 'hidden' }}"
+                                 alt="preview foto {{ $i }}">
 
                             <div id="{{ $placeholderId }}"
-                                class="w-full h-32 rounded-xl border border-dashed border-gray-300 bg-white flex items-center justify-center text-xs text-gray-400 {{ $foto ? 'hidden' : '' }}">
+                                 class="w-full h-32 rounded-xl border border-dashed border-gray-300 bg-white flex items-center justify-center text-xs text-gray-400 {{ $foto ? 'hidden' : '' }}">
                               Belum ada foto
                             </div>
                           </div>
@@ -254,14 +254,7 @@
         confirmButtonText: 'OK'
       });
     @endif
-  });
-</script>
 
-
-@endpush
-@push('scripts')
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.ppd-photo-input').forEach(function (input) {
       input.addEventListener('change', function () {
         const file = this.files && this.files[0];

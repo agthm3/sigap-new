@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <style>
 @page {
-    size: 210mm 330mm; /* F4 */
+    size: 210mm 330mm;
     margin: 8mm 10mm 10mm 10mm;
 }
 
@@ -12,7 +12,7 @@ body {
     font-family: DejaVu Sans, sans-serif;
     margin: 0;
     padding: 0;
-    color: #1f2937;
+    color: #000;
     font-size: 10px;
 }
 
@@ -27,7 +27,6 @@ body {
     page-break-after: auto;
 }
 
-/* Bagian atas */
 .header {
     text-align: center;
     margin-bottom: 3mm;
@@ -36,14 +35,16 @@ body {
 .title {
     font-size: 13px;
     font-weight: bold;
-    color: #7a2222;
-    line-height: 1.2;
+    color: #000;
+    line-height: 1.35;
+    text-transform: uppercase;
 }
 
 .meta {
     font-size: 9.5px;
     margin-bottom: 2.5mm;
     line-height: 1.35;
+    color: #000;
 }
 
 .desc {
@@ -52,9 +53,9 @@ body {
     line-height: 1.35;
     max-height: 16mm;
     overflow: hidden;
+    color: #000;
 }
 
-/* Grid foto */
 .grid {
     width: 100%;
     border-collapse: collapse;
@@ -93,12 +94,10 @@ body {
     background: #fafafa;
 }
 
-/* Halaman pertama lebih rapat supaya footer tidak loncat */
 .page.first .photo-box {
     height: 75mm;
 }
 
-/* Footer */
 .footer {
     position: absolute;
     left: 0;
@@ -114,7 +113,7 @@ body {
 }
 
 .footer a {
-    color: #7a2222;
+    color: #000;
     text-decoration: none;
 }
 </style>
@@ -127,20 +126,15 @@ body {
         @if($index === 0)
             <div class="header">
                 <div class="title">{{ $kegiatan->judul }}</div>
-            </div>
-
-            <div class="meta">
-                <strong>Hari/Tanggal:</strong> {{ $kegiatan->hari_tanggal }}<br>
-                <strong>Tempat:</strong> {{ $kegiatan->tempat }}<br>
-                <strong>Pegawai:</strong> {{ $lembar->user->name ?? '-' }}<br>
-                <strong>Lembar:</strong> {{ $lembar->lembar_ke }}
-            </div>
-        @else
-            <div class="meta">
-                <strong>Pegawai:</strong> {{ $lembar->user->name ?? '-' }}<br>
-                <strong>Lembar:</strong> {{ $lembar->lembar_ke }}
+                <div class="title">HARI/TANGGAL: {{ strtoupper($kegiatan->hari_tanggal) }}</div>
+                <div class="title">TEMPAT: {{ strtoupper($kegiatan->tempat) }}</div>
             </div>
         @endif
+
+        <div class="meta">
+            <strong>Pegawai:</strong> {{ $lembar->user->name ?? '-' }}<br>
+            <strong>Lembar:</strong> {{ $lembar->lembar_ke }}
+        </div>
 
         <div class="desc">
             <strong>Deskripsi:</strong><br>

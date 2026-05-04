@@ -142,17 +142,25 @@ class SigapPpdController extends Controller
         return view('dashboard.ppd.show', compact('kegiatan'));
     }
 
-    public function exportPdf(PpdKegiatan $kegiatan)
+    public function exportPdf(PpdKegiatan $kegiatan, ?User $user = null)
     {
-        $user = Auth::user();
+        $auth = Auth::user();
 
-        if (!$user->hasAnyRole(['admin', 'verif_ppd'])) {
-            abort_unless(
-                $kegiatan->pegawai()->where('users.id', $user->id)->exists(),
-                403,
-                'Anda tidak memiliki akses ke kegiatan ini.'
-            );
+        if (!$auth->hasAnyRole(['admin', 'verif_ppd'])) {
+            $user = $auth;
         }
+
+        if (!$user) {
+            $user = $kegiatan->pegawai()->orderBy('users.id')->first();
+        }
+
+        abort_unless($user, 404, 'Pegawai tidak ditemukan.');
+
+        abort_unless(
+            $kegiatan->pegawai()->where('users.id', $user->id)->exists(),
+            403,
+            'Anda tidak memiliki akses ke data pegawai ini.'
+        );
 
         $kegiatan->load(['creator', 'pegawai']);
 
@@ -161,8 +169,8 @@ class SigapPpdController extends Controller
         for ($i = 1; $i <= (int) $kegiatan->jumlah_lembar; $i++) {
             $lembar = PpdLembarLaporan::with(['user', 'fotos'])
                 ->where('ppd_kegiatan_id', $kegiatan->id)
+                ->where('user_id', $user->id)
                 ->where('lembar_ke', $i)
-                ->orderBy('user_id')
                 ->first();
 
             if (!$lembar) {
@@ -190,12 +198,12 @@ class SigapPpdController extends Controller
         }
 
         $pdf = Pdf::loadView('dashboard.ppd.pdf', [
-                'kegiatan'    => $kegiatan,
-                'lembarPages'  => $lembarPages,
-            ])
-            ->setPaper('f4', 'portrait');
+            'kegiatan'    => $kegiatan,
+            'lembarPages' => $lembarPages,
+            'user'        => $user,
+        ])->setPaper('f4', 'portrait');
 
-        return $pdf->download('ppd-' . str()->slug($kegiatan->judul) . '.pdf');
+        return $pdf->download('ppd-' . str()->slug($kegiatan->judul) . '-' . str()->slug($user->name) . '.pdf');
     }
 
     public function storeLembar(Request $request, PpdLembarLaporan $lembar)
@@ -312,5 +320,36 @@ class SigapPpdController extends Controller
         ]);
 
         return back()->with('success', 'Status kegiatan berhasil diperbarui.');
+    }
+
+    public function destroy(PpdKegiatan $kegiatan)
+    {
+        DB::transaction(function () use ($kegiatan) {
+
+            // hapus semua foto dulu
+            foreach ($kegiatan->lembar as $lembar) {
+                foreach ($lembar->fotos as $foto) {
+                    $path = storage_path('app/public/' . $foto->foto_path);
+
+                    if (file_exists($path)) {
+                        unlink($path);
+                    }
+
+                    $foto->delete();
+                }
+
+                $lembar->delete();
+            }
+
+            // hapus relasi pegawai
+            $kegiatan->pegawai()->detach();
+
+            // hapus kegiatan
+            $kegiatan->delete();
+        });
+
+        return redirect()
+            ->route('sigap-ppd.index')
+            ->with('success', 'Kegiatan berhasil dihapus.');
     }
 }
