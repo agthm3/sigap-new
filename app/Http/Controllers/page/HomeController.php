@@ -5,6 +5,8 @@ namespace App\Http\Controllers\page;
 use App\Http\Controllers\Controller;
 use App\Repositories\DocumentRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
 
 class HomeController extends Controller
 {

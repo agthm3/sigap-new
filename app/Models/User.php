@@ -69,4 +69,19 @@ class User extends Authenticatable
     {
         return $this->hasMany(PegawaiKompetensi::class);
     }
+    public function absensis()
+    {
+        return $this->hasMany(\App\Models\SigapAbsensi::class);
+    }
+
+    public function ppdKegiatan()
+    {
+        return $this->belongsToMany(PpdKegiatan::class, 'ppd_kegiatan_user', 'user_id', 'ppd_kegiatan_id')
+            ->withTimestamps();
+    }
+
+    public function ppdLembar()
+    {
+        return $this->hasMany(PpdLembarLaporan::class);
+    }
 }

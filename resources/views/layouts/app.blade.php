@@ -267,38 +267,117 @@
       </div>
       @endhasanyrole
       @hasanyrole('admin|employee')
-        <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">SIGAP FORMAT</div>
+              <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">SIGAP FORMAT</div>
 
-        <!-- Toggle -->
-        <button id="formatToggle"
-                class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-left"
-                aria-controls="formatMenu" aria-expanded="false">
+              <!-- Toggle -->
+              <button id="formatToggle"
+                      class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-left"
+                      aria-controls="formatMenu" aria-expanded="false">
+                <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M6 3h12a2 2 0 0 1 2 2v16H4V5a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="2" />
+                <path d="M8 8h8M8 12h8M8 16h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+                <span class="font-medium">SIGAP Format</span>
+                <svg id="formatCaret" class="w-4 h-4 ml-auto transition-transform duration-200"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path stroke-width="2" d="M6 9l6 6 6-6"/>
+                </svg>
+              </button>
+
+              <!-- Dropdown Items -->
+              <div id="formatMenu" class="ml-3 mt-1 space-y-1 hidden">
+                <a href="{{ route('format.index') }}"
+                  class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+                          {{ request()->routeIs('sigap-format.*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M6 3h8l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <path d="M8 12h8M8 15h8M8 18h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M14 3v5h5" fill="none" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                  Katalog Template
+                </a>
+              </div>
+            @endhasanyrole
+
+          @hasanyrole('admin|verificator_absensi|employee')
+        <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">
+          SIGAP ABSENSI
+        </div>
+
+        <button id="absensiToggle"
+                class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-left">
           <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path d="M6 3h12a2 2 0 0 1 2 2v16H4V5a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="2" />
-          <path d="M8 8h8M8 12h8M8 16h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <path stroke-width="2" d="M12 8v4l3 3"/>
+            <circle cx="12" cy="12" r="9" stroke-width="2"/>
           </svg>
-          <span class="font-medium">SIGAP Format</span>
-          <svg id="formatCaret" class="w-4 h-4 ml-auto transition-transform duration-200"
+
+          <span class="font-medium">SIGAP Absensi</span>
+
+          <svg id="absensiCaret"
+              class="w-4 h-4 ml-auto transition-transform duration-200"
               viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path stroke-width="2" d="M6 9l6 6 6-6"/>
           </svg>
         </button>
 
-        <!-- Dropdown Items -->
-        <div id="formatMenu" class="ml-3 mt-1 space-y-1 hidden">
-          <a href="{{ route('format.index') }}"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
-                    {{ request()->routeIs('sigap-format.*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M6 3h8l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="2"/>
-              <path d="M8 12h8M8 15h8M8 18h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              <path d="M14 3v5h5" fill="none" stroke="currentColor" stroke-width="2"/>
-            </svg>
-            Katalog Template
-          </a>
+        <div id="absensiMenu" class="ml-3 mt-1 space-y-1 hidden">
+          @hasanyrole('employee|admin')
+            <a href="{{ route('sigap-absensi.index') }}"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+              {{ request()->routeIs('sigap-absensi.index') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-width="2" d="M12 8v4l3 3"/>
+                <circle cx="12" cy="12" r="9" stroke-width="2"/>
+              </svg>
+              Absen Saya
+            </a>
+          @endhasanyrole
+
+          @hasanyrole('admin|verificator_absensi')
+            <a href="{{ route('sigap-absensi.dashboard') }}"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+              {{ request()->routeIs('sigap-absensi.dashboard') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-width="2" d="M3 12h18M6 7h12M8 17h8"/>
+              </svg>
+              Dashboard Absensi
+            </a>
+
+            <a href="{{ route('sigap-absensi.rekap-harian') }}"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+              {{ request()->routeIs('sigap-absensi.rekap-harian') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-width="2" d="M4 6h16M4 10h16M4 14h10"/>
+              </svg>
+              Rekap Harian
+            </a>
+
+            <a href="{{ route('sigap-absensi.rekap-bulanan') }}"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+              {{ request()->routeIs('sigap-absensi.rekap-bulanan') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-width="2" d="M7 3v4M17 3v4M4 8h16M5 12h4M5 16h4M13 12h4M13 16h4"/>
+              </svg>
+              Rekap Bulanan
+            </a>
+          @endhasanyrole
         </div>
       @endhasanyrole
+      @hasanyrole('admin|verif_ppd|employee')
+      <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">
+        SIGAP PPD
+      </div>
 
+      <a href="{{ route('sigap-ppd.index') }}"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg
+                {{ request()->routeIs('sigap-ppd.*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-width="2" d="M7 3h10v18H7z"/>
+          <path stroke-width="2" d="M9 7h6M9 11h6M9 15h4"/>
+        </svg>
+        SIGAP PPD
+      </a>
+      @endhasanyrole
         <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">PENGATURAN</div>
         {{-- <a href="{{ route('logout') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M10 17l5-5-5-5"/><path stroke-width="2" d="M4 12h11"/></svg>
@@ -532,6 +611,28 @@ document.addEventListener("DOMContentLoaded", function(){
   });
 
 });
+</script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const absensiToggle = document.getElementById('absensiToggle');
+    const absensiMenu   = document.getElementById('absensiMenu');
+    const absensiCaret  = document.getElementById('absensiCaret');
+
+    const ABSENSI_KEY = 'sb_absensi_open';
+    const isOpenSaved = localStorage.getItem(ABSENSI_KEY) === '1';
+
+    if (isOpenSaved && absensiMenu && absensiCaret) {
+      absensiMenu.classList.remove('hidden');
+      absensiCaret.classList.add('rotate-180');
+    }
+
+    absensiToggle?.addEventListener('click', () => {
+      const willOpen = absensiMenu.classList.contains('hidden');
+      absensiMenu.classList.toggle('hidden');
+      absensiCaret.classList.toggle('rotate-180', willOpen);
+      localStorage.setItem(ABSENSI_KEY, willOpen ? '1' : '0');
+    });
+  });
 </script>
 
     @stack('scripts')
