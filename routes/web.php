@@ -33,6 +33,7 @@ use App\Http\Controllers\SigapFormatController;
 use App\Http\Controllers\SigapKinerjaController;
 use App\Http\Controllers\SigapRisetController;
 use App\Http\Controllers\SigapInkubatormaController;
+use App\Http\Controllers\SigapPicController;
 use App\Http\Controllers\SigapPpdController;
 use App\Http\Controllers\SigapSertifikatController;
 
@@ -470,4 +471,20 @@ Route::middleware('auth')->group(function () {
         Route::post('/{kegiatan}/status', [SigapPpdController::class, 'updateStatus'])->name('status')->middleware('role:admin|verif_ppd');
         Route::delete('/{kegiatan}', [SigapPpdController::class, 'destroy'])->name('destroy')->middleware('role:admin|verif_ppd');
     });
+});
+
+
+Route::get('/sigap-pic', [SigapPicController::class, 'publicIndex'])->name('sigap-pic.public');
+Route::middleware(['auth'])->prefix('dashboard/sigap-pic')->name('sigap-pic.')->group(function () {
+    Route::get('/', [SigapPicController::class, 'index'])->name('index');
+
+    Route::middleware('role:admin|verif_pic')->group(function () {
+        Route::get('/create', [SigapPicController::class, 'create'])->name('create');
+        Route::post('/', [SigapPicController::class, 'store'])->name('store');
+        Route::get('/{system}/edit', [SigapPicController::class, 'edit'])->name('edit');
+        Route::put('/{system}', [SigapPicController::class, 'update'])->name('update');
+        Route::delete('/{system}', [SigapPicController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::get('/{system}', [SigapPicController::class, 'show'])->name('show');
 });

@@ -45,15 +45,29 @@
 <!-- Top Bar -->
 <header x-data="{ mobileOpen:false }" class="border-b border-maroon/10 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 sticky top-0 z-50">
   <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-    <a href="{{ route('home') }}">
-      <div class="flex items-center gap-3">
-        <span class="inline-flex h-9 w-9 items-center justify-center rounded-md bg-maroon text-white font-extrabold">SB</span>
-        <div>
-          <p class="text-sm font-semibold text-maroon">SIGAP BRIDA</p>
-          <p class="text-[11px] text-gray-500 -mt-0.5">Sistem Informasi Gabungan Arsip & Privasi</p>
-        </div>
+  <a href="{{ route('home') }}">
+    <div class="flex items-center gap-3">
+
+      {{-- Logo --}}
+      <img 
+        src="{{ asset('images/logo-sigap.png') }}" 
+        alt="Logo SIGAP BRIDA"
+        class="h-10 w-auto sm:h-11 md:h-12 object-contain"
+      >
+
+      {{-- Text --}}
+      <div class="leading-tight">
+        <p class="text-sm sm:text-base font-semibold text-maroon">
+          SIGAP BRIDA
+        </p>
+
+        <p class="text-[10px] sm:text-[11px] text-gray-500">
+          Sistem Informasi Gabungan Arsip & Privasi
+        </p>
       </div>
-    </a>
+
+    </div>
+  </a>
 
     {{-- DESKTOP NAV --}}
     <nav class="hidden md:flex items-center gap-6 text-sm">
@@ -91,6 +105,7 @@
             <li><a href="{{ route('sigap-inkubatorma.index') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Inkubatorma</a></li>
             <li><a href="{{ route('sigap-absensi.home') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Absensi</a></li>
             <li><a href="{{ route('sigap-ppd.public') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP PPD</a></li>
+            <li><a href="{{ route('sigap-pic.public') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP PIC</a></li>
           </ul>
         </div>
       </div>
@@ -186,6 +201,7 @@
             <li><a href="{{ route('sigap-inkubatorma.index') }}" class="block px-4 py-2 hover:bg-gray-50">SIGAP Inkubatorma</a></li>
             <li><a href="{{ route('sigap-absensi.home') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Absensi</a></li>
             <li><a href="{{ route('sigap-ppd.public') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP PPD</a></li>
+            <li><a href="{{ route('sigap-pic.public') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP PIC</a></li>
           </ul>
         </div>
       </div>

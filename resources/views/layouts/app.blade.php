@@ -69,6 +69,20 @@
               SIGAP Pegawai
             </a>
         @endhasrole
+        @hasanyrole('admin|verif_pic')
+        <a href="{{ route('sigap-pic.index') }}"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg
+                {{ request()->routeIs('sigap-pic.*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" d="M9 12h6"/>
+            <path stroke-width="2" d="M12 9v6"/>
+            <path stroke-width="2" d="M4 5h16v14H4z"/>
+          </svg>
+
+          SIGAP PIC
+        </a>
+        @endhasanyrole
         <a href="{{ route('pegawai.profil') }}"
           class="flex items-center gap-3 px-3 py-2 rounded-lg
                   {{ request()->routeIs('pegawai.profil') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
