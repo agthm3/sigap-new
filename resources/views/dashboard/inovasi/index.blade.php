@@ -29,6 +29,168 @@
 }
 
 </style>
+<style>
+/* ========================================
+   SUPER EYE CATCHING TUTORIAL BUTTON
+======================================== */
+.tutorial-btn{
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: .6rem;
+
+  padding: 12px 20px;
+  border-radius: 14px;
+
+  background: linear-gradient(135deg,#7a2222,#a83232,#d14545);
+  background-size: 200% 200%;
+
+  color: white !important;
+  font-weight: 800;
+  letter-spacing: .2px;
+
+  border: none;
+
+  animation:
+    tutorialGradient 4s ease infinite,
+    tutorialBounce 1.5s infinite,
+    tutorialGlow 1.2s infinite;
+
+  box-shadow:
+    0 0 0 rgba(122,34,34,0.5),
+    0 10px 25px rgba(122,34,34,.35);
+
+  transition: all .25s ease;
+}
+
+/* Hover */
+.tutorial-btn:hover{
+  transform: scale(1.06);
+  box-shadow:
+    0 0 25px rgba(220,38,38,.8),
+    0 0 50px rgba(220,38,38,.4);
+}
+
+/* Shine effect */
+.tutorial-btn::before{
+  content:'';
+  position:absolute;
+  top:0;
+  left:-120%;
+  width:70%;
+  height:100%;
+
+  background:linear-gradient(
+    120deg,
+    transparent,
+    rgba(255,255,255,.8),
+    transparent
+  );
+
+  transform: skewX(-25deg);
+  animation:tutorialShine 2s infinite;
+}
+
+/* Pulsing ring */
+.tutorial-btn::after{
+  content:'';
+  position:absolute;
+  inset:-6px;
+  border-radius:18px;
+  border:3px solid rgba(239,68,68,.45);
+
+  animation:tutorialRing 1.5s infinite;
+}
+
+/* Badge */
+.tutorial-badge{
+  position:absolute;
+  top:-10px;
+  right:-10px;
+
+  background:#facc15;
+  color:#111827;
+
+  font-size:10px;
+  font-weight:900;
+
+  padding:4px 8px;
+  border-radius:999px;
+
+  box-shadow:0 4px 10px rgba(0,0,0,.2);
+
+  animation:tutorialBadge 1s infinite;
+  z-index:2;
+}
+
+/* Floating icon */
+.tutorial-icon{
+  font-size:18px;
+  animation:tutorialIcon 1s infinite alternate;
+}
+
+/* Animations */
+@keyframes tutorialGradient{
+  0%{ background-position:0% 50%; }
+  50%{ background-position:100% 50%; }
+  100%{ background-position:0% 50%; }
+}
+
+@keyframes tutorialBounce{
+  0%,100%{ transform:translateY(0); }
+  50%{ transform:translateY(-6px); }
+}
+
+@keyframes tutorialGlow{
+  0%{
+    box-shadow:0 0 0 rgba(239,68,68,.4);
+  }
+  50%{
+    box-shadow:
+      0 0 20px rgba(239,68,68,.9),
+      0 0 40px rgba(239,68,68,.5);
+  }
+  100%{
+    box-shadow:0 0 0 rgba(239,68,68,.4);
+  }
+}
+
+@keyframes tutorialShine{
+  0%{ left:-120%; }
+  60%{ left:140%; }
+  100%{ left:140%; }
+}
+
+@keyframes tutorialRing{
+  0%{
+    transform:scale(1);
+    opacity:.7;
+  }
+  100%{
+    transform:scale(1.12);
+    opacity:0;
+  }
+}
+
+@keyframes tutorialBadge{
+  0%,100%{
+    transform:scale(1);
+  }
+  50%{
+    transform:scale(1.12);
+  }
+}
+
+@keyframes tutorialIcon{
+  from{
+    transform:rotate(-8deg) scale(1);
+  }
+  to{
+    transform:rotate(8deg) scale(1.15);
+  }
+}
+</style>
 
 @section('content')
   <!-- Page header -->
@@ -39,12 +201,21 @@
         <p class="text-sm text-gray-600 mt-1">Direktori inovasi daerah: cari, pantau tahapan, dan kelola unggahan tiap OPD.</p>
       </div>
       <div class="flex flex-wrap gap-2">
-        <a href="{{ route('evidence.pedoman') }}"
-        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg
-                border border-maroon text-maroon
-                hover:bg-maroon hover:text-white transition">
-        📘 Pedoman Evidence
-        </a>
+      <a href="{{ route('evidence.pedoman') }}"
+        class="tutorial-btn">
+
+        <span class="tutorial-badge" style="margin-top: 1em; margin-right:1em">
+          WAJIB DIBACA
+        </span>
+
+        <span class="tutorial-icon">
+          📘
+        </span>
+
+        <span>
+          Tutorial Pengisian Metadata & Evidence
+        </span>
+      </a>
         <button id="btnTambah" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 transition">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M12 5v14M5 12h14"/></svg>
           Tambah Inovasi

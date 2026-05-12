@@ -58,11 +58,11 @@
       {{-- Text --}}
       <div class="leading-tight">
         <p class="text-sm sm:text-base font-semibold text-maroon">
-          SIGAP BRIDA
+          SIGAP
         </p>
 
         <p class="text-[10px] sm:text-[11px] text-gray-500">
-          Sistem Informasi Gabungan Arsip & Privasi
+          Sistem Informasi Gabungan Arsip & Pegawai
         </p>
       </div>
 
