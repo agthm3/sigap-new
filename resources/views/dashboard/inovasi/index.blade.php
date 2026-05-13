@@ -611,17 +611,17 @@
           @csrf
 
           <label class="block">
-            <span class="text-sm font-semibold text-gray-700">Judul Inovasi</span>
+            <span class="text-sm font-semibold text-gray-700">Judul Inovasi <span style="color:red">*</span></span>
             <input name="judul" type="text" required class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Nama inovasi">
           </label>
           <label class="block">
-            <span class="text-sm font-semibold text-gray-700">OPD/Unit</span>
-            <input name="opd_unit" type="text" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Nama OPD/Unit">
+            <span class="text-sm font-semibold text-gray-700">OPD/Unit <span style="color:red">*</span></span>
+            <input name="opd_unit" type="text" required class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Nama OPD/Unit">
           </label>
 
           <label class="block">
-            <span class="text-sm font-semibold text-gray-700">Tahapan Inovasi</span>
-            <select name="tahap_inovasi" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+            <span class="text-sm font-semibold text-gray-700">Tahapan Inovasi <span style="color:red">*</span></span>
+            <select name="tahap_inovasi" required class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
               <option value="">Pilih…</option>
               <option>Inisiatif</option>
               <option>Uji Coba</option>
@@ -629,8 +629,8 @@
             </select>
           </label>
           <label class="block">
-            <span class="text-sm font-semibold text-gray-700">Inisiator Inovasi Daerah</span>
-            <select name="inisiator_daerah" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+            <span class="text-sm font-semibold text-gray-700">Inisiator Inovasi Daerah <span style="color:red">*</span></span>
+            <select name="inisiator_daerah" required class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
               <option value="">Pilih…</option>
               <option>Kepala Daerah</option>
               <option>Anggota DPRD</option>
@@ -645,12 +645,12 @@
           </label>
 
           <label class="block">
-            <span class="text-sm font-semibold text-gray-700">Koordinat</span>
-            <input name="koordinat" type="text" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Koordinat">
+            <span class="text-sm font-semibold text-gray-700">Koordinat <span style="color:red">*</span></span>
+            <input name="koordinat" type="text" required class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Koordinat">
           </label>
           <label class="block">
-            <span class="text-sm font-semibold text-gray-700">Klasifikasi Inovasi</span>
-            <select name="klasifikasi" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+            <span class="text-sm font-semibold text-gray-700">Klasifikasi Inovasi <span style="color:red">*</span></span>
+            <select name="klasifikasi" required class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
               <option value="">--</option>
               <option>Inovasi Perangkat Daerah</option>
               <option>Inovasi Desa dan Kelurahan</option>
@@ -659,14 +659,14 @@
           </label>
 
           <label class="block">
-            <span class="text-sm font-semibold text-gray-700">Jenis Inovasi</span>
-            <select name="jenis_inovasi" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+            <span class="text-sm font-semibold text-gray-700">Jenis Inovasi <span style="color:red">*</span></span>
+            <select name="jenis_inovasi" required class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
               <option value="">--</option><option>Digital</option><option>Non Digital</option>
             </select>
           </label>
           <label class="block">
-            <span class="text-sm font-semibold text-gray-700">Bentuk Inovasi Daerah</span>
-            <select name="bentuk_inovasi_daerah" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+            <span class="text-sm font-semibold text-gray-700">Bentuk Inovasi Daerah <span style="color:red">*</span></span>
+            <select name="bentuk_inovasi_daerah" required class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
               <option value="">--</option>
               <option>Inovasi Daerah lainnya sesuai kewenangan</option>
               <option>Inovasi Pelayanan Publik</option>
@@ -675,8 +675,8 @@
           </label>
 
         <label class="block">
-          <span class="text-sm font-semibold text-gray-700">Asta Cipta</span>
-          <select name="asta_cipta" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+          <span class="text-sm font-semibold text-gray-700">Asta Cita <span style="color:red">*</span></span>
+          <select name="asta_cipta" required class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
             <option value="">--</option>
             @foreach(config('inovasi.asta_cipta') as $code => $label)
               <option value="{{ $code }}" @selected(old('asta_cipta')===$code)>{{ $label }}</option>
@@ -719,8 +719,8 @@
 
 
         <label class="block">
-          <span class="text-sm font-semibold text-gray-700">Urusan Pemerintah</span>
-          <select name="urusan_pemerintah" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+          <span class="text-sm font-semibold text-gray-700">Urusan Pemerintah <span style="color:red">*</span></span>
+          <select name="urusan_pemerintah" required class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
             <option value="">--</option>
             @foreach(config('inovasi.urusan_pemerintah') as $code => $label)
               <option value="{{ $code }}" @selected(old('urusan_pemerintah')===$code)>{{ $label }}</option>
@@ -729,18 +729,18 @@
         </label>
 
           <label class="block">
-            <span class="text-sm font-semibold text-gray-700">Waktu Uji Coba</span>
-            <input name="waktu_uji_coba" type="date" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+            <span class="text-sm font-semibold text-gray-700">Waktu Uji Coba <span style="color:red">*</span></span>
+            <input name="waktu_uji_coba" type="date" required class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
           </label>
           <label class="block">
-            <span class="text-sm font-semibold text-gray-700">Waktu Penerapan</span>
-            <input name="waktu_penerapan" type="date" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+            <span class="text-sm font-semibold text-gray-700">Waktu Penerapan <span style="color:red">*</span></span>
+            <input name="waktu_penerapan" type="date" required class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
           </label>
 
           <!-- Tahap (opsional) -->
           <label class="block">
-            <span class="text-sm font-semibold text-gray-700">Apakah sudah ada perkembangan inovasi tersebut?</span>
-            <select name="perkembangan_inovasi" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+            <span class="text-sm font-semibold text-gray-700">Apakah sudah ada perkembangan inovasi tersebut? <span style="color:red">*</span></span>
+            <select name="perkembangan_inovasi" required class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
               <option value="">--</option>
               <option>Tidak</option>
               <option>Ya</option>
@@ -750,7 +750,7 @@
           <!-- Richtext (Quill -> textarea) -->
           <div class="sm:col-span-2">
             <label class="block text-sm font-semibold text-gray-700 mb-1">
-              Rancang bangun (Min 300 karakter)
+              Rancang bangun (Min 300 karakter) <span style="color:red">*</span>
             </label>
 
             <textarea
@@ -771,7 +771,7 @@
 
           <div class="sm:col-span-2">
             <label class="block text-sm font-semibold text-gray-700 mb-1">
-              Tujuan inovasi daerah
+              Tujuan inovasi daerah <span style="color:red">*</span>
             </label>
 
             <textarea
@@ -784,7 +784,7 @@
           </div>
           <div class="sm:col-span-2">
             <label class="block text-sm font-semibold text-gray-700 mb-1">
-             Manfaat yang diperoleh
+             Manfaat yang diperoleh <span style="color:red">*</span>
             </label>
 
             <textarea
@@ -797,7 +797,7 @@
           </div>
           <div class="sm:col-span-2">
             <label class="block text-sm font-semibold text-gray-700 mb-1">
-             Hasil Inovasi
+             Hasil Inovasi <span style="color:red">*</span>
             </label>
 
             <textarea
@@ -810,9 +810,27 @@
           </div>
           <div class="sm:col-span-2">
             <label class="block text-sm font-semibold text-gray-700 mb-2">
-              Penelitian / Inovasi Terdahulu (Minimal 3, Maksimal 5)
+              Penelitian / Inovasi Terdahulu (Minimal 3, Maksimal 5) <span style="color:red">*</span>
+              <small><br> Cari di Youtube/Tuxedovation inovasi daerah lain yang memiliki kemiripan atau pada tema yang sama dengan inovasi anda.</small>
             </label>
 
+            <div class="flex flex-wrap gap-2 mb-3">
+              <a
+                href="https://www.youtube.com/results?search_query=lomba+inovasi+daerah+%22ganti+teks+ini+jadi+nama+inovasi+dan+tema+inovasi+anda%22"
+                target="_blank"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition"
+              >
+                Cari di YouTube
+              </a>
+
+              <a
+                href="https://tuxedovation.inovasi.litbang.kemendagri.go.id/"
+                target="_blank"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-sm font-semibold hover:bg-gray-50 transition"
+              >
+                Cari di Tuxedovation
+              </a>
+            </div>
             <div id="video-wrapper" class="space-y-3">
 
               @for ($i = 0; $i < 3; $i++)
@@ -931,7 +949,113 @@
     </div>
   </div>
 </div>
+<!-- Modal Pedoman / Tutorial -->
+<div id="pedomanModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+  <!-- Backdrop -->
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm"></div>
 
+  <div class="relative z-10 mx-auto flex min-h-screen max-w-5xl items-center justify-center px-4 py-8">
+    <div class="relative w-full overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/5">
+
+      <!-- accent line -->
+      <div class="h-1 w-full bg-gradient-to-r from-maroon via-red-500 to-amber-400"></div>
+
+      <!-- Header -->
+      <div class="relative overflow-hidden bg-gradient-to-br from-maroon via-maroon-800 to-gray-900 px-6 py-5 sm:px-8">
+        <div class="absolute inset-0 opacity-15">
+          <div class="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white blur-3xl"></div>
+          <div class="absolute -bottom-8 -left-10 h-36 w-36 rounded-full bg-amber-300 blur-3xl"></div>
+        </div>
+
+        <div class="relative flex items-start justify-between gap-4">
+          <div class="flex items-start gap-4">
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/20 backdrop-blur">
+              <span class="text-2xl">📘</span>
+            </div>
+
+            <div>
+              <div class="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold tracking-wide text-white/90 ring-1 ring-white/15">
+                WAJIB DIBACA
+              </div>
+              <h2 class="mt-3 text-xl font-extrabold text-white sm:text-2xl">
+                Tutorial Pengisian Metadata & Evidence
+              </h2>
+              <p class="mt-1 max-w-2xl text-sm leading-6 text-white/80">
+                Jika ada pertanyaan, buka panduan ini terlebih dahulu agar pengisian lebih rapi, seragam, dan sesuai alur.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            id="closePedomanModal"
+            class="grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+            aria-label="Tutup modal"
+          >
+            <span class="text-2xl leading-none">&times;</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="grid gap-0 md:grid-cols-2">
+        <!-- Image side -->
+        <div class="relative bg-gradient-to-br from-gray-50 to-gray-100 p-5 sm:p-6">
+          <div class="absolute left-5 top-5 rounded-full bg-white px-3 py-1 text-[11px] font-bold text-maroon shadow">
+            Tutorial Visual
+          </div>
+
+          <div class="flex h-full items-center justify-center">
+            <div class="relative w-full overflow-hidden rounded-2xl bg-white p-3 shadow-xl ring-1 ring-gray-200">
+              <img
+                src="{{ asset('images/tutorial-inovasi.png') }}"
+                alt="Pedoman SIGAP Inovasi"
+                class="h-auto w-full rounded-xl object-contain"
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Text side -->
+        <div class="flex flex-col justify-between p-6 sm:p-8">
+          <div>
+            <h3 class="text-lg font-bold text-gray-900 sm:text-xl">
+              Baca dulu sebelum mengisi data
+            </h3>
+
+            <div class="mt-4 space-y-3 text-sm leading-6 text-gray-700">
+              <p class="rounded-2xl bg-gray-50 p-4 ring-1 ring-gray-100">
+                Modal ini membantu memahami cara pengisian metadata dan evidence agar data yang diinput lebih lengkap, konsisten, dan mudah diverifikasi.
+              </p>
+
+              <p class="rounded-2xl bg-amber-50 p-4 text-amber-900 ring-1 ring-amber-100">
+                Jika masih bingung, silakan buka tutorial lengkap melalui tombol di bawah.
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-6 flex flex-wrap gap-3">
+            <a
+              href="{{ route('evidence.pedoman') }}"
+              class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-maroon to-maroon-800 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-maroon/25 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-maroon/30"
+            >
+              <span>📎</span>
+              Buka Tutorial Lengkap
+            </a>
+
+            <button
+              type="button"
+              class="rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+              data-pedoman-close
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -1059,5 +1183,36 @@ document.getElementById('removeVideo').addEventListener('click', () => {
   videoIndex--;
 });
 </script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const pedomanModal = document.getElementById('pedomanModal');
+    const closeBtn = document.getElementById('closePedomanModal');
 
+    if (!pedomanModal) return;
+
+    setTimeout(() => {
+      pedomanModal.classList.remove('hidden');
+    }, 150);
+
+    setTimeout(() => {
+      pedomanModal.classList.add('hidden');
+    }, 10000);
+
+    closeBtn?.addEventListener('click', () => {
+      pedomanModal.classList.add('hidden');
+    });
+
+    document.querySelectorAll('[data-pedoman-close]').forEach(el => {
+      el.addEventListener('click', () => {
+        pedomanModal.classList.add('hidden');
+      });
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        pedomanModal.classList.add('hidden');
+      }
+    });
+  });
+</script>
 @endpush
