@@ -579,7 +579,7 @@
 
 
 <!-- Modal Pop-up -->
-<div id="popup-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 hidden">
+{{-- <div id="popup-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 hidden">
   <div id="popup-content" class="bg-white max-w-md w-full mx-4 rounded-xl p-6 shadow-xl relative animate-fade-in">
     <button id="close-modal" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 text-xl font-bold">&times;</button>
     
@@ -611,7 +611,7 @@
     </p>
 
   </div>
-</div>
+</div> --}}
 
 <style>
   @keyframes fade-in {
