@@ -240,7 +240,7 @@
         </div>
         <div>
           <label class="text-sm font-semibold text-gray-700">Jenis Urusan</label>
-          <select name="urusan" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+          <select name="urusan" required class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
             <option value="">Semua</option>
             @foreach(['Kesehatan','Pendidikan','Air Bersih','Transportasi'] as $opt)
               <option value="{{ $opt }}" @selected(($filters['urusan'] ?? '')==$opt)>{{ $opt }}</option>
@@ -879,8 +879,15 @@
           <div class="sm:col-span-2 grid sm:grid-cols-2 gap-4">
             <label class="block">
               <span class="text-sm font-semibold text-gray-700 ">Anggaran <span style="color:red">*</span></span>
-              <input name="anggaran" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon" required>
-              <p class="text-[12px] text-gray-500 mt-1">Utamakan PDF untuk ringkasan / TOR.</p>
+              <input 
+                id="anggaranFile"
+                name="anggaran" 
+                type="file" 
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" 
+                class="mt-1.5 w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon" 
+                required
+              >
+              <p class="text-[12px] text-gray-500 mt-1">Pastikan file PDF, maksimal 10 MB</p>
             </label>
             <label class="block">
               <span class="text-sm font-semibold text-gray-700">Profil Bisnis (.ppt) (Jika ada)</span>
@@ -1214,5 +1221,35 @@ document.getElementById('removeVideo').addEventListener('click', () => {
       }
     });
   });
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const anggaranInput = document.getElementById('anggaranFile');
+
+    anggaranInput.addEventListener('change', function () {
+
+        const file = this.files[0];
+
+        if (!file) return;
+
+        // 10 MB
+        const maxSize = 10 * 1024 * 1024;
+
+        if (file.size > maxSize) {
+
+            Swal.fire({
+                icon: 'error',
+                title: 'File Terlalu Besar',
+                text: 'Ukuran file maksimal 10 MB.',
+                confirmButtonColor: '#7a2222'
+            });
+
+            // reset input
+            this.value = '';
+        }
+    });
+
+});
 </script>
 @endpush
