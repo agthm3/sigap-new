@@ -208,11 +208,9 @@ PICSCREEN APLIKASI (WEB & ANDROID/IOS) YANG DIGUNAKAN ',
                 'jenis_file'  => 'Foto/Gambar',
                 'hint'        => 'DOKUMEN PKS/MOU/SURAT PERNYATAAN DARI PEMDA YANG MEREPLIKASI /DOKUMEN REPLIKASI LAINNYA (PDF)',
                 'params'      => [
-                    ['label'=>'PERNAH 3 KALI DIREPLIKASI DI DAERAH LAIN YANG BERBEDA ⭐⭐⭐', 'weight'=>10],
+                    ['label'=>'PERNAH 3 KALI DIREPLIKASI DI DAERAH LAIN YANG BERBEDA ⭐⭐⭐', 'weight'=>3],
                     ['label'=>'PERNAH 2 KALI DIREPLIKASI DI DAERAH LAIN YANG BERBEDA⭐⭐', 'weight'=>6],
-                    ['label'=>'PERNAH 1 KALI DIREPLIKASI DI DAERAH LAIN
-
-⭐', 'weight'=>5],
+                    ['label'=>'PERNAH 1 KALI DIREPLIKASI DI DAERAH LAIN ⭐', 'weight'=>1],
                     ['label'=>'Tidak terintegrasi', 'weight'=>0],
                 ],
             ],
