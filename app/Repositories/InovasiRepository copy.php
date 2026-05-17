@@ -4,7 +4,6 @@ namespace App\Repositories;
 
 use App\Models\Inovasi;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -24,9 +23,11 @@ class InovasiRepository
         ?UploadedFile $penghargaan = null
     ): Inovasi {
         return DB::transaction(function () use ($data, $anggaran, $profilBisnis, $haki, $penghargaan) {
+            // default tahap & pemilik
             $data['tahap_inovasi'] = $data['tahap_inovasi'] ?? 'Inisiatif';
             $data['user_id'] = $data['user_id'] ?? Auth::id();
 
+            // simpan file
             if ($anggaran instanceof UploadedFile) {
                 $data['anggaran_file'] = $anggaran->store('inovasi/anggaran', 'public');
             }
@@ -53,24 +54,19 @@ class InovasiRepository
     }
 
     /**
-     * Query dasar dengan pembatasan kepemilikan.
+     * Paginate dengan pembatasan kepemilikan:
+     * - Admin: semua
+     * - Non-admin: hanya miliknya (user_id)
      */
-    private function baseQueryForUser(User $user): Builder
+    public function paginateForUser(User $user, array $filters = [], int $perPage = 10)
     {
         $q = Inovasi::query();
 
+        // batasi kepemilikan untuk non-admin
         if (!$user->hasRole('admin')) {
             $q->where('user_id', $user->id);
         }
 
-        return $q;
-    }
-
-    /**
-     * Filter umum yang dipakai di index dan export.
-     */
-    private function applyCommonFilters(Builder $q, array $filters): Builder
-    {
         if (!empty($filters['q'])) {
             $kw = trim($filters['q']);
             $q->where(function ($w) use ($kw) {
@@ -78,21 +74,14 @@ class InovasiRepository
                   ->orWhere('opd_unit', 'like', "%{$kw}%");
             });
         }
-
-        if (!empty($filters['urusan'])) {
-            $q->where('urusan_pemerintah', $filters['urusan']);
+        if (!empty($filters['asistensi_status'])) {
+         $q->where('asistensi_status', $filters['asistensi_status']);
         }
-
-        if (!empty($filters['inisiator'])) {
-            $q->where('inisiator_daerah', $filters['inisiator']);
-        }
+        if (!empty($filters['urusan']))    $q->where('urusan_pemerintah', $filters['urusan']);
+        if (!empty($filters['inisiator'])) $q->where('inisiator_daerah', $filters['inisiator']);
 
         if (!empty($filters['tahap'])) {
             $q->where('tahap_inovasi', $filters['tahap']);
-        }
-
-        if (!empty($filters['asistensi_status'])) {
-            $q->where('asistensi_status', $filters['asistensi_status']);
         }
 
         if (($filters['sort'] ?? 'terbaru') === 'judul') {
@@ -100,56 +89,6 @@ class InovasiRepository
         } else {
             $q->latest('created_at');
         }
-
-        return $q;
-    }
-
-    /**
-     * Filter khusus export.
-     * - aktif = Disetujui
-     * - revisi = ada revisi di metadata / evidence / asistensi
-     */
-    private function applyExportFilters(Builder $q, array $filters): Builder
-    {
-        $statusAktif = $filters['export_status_aktif'] ?? 'semua';
-        if ($statusAktif === 'aktif') {
-            $q->where('asistensi_status', 'Disetujui');
-        } elseif ($statusAktif === 'nonaktif') {
-            $q->where(function ($w) {
-                $w->whereNull('asistensi_status')
-                  ->orWhere('asistensi_status', '!=', 'Disetujui');
-            });
-        }
-
-        $statusRevisi = $filters['export_status_revisi'] ?? 'semua';
-        if ($statusRevisi === 'ada') {
-            $q->where(function ($w) {
-                $w->where('asistensi_status', 'Revisi')
-                  ->orWhereHas('reviewItems', fn ($r) => $r->where('status', 'revisi'))
-                  ->orWhereHas('evidenceReviewItems', fn ($r) => $r->where('status', 'revisi'));
-            });
-        } elseif ($statusRevisi === 'tidak') {
-            $q->where(function ($w) {
-                $w->where(function ($x) {
-                    $x->whereNull('asistensi_status')
-                      ->orWhere('asistensi_status', '!=', 'Revisi');
-                })
-                ->whereDoesntHave('reviewItems', fn ($r) => $r->where('status', 'revisi'))
-                ->whereDoesntHave('evidenceReviewItems', fn ($r) => $r->where('status', 'revisi'));
-            });
-        }
-
-        return $q;
-    }
-
-    /**
-     * Pagination untuk halaman index.
-     */
-    public function paginateForUser(User $user, array $filters = [], int $perPage = 10)
-    {
-        $q = $this->baseQueryForUser($user);
-
-        $this->applyCommonFilters($q, $filters);
 
         Log::channel('giga')->info('Inovasi paginateForUser', [
             'user_id' => $user->id,
@@ -161,25 +100,7 @@ class InovasiRepository
     }
 
     /**
-     * Query export untuk Excel.
-     */
-    public function exportQueryForUser(User $user, array $filters = []): Builder
-    {
-        $q = $this->baseQueryForUser($user)
-            ->with([
-                'referensiVideos',
-                'reviewItems.reviewer',
-                'evidenceReviewItems.reviewer',
-            ]);
-
-        $this->applyCommonFilters($q, $filters);
-        $this->applyExportFilters($q, $filters);
-
-        return $q;
-    }
-
-    /**
-     * (Optional) Versi umum tanpa user.
+     * (Optional) Versi umum tanpa user; masih dipakai tempat lain jika perlu.
      */
     public function paginate(array $filters = [], int $perPage = 10)
     {
@@ -193,13 +114,8 @@ class InovasiRepository
             });
         }
 
-        if (!empty($filters['urusan'])) {
-            $q->where('urusan_pemerintah', $filters['urusan']);
-        }
-
-        if (!empty($filters['inisiator'])) {
-            $q->where('inisiator_daerah', $filters['inisiator']);
-        }
+        if (!empty($filters['urusan']))    $q->where('urusan_pemerintah', $filters['urusan']);
+        if (!empty($filters['inisiator'])) $q->where('inisiator_daerah', $filters['inisiator']);
 
         if (!empty($filters['tahap_status'])) {
             $q->where('tahap_status', $filters['tahap_status']);
@@ -237,7 +153,7 @@ class InovasiRepository
     }
 
     /**
-     * Update metadata + ganti file.
+     * Update metadata + ganti file (hapus file lama jika diubah).
      */
     public function update(
         int $id,
@@ -250,6 +166,7 @@ class InovasiRepository
         return DB::transaction(function () use ($id, $data, $anggaran, $profilBisnis, $haki, $penghargaan) {
             $inovasi = Inovasi::findOrFail($id);
 
+            // Lindungi user_id agar tidak diubah dari form biasa
             unset($data['user_id']);
 
             if ($anggaran instanceof UploadedFile) {
@@ -291,7 +208,7 @@ class InovasiRepository
         });
     }
 
-    public function updateAsistensi(int $id, string $status, ?string $note, int $byUserId): Inovasi
+      public function updateAsistensi(int $id, string $status, ?string $note, int $byUserId): Inovasi
     {
         $allowed = ['Menunggu Verifikasi','Disetujui','Dikembalikan','Revisi','Ditolak'];
         if (!in_array($status, $allowed, true)) {
@@ -307,9 +224,9 @@ class InovasiRepository
             $inv->save();
 
             Log::channel('giga')->info('Asistensi updated', [
-                'inovasi_id' => $inv->id,
-                'status'     => $status,
-                'by'         => $byUserId
+                'inovasi_id'=>$inv->id,
+                'status'=>$status,
+                'by'=>$byUserId
             ]);
 
             return $inv;

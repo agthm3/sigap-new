@@ -182,6 +182,10 @@ Route::prefix('/sigap-inovasi')->middleware('auth', 'role:inovator|admin')->grou
 
 });
 
+Route::get('/sigap-inovasi/export', [SigapInovasiController::class, 'export'])
+    ->middleware(['auth', 'role:admin|verificator_inovasi'])
+    ->name('sigap-inovasi.export');
+
 
 //Route Invasi Review
 Route::middleware(['auth'])->group(function () {

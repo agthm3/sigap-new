@@ -13,6 +13,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Exports\InovasiExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class SigapInovasiController extends Controller
 {
@@ -675,4 +677,39 @@ class SigapInovasiController extends Controller
         return back()->with('success','File pedoman berhasil dihapus.');
     }
 
+
+    public function export(Request $request)
+    {
+        $this->authorizeExport();
+
+        $user = Auth::user();
+
+        $filters = [
+            'q'                    => $request->get('q'),
+            'sort'                 => $request->get('sort', 'terbaru'),
+            'tahap'                => $request->get('tahap'),
+            'urusan'               => $request->get('urusan'),
+            'inisiator'            => $request->get('inisiator'),
+            'asistensi_status'     => $request->get('asistensi_status'),
+
+            // filter export tambahan
+            'export_status_aktif'  => $request->get('export_status_aktif', 'semua'),
+            'export_status_revisi' => $request->get('export_status_revisi', 'semua'),
+        ];
+
+        $query = $this->repo->exportQueryForUser($user, $filters);
+
+        $filename = 'export-inovasi-' . now()->format('Ymd_His') . '.xlsx';
+
+        return Excel::download(new InovasiExport($query), $filename);
+    }
+
+    private function authorizeExport(): void
+    {
+        $user = Auth::user();
+
+        if (!$user || !$user->hasAnyRole(['admin', 'verificator_inovasi'])) {
+            abort(403, 'Akses export hanya untuk admin dan verificator.');
+        }
+    }
 }

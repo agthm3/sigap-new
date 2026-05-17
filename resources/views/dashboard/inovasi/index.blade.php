@@ -305,6 +305,86 @@
       </form>
     </div>
   </section>
+  @hasanyrole('admin|verificator_inovasi')
+<section class="max-w-7xl mx-auto px-4 mt-4">
+  <div class="bg-white border border-gray-200 rounded-2xl p-4 sm:p-5">
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+      <div>
+        <h3 class="text-base font-bold text-gray-900">Export Inovasi</h3>
+        <p class="text-sm text-gray-600 mt-1">
+          Export data inovasi beserta relasinya ke Excel. Bisa difilter per jenis urusan, tahap, status aktif, dan status revisi.
+        </p>
+      </div>
+
+      <form id="exportInovasiForm"
+            method="GET"
+            action="{{ route('sigap-inovasi.export') }}"
+            class="grid grid-cols-1 md:grid-cols-5 gap-3 w-full">
+
+        {{-- pertahankan filter halaman yang sedang aktif --}}
+        @foreach(request()->only(['q','tahap','urusan','inisiator','asistensi_status','sort']) as $k => $v)
+          <input type="hidden" name="{{ $k }}" value="{{ $v }}">
+        @endforeach
+
+        <label class="block">
+          <span class="text-sm font-semibold text-gray-700">Jenis Urusan</span>
+          <select name="urusan" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+            <option value="">Semua</option>
+            @foreach(['Kesehatan','Pendidikan','Air Bersih','Transportasi'] as $opt)
+              <option value="{{ $opt }}" @selected(request('urusan') == $opt)>{{ $opt }}</option>
+            @endforeach
+          </select>
+        </label>
+
+        <label class="block">
+          <span class="text-sm font-semibold text-gray-700">Tahap Inovasi</span>
+          <select name="tahap" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+            <option value="">Semua</option>
+            @foreach(['Inisiatif','Uji Coba','Penerapan'] as $opt)
+              <option value="{{ $opt }}" @selected(request('tahap') == $opt)>{{ $opt }}</option>
+            @endforeach
+          </select>
+        </label>
+
+        <label class="block">
+          <span class="text-sm font-semibold text-gray-700">Status Aktif</span>
+          <select name="export_status_aktif" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+            <option value="semua">Semua</option>
+            <option value="aktif">Aktif</option>
+            <option value="nonaktif">Tidak Aktif</option>
+          </select>
+        </label>
+
+        <label class="block">
+          <span class="text-sm font-semibold text-gray-700">Status Revisi</span>
+          <select name="export_status_revisi" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+            <option value="semua">Semua</option>
+            <option value="ada">Ada Revisi</option>
+            <option value="tidak">Tidak Ada Revisi</option>
+          </select>
+        </label>
+
+        <div class="flex items-end">
+          <button type="submit"
+                  class="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 active:bg-green-800 transition w-full shadow-md hover:shadow-lg flex items-center justify-center gap-2 font-semibold">
+            
+            <svg xmlns="http://www.w3.org/2000/svg"
+                class="w-5 h-5"
+                fill="currentColor"
+                viewBox="0 0 24 24">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zm0 1.5L18.5 8H14zM9.4 17 11 14.7 12.6 17h1.8l-2.3-3.3 2.1-3h-1.7L11 13l-1.5-2.3H7.8l2.1 3L7.6 17z"/>
+            </svg>
+
+            Export Excel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<iframe id="download-frame" name="download-frame" class="hidden"></iframe>
+@endhasanyrole
 
   <!-- Table -->
   <section class="max-w-7xl mx-auto px-4 py-6">
@@ -1250,6 +1330,83 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.getElementById('exportInovasiForm');
+  if (!form || typeof Swal === 'undefined') return;
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    Swal.fire({
+      title: 'Sedang memproses export',
+      text: 'File Excel sedang disiapkan. Mohon tunggu.',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      didOpen: () => Swal.showLoading()
+    });
+
+    try {
+      const formData = new FormData(form);
+      const params = new URLSearchParams();
+
+      for (const pair of formData.entries()) {
+        if (pair[1] !== '') params.append(pair[0], pair[1]);
+      }
+
+      const response = await fetch(`${form.action}?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Gagal memproses export.');
+      }
+
+      const blob = await response.blob();
+
+      const disposition = response.headers.get('Content-Disposition');
+      let filename = 'export-inovasi.xlsx';
+
+      if (disposition && disposition.includes('filename=')) {
+        const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/i);
+        if (match && match[1]) {
+          filename = match[1].replace(/['"]/g, '');
+        }
+      }
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      Swal.close();
+      Swal.fire({
+        icon: 'success',
+        title: 'Export selesai',
+        text: 'File Excel berhasil diunduh.'
+      });
+
+    } catch (error) {
+      Swal.close();
+      Swal.fire({
+        icon: 'error',
+        title: 'Export gagal',
+        text: error.message || 'Terjadi kesalahan saat export.'
+      });
+    }
+  });
 });
 </script>
 @endpush
