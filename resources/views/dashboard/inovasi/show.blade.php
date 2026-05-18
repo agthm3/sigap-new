@@ -290,31 +290,52 @@
 </section>
 
 
+@php
+  $renderRichText = function ($content) {
+    if (blank($content)) {
+      return '<p class="text-gray-500">Belum ada isi.</p>';
+    }
+
+    $content = html_entity_decode((string) $content, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+    // Kalau memang ada HTML, tampilkan sebagai HTML
+    if (preg_match('/<[^>]+>/', $content)) {
+      return $content;
+    }
+
+    // Kalau cuma teks biasa, jaga paragraf/line break
+    return nl2br(e($content));
+  };
+@endphp
+
 <!-- Deskripsi detail -->
 <section class="max-w-7xl mx-auto px-4">
   <div class="grid lg:grid-cols-2 gap-4">
     <div class="card rounded-2xl border bg-white p-4">
       <h3 class="font-semibold text-gray-800">Rancang Bangun</h3>
-      <div class="prose prose-sm max-w-none mt-2 text-gray-800">
-        {!! $inovasi->rancang_bangun ?? '<p class="text-gray-500">Belum ada isi.</p>' !!}
+      <div class="mt-3 text-gray-800 leading-7 rich-text">
+        {!! $renderRichText($inovasi->rancang_bangun) !!}
       </div>
     </div>
+
     <div class="card rounded-2xl border bg-white p-4">
       <h3 class="font-semibold text-gray-800">Tujuan Inovasi</h3>
-      <div class="prose prose-sm max-w-none mt-2 text-gray-800">
-        {!! $inovasi->tujuan ?? '<p class="text-gray-500">Belum ada isi.</p>' !!}
+      <div class="mt-3 text-gray-800 leading-7 rich-text">
+        {!! $renderRichText($inovasi->tujuan) !!}
       </div>
     </div>
+
     <div class="card rounded-2xl border bg-white p-4">
       <h3 class="font-semibold text-gray-800">Manfaat yang Diperoleh</h3>
-      <div class="prose prose-sm max-w-none mt-2 text-gray-800">
-        {!! $inovasi->manfaat ?? '<p class="text-gray-500">Belum ada isi.</p>' !!}
+      <div class="mt-3 text-gray-800 leading-7 rich-text">
+        {!! $renderRichText($inovasi->manfaat) !!}
       </div>
     </div>
+
     <div class="card rounded-2xl border bg-white p-4">
       <h3 class="font-semibold text-gray-800">Hasil Inovasi</h3>
-      <div class="prose prose-sm max-w-none mt-2 text-gray-800">
-        {!! $inovasi->hasil_inovasi ?? '<p class="text-gray-500">Belum ada isi.</p>' !!}
+      <div class="mt-3 text-gray-800 leading-7 rich-text">
+        {!! $renderRichText($inovasi->hasil_inovasi) !!}
       </div>
     </div>
   </div>

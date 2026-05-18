@@ -240,7 +240,7 @@
         </div>
         <div>
           <label class="text-sm font-semibold text-gray-700">Jenis Urusan</label>
-          <select name="urusan" required class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
+          <select name="urusan"  class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
             <option value="">Semua</option>
             @foreach(['Kesehatan','Pendidikan','Air Bersih','Transportasi'] as $opt)
               <option value="{{ $opt }}" @selected(($filters['urusan'] ?? '')==$opt)>{{ $opt }}</option>
