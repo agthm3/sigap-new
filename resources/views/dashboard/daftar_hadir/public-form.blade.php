@@ -23,7 +23,8 @@
       @csrf
 
       <div class="relative">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Nama</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+        <small>Disarankan menggunakan nama lengkap sesuai dengan identitas resmi + Gelar</small>
         <input type="text" id="nama-input" name="nama" value="{{ old('nama') }}"
                autocomplete="off"
                class="w-full rounded-xl border-gray-300 focus:border-maroon focus:ring-maroon" required>

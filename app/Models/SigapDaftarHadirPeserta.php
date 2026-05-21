@@ -16,7 +16,7 @@ class SigapDaftarHadirPeserta extends Model
         'gender',
         'no_hp',
         'email',
-        'ttd_path',
+        'ttd_path', 
         'urutan_absen',
         'created_by',
     ];
@@ -29,5 +29,9 @@ class SigapDaftarHadirPeserta extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+    public function peserta()
+    {
+        return $this->hasMany(SigapDaftarHadirPeserta::class, 'kegiatan_id');
     }
 }

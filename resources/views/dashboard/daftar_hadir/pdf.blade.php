@@ -181,12 +181,9 @@
 
                             @php
                                 $ttdPath = storage_path('app/public/' . $item->ttd_path);
-
-                                $type = pathinfo($ttdPath, PATHINFO_EXTENSION);
-
-                                $data = file_get_contents($ttdPath);
-
-                                $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+                                $type    = pathinfo($ttdPath, PATHINFO_EXTENSION);
+                                $data    = file_get_contents($ttdPath);
+                                $base64  = 'data:image/' . $type . ';base64,' . base64_encode($data);
                             @endphp
 
                             <img src="{{ $base64 }}" class="ttd-img">

@@ -417,19 +417,52 @@ textarea::placeholder {
       <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">
         SIGAP DAFTAR HADIR
       </div>
-
-      <a href="{{ route('sigap-daftar-hadir.index') }}"
-        class="flex items-center gap-3 px-3 py-2 rounded-lg
-                {{ request()->routeIs('sigap-daftar-hadir.*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
-
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      
+      {{-- Toggle --}}
+      <button id="daftarHadirToggle"
+              class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-left">
+        <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
           <path stroke-width="2" d="M4 5h16v14H4z"/>
           <path stroke-width="2" d="M8 9h8"/>
           <path stroke-width="2" d="M8 13h5"/>
         </svg>
-
-        SIGAP Daftar Hadir
-      </a>
+        <span class="font-medium">SIGAP Daftar Hadir</span>
+        <svg id="daftarHadirCaret"
+            class="w-4 h-4 ml-auto transition-transform duration-200"
+            viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-width="2" d="M6 9l6 6 6-6"/>
+        </svg>
+      </button>
+      
+      {{-- Dropdown --}}
+      <div id="daftarHadirMenu" class="ml-3 mt-1 space-y-1 hidden">
+      
+        {{-- Daftar Kegiatan (semua role) --}}
+        <a href="{{ route('sigap-daftar-hadir.index') }}"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+          {{ request()->routeIs('sigap-daftar-hadir.index') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" d="M4 5h16v14H4z"/>
+            <path stroke-width="2" d="M8 9h8M8 13h5"/>
+          </svg>
+          Daftar Kegiatan
+        </a>
+      
+        {{-- Riwayat Peserta — hanya admin --}}
+        @hasrole('admin')
+        <a href="{{ route('sigap-daftar-hadir.riwayat-peserta') }}"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+          {{ request()->routeIs('sigap-daftar-hadir.riwayat-peserta*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4" stroke-width="2"/>
+            <path stroke-width="2" d="M16 11l2 2 4-4" stroke-linecap="round"/>
+          </svg>
+          Riwayat Peserta
+        </a>
+        @endhasrole
+      
+      </div>
       @endhasanyrole
         <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">PENGATURAN</div>
         {{-- <a href="{{ route('logout') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100">
@@ -687,7 +720,34 @@ document.addEventListener("DOMContentLoaded", function(){
     });
   });
 </script>
-
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const daftarHadirToggle = document.getElementById('daftarHadirToggle');
+  const daftarHadirMenu   = document.getElementById('daftarHadirMenu');
+  const daftarHadirCaret  = document.getElementById('daftarHadirCaret');
+ 
+  if (!daftarHadirToggle) return;
+ 
+  const DH_KEY     = 'sb_daftar_hadir_open';
+  const isOpenSaved = localStorage.getItem(DH_KEY) === '1';
+ 
+  // Auto-buka jika sedang di halaman daftar hadir
+  const isOnDaftarHadir = window.location.pathname.includes('/sigap-daftar-hadir');
+ 
+  if (isOpenSaved || isOnDaftarHadir) {
+    daftarHadirMenu.classList.remove('hidden');
+    daftarHadirCaret.classList.add('rotate-180');
+  }
+ 
+  daftarHadirToggle.addEventListener('click', () => {
+    const willOpen = daftarHadirMenu.classList.contains('hidden');
+    daftarHadirMenu.classList.toggle('hidden');
+    daftarHadirCaret.classList.toggle('rotate-180', willOpen);
+    localStorage.setItem(DH_KEY, willOpen ? '1' : '0');
+  });
+});
+</script>
+ 
     @stack('scripts')
 </body>
 </html>

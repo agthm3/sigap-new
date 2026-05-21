@@ -86,7 +86,7 @@
                     </a>
                   @endif
 
-                  <form action="{{ route('sigap-daftar-hadir.status', $item->uuid) }}" method="POST">
+                  <form action="{{ route('sigap-daftar-hadir.status', $item->uuid) }}" method="POST" class="inline">
                     @csrf
                     @if($item->status === 'selesai')
                       <input type="hidden" name="status" value="proses">
@@ -101,19 +101,22 @@
                     @endif
                   </form>
                 @endhasanyrole
+
                 @role('admin')
-                  <form action="{{ route('sigap-daftar-hadir.destroy', $item->uuid) }}"
+                  {{-- Form hapus — id unik per baris --}}
+                  <form id="form-delete-{{ $item->uuid }}"
+                        action="{{ route('sigap-daftar-hadir.destroy', $item->uuid) }}"
                         method="POST"
-                        class="form-delete inline">
+                        class="inline">
                     @csrf
                     @method('DELETE')
-
-                    <button type="button"
-                            class="btn-delete px-3 py-1.5 rounded border border-red-500 text-red-600 text-xs hover:bg-red-600 hover:text-white"
-                            data-judul="{{ $item->nama_kegiatan }}">
-                      Hapus
-                    </button>
                   </form>
+
+                  <button type="button"
+                          onclick="confirmDelete('{{ $item->uuid }}', '{{ addslashes($item->nama_kegiatan) }}')"
+                          class="px-3 py-1.5 rounded border border-red-500 text-red-600 text-xs hover:bg-red-600 hover:text-white transition-colors">
+                    Hapus
+                  </button>
                 @endrole
               </div>
             </td>
@@ -134,3 +137,25 @@
   {{ $kegiatans->links() }}
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function confirmDelete(uuid, namaKegiatan) {
+  Swal.fire({
+    title: 'Hapus Kegiatan?',
+    html: 'Kegiatan <strong>' + namaKegiatan + '</strong> beserta seluruh data pesertanya akan dihapus permanen.<br><br>Tindakan ini tidak bisa dibatalkan.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Ya, Hapus',
+    cancelButtonText: 'Batal',
+    confirmButtonColor: '#dc2626',
+    cancelButtonColor: '#6b7280',
+    reverseButtons: true,
+  }).then(function(result) {
+    if (result.isConfirmed) {
+      document.getElementById('form-delete-' + uuid).submit();
+    }
+  });
+}
+</script>
+@endpush
