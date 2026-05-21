@@ -15,6 +15,10 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(DocumentRepositoryInterface::class, EloquentDocumentRepository::class);
+        $this->app->alias(
+        \SimpleSoftwareIO\QrCode\Facades\QrCode::class,
+        'QrCode'
+        );  
     }
 
     /**

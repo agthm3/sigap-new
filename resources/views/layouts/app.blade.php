@@ -29,6 +29,27 @@
     body{font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
     .scrollbar-thin::-webkit-scrollbar{height:6px;width:6px}
     .scrollbar-thin::-webkit-scrollbar-thumb{background:#e5e7eb;border-radius:8px}
+
+    input,
+select,
+textarea {
+  border: 1px solid #d1d5db !important; /* gray-300 */
+  background-color: #ffffff !important;
+  color: #111827 !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #7a2222 !important; /* maroon */
+  box-shadow: 0 0 0 2px rgba(122, 34, 34, 0.15) !important;
+  outline: none !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af !important;
+}
   </style>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <!-- Chart.js -->
@@ -390,6 +411,24 @@
           <path stroke-width="2" d="M9 7h6M9 11h6M9 15h4"/>
         </svg>
         SIGAP PPD
+      </a>
+      @endhasanyrole
+      @hasanyrole('admin|verif_daftarhadir|employee')
+      <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">
+        SIGAP DAFTAR HADIR
+      </div>
+
+      <a href="{{ route('sigap-daftar-hadir.index') }}"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg
+                {{ request()->routeIs('sigap-daftar-hadir.*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-width="2" d="M4 5h16v14H4z"/>
+          <path stroke-width="2" d="M8 9h8"/>
+          <path stroke-width="2" d="M8 13h5"/>
+        </svg>
+
+        SIGAP Daftar Hadir
       </a>
       @endhasanyrole
         <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">PENGATURAN</div>
