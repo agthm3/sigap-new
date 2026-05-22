@@ -203,7 +203,41 @@
       </div>
     </div>
   </div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Tangkap session error dari backend -->
+@if (session('sweet_error'))
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Ambil detik dari session backend
+    let waitSeconds = {{ session('retry_after', 60) }};
+    let timerInterval;
 
+    Swal.fire({
+      icon: 'warning',
+      title: 'Akses Dibatasi',
+      // Gunakan tag <b> untuk tempat angka berhitung mundur
+      html: '{{ session('sweet_error') }}<br><br>Silakan coba lagi dalam <b></b> detik.',
+      timer: waitSeconds * 1000, // Konversi ke milidetik
+      timerProgressBar: true,
+      confirmButtonColor: '#7a2222',
+      confirmButtonText: 'Tutup',
+      allowOutsideClick: false, // Cegah user menutup popup sembarangan
+      
+      didOpen: () => {
+        // Ambil elemen <b> di dalam SweetAlert
+        const b = Swal.getHtmlContainer().querySelector('b');
+        timerInterval = setInterval(() => {
+          // Update angka setiap milidetik menjadi hitungan detik
+          b.textContent = Math.ceil(Swal.getTimerLeft() / 1000);
+        }, 100);
+      },
+      willClose: () => {
+        clearInterval(timerInterval);
+      }
+    });
+  });
+</script>
+@endif
 <script>
   // Show/Hide password
   function togglePwd(id){
