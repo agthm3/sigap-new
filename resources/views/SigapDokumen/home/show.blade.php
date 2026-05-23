@@ -106,20 +106,14 @@
             @endif
 
             <div class="mt-4 flex flex-wrap gap-2">
-              <a href="{{ route('sigap-dokumen.show', $item->id) }}"
-                 class="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition text-sm">
+              <a href="{{ route('home.document.show', $item) }}"
+                class="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition text-sm">
                 Lihat
               </a>
-              @if($item->sensitivity==='public')
-                <a href="{{ route('sigap-dokumen.download', $item->id) }}"
-                   class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-maroon text-white hover:bg-maroon-800 transition text-sm">
-               Download
-                </a>
-              @else
-                <span class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-gray-200 text-gray-600 cursor-not-allowed text-sm" title="Unduh membutuhkan hak akses">
-                 Download
-                </span>
-              @endif
+              <a href="{{ route('home.document.show', $item) }}#download"
+                class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-maroon text-white hover:bg-maroon-800 transition text-sm">
+                Download
+              </a>
             </div>
           </div>
         </div>

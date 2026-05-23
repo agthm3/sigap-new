@@ -59,7 +59,7 @@
       <li>
         <span>/</span>
       </li>
-      <li class="text-maroon font-bold" aria-current="page">{{ $doc->title }}</li>
+      <li class="text-maroon font-bold" aria-current="page">{{ $document->title }}</li>
     </ol>
   </nav>
   <!-- Header -->
@@ -93,16 +93,16 @@
         <h2 class="text-lg font-bold text-gray-800">Informasi Dokumen</h2>
       </div>
       <div class="p-5 space-y-3 text-sm">
-        <p><span class="font-semibold">Judul:</span> {{ $doc->title }}</p>
-        <p><span class="font-semibold">Alias:</span> {{ $doc->alias }}</p>
-        <p><span class="font-semibold">Kategori:</span> {{ $doc->category }}</p>
-        <p><span class="font-semibold">Tahun:</span> {{ $doc->year }}</p>
-        <p><span class="font-semibold">Pihak Terkait:</span> {{ $doc->stakeholder }}</p>
-        <p><span class="font-semibold">Status Akses:</span> <span class="px-2 py-0.5 rounded text-xs bg-amber-50 text-amber-700">{{ $doc->sensitivity }}</span></p>
-        <p><span class="font-semibold">Deskripsi:</span> {{ $doc->description }}</p>
+        <p><span class="font-semibold">Judul:</span> {{ $document->title }}</p>
+        <p><span class="font-semibold">Alias:</span> {{ $document->alias }}</p>
+        <p><span class="font-semibold">Kategori:</span> {{ $document->category }}</p>
+        <p><span class="font-semibold">Tahun:</span> {{ $document->year }}</p>
+        <p><span class="font-semibold">Pihak Terkait:</span> {{ $document->stakeholder }}</p>
+        <p><span class="font-semibold">Status Akses:</span> <span class="px-2 py-0.5 rounded text-xs bg-amber-50 text-amber-700">{{ $document->sensitivity }}</span></p>
+        <p><span class="font-semibold">Deskripsi:</span> {{ $document->description }}</p>
       </div>
       <div class="px-5 pb-5">
-        <a href="{{ route('sigap-dokumen.download', $doc->id) }}"  class="w-full px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 transition">
+        <a href="{{ route('sigap-dokumen.download', $document) }}"  class="w-full px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 transition">
             Download Dokumen
         </a>
         {{-- <button id="btnDownload" class="w-full px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 transition">Download Dokumen</button> --}}

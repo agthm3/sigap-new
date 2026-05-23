@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
+            $table->uuid('public_key')->unique();
             $table->string('number')->nullable();            // BRIDA/SK/123/2025
             $table->string('title');
             $table->string('alias')->unique();               // SK-12-2025 (unik)

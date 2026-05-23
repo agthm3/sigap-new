@@ -60,56 +60,47 @@ class SigapDokumenController extends Controller
                     ->with('success', "Dokumen '{$doc->title}' berhasil disimpan!");
     }
 
-    public function show(int $id)
+   public function show(ModelsDocument $document)
     {
-        $doc = $this->repo->find($id);
-
         ActivityLogger::log(
             module: 'dokumen',
             action: 'view',
-            object: $doc
+            object: $document
         );
 
-        $fileUrl = asset('storage/' . $doc->file_path);
-        $thumbUrl = $doc->thumb_path ? asset('storage/' . $doc->thumb_path) : null;
+        $fileUrl = asset('storage/' . $document->file_path);
+        $thumbUrl = $document->thumb_path ? asset('storage/' . $document->thumb_path) : null;
 
-        $ext = strtolower(pathinfo($doc->file_path, PATHINFO_EXTENSION));
+        $ext = strtolower(pathinfo($document->file_path, PATHINFO_EXTENSION));
         $isPdf = $ext === 'pdf';
         $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif']);
 
-           // Ambil riwayat akses untuk tabel
-        $logs = ActivityLog::where('module','dokumen')
+        $logs = ActivityLog::where('module', 'dokumen')
             ->where('object_type', ModelsDocument::class)
-            ->where('object_id', $doc->id)
+            ->where('object_id', $document->id)
             ->latest()
             ->paginate(10);
 
-        return view('dashboard.dokumen.show', compact('doc', 'fileUrl', 'thumbUrl', 'isPdf', 'isImage', 'logs'));
+        return view('dashboard.dokumen.show', compact('document', 'fileUrl', 'thumbUrl', 'isPdf', 'isImage', 'logs'));
     }
 
 
-    public function download(int $id)
+    public function download(ModelsDocument $document)
     {
-    $doc = $this->repo->find($id);
+        if (!Storage::disk('public')->exists($document->file_path)) {
+            ActivityLogger::log('dokumen', 'access_denied', $document, [
+                'success' => false,
+                'reason' => 'file_missing',
+            ]);
+            abort(404, 'File tidak ditemukan');
+        }
 
-     // Validasi fisik file
-    if (!Storage::disk('public')->exists($doc->file_path)) {
-        // LOG: access_denied (file missing)
-        ActivityLogger::log('dokumen', 'access_denied', $doc, ['success' => false, 'reason' => 'file_missing']);
-        abort(404, 'File tidak ditemukan');
-    }
+        ActivityLogger::log('dokumen', 'download', $document);
 
-    ActivityLogger::log('dokumen', 'download', $doc);
+        $ext = pathinfo($document->file_path, PATHINFO_EXTENSION);
+        $filename = ($document->alias ?? $document->title) . '.' . $ext;
 
-    // Pastikan file ada di storage
-    if (!Storage::disk('public')->exists($doc->file_path)) {
-        abort(404, 'File tidak ditemukan');
-    }
-
-    // Ambil nama asli file (misalnya dari judul + ekstensi)
-    $ext = pathinfo($doc->file_path, PATHINFO_EXTENSION);
-    $filename = ($doc->alias ?? $doc->title).'.'.$ext;
-    return Storage::disk('public')->download($doc->file_path, $filename);
+        return Storage::disk('public')->download($document->file_path, $filename);
     }
 
     public function destroy(int $id)

@@ -1,11 +1,13 @@
 <?php
-
 namespace App\Http\Controllers\page;
 
 use App\Http\Controllers\Controller;
+use App\Models\Document;
 use App\Repositories\DocumentRepository;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use App\Models\ActivityLog;
 
 
 class HomeController extends Controller
@@ -20,30 +22,69 @@ class HomeController extends Controller
         return view('SigapDokumen.home.index');
     }
 
-  public function show(Request $request)
+    public function show(Request $request)
     {
-        // dd($request->all());
-        // Ambil filter dari request
         $filters = $request->only(['q', 'category', 'stakeholder', 'year', 'sort']);
-
-        // Paksa hanya dokumen public di halaman umum
         $filters['sensitivity'] = 'public';
 
-        $perPage = 10;
-        $documents = $this->documentRepository->paginate($filters, $perPage);
-        // dd($documents);
+        $documents = $this->documentRepository->paginate($filters, 10);
 
         return view('SigapDokumen.home.show', compact('documents'));
     }
 
-
-    public function indexPegawai()
+    public function detail(Document $document)
     {
-        return view('SigapPegawai.index');
+        abort_if($document->sensitivity !== 'public', 403);
+
+        $fileUrl  = asset('storage/' . $document->file_path);
+        $thumbUrl = $document->thumb_path ? asset('storage/' . $document->thumb_path) : null;
+
+        $ext = strtolower(pathinfo($document->file_path, PATHINFO_EXTENSION));
+        $isPdf = $ext === 'pdf';
+        $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif']);
+
+        $logs = ActivityLog::where('module', 'dokumen')
+            ->where('object_type', Document::class)
+            ->where('object_id', $document->id)
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        return view('SigapDokumen.home.detail', compact(
+            'document',
+            'fileUrl',
+            'thumbUrl',
+            'isPdf',
+            'isImage',
+            'logs'
+        ));
     }
 
-    public function about()
+    public function download(Request $request, Document $document)
     {
-        return view('about');
+        abort_if($document->sensitivity !== 'public' && !auth()->check(), 403);
+
+        if (!Storage::disk('public')->exists($document->file_path)) {
+            abort(404, 'File tidak ditemukan');
+        }
+
+        if (auth()->check()) {
+            ActivityLogger::log('dokumen', 'download', $document);
+        } else {
+            $data = $request->validate([
+                'guest_name' => ['required', 'string', 'max:255'],
+            ]);
+
+            ActivityLogger::log('dokumen', 'download', $document, [
+                'user_name' => $data['guest_name'],
+                'user_role' => 'tamu',
+                'source' => 'public',
+            ]);
+        }
+
+        $ext = pathinfo($document->file_path, PATHINFO_EXTENSION);
+        $filename = ($document->alias ?? $document->title) . '.' . $ext;
+
+        return Storage::disk('public')->download($document->file_path, $filename);
     }
 }

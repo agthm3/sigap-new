@@ -39,8 +39,14 @@ use App\Http\Controllers\SigapPpdController;
 use App\Http\Controllers\SigapSertifikatController;
 
 // --- Public
-Route::get('/',      [HomeController::class, 'index'])->name('home');
+Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/hasil', [HomeController::class, 'show'])->name('home.show');
+
+Route::get('/dokumen/{document}', [HomeController::class, 'detail'])
+    ->name('home.document.show');
+
+Route::match(['get', 'post'], '/dokumen/{document}/download', [HomeController::class, 'download'])
+    ->name('home.document.download');
 
 Route::get('/sigap-riset', [SigapRisetController::class, 'index'])->name('sigap-riset.index');
 Route::get('/sigap-riset/{riset}', [SigapRisetController::class, 'show'])->name('sigap-riset.show');
@@ -119,15 +125,16 @@ Route::delete('/sigap-pegawai/{user}/avatar', [SigapPegawaiController::class,'de
     ->name('sigap-pegawai.avatar.destroy');
 
 // --- SIGAP Dokumen (tanpa resource)
-Route::prefix('sigap-dokumen')->middleware('auth', 'role:employee|admin')->name('sigap-dokumen.')->group(function () {
-    Route::get('/',           [SigapDokumenController::class, 'index'])->name('index');
-    Route::post('/',          [SigapDokumenController::class, 'store'])->name('store');
-    Route::get('/{id}',       [SigapDokumenController::class, 'show'])->name('show');
-    Route::get('/{id}/download', [SigapDokumenController::class, 'download'])->name('download');
-    Route::middleware('role:admin')->group(function(){
-        Route::get('/{id}/edit',  [SigapDokumenController::class, 'edit'])->name('edit');
-        Route::put('/{id}',       [SigapDokumenController::class, 'update'])->name('update');
-        Route::delete('/{id}',    [SigapDokumenController::class, 'destroy'])->name('destroy');
+Route::prefix('sigap-dokumen')->middleware(['auth', 'role:employee|admin'])->name('sigap-dokumen.')->group(function () {
+    Route::get('/', [SigapDokumenController::class, 'index'])->name('index');
+    Route::post('/', [SigapDokumenController::class, 'store'])->name('store');
+    Route::get('/{document}', [SigapDokumenController::class, 'show'])->name('show');
+    Route::get('/{document}/download', [SigapDokumenController::class, 'download'])->name('download');
+
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/{document}/edit', [SigapDokumenController::class, 'edit'])->name('edit');
+        Route::put('/{document}', [SigapDokumenController::class, 'update'])->name('update');
+        Route::delete('/{document}', [SigapDokumenController::class, 'destroy'])->name('destroy');
     });
 });
 

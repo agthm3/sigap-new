@@ -137,8 +137,8 @@
               {{-- <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-xs bg-emerald-50 text-emerald-700">Publik</span></td> --}}
               <td class="px-4 py-3">
                 <div class="flex flex-wrap gap-2">
-                  <a href="{{ route('sigap-dokumen.show', $item->id) }}" target="_blank" class="px-3 py-1.5 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">View</a>
-                  <a href="{{ route('sigap-dokumen.download', $item->id) }}" target="_blank" class="px-3 py-1.5 rounded-md bg-maroon text-white hover:bg-maroon-800 transition">Download</a>
+                  <a href="{{ route('sigap-dokumen.show', $item) }}" target="_blank" class="px-3 py-1.5 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">View</a>
+                  <a href="{{ route('sigap-dokumen.download', $item) }}" target="_blank" class="px-3 py-1.5 rounded-md bg-maroon text-white hover:bg-maroon-800 transition">Download</a>
                   @hasrole('admin')
                   <a href="{{ route('sigap-dokumen.edit', $item->id) }}" class="px-3 py-1.5 rounded-md border hover:bg-gray-50">Edit</a>
                   <button type="button"
@@ -218,16 +218,18 @@
           </label>
           <label class="block">
             <span class="text-sm font-semibold text-gray-700">Tahun</span>
-            <select id="d_th" name="year" required class="mt-1.5 w-full rounded border border-black-300 p-2 focus:ring-maroon">
-              <option value="2025">2025</option>
-              <option value="2024">2024</option>
-              <option value="2023">2023</option>
-              <option value="2023">2022</option>
-              <option value="2023">2021</option>
-              <option value="2023">2020</option>
-              <option value="2023">2019</option>
-              <option value="2023">2018</option>
-              <option value="2023">2017</option>
+
+            <select id="d_th"
+                    name="year"
+                    required
+                    class="mt-1.5 w-full rounded border border-black-300 p-2 focus:ring-maroon">
+
+              @for ($y = now()->year + 1; $y >= 2000; $y--)
+                <option value="{{ $y }}" @selected(old('year') == $y)>
+                  {{ $y }}
+                </option>
+              @endfor
+
             </select>
           </label>
 
@@ -330,7 +332,7 @@
     function validateFileSize(input) {
       const file = input.files[0];
       if (file && file.size > 20 * 1024 * 1024) { // 20 MB
-        alert("Ukuran file maksimal 5 MB!");
+        alert("Ukuran file maksimal 20 MB!");
         input.value = ""; // reset input
       }
     }
