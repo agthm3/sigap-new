@@ -1,14 +1,14 @@
 <?php
+
 namespace App\Http\Controllers\page;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Document;
 use App\Repositories\DocumentRepository;
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use App\Models\ActivityLog;
-
 
 class HomeController extends Controller
 {
@@ -78,7 +78,7 @@ class HomeController extends Controller
             ActivityLogger::log('dokumen', 'download', $document, [
                 'user_name' => $data['guest_name'],
                 'user_role' => 'tamu',
-                'source' => 'public',
+                'source'    => 'public',
             ]);
         }
 
@@ -86,5 +86,15 @@ class HomeController extends Controller
         $filename = ($document->alias ?? $document->title) . '.' . $ext;
 
         return Storage::disk('public')->download($document->file_path, $filename);
+    }
+
+    public function indexPegawai()
+    {
+        return view('SigapPegawai.index');
+    }
+
+    public function about()
+    {
+        return view('about');
     }
 }
