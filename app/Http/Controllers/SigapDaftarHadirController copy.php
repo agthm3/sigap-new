@@ -178,16 +178,31 @@ class SigapDaftarHadirController extends Controller
         return back()->with('success', 'Status kegiatan berhasil diperbarui.');
     }
 
+    /**
+     * Hapus kegiatan.
+     *
+     * CATATAN DESAIN:
+     * - Tabel sigap_daftar_hadir_peserta menyimpan SATU baris per peserta PER kegiatan
+     *   (kolom kegiatan_id), sehingga menghapus peserta kegiatan ini TIDAK mempengaruhi
+     *   baris peserta di kegiatan lain sama sekali.
+     * - File tanda tangan (ttd_path) yang dihapus hanya milik peserta kegiatan ini.
+     *   Jika ke depan Anda ingin mempertahankan file TTD agar bisa dipakai ulang,
+     *   cukup hapus blok Storage::delete di bawah.
+     */
     public function destroy(SigapDaftarHadirKegiatan $kegiatan)
     {
         DB::transaction(function () use ($kegiatan) {
+            // Hapus file TTD hanya milik peserta kegiatan ini
             foreach ($kegiatan->peserta as $peserta) {
                 if ($peserta->ttd_path && Storage::disk('public')->exists($peserta->ttd_path)) {
                     Storage::disk('public')->delete($peserta->ttd_path);
                 }
             }
 
+            // Hapus baris peserta kegiatan ini (TIDAK menyentuh kegiatan lain)
             $kegiatan->peserta()->delete();
+
+            // Hapus kegiatan
             $kegiatan->delete();
         });
 
@@ -196,6 +211,59 @@ class SigapDaftarHadirController extends Controller
             ->with('success', 'Kegiatan berhasil dihapus.');
     }
 
+    // -------------------------------------------------------------------------
+    // RIWAYAT PESERTA — admin bisa cari peserta & lihat semua kegiatan yg pernah
+    // diikuti, termasuk download PDF daftar hadir per kegiatan.
+    // -------------------------------------------------------------------------
+
+    /**
+     * Halaman pencarian peserta (riwayat keikutsertaan).
+     * Route: GET /sigap-daftar-hadir/riwayat-peserta
+     */
+    public function riwayatPeserta(Request $request)
+    {
+        $q       = trim((string) $request->get('q', ''));
+        $results = collect();
+
+        if ($q !== '') {
+            // Cari nama peserta yang pernah ikut kegiatan apapun
+            $results = SigapDaftarHadirPeserta::with('kegiatan')
+                ->where('nama', 'like', "%{$q}%")
+                ->orderBy('nama')
+                ->get()
+                // Kelompokkan per nama (case-insensitive) agar satu orang = satu baris
+                ->groupBy(fn ($p) => Str::lower(trim($p->nama)));
+        }
+
+        return view('dashboard.daftar_hadir.riwayat-peserta', compact('q', 'results'));
+    }
+
+    /**
+     * Detail kegiatan yang pernah diikuti satu peserta (berdasarkan nama).
+     * Route: GET /sigap-daftar-hadir/riwayat-peserta/detail?nama=Yusuf+Sulaiman
+     */
+    public function riwayatPesertaDetail(Request $request)
+    {
+        $nama = trim((string) $request->get('nama', ''));
+
+        abort_if($nama === '', 400, 'Parameter nama diperlukan.');
+
+        $pesertaList = SigapDaftarHadirPeserta::with('kegiatan')
+            ->whereRaw('LOWER(nama) = ?', [Str::lower($nama)])
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('dashboard.daftar_hadir.riwayat-peserta-detail', compact('nama', 'pesertaList'));
+    }
+
+    /**
+     * Export PDF daftar hadir satu kegiatan — bisa dipanggil dari halaman riwayat peserta.
+     * (Reuse exportPdf yang sudah ada, tidak perlu method baru.)
+     */
+
+    // -------------------------------------------------------------------------
+    // PUBLIC FORM
+    // -------------------------------------------------------------------------
 
     public function publicForm(SigapDaftarHadirKegiatan $kegiatan)
     {
@@ -297,137 +365,48 @@ class SigapDaftarHadirController extends Controller
             ->with('success_kegiatan', $kegiatan->nama_kegiatan);
     }
 
-    // public function exportPdf(SigapDaftarHadirKegiatan $kegiatan)
-    // {
-    //     $user = Auth::user();
-
-    //     if (!$user->hasAnyRole(['admin', 'verif_daftarhadir'])) {
-    //         abort_unless((int) $kegiatan->created_by === (int) $user->id, 403, 'Anda tidak memiliki akses.');
-    //     }
-
-    //     abort_unless($kegiatan->status === 'selesai', 403, 'PDF hanya bisa diexport saat kegiatan berstatus selesai.');
-
-    //     $kegiatan->load([
-    //         'peserta' => fn ($q) => $q->orderBy('urutan_absen')->orderBy('created_at'),
-    //     ]);
-
-    //     $logoPemkot = null;
-    //     $logoBrida  = null;
-
-    //     $pemkotPath = public_path('images/logo-pemkot.png');
-    //     $bridaPath  = public_path('images/logo-brida.png');
-
-    //     if (file_exists($pemkotPath)) {
-    //         $logoPemkot = 'data:image/png;base64,' . base64_encode(file_get_contents($pemkotPath));
-    //     }
-
-    //     if (file_exists($bridaPath)) {
-    //         $logoBrida = 'data:image/png;base64,' . base64_encode(file_get_contents($bridaPath));
-    //     }
-
-    //     $pdf = Pdf::loadView('dashboard.daftar_hadir.pdf', [
-    //         'kegiatan'   => $kegiatan,
-    //         'logoPemkot' => $logoPemkot,
-    //         'logoBrida'  => $logoBrida,
-    //     ])->setPaper('letter', 'portrait');
-
-    //     return $pdf->download('daftar-hadir-' . Str::slug($kegiatan->nama_kegiatan) . '.pdf');
-    // }
+    // -------------------------------------------------------------------------
+    // EXPORT PDF
+    // -------------------------------------------------------------------------
 
     public function exportPdf(SigapDaftarHadirKegiatan $kegiatan)
-{
-    $user = Auth::user();
-
-    if (!$user->hasAnyRole(['admin', 'verif_daftarhadir'])) {
-        abort_unless(
-            (int) $kegiatan->created_by === (int) $user->id,
-            403,
-            'Anda tidak memiliki akses.'
-        );
-    }
-
-    abort_unless(
-        $kegiatan->status === 'selesai',
-        403,
-        'PDF hanya bisa diexport saat kegiatan selesai.'
-    );
-
-    $kegiatan->load([
-        'peserta' => fn ($q) =>
-            $q->orderBy('urutan_absen')
-              ->orderBy('created_at'),
-    ]);
-
-    /*
-    |--------------------------------------------------------------------------
-    | Logo Base64
-    |--------------------------------------------------------------------------
-    */
-
-    $logoPemkot = null;
-    $logoBrida  = null;
-
-    $pemkotPath = base_path('public/images/logo-pemkot.png');
-    $bridaPath  = base_path('public/images/logo-brida.png');
-
-    if (file_exists($pemkotPath)) {
-
-        $imageData = base64_encode(
-            file_get_contents($pemkotPath)
-        );
-
-        $logoPemkot = 'data:image/png;base64,' . $imageData;
-    }
-
-    if (file_exists($bridaPath)) {
-
-        $imageData = base64_encode(
-            file_get_contents($bridaPath)
-        );
-
-        $logoBrida = 'data:image/png;base64,' . $imageData;
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Generate PDF
-    |--------------------------------------------------------------------------
-    */
-
-    $pdf = Pdf::loadView('dashboard.daftar_hadir.pdf', [
-        'kegiatan'   => $kegiatan,
-        'logoPemkot' => $logoPemkot,
-        'logoBrida'  => $logoBrida,
-    ])->setPaper('letter', 'portrait');
-
-    return $pdf->download(
-        'daftar-hadir-' .
-        str()->slug($kegiatan->nama_kegiatan) .
-        '.pdf'
-    );
-}
-
-    private function saveSignatureBase64(string $data, string $folder): string
     {
-        if (!Str::startsWith($data, 'data:image/')) {
-            return '';
+        $user = Auth::user();
+
+        if (!$user->hasAnyRole(['admin', 'verif_daftarhadir'])) {
+            abort_unless(
+                (int) $kegiatan->created_by === (int) $user->id,
+                403,
+                'Anda tidak memiliki akses.'
+            );
         }
 
-        [$meta, $content] = explode(',', $data, 2);
+        abort_unless(
+            $kegiatan->status === 'selesai',
+            403,
+            'PDF hanya bisa diexport saat kegiatan selesai.'
+        );
 
-        $extension = 'png';
-        if (Str::contains($meta, 'image/jpeg')) {
-            $extension = 'jpg';
-        }
+        $kegiatan->load([
+            'peserta' => fn ($q) =>
+                $q->orderBy('urutan_absen')
+                  ->orderBy('created_at'),
+        ]);
 
-        $binary = base64_decode($content);
+        $logoPemkot = $this->loadLogoBase64('logo-pemkot.png');
+        $logoBrida  = $this->loadLogoBase64('logo-brida.png');
 
-        $fileName = Str::uuid() . '.' . $extension;
-        $path = trim($folder, '/') . '/' . $fileName;
+        $pdf = Pdf::loadView('dashboard.daftar_hadir.pdf', [
+            'kegiatan'   => $kegiatan,
+            'logoPemkot' => $logoPemkot,
+            'logoBrida'  => $logoBrida,
+        ])->setPaper('letter', 'portrait');
 
-        Storage::disk('public')->put($path, $binary);
-
-        return $path;
+        return $pdf->download(
+            'daftar-hadir-' .
+            str()->slug($kegiatan->nama_kegiatan) .
+            '.pdf'
+        );
     }
 
     public function printQr(SigapDaftarHadirKegiatan $kegiatan)
@@ -442,8 +421,7 @@ class SigapDaftarHadirController extends Controller
             );
         }
 
-        $qrUrl = route('sigap-daftar-hadir.public', $kegiatan->uuid);
-
+        $qrUrl        = route('sigap-daftar-hadir.public', $kegiatan->uuid);
         $instagramUrl = 'https://www.instagram.com/bridakotamakassar/';
 
         return view('dashboard.daftar_hadir.print-qr', compact(
@@ -451,5 +429,64 @@ class SigapDaftarHadirController extends Controller
             'qrUrl',
             'instagramUrl'
         ));
+    }
+
+    private function saveSignatureBase64(string $data, string $folder): string
+    {
+        if (!Str::startsWith($data, 'data:image/')) {
+            return '';
+        }
+
+        [$meta, $content] = explode(',', $data, 2);
+
+        $extension = 'png';
+        if (Str::contains($meta, 'image/jpeg')) {
+            $extension = 'jpg';
+        }
+
+        $binary   = base64_decode($content);
+        $fileName = Str::uuid() . '.' . $extension;
+        $path     = trim($folder, '/') . '/' . $fileName;
+
+        Storage::disk('public')->put($path, $binary);
+
+        return $path;
+    }
+
+    private function loadLogoBase64(string $filename): ?string
+    {
+        $candidates = [
+            // 1. Path Server Production (sejajar dengan sigap_new)
+            base_path('../public_html/images/' . $filename),
+            
+            // 2. Path Alternatif (misal document root di server Anda diset di folder tertentu)
+            '/home/sigap/public_html/images/' . $filename,
+
+            // 3. Fallback Local Laragon (jika sewaktu-waktu di-run di localhost Anda)
+            public_path('images/' . $filename),
+        ];
+
+        foreach ($candidates as $path) {
+            // Kita log path yang sedang dicek untuk keperluan debug (opsional)
+            // \Illuminate\Support\Facades\Log::info('Mencari logo di: ' . $path);
+
+            if (file_exists($path) && is_readable($path)) {
+                $content = @file_get_contents($path);
+                
+                if ($content !== false && $content !== '') {
+                    $ext  = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+                    $mime = match ($ext) {
+                        'jpg', 'jpeg' => 'image/jpeg',
+                        'svg'         => 'image/svg+xml',
+                        'gif'         => 'image/gif',
+                        default       => 'image/png',
+                    };
+
+                    return 'data:' . $mime . ';base64,' . base64_encode($content);
+                }
+            }
+        }
+
+        return null;
     }
 }

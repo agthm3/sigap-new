@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\SigapDaftarHadirKegiatan;
+use App\Models\SigapDaftarHadirPejabat;
+use App\Models\SigapDaftarHadirPenandatangan;
 use App\Models\SigapDaftarHadirPeserta;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -14,6 +16,10 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class SigapDaftarHadirController extends Controller
 {
+    // =========================================================================
+    // DASHBOARD — KEGIATAN
+    // =========================================================================
+
     public function index()
     {
         $user = Auth::user();
@@ -51,21 +57,37 @@ class SigapDaftarHadirController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nama_kegiatan' => ['required', 'string', 'max:255'],
-            'hari_tanggal'  => ['required', 'string', 'max:255'],
-            'tempat'        => ['required', 'string', 'max:255'],
-            'waktu'         => ['required', 'string', 'max:255'],
+            'nama_kegiatan'               => ['required', 'string', 'max:255'],
+            'hari_tanggal'                => ['required', 'string', 'max:255'],
+            'tempat'                      => ['required', 'string', 'max:255'],
+            'waktu'                       => ['required', 'string', 'max:255'],
+            // Penandatangan — opsional
+            'pejabat.nama_lengkap'        => ['nullable', 'string', 'max:255'],
+            'pejabat.jabatan'             => ['nullable', 'string', 'max:255'],
+            'pejabat.pangkat'             => ['nullable', 'string', 'max:255'],
+            'pejabat.golongan'            => ['nullable', 'string', 'max:20'],
+            'pejabat.nip'                 => ['nullable', 'string', 'max:30'],
+            'pejabat.tempat_ttd'          => ['nullable', 'string', 'max:255'],
+            'pejabat.tanggal_ttd'         => ['nullable', 'string', 'max:255'],
         ]);
 
-        $kegiatan = SigapDaftarHadirKegiatan::create([
-            'uuid'          => (string) Str::uuid(),
-            'nama_kegiatan' => $request->nama_kegiatan,
-            'hari_tanggal'  => $request->hari_tanggal,
-            'tempat'        => $request->tempat,
-            'waktu'         => $request->waktu,
-            'status'        => 'draft',
-            'created_by'    => Auth::id(),
-        ]);
+        DB::transaction(function () use ($request, &$kegiatan) {
+            $kegiatan = SigapDaftarHadirKegiatan::create([
+                'uuid'          => (string) Str::uuid(),
+                'nama_kegiatan' => $request->nama_kegiatan,
+                'hari_tanggal'  => $request->hari_tanggal,
+                'tempat'        => $request->tempat,
+                'waktu'         => $request->waktu,
+                'status'        => 'draft',
+                'created_by'    => Auth::id(),
+            ]);
+
+            // Simpan penandatangan hanya jika nama_lengkap diisi
+            $pejabatInput = $request->input('pejabat', []);
+            if (!empty($pejabatInput['nama_lengkap'])) {
+                $this->upsertPenandatangan($kegiatan, $pejabatInput);
+            }
+        });
 
         return redirect()
             ->route('sigap-daftar-hadir.show', $kegiatan->uuid)
@@ -82,6 +104,7 @@ class SigapDaftarHadirController extends Controller
 
         $kegiatan->load([
             'creator',
+            'penandatangan',
             'peserta' => fn ($q) => $q->orderBy('urutan_absen')->orderBy('created_at'),
         ]);
 
@@ -99,6 +122,7 @@ class SigapDaftarHadirController extends Controller
         }
 
         $kegiatan->load([
+            'penandatangan',
             'peserta' => fn ($q) => $q->orderBy('urutan_absen')->orderBy('created_at'),
         ]);
 
@@ -114,17 +138,25 @@ class SigapDaftarHadirController extends Controller
         }
 
         $request->validate([
-            'nama_kegiatan'           => ['required', 'string', 'max:255'],
-            'hari_tanggal'            => ['required', 'string', 'max:255'],
-            'tempat'                  => ['required', 'string', 'max:255'],
-            'waktu'                   => ['required', 'string', 'max:255'],
-            'peserta'                 => ['sometimes', 'array'],
-            'peserta.*.nama'          => ['required_with:peserta', 'string', 'max:255'],
-            'peserta.*.instansi'      => ['required_with:peserta', 'string', 'max:255'],
-            'peserta.*.gender'        => ['required_with:peserta', 'in:L,P'],
-            'peserta.*.no_hp'         => ['required_with:peserta', 'string', 'max:30'],
-            'peserta.*.email'         => ['nullable', 'email', 'max:255'],
-            'peserta.*.urutan_absen'  => ['required_with:peserta', 'integer', 'min:1'],
+            'nama_kegiatan'               => ['required', 'string', 'max:255'],
+            'hari_tanggal'                => ['required', 'string', 'max:255'],
+            'tempat'                      => ['required', 'string', 'max:255'],
+            'waktu'                       => ['required', 'string', 'max:255'],
+            'peserta'                     => ['sometimes', 'array'],
+            'peserta.*.nama'              => ['required_with:peserta', 'string', 'max:255'],
+            'peserta.*.instansi'          => ['required_with:peserta', 'string', 'max:255'],
+            'peserta.*.gender'            => ['required_with:peserta', 'in:L,P'],
+            'peserta.*.no_hp'             => ['required_with:peserta', 'string', 'max:30'],
+            'peserta.*.email'             => ['nullable', 'email', 'max:255'],
+            'peserta.*.urutan_absen'      => ['required_with:peserta', 'integer', 'min:1'],
+            // Penandatangan — opsional
+            'pejabat.nama_lengkap'        => ['nullable', 'string', 'max:255'],
+            'pejabat.jabatan'             => ['nullable', 'string', 'max:255'],
+            'pejabat.pangkat'             => ['nullable', 'string', 'max:255'],
+            'pejabat.golongan'            => ['nullable', 'string', 'max:20'],
+            'pejabat.nip'                 => ['nullable', 'string', 'max:30'],
+            'pejabat.tempat_ttd'          => ['nullable', 'string', 'max:255'],
+            'pejabat.tanggal_ttd'         => ['nullable', 'string', 'max:255'],
         ]);
 
         DB::transaction(function () use ($request, $kegiatan) {
@@ -135,8 +167,8 @@ class SigapDaftarHadirController extends Controller
                 'waktu'         => $request->waktu,
             ]);
 
+            // Update peserta
             $pesertaInput = collect($request->input('peserta', []));
-
             foreach ($pesertaInput as $id => $row) {
                 $peserta = SigapDaftarHadirPeserta::where('kegiatan_id', $kegiatan->id)
                     ->where('id', $id)
@@ -153,10 +185,24 @@ class SigapDaftarHadirController extends Controller
             }
 
             $sorted = $kegiatan->peserta()->orderBy('urutan_absen')->orderBy('created_at')->get();
-
             $urut = 1;
             foreach ($sorted as $item) {
                 $item->update(['urutan_absen' => $urut++]);
+            }
+
+            // Update / hapus penandatangan
+            $pejabatInput = $request->input('pejabat', []);
+            if (!empty($pejabatInput['nama_lengkap'])) {
+                $this->upsertPenandatangan($kegiatan, $pejabatInput);
+            } else {
+                // Jika dikosongkan, hapus penandatangan (dan file TTD jika ada)
+                $existing = $kegiatan->penandatangan;
+                if ($existing) {
+                    if ($existing->ttd_path && Storage::disk('public')->exists($existing->ttd_path)) {
+                        Storage::disk('public')->delete($existing->ttd_path);
+                    }
+                    $existing->delete();
+                }
             }
         });
 
@@ -171,38 +217,31 @@ class SigapDaftarHadirController extends Controller
             'status' => ['required', 'in:draft,proses,selesai'],
         ]);
 
-        $kegiatan->update([
-            'status' => $request->status,
-        ]);
+        $kegiatan->update(['status' => $request->status]);
 
         return back()->with('success', 'Status kegiatan berhasil diperbarui.');
     }
 
-    /**
-     * Hapus kegiatan.
-     *
-     * CATATAN DESAIN:
-     * - Tabel sigap_daftar_hadir_peserta menyimpan SATU baris per peserta PER kegiatan
-     *   (kolom kegiatan_id), sehingga menghapus peserta kegiatan ini TIDAK mempengaruhi
-     *   baris peserta di kegiatan lain sama sekali.
-     * - File tanda tangan (ttd_path) yang dihapus hanya milik peserta kegiatan ini.
-     *   Jika ke depan Anda ingin mempertahankan file TTD agar bisa dipakai ulang,
-     *   cukup hapus blok Storage::delete di bawah.
-     */
     public function destroy(SigapDaftarHadirKegiatan $kegiatan)
     {
         DB::transaction(function () use ($kegiatan) {
-            // Hapus file TTD hanya milik peserta kegiatan ini
+            // Hapus TTD peserta
             foreach ($kegiatan->peserta as $peserta) {
                 if ($peserta->ttd_path && Storage::disk('public')->exists($peserta->ttd_path)) {
                     Storage::disk('public')->delete($peserta->ttd_path);
                 }
             }
-
-            // Hapus baris peserta kegiatan ini (TIDAK menyentuh kegiatan lain)
             $kegiatan->peserta()->delete();
 
-            // Hapus kegiatan
+            // Hapus TTD penandatangan
+            $penandatangan = $kegiatan->penandatangan;
+            if ($penandatangan) {
+                if ($penandatangan->ttd_path && Storage::disk('public')->exists($penandatangan->ttd_path)) {
+                    Storage::disk('public')->delete($penandatangan->ttd_path);
+                }
+                $penandatangan->delete();
+            }
+
             $kegiatan->delete();
         });
 
@@ -211,41 +250,29 @@ class SigapDaftarHadirController extends Controller
             ->with('success', 'Kegiatan berhasil dihapus.');
     }
 
-    // -------------------------------------------------------------------------
-    // RIWAYAT PESERTA — admin bisa cari peserta & lihat semua kegiatan yg pernah
-    // diikuti, termasuk download PDF daftar hadir per kegiatan.
-    // -------------------------------------------------------------------------
+    // =========================================================================
+    // RIWAYAT PESERTA
+    // =========================================================================
 
-    /**
-     * Halaman pencarian peserta (riwayat keikutsertaan).
-     * Route: GET /sigap-daftar-hadir/riwayat-peserta
-     */
     public function riwayatPeserta(Request $request)
     {
         $q       = trim((string) $request->get('q', ''));
         $results = collect();
 
         if ($q !== '') {
-            // Cari nama peserta yang pernah ikut kegiatan apapun
             $results = SigapDaftarHadirPeserta::with('kegiatan')
                 ->where('nama', 'like', "%{$q}%")
                 ->orderBy('nama')
                 ->get()
-                // Kelompokkan per nama (case-insensitive) agar satu orang = satu baris
                 ->groupBy(fn ($p) => Str::lower(trim($p->nama)));
         }
 
         return view('dashboard.daftar_hadir.riwayat-peserta', compact('q', 'results'));
     }
 
-    /**
-     * Detail kegiatan yang pernah diikuti satu peserta (berdasarkan nama).
-     * Route: GET /sigap-daftar-hadir/riwayat-peserta/detail?nama=Yusuf+Sulaiman
-     */
     public function riwayatPesertaDetail(Request $request)
     {
         $nama = trim((string) $request->get('nama', ''));
-
         abort_if($nama === '', 400, 'Parameter nama diperlukan.');
 
         $pesertaList = SigapDaftarHadirPeserta::with('kegiatan')
@@ -256,14 +283,9 @@ class SigapDaftarHadirController extends Controller
         return view('dashboard.daftar_hadir.riwayat-peserta-detail', compact('nama', 'pesertaList'));
     }
 
-    /**
-     * Export PDF daftar hadir satu kegiatan — bisa dipanggil dari halaman riwayat peserta.
-     * (Reuse exportPdf yang sudah ada, tidak perlu method baru.)
-     */
-
-    // -------------------------------------------------------------------------
-    // PUBLIC FORM
-    // -------------------------------------------------------------------------
+    // =========================================================================
+    // PUBLIC FORM — PESERTA
+    // =========================================================================
 
     public function publicForm(SigapDaftarHadirKegiatan $kegiatan)
     {
@@ -285,21 +307,17 @@ class SigapDaftarHadirController extends Controller
             ->orderByDesc('created_at')
             ->limit(20)
             ->get()
-            ->unique(function ($item) {
-                return Str::lower(trim($item->nama));
-            })
+            ->unique(fn ($item) => Str::lower(trim($item->nama)))
             ->values()
-            ->map(function ($item) {
-                return [
-                    'id'         => $item->id,
-                    'nama'       => $item->nama,
-                    'instansi'   => $item->instansi,
-                    'gender'     => $item->gender,
-                    'no_hp'      => $item->no_hp,
-                    'email'      => $item->email,
-                    'ttd_path'   => $item->ttd_path ? asset('storage/' . $item->ttd_path) : null,
-                ];
-            });
+            ->map(fn ($item) => [
+                'id'       => $item->id,
+                'nama'     => $item->nama,
+                'instansi' => $item->instansi,
+                'gender'   => $item->gender,
+                'no_hp'    => $item->no_hp,
+                'email'    => $item->email,
+                'ttd_path' => $item->ttd_path ? asset('storage/' . $item->ttd_path) : null,
+            ]);
 
         return response()->json($items);
     }
@@ -329,13 +347,10 @@ class SigapDaftarHadirController extends Controller
             ->exists();
 
         if ($duplicate) {
-            return back()
-                ->withInput()
-                ->with('error', 'Nama tersebut sudah terdaftar pada kegiatan ini.');
+            return back()->withInput()->with('error', 'Nama tersebut sudah terdaftar pada kegiatan ini.');
         }
 
         $ttdPath = null;
-
         if ($request->filled('ttd_data')) {
             $ttdPath = $this->saveSignatureBase64(
                 $request->ttd_data,
@@ -365,70 +380,266 @@ class SigapDaftarHadirController extends Controller
             ->with('success_kegiatan', $kegiatan->nama_kegiatan);
     }
 
-    // -------------------------------------------------------------------------
+    // =========================================================================
+    // PUBLIC FORM — PEJABAT (TTD)
+    // =========================================================================
+
+    /**
+     * Form TTD untuk pejabat penandatangan.
+     * Route: GET /sigap-daftar-hadir/pejabat/{penandatangan:uuid}
+     */
+    public function publicFormPejabat(SigapDaftarHadirPenandatangan $penandatangan)
+    {
+        $penandatangan->load('kegiatan');
+
+        return view('dashboard.daftar_hadir.public-form-pejabat', compact('penandatangan'));
+    }
+
+    /**
+     * Simpan TTD pejabat.
+     * Route: POST /sigap-daftar-hadir/pejabat/{penandatangan:uuid}
+     */
+    public function storePublicPejabat(Request $request, SigapDaftarHadirPenandatangan $penandatangan)
+    {
+        // Jika sudah TTD, tidak boleh TTD ulang (opsional — bisa dihapus jika ingin bisa revisi)
+        if ($penandatangan->sudah_ttd) {
+            return redirect()
+                ->route('sigap-daftar-hadir.pejabat-form', $penandatangan->uuid)
+                ->with('error', 'Tanda tangan sudah tersimpan untuk kegiatan ini.');
+        }
+
+        $request->validate([
+            'ttd_data' => ['required', 'string'],
+        ]);
+
+        $ttdPath = $this->saveSignatureBase64(
+            $request->ttd_data,
+            'sigap/daftar-hadir/ttd-pejabat/' . $penandatangan->kegiatan_id
+        );
+
+        if (!$ttdPath) {
+            return back()->with('error', 'Data TTD tidak valid.');
+        }
+
+        // Hapus TTD lama jika ada
+        if ($penandatangan->ttd_path && Storage::disk('public')->exists($penandatangan->ttd_path)) {
+            Storage::disk('public')->delete($penandatangan->ttd_path);
+        }
+
+        $penandatangan->update([
+            'ttd_path'  => $ttdPath,
+            'signed_at' => now(),
+        ]);
+
+        // Update / insert master pejabat (upsert berdasarkan NIP atau nama)
+        if ($penandatangan->nip) {
+            SigapDaftarHadirPejabat::updateOrCreate(
+                ['nip' => $penandatangan->nip],
+                [
+                    'nama_lengkap' => $penandatangan->nama_lengkap,
+                    'jabatan'      => $penandatangan->jabatan,
+                    'pangkat'      => $penandatangan->pangkat,
+                    'golongan'     => $penandatangan->golongan,
+                ]
+            );
+        }
+
+        return redirect()
+            ->route('sigap-daftar-hadir.pejabat-form', $penandatangan->uuid)
+            ->with('success', 'Tanda tangan berhasil disimpan. Terima kasih, ' . $penandatangan->nama_lengkap . '.');
+    }
+
+    // =========================================================================
+    // SEARCH PEJABAT (autocomplete di create/edit form)
+    // =========================================================================
+
+    /**
+     * Route: GET /sigap-daftar-hadir/pejabat/search?q=...
+     */
+    public function searchPejabat(Request $request)
+    {
+        $q = trim((string) $request->get('q', ''));
+
+        if ($q === '') {
+            return response()->json([]);
+        }
+
+        $items = SigapDaftarHadirPejabat::where('nama_lengkap', 'like', "%{$q}%")
+            ->orWhere('nip', 'like', "%{$q}%")
+            ->orWhere('jabatan', 'like', "%{$q}%")
+            ->orderBy('nama_lengkap')
+            ->limit(10)
+            ->get()
+            ->map(fn ($p) => [
+                'id'           => $p->id,
+                'nama_lengkap' => $p->nama_lengkap,
+                'jabatan'      => $p->jabatan,
+                'pangkat'      => $p->pangkat,
+                'golongan'     => $p->golongan,
+                'nip'          => $p->nip,
+            ]);
+
+        return response()->json($items);
+    }
+
+    // =========================================================================
+    // VERIFIKASI PUBLIK — QR di footer PDF
+    // =========================================================================
+
+    /**
+     * Halaman verifikasi publik yang ditampilkan saat QR di footer PDF discan.
+     * Route: GET /verifikasi/daftar-hadir/{kegiatan:uuid}
+     */
+    public function verifikasi(SigapDaftarHadirKegiatan $kegiatan)
+    {
+        $kegiatan->load([
+            'penandatangan',
+            'peserta' => fn ($q) => $q->orderBy('urutan_absen')->orderBy('created_at'),
+        ]);
+
+        return view('dashboard.daftar_hadir.verifikasi', compact('kegiatan'));
+    }
+
+    // =========================================================================
     // EXPORT PDF
-    // -------------------------------------------------------------------------
+    // =========================================================================
 
     public function exportPdf(SigapDaftarHadirKegiatan $kegiatan)
     {
         $user = Auth::user();
 
         if (!$user->hasAnyRole(['admin', 'verif_daftarhadir'])) {
-            abort_unless(
-                (int) $kegiatan->created_by === (int) $user->id,
-                403,
-                'Anda tidak memiliki akses.'
-            );
+            abort_unless((int) $kegiatan->created_by === (int) $user->id, 403, 'Anda tidak memiliki akses.');
         }
 
-        abort_unless(
-            $kegiatan->status === 'selesai',
-            403,
-            'PDF hanya bisa diexport saat kegiatan selesai.'
-        );
+        abort_unless($kegiatan->status === 'selesai', 403, 'PDF hanya bisa diexport saat kegiatan selesai.');
 
         $kegiatan->load([
-            'peserta' => fn ($q) =>
-                $q->orderBy('urutan_absen')
-                  ->orderBy('created_at'),
+            'penandatangan',
+            'peserta' => fn ($q) => $q->orderBy('urutan_absen')->orderBy('created_at'),
         ]);
 
         $logoPemkot = $this->loadLogoBase64('logo-pemkot.png');
         $logoBrida  = $this->loadLogoBase64('logo-brida.png');
 
+        // QR verifikasi — arahkan ke halaman verifikasi publik
+        $verifikasiUrl = route('sigap-daftar-hadir.verifikasi', $kegiatan->uuid);
+        $qrVerifikasi = base64_encode(
+            QrCode::format('svg')->size(120)->margin(1)->generate($verifikasiUrl)
+        );
+
         $pdf = Pdf::loadView('dashboard.daftar_hadir.pdf', [
-            'kegiatan'   => $kegiatan,
-            'logoPemkot' => $logoPemkot,
-            'logoBrida'  => $logoBrida,
+            'kegiatan'      => $kegiatan,
+            'logoPemkot'    => $logoPemkot,
+            'logoBrida'     => $logoBrida,
+            'qrVerifikasi'  => $qrVerifikasi,
+            'verifikasiUrl' => $verifikasiUrl,
         ])->setPaper('letter', 'portrait');
 
         return $pdf->download(
-            'daftar-hadir-' .
-            str()->slug($kegiatan->nama_kegiatan) .
-            '.pdf'
+            'daftar-hadir-' . str()->slug($kegiatan->nama_kegiatan) . '.pdf'
         );
     }
+
+    // =========================================================================
+    // PRINT QR
+    // =========================================================================
 
     public function printQr(SigapDaftarHadirKegiatan $kegiatan)
     {
         $user = Auth::user();
 
         if (!$user->hasAnyRole(['admin', 'verif_daftarhadir'])) {
-            abort_unless(
-                (int) $kegiatan->created_by === (int) $user->id,
-                403,
-                'Anda tidak memiliki akses.'
-            );
+            abort_unless((int) $kegiatan->created_by === (int) $user->id, 403, 'Anda tidak memiliki akses.');
         }
 
         $qrUrl        = route('sigap-daftar-hadir.public', $kegiatan->uuid);
         $instagramUrl = 'https://www.instagram.com/bridakotamakassar/';
 
-        return view('dashboard.daftar_hadir.print-qr', compact(
-            'kegiatan',
-            'qrUrl',
-            'instagramUrl'
-        ));
+        return view('dashboard.daftar_hadir.print-qr', compact('kegiatan', 'qrUrl', 'instagramUrl'));
+    }
+
+    /**
+     * Print QR khusus pejabat penandatangan.
+     * Route: GET /sigap-daftar-hadir/{kegiatan}/print-qr-pejabat
+     */
+    public function printQrPejabat(SigapDaftarHadirKegiatan $kegiatan)
+    {
+        $user = Auth::user();
+
+        if (!$user->hasAnyRole(['admin', 'verif_daftarhadir'])) {
+            abort_unless((int) $kegiatan->created_by === (int) $user->id, 403, 'Anda tidak memiliki akses.');
+        }
+
+        $penandatangan = $kegiatan->penandatangan;
+
+        abort_unless($penandatangan !== null, 404, 'Kegiatan ini tidak memiliki data penandatangan.');
+
+        $qrPejabatUrl = route('sigap-daftar-hadir.pejabat-form', $penandatangan->uuid);
+
+        return view('dashboard.daftar_hadir.print-qr-pejabat', compact('kegiatan', 'penandatangan', 'qrPejabatUrl'));
+    }
+
+    // =========================================================================
+    // PRIVATE HELPERS
+    // =========================================================================
+
+    /**
+     * Buat atau perbarui data penandatangan untuk satu kegiatan.
+     */
+    private function upsertPenandatangan(SigapDaftarHadirKegiatan $kegiatan, array $input): void
+    {
+        // Cari master pejabat (via NIP jika ada, else nama)
+        $pejabatId = null;
+        if (!empty($input['nip'])) {
+            $master = SigapDaftarHadirPejabat::firstOrCreate(
+                ['nip' => $input['nip']],
+                [
+                    'nama_lengkap' => $input['nama_lengkap'],
+                    'jabatan'      => $input['jabatan']      ?? null,
+                    'pangkat'      => $input['pangkat']      ?? null,
+                    'golongan'     => $input['golongan']     ?? null,
+                    'created_by'   => Auth::id(),
+                ]
+            );
+            // Update data master jika sudah ada
+            $master->update([
+                'nama_lengkap' => $input['nama_lengkap'],
+                'jabatan'      => $input['jabatan']      ?? $master->jabatan,
+                'pangkat'      => $input['pangkat']      ?? $master->pangkat,
+                'golongan'     => $input['golongan']     ?? $master->golongan,
+            ]);
+            $pejabatId = $master->id;
+        }
+
+        $existing = $kegiatan->penandatangan;
+
+        if ($existing) {
+            // Jangan reset TTD yang sudah ada jika hanya update data
+            $existing->update([
+                'pejabat_id'   => $pejabatId ?? $existing->pejabat_id,
+                'nama_lengkap' => $input['nama_lengkap'],
+                'jabatan'      => $input['jabatan']      ?? null,
+                'pangkat'      => $input['pangkat']      ?? null,
+                'golongan'     => $input['golongan']     ?? null,
+                'nip'          => $input['nip']          ?? null,
+                'tempat_ttd'   => $input['tempat_ttd']   ?? null,
+                'tanggal_ttd'  => $input['tanggal_ttd']  ?? null,
+            ]);
+        } else {
+            SigapDaftarHadirPenandatangan::create([
+                'uuid'         => (string) Str::uuid(),
+                'kegiatan_id'  => $kegiatan->id,
+                'pejabat_id'   => $pejabatId,
+                'nama_lengkap' => $input['nama_lengkap'],
+                'jabatan'      => $input['jabatan']      ?? null,
+                'pangkat'      => $input['pangkat']      ?? null,
+                'golongan'     => $input['golongan']     ?? null,
+                'nip'          => $input['nip']          ?? null,
+                'tempat_ttd'   => $input['tempat_ttd']   ?? null,
+                'tanggal_ttd'  => $input['tanggal_ttd']  ?? null,
+            ]);
+        }
     }
 
     private function saveSignatureBase64(string $data, string $folder): string
@@ -456,23 +667,14 @@ class SigapDaftarHadirController extends Controller
     private function loadLogoBase64(string $filename): ?string
     {
         $candidates = [
-            // 1. Path Server Production (sejajar dengan sigap_new)
             base_path('../public_html/images/' . $filename),
-            
-            // 2. Path Alternatif (misal document root di server Anda diset di folder tertentu)
             '/home/sigap/public_html/images/' . $filename,
-
-            // 3. Fallback Local Laragon (jika sewaktu-waktu di-run di localhost Anda)
             public_path('images/' . $filename),
         ];
 
         foreach ($candidates as $path) {
-            // Kita log path yang sedang dicek untuk keperluan debug (opsional)
-            // \Illuminate\Support\Facades\Log::info('Mencari logo di: ' . $path);
-
             if (file_exists($path) && is_readable($path)) {
                 $content = @file_get_contents($path);
-                
                 if ($content !== false && $content !== '') {
                     $ext  = strtolower(pathinfo($path, PATHINFO_EXTENSION));
                     $mime = match ($ext) {
@@ -481,7 +683,6 @@ class SigapDaftarHadirController extends Controller
                         'gif'         => 'image/gif',
                         default       => 'image/png',
                     };
-
                     return 'data:' . $mime . ';base64,' . base64_encode($content);
                 }
             }

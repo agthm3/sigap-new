@@ -553,6 +553,11 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{kegiatan}/status',  [SigapDaftarHadirController::class, 'updateStatus'])->name('status');
         Route::get('/{kegiatan}/pdf',      [SigapDaftarHadirController::class, 'exportPdf'])   ->name('export-pdf');
         Route::get('/{kegiatan}/print-qr', [SigapDaftarHadirController::class, 'printQr'])     ->name('print-qr');
+        Route::get('/{kegiatan}/print-qr-pejabat',[SigapDaftarHadirController::class, 'printQrPejabat'])->name('print-qr-pejabat');
+ 
+        // Route search pejabat (autocomplete di form create/edit)
+        // Letakkan SEBELUM /{kegiatan} wildcard, bersama route statis lainnya:
+        Route::get('/pejabat/search',[SigapDaftarHadirController::class, 'searchPejabat'])->name('search-pejabat');
     });
 });
  
@@ -564,5 +569,13 @@ Route::post('/sigap-daftar-hadir/scan/{kegiatan:uuid}', [SigapDaftarHadirControl
  
 Route::get('/sigap-daftar-hadir/peserta/search', [SigapDaftarHadirController::class, 'searchPeserta'])
     ->name('sigap-daftar-hadir.search-peserta');
+// Form TTD pejabat (publik, akses via QR)
+Route::get('/sigap-daftar-hadir/pejabat/{penandatangan:uuid}',[SigapDaftarHadirController::class, 'publicFormPejabat'])
+    ->name('sigap-daftar-hadir.pejabat-form');
+ 
+Route::post('/sigap-daftar-hadir/pejabat/{penandatangan:uuid}',[SigapDaftarHadirController::class, 'storePublicPejabat'])
+    ->name('sigap-daftar-hadir.pejabat-store');
 
-    Route::get('/debug-logo', [SigapDaftarHadirController::class, 'debugLogo'])->middleware('auth');
+// Halaman verifikasi publik (discan dari QR footer PDF)
+Route::get('/verifikasi/daftar-hadir/{kegiatan:uuid}',[SigapDaftarHadirController::class, 'verifikasi'])
+    ->name('sigap-daftar-hadir.verifikasi');
