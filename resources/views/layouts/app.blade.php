@@ -461,7 +461,15 @@ textarea::placeholder {
           Riwayat Peserta
         </a>
         @endhasrole
-      
+        <a href="{{ route('sigap-narasumber.index') }}"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm {{ request()->routeIs('sigap-narasumber.*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="8.5" cy="7" r="4" stroke-width="2"/>
+            <path stroke-width="2" d="M20 8v6M23 11h-6"/>
+          </svg>
+          Permintaan Kesediaan
+        </a>
       </div>
       @endhasanyrole
         <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">PENGATURAN</div>

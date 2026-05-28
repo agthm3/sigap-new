@@ -37,6 +37,7 @@ use App\Http\Controllers\SigapInkubatormaController;
 use App\Http\Controllers\SigapPicController;
 use App\Http\Controllers\SigapPpdController;
 use App\Http\Controllers\SigapSertifikatController;
+use App\Http\Controllers\SigapNarasumberController;
 
 // --- Public
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -501,34 +502,6 @@ Route::middleware(['auth'])->prefix('dashboard/sigap-pic')->name('sigap-pic.')->
     Route::get('/{system}', [SigapPicController::class, 'show'])->name('show');
 });
 
-// Route::middleware(['auth'])->group(function () {
-//     Route::prefix('sigap-daftar-hadir')->name('sigap-daftar-hadir.')->group(function () {
-//         Route::get('/', [SigapDaftarHadirController::class, 'index'])->name('index');
-//         Route::get('/create', [SigapDaftarHadirController::class, 'create'])->name('create');
-//         Route::post('/', [SigapDaftarHadirController::class, 'store'])->name('store');
-
-//         Route::get('/{kegiatan}', [SigapDaftarHadirController::class, 'show'])->name('show');
-//         Route::get('/{kegiatan}/edit', [SigapDaftarHadirController::class, 'edit'])->name('edit');
-//         Route::put('/{kegiatan}', [SigapDaftarHadirController::class, 'update'])->name('update');
-//         Route::delete('/{kegiatan}', [SigapDaftarHadirController::class, 'destroy'])->name('destroy');
-
-//         Route::post('/{kegiatan}/status', [SigapDaftarHadirController::class, 'updateStatus'])->name('status');
-//         Route::get('/{kegiatan}/pdf', [SigapDaftarHadirController::class, 'exportPdf'])->name('export-pdf');
-//         Route::get('/{kegiatan}/print-qr', [SigapDaftarHadirController::class, 'printQr'])->name('print-qr');
-//     });
-
-
-// });
-
-// Route::get('/sigap-daftar-hadir/scan/{kegiatan:uuid}', [SigapDaftarHadirController::class, 'publicForm'])
-//     ->name('sigap-daftar-hadir.public');
-
-// Route::post('/sigap-daftar-hadir/scan/{kegiatan:uuid}', [SigapDaftarHadirController::class, 'storePublic'])
-//     ->name('sigap-daftar-hadir.store-public');
-
-// Route::get('/sigap-daftar-hadir/peserta/search', [SigapDaftarHadirController::class, 'searchPeserta'])
-//     ->name('sigap-daftar-hadir.search-peserta');
-
 Route::middleware(['auth'])->group(function () {
     Route::prefix('sigap-daftar-hadir')->name('sigap-daftar-hadir.')->group(function () {
  
@@ -579,3 +552,15 @@ Route::post('/sigap-daftar-hadir/pejabat/{penandatangan:uuid}',[SigapDaftarHadir
 // Halaman verifikasi publik (discan dari QR footer PDF)
 Route::get('/verifikasi/daftar-hadir/{kegiatan:uuid}',[SigapDaftarHadirController::class, 'verifikasi'])
     ->name('sigap-daftar-hadir.verifikasi');
+
+
+Route::prefix('dashboard/narasumber')->name('sigap-narasumber.')->middleware(['auth'])->group(function () {
+    Route::get('/', [SigapNarasumberController::class, 'index'])->name('index');
+    Route::get('/kegiatan', [SigapNarasumberController::class, 'pilihKegiatan'])->name('pilih-kegiatan');
+    Route::get('/kegiatan/{kegiatan:uuid}/qr', [SigapNarasumberController::class, 'showQr'])->name('qr');
+    Route::get('/{kesediaan:uuid}/pdf', [SigapNarasumberController::class, 'exportPdf'])->name('export-pdf');
+    Route::delete('/{kesediaan:uuid}', [SigapNarasumberController::class, 'destroy'])->name('destroy');
+});
+
+Route::get('/narasumber/kesediaan/{kegiatan:uuid}', [SigapNarasumberController::class, 'publicForm'])->name('sigap-narasumber.public');
+Route::post('/narasumber/kesediaan/{kegiatan:uuid}', [SigapNarasumberController::class, 'storePublic'])->name('sigap-narasumber.store-public');
