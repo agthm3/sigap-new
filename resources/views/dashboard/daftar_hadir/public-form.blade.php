@@ -73,8 +73,14 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">TTD Digital</label>
-          <div class="rounded-2xl border p-2">
+          
+          <div class="rounded-2xl border p-2 relative" id="canvas-container">
             <canvas id="signature-pad" class="w-full h-40"></canvas>
+            
+            <!-- Overlay saat Canvas dimatikan -->
+            <div id="canvas-overlay" class="absolute inset-0 bg-gray-50 bg-opacity-80 hidden flex-col items-center justify-center rounded-2xl z-10 backdrop-blur-sm transition-all">
+              <span class="text-sm font-semibold text-gray-600">Menggunakan TTD Lama</span>
+            </div>
           </div>
 
           <input type="hidden" id="ttd_data" name="ttd_data">
@@ -82,6 +88,12 @@
             <button type="button" id="clear-signature"
                     class="px-3 py-1.5 rounded-lg border text-xs hover:bg-gray-50">
               Hapus TTD
+            </button>
+
+            <!-- Tombol Ganti TTD -->
+            <button type="button" id="ganti-signature"
+                    class="hidden px-3 py-1.5 rounded-lg border border-maroon text-maroon text-xs hover:bg-maroon-50 font-medium">
+              Ganti TTD Baru
             </button>
           </div>
           @error('ttd_data') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
@@ -113,6 +125,9 @@ document.addEventListener('DOMContentLoaded', function () {
   const form = document.getElementById('absen-form');
   const canvas = document.getElementById('signature-pad');
   const clearBtn = document.getElementById('clear-signature');
+  const gantiBtn = document.getElementById('ganti-signature');
+  const canvasOverlay = document.getElementById('canvas-overlay');
+  
   const namaInput = document.getElementById('nama-input');
   const suggestionBox = document.getElementById('nama-suggestions');
   const instansi = document.getElementById('instansi');
@@ -173,6 +188,25 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  // Fungsi untuk mengaktifkan/mereset kembali canvas TTD
+  function enableCanvas() {
+    if (signaturePad) {
+      signaturePad.on();
+      signaturePad.clear();
+    }
+    
+    if (canvasOverlay) {
+      canvasOverlay.classList.remove('flex');
+      canvasOverlay.classList.add('hidden');
+    }
+    
+    if (gantiBtn) gantiBtn.classList.add('hidden');
+    if (clearBtn) clearBtn.classList.remove('hidden');
+
+    existingTtdInput.value = '';
+    showPreview('');
+  }
+
   function fillFields(item) {
     namaInput.value = item.nama || '';
     instansi.value = item.instansi || '';
@@ -185,6 +219,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (signaturePad) {
       signaturePad.clear();
+      
+      if (item.ttd_path) {
+        // Matikan fungsi gambar pada canvas
+        signaturePad.off(); 
+        
+        // Munculkan overlay dan tombol "Ganti TTD Baru"
+        if (canvasOverlay) {
+          canvasOverlay.classList.remove('hidden');
+          canvasOverlay.classList.add('flex');
+        }
+        if (gantiBtn) gantiBtn.classList.remove('hidden');
+        if (clearBtn) clearBtn.classList.add('hidden');
+      } else {
+        enableCanvas(); // Kalau ternyata data lamanya gak punya TTD
+      }
     }
 
     ttdDataInput.value = '';
@@ -254,12 +303,18 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  if (gantiBtn) {
+    gantiBtn.addEventListener('click', function() {
+      enableCanvas();
+    });
+  }
+
   if (namaInput) {
     namaInput.addEventListener('input', function () {
       const q = this.value.trim();
 
-      existingTtdInput.value = '';
-      showPreview('');
+      // Setiap kali diketik ulang, canvas harus selalu hidup kembali
+      enableCanvas();
 
       if (debounceTimer) clearTimeout(debounceTimer);
 
