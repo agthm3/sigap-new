@@ -6,8 +6,9 @@
 <style>
     body { font-family: 'Inter', sans-serif; }
 </style>
+<!-- CDN SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @endpush
-
 @section('content')
 
 @php
@@ -145,7 +146,7 @@
                     <p class="text-base text-gray-800">
                         <b>Butuh bantuan?</b>
                     </p>
-                    <a href="https://wa.me/6285173231604?text=Halo%20Admin%20BRIDA,%20saya%20ingin%20bertanya%20terkait%20layanan%20SIGAP%20Inkubatorma."
+                    <a href="https://wa.me/6282396768528?text=Halo%20Admin%20BRIDA,%20saya%20ingin%20bertanya%20terkait%20layanan%20SIGAP%20Inkubatorma."
                        target="_blank"
                        rel="noopener noreferrer"
                        class="inline-flex items-center gap-2 px-3 py-1 rounded bg-green-600 text-white text-sm font-semibold hover:opacity-90">
@@ -177,6 +178,19 @@
                             placeholder="Contoh: 08xxxxxxxxxx">
                         <p class="mt-1 text-sm text-gray-600">Nomor ini dipakai untuk konfirmasi jadwal.</p>
                     </div>
+                    @guest
+                    <div>
+                        <label class="text-base font-semibold">Alamat Email <span class="text-red-600">*</span></label>
+                        <p class="mt-1 text-sm text-gray-500">Email aktif Anda untuk menerima lampiran surat balasan & link meet final</p>
+                        <input type="email" name="email" required
+                            value="{{ old('email', $formData['email'] ?? '') }}"
+                            class="mt-2 w-full rounded-xl border {{ $errors->has('email') ? 'border-red-500' : 'border-gray-300' }} bg-white px-4 py-3 text-base focus:border-maroon focus:ring-2 focus:ring-maroon/30"
+                            placeholder="Contoh: namaanda@gmail.com">
+                        @error('email')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    @endguest
 
                     {{-- Nama OPD/Unit --}}
                     <div>
@@ -806,6 +820,36 @@
 @push('scripts')
 <script>
 (function () {
+    @if(session('success'))
+        Swal.fire({
+            title: 'Berhasil!',
+            text: "{{ session('success') }}",
+            icon: 'success',
+            confirmButtonColor: '#800000', // Warna maroon sesuai tema BRIDA
+            confirmButtonText: 'Oke, Paham'
+        });
+    @endif
+
+    @if(session('error'))
+        Swal.fire({
+            title: 'Gagal!',
+            text: "{{ session('error') }}",
+            icon: 'error',
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Coba Lagi'
+        });
+    @endif
+
+    // Jika validasi dari Laravel Controller gagal ($errors membawa pesan bawan)
+    @if($errors->any())
+        Swal.fire({
+            title: 'Periksa Kembali Isian Anda',
+            text: "Beberapa data yang Anda masukkan tidak valid atau belum lengkap.",
+            icon: 'warning',
+            confirmButtonColor: '#800000',
+            confirmButtonText: 'Perbaiki'
+        });
+    @endif
     // ====== MODAL LOGIC ======
     const modal = document.getElementById('scheduleModal');
     const mTitle   = document.getElementById('mTitle');
@@ -1353,7 +1397,7 @@
         });
     }
 
-    // ====== VALIDASI SUBMIT ======
+    // ====== VALIDASI SUBMIT & PREVENT SPAM CLICK ======
     const form = document.querySelector('form[enctype="multipart/form-data"]');
 
     form?.addEventListener('submit', function (e) {
@@ -1398,31 +1442,41 @@
             lainnyaError?.remove();
         }
 
-        // --- CEK LAMPIRAN ---
-        // const lampiranError2 = document.getElementById('lampiranValidasiError');
-        // if (selectedFiles.length === 0) {
-        //     e.preventDefault();
-        //     if (!lampiranError2) {
-        //         const p = document.createElement('p');
-        //         p.id = 'lampiranValidasiError';
-        //         p.className = 'mt-1 text-xs text-red-600';
-        //         p.textContent = '⚠ Upload minimal 1 file lampiran.';
-        //         document.getElementById('lampiranInput')?.parentElement.appendChild(p);
-        //     }
-        //     firstError = firstError ?? document.getElementById('lampiranInput');
-        // } else {
-        //     lampiranError2?.remove();
-        // }
-
         // --- SCROLL KE ERROR PERTAMA ---
         if (firstError) {
             firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
-        // TRIGGER VALIDASI BROWSER
+        // TRIGGER VALIDASI BROWSER HTML5 (required, type="email", dll)
         if (!this.checkValidity()) {
             e.preventDefault();
             this.reportValidity();
+            return; // Hentikan di sini jika validasi HTML5 gagal
+        }
+
+        // =======================================================
+        // ✅ JIKA SEMUA VALIDASI LOLOS, COCOK UNTUK CEGAH SPAM CLICK
+        // =======================================================
+        if (!e.defaultPrevented) {
+            // 1. Munculkan SweetAlert Loading
+            Swal.fire({
+                title: 'Sedang Mengirim...',
+                html: 'Mohon tunggu sebentar, sistem sedang memproses pengajuan dan mengirimkan email konfirmasi.',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // 2. Disable tombol submit agar tidak bisa di-klik lagi saat loading berjalan
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerText = 'Memproses...';
+                submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+            }
         }
     });
 })();

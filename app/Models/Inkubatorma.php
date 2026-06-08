@@ -46,6 +46,7 @@ class Inkubatorma extends Model
         'jam_final',
         'metode_final',
         'lokasi_link_final',
+        'email_pengaju',
 
         'created_by',
         'updated_by',

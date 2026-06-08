@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Notification;
 
 class SigapInkubatormaController extends Controller
 {
@@ -589,10 +590,12 @@ class SigapInkubatormaController extends Controller
             'nama_pengaju' => ['required', 'string', 'max:255'],
             'no_hp'        => ['required', 'string', 'max:20'],
             'nama_opd'     => ['required', 'string', 'max:255'],
+            
+            // ✅ VALIDASI EMAIL BARU: Wajib diisi jika user TIDAK login
+            'email'        => [Auth::check() ? 'nullable' : 'required', 'email', 'max:255'],
 
             'layanan' => ['required', 'array', 'max:2'],
             'layanan_lainnya' => ['nullable','string','max:255', 'required_if:layanan,lainnya'],
-
 
             'judul_konsultasi' => ['required', 'string', 'max:255'],
             'keluhan'          => ['required', 'string'],
@@ -608,14 +611,12 @@ class SigapInkubatormaController extends Controller
         ]);
 
         $layananLainnya = in_array('lainnya', $validated['layanan'])
-        ? ($validated['layanan_lainnya'] ?? null)
-        : null;
+            ? ($validated['layanan_lainnya'] ?? null)
+            : null;
 
         $lampiranPaths = [];
         if ($request->hasFile('lampiran')) {
             foreach ($request->file('lampiran') as $file) {
-                // $path = $file->store('inkubatorma/lampiran', 'public');
-                // supaya nama file sesuai yg diupload
                 $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
                 $extension    = $file->getClientOriginalExtension();
                 $safeName     = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $originalName);
@@ -625,39 +626,36 @@ class SigapInkubatormaController extends Controller
             }
         }
 
-        // ambil nama target personil dari users (kalau dipilih)
         $targetPersonilNama = null;
         if (!empty($validated['pegawai_id'])) {
             $targetPersonilNama = User::where('id', $validated['pegawai_id'])->value('name');
         }
 
-        // Kode unik (AMAN dari duplikat)
         $prefix = 'INK-' . now()->format('Ymd') . '-';
-
-        // ambil kode terakhir untuk hari ini, lalu naikkan 1
         $lastKode = Inkubatorma::where('kode', 'like', $prefix . '%')
             ->orderBy('kode', 'desc')
             ->value('kode');
 
         $lastNumber = 0;
         if ($lastKode) {
-            // ambil 4 digit terakhir
             $lastNumber = (int) substr($lastKode, -4);
         }
 
         $newNumber = $lastNumber + 1;
         $kode = $prefix . str_pad((string) $newNumber, 4, '0', STR_PAD_LEFT);
 
+        // ✅ SIMPAN KE DATABASE
         $inkubatorma = Inkubatorma::create([
             'kode' => $kode,
-
-            // simpan string layanan ke layanan_id
             'layanan_id' => $validated['layanan'],
             'layanan_lainnya' => $layananLainnya,
-
             'judul_konsultasi' => $validated['judul_konsultasi'] ?? null,
             'nama_pengaju'     => $validated['nama_pengaju'],
             'hp_pengaju'       => $validated['no_hp'],
+            
+            // ✅ SIMPAN EMAIL: jika login pakai email user, jika tidak pakai inputan form
+            'email_pengaju'    => Auth::check() ? Auth::user()->email : $validated['email'],
+            
             'opd_unit'         => $validated['nama_opd'],
             'keluhan'          => $validated['keluhan'],
             'poin_asistensi'   => $validated['poin_asistensi'],
@@ -665,54 +663,48 @@ class SigapInkubatormaController extends Controller
             'jam_usulan'       => $validated['jam'],
             'metode_usulan'    => $validated['mode'],
             'status'           => Inkubatorma::STATUS_MENUNGGU,
-
-            // ✅ agar USER bisa lihat list miliknya
-            'created_by'       => Auth::id(),
-
-            // ✅ agar VERIFIKATOR bisa lihat list yang ditujukan kepadanya
-            // (pakai pegawai_id dari form index)
+            'created_by'       => Auth::id(), // Akan otomatis bernilai null jika tidak login (aman)
             'pic_employee_id'  => $validated['pegawai_id'] ?? null,
-
             'target_personil_usulan' => $targetPersonilNama,
-            
             'lampiran' => $lampiranPaths,
         ]);
 
+        // Kirim ke semua verifikator
         $verifikators = User::role('verifikator_inkubatorma')
             ->where('status', 'active')
             ->whereNotNull('email')
-            ->select('id', 'name', 'email')
             ->get();
 
-        // Kirim ke semua verifikator
         foreach ($verifikators as $verifikator) {
             $verifikator->notify(new InkubatormaPengajuanBaruNotification($inkubatorma, true));
         }
 
-        // Kirim konfirmasi ke pengaju
-        if (auth()->user()->email) {
-            auth()->user()->notify(new InkubatormaPengajuanBaruNotification($inkubatorma, false));
+        // ✅ SEBELUMNYA: auth()->user()->email (Memicu eror jika null)
+        // ✅ SEKARANG: Kirim konfirmasi menggunakan email target yang dinamis
+        $targetEmail = $inkubatorma->email_pengaju;
+        if ($targetEmail) {
+            if (Auth::check()) {
+                Auth::user()->notify(new InkubatormaPengajuanBaruNotification($inkubatorma, false));
+            } else {
+                // Menggunakan On-Demand Notification untuk tamu yang tidak terdaftar di table users
+                Notification::route('mail', $targetEmail)
+                    ->notify(new InkubatormaPengajuanBaruNotification($inkubatorma, false));
+            }
         }
-
-        if (!auth()->check()) {
-            session()->put('inkubatorma_form', $validated);
-            // supaya kembali ke halaman inkubatorma
-            redirect()->setIntendedUrl(route('sigap-inkubatorma.index') . '#form');
-            return redirect()->route('login');
-        }
-
-        // Ambil email user yang sedang login
-        $userEmail = auth()->user()->email;
-        $kodePengajuan = $inkubatorma->kode; 
 
         session()->forget('inkubatorma_form');
+        $success_message = "Pengajuan konsultasi Anda berhasil dikirim! Update selanjutnya akan diinfokan melalui email: {$targetEmail}";
 
-        // Pesan Berhasil
-        $success_message = "Pengajuan konsultasi Anda berhasil dikirim! Update selanjutnya akan diinfokan melalui email: {$userEmail}";
-
-        return redirect()
-            ->route('sigap-inkubatorma.dashboard')
-            ->with('success', $success_message);
+        if (Auth::check()) {
+            return redirect()
+                ->route('sigap-inkubatorma.dashboard')
+                ->with('success', $success_message);
+        } else {
+            // ✅ Mengarahkan tamu kembali ke index sambil melempar session success untuk dibaca SweetAlert
+            return redirect()
+                ->route('sigap-inkubatorma.index')
+                ->with('success', $success_message);
+        }
     }
 
     /**
@@ -954,13 +946,16 @@ class SigapInkubatormaController extends Controller
 
         $inkubatorma->save();
 
-        if (!empty($inkubatorma->created_by)) {
-            $pengajuUser = User::where('id', $inkubatorma->created_by)
-                ->whereNotNull('email')
-                ->first();
-
-            if ($pengajuUser) {
-                $pengajuUser->notify(new InkubatormaStatusUpdateNotification($inkubatorma));
+        if (!empty($inkubatorma->email_pengaju)) {
+            if (!empty($inkubatorma->created_by)) {
+                $pengajuUser = User::where('id', $inkubatorma->created_by)->whereNotNull('email')->first();
+                if ($pengajuUser) {
+                    $pengajuUser->notify(new InkubatormaStatusUpdateNotification($inkubatorma));
+                }
+            } else {
+                // Jika diisi oleh tamu tanpa login, kirim on-demand mail
+                Notification::route('mail', $inkubatorma->email_pengaju)
+                    ->notify(new InkubatormaStatusUpdateNotification($inkubatorma));
             }
         }
 
