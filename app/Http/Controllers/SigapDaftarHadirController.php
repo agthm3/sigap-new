@@ -57,7 +57,7 @@ class SigapDaftarHadirController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nama_kegiatan'               => ['required', 'string', 'max:255'],
+            'nama_kegiatan'               => ['required', 'string', 'max:500'],
             'hari_tanggal'                => ['required', 'string', 'max:255'],
             'tempat'                      => ['required', 'string', 'max:255'],
             'waktu'                       => ['required', 'string', 'max:255'],
