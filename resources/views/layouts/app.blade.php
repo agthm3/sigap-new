@@ -472,6 +472,58 @@ textarea::placeholder {
         </a>
       </div>
       @endhasanyrole
+      @hasanyrole('admin|operator_spj')
+      <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">
+        SIGAP SPJ
+      </div>
+      
+      <!-- Toggle -->
+      <button id="spjToggle"
+              class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-left">
+        <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="14 2 14 8 20 8"></polyline>
+          <line stroke-width="2" stroke-linecap="round" stroke-linejoin="round" x1="16" y1="13" x2="8" y2="13"></line>
+          <line stroke-width="2" stroke-linecap="round" stroke-linejoin="round" x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span class="font-medium">SIGAP SPJ</span>
+        <svg id="spjCaret"
+            class="w-4 h-4 ml-auto transition-transform duration-200"
+            viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/>
+        </svg>
+      </button>
+      
+      <!-- Dropdown -->
+      <div id="spjMenu" class="ml-3 mt-1 space-y-1 hidden">
+      
+        <!-- Menu Laporan (Semua Role SPJ) -->
+        <a href="{{ route('sigap-spj.index') }}"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+          {{ request()->routeIs('sigap-spj.index') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 5h16v14H4z"/>
+            <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M8 9h8M8 13h5"/>
+          </svg>
+          Laporan Sub-Kegiatan
+        </a>
+      
+        <!-- Menu Master Struktur (Hanya Admin) -->
+        @hasrole('admin')
+        <a href="{{ route('sigap-spj.bidang.index') }}"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+          {{ request()->routeIs('sigap-spj.bidang.*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+             <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+             <polyline stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+             <line stroke-width="2" stroke-linecap="round" stroke-linejoin="round" x1="12" y1="22.08" x2="12" y2="12"></line>
+          </svg>
+          Struktur Bidang
+        </a>
+        @endhasrole
+      </div>
+      @endhasanyrole
         <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">PENGATURAN</div>
         {{-- <a href="{{ route('logout') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M10 17l5-5-5-5"/><path stroke-width="2" d="M4 12h11"/></svg>
@@ -752,6 +804,33 @@ document.addEventListener("DOMContentLoaded", function () {
     daftarHadirMenu.classList.toggle('hidden');
     daftarHadirCaret.classList.toggle('rotate-180', willOpen);
     localStorage.setItem(DH_KEY, willOpen ? '1' : '0');
+  });
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const spjToggle = document.getElementById('spjToggle');
+  const spjMenu   = document.getElementById('spjMenu');
+  const spjCaret  = document.getElementById('spjCaret');
+
+  if (!spjToggle) return;
+
+  const SPJ_KEY   = 'sb_spj_open';
+  const isOpenSaved = localStorage.getItem(SPJ_KEY) === '1';
+
+  // Auto-buka jika sedang di URL SPJ
+  const isOnSPJ = window.location.pathname.includes('/sigap-spj');
+
+  if (isOpenSaved || isOnSPJ) {
+    spjMenu.classList.remove('hidden');
+    spjCaret.classList.add('rotate-180');
+  }
+
+  spjToggle.addEventListener('click', () => {
+    const willOpen = spjMenu.classList.contains('hidden');
+    spjMenu.classList.toggle('hidden');
+    spjCaret.classList.toggle('rotate-180', willOpen);
+    localStorage.setItem(SPJ_KEY, willOpen ? '1' : '0');
   });
 });
 </script>
