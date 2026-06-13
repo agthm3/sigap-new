@@ -38,6 +38,8 @@ use App\Http\Controllers\SigapPicController;
 use App\Http\Controllers\SigapPpdController;
 use App\Http\Controllers\SigapSertifikatController;
 use App\Http\Controllers\SigapNarasumberController;
+use App\Http\Controllers\SpjBidangController;
+use App\Http\Controllers\SpjController;
 
 // --- Public
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -564,3 +566,88 @@ Route::prefix('dashboard/narasumber')->name('sigap-narasumber.')->middleware(['a
 
 Route::get('/narasumber/kesediaan/{kegiatan:uuid}', [SigapNarasumberController::class, 'publicForm'])->name('sigap-narasumber.public');
 Route::post('/narasumber/kesediaan/{kegiatan:uuid}', [SigapNarasumberController::class, 'storePublic'])->name('sigap-narasumber.store-public');
+
+
+Route::middleware(['auth'])->group(function () {
+    
+    // --- AREA SPJ (Bisa diakses Admin & Operator SPJ) ---
+    Route::middleware(['role:admin|operator_spj'])->prefix('sigap-spj')->name('sigap-spj.')->group(function () {
+        
+        // Halaman Utama: Daftar Sub-Kegiatan
+        Route::get('/', [SpjController::class, 'index'])->name('index');
+        
+        // Halaman Detail Sub-Kegiatan (Upload KAK & Lihat Kegiatan)
+        Route::get('/sub-kegiatan/{id}', [SpjController::class, 'show'])->name('show');
+        
+        // Route untuk Generate PDF Gabungan
+        Route::post('/sub-kegiatan/{id}/generate', [SpjController::class, 'generateReport'])->name('generate');
+        
+        // Route untuk kelola file di level Gelombang/Angkatan (Mockup URL)
+        Route::get('/gelombang/{id}/berkas', [SpjController::class, 'berkasGelombang'])->name('gelombang.berkas');
+    });
+
+    // --- AREA ADMIN MASTER STRUKTUR SPJ (Hanya Admin) ---
+    Route::middleware(['role:admin'])->prefix('sigap-spj/master')->name('sigap-spj.bidang.')->group(function () {
+        
+        // CRUD Master Bidang
+        Route::get('/bidang', [SpjBidangController::class, 'index'])->name('index');
+        Route::post('/bidang', [SpjBidangController::class, 'store'])->name('store');
+        Route::put('/bidang/{id}', [SpjBidangController::class, 'update'])->name('update');
+        Route::delete('/bidang/{id}', [SpjBidangController::class, 'destroy'])->name('destroy');
+
+        // CRUD Master Sub-Kegiatan (Berbasis ID Bidang)
+        Route::get('/bidang/{bidang_id}/sub-kegiatan', [SpjBidangController::class, 'indexSub'])->name('sub.index');
+        Route::post('/bidang/{bidang_id}/sub-kegiatan', [SpjBidangController::class, 'storeSub'])->name('sub.store');
+        Route::delete('/sub-kegiatan/{id}', [SpjBidangController::class, 'destroySub'])->name('sub.destroy');
+
+        // CRUD Master Kegiatan (Berbasis ID Sub-Kegiatan)
+        Route::get('/sub-kegiatan/{sub_id}/kegiatan', [SpjBidangController::class, 'indexKegiatan'])->name('kegiatan.index');
+        Route::post('/sub-kegiatan/{sub_id}/kegiatan', [SpjBidangController::class, 'storeKegiatan'])->name('kegiatan.store');
+        Route::delete('/kegiatan/{id}', [SpjBidangController::class, 'destroyKegiatan'])->name('kegiatan.destroy');
+
+        // CRUD Master Gelombang (Berbasis ID Kegiatan)
+        Route::get('/kegiatan/{kegiatan_id}/gelombang', [SpjBidangController::class, 'indexGelombang'])->name('gelombang.index');
+        Route::post('/kegiatan/{kegiatan_id}/gelombang', [SpjBidangController::class, 'storeGelombang'])->name('gelombang.store');
+        Route::delete('/gelombang/{id}', [SpjBidangController::class, 'destroyGelombang'])->name('gelombang.destroy');
+    });
+
+    Route::middleware(['role:admin|operator_spj'])->prefix('sigap-spj')->name('sigap-spj.')->group(function () {
+    
+        // Halaman Utama: Daftar Laporan Sub-Kegiatan
+        Route::get('/', [App\Http\Controllers\SpjController::class, 'index'])->name('index');
+        
+        // Halaman Detail Sub-Kegiatan
+        Route::get('/sub-kegiatan/{id}', [App\Http\Controllers\SpjController::class, 'show'])->name('show');
+        
+        // Upload KAK (Level Sub-Kegiatan)
+        Route::post('/sub-kegiatan/{id}/kak', [App\Http\Controllers\SpjController::class, 'uploadKak'])->name('upload.kak');
+        
+        // Upload SK Panpel & SK Tenaga Ahli (Level Kegiatan)
+        Route::post('/kegiatan/{id}/sk', [App\Http\Controllers\SpjController::class, 'uploadSk'])->name('upload.sk');
+        
+        // Halaman Kelola 10 Berkas (Level Gelombang)
+        Route::get('/gelombang/{id}/berkas', [App\Http\Controllers\SpjController::class, 'berkasGelombang'])->name('gelombang.berkas');
+        
+        // Upload 10 Berkas (Level Gelombang)
+        Route::post('/gelombang/{id}/berkas', [App\Http\Controllers\SpjController::class, 'uploadBerkasGelombang'])->name('upload.berkas');
+
+        // Generate PDF Gabungan
+        Route::post('/sub-kegiatan/{id}/generate', [App\Http\Controllers\SpjController::class, 'generateReport'])->name('generate');
+
+        // Integrasi Tarik Daftar Hadir
+        Route::get('/gelombang/{id}/search-daftar-hadir', [App\Http\Controllers\SpjController::class, 'searchDaftarHadir'])->name('search.daftar-hadir');
+        Route::post('/gelombang/{id}/import-daftar-hadir', [App\Http\Controllers\SpjController::class, 'importDaftarHadir'])->name('import.daftar-hadir');
+
+        // Integrasi Tarik Kinerja (Dokumentasi)
+        Route::get('/gelombang/{id}/search-kinerja', [App\Http\Controllers\SpjController::class, 'searchKinerja'])->name('search.kinerja');
+        Route::post('/gelombang/{id}/import-kinerja', [App\Http\Controllers\SpjController::class, 'importKinerja'])->name('import.kinerja');
+    });
+    // FUNGSI SHARE PUBLIK (Tanpa Auth)
+    Route::prefix('laporan-spj')->name('spj.public.')->group(function () {
+        Route::get('/{uuid}', [App\Http\Controllers\SpjController::class, 'sharePage'])->name('share');
+        Route::get('/{uuid}/stream', [App\Http\Controllers\SpjController::class, 'streamReport'])->name('stream');
+        Route::post('/{uuid}/download', [App\Http\Controllers\SpjController::class, 'downloadPublicReport'])->name('download');
+    });
+
+    
+});
