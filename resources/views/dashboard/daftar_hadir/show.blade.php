@@ -9,6 +9,9 @@
     <p class="text-sm text-gray-600 mt-0.5">
       {{ $kegiatan->hari_tanggal }} • {{ $kegiatan->tempat }} • {{ $kegiatan->waktu }}
     </p>
+    <p class="text-xs text-gray-500 mt-1">
+      Dibuat oleh: <span class="font-semibold text-gray-700">{{ $kegiatan->creator->name ?? 'Sistem' }}</span> pada {{ $kegiatan->created_at->format('d M Y, H:i') }} WITA
+    </p>
   </div>
 
   <div class="flex flex-wrap gap-2">

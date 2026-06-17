@@ -52,7 +52,7 @@
           <th class="px-4 py-3 text-left">Tempat</th>
           <th class="px-4 py-3 text-left">Waktu</th>
           <th class="px-4 py-3 text-left">Peserta</th>
-          <th class="px-4 py-3 text-left">Status</th>
+          <th class="px-4 py-3 text-left">Pembuat</th> <th class="px-4 py-3 text-left">Status</th>
           <th class="px-4 py-3 text-left">Aksi</th>
         </tr>
       </thead>
@@ -64,6 +64,10 @@
             <td class="px-4 py-3">{{ $item->tempat }}</td>
             <td class="px-4 py-3">{{ $item->waktu }}</td>
             <td class="px-4 py-3">{{ $item->peserta_count }}</td>
+            <td class="px-4 py-3">
+              <span class="font-medium text-gray-700">{{ $item->creator->name ?? 'Sistem' }}</span>
+              <div class="text-xs text-gray-500 mt-0.5">{{ $item->created_at->format('d/m/Y H:i') }} WITA</div>
+            </td>
             <td class="px-4 py-3">
               <span class="inline-flex px-2.5 py-1 rounded-full text-[11px] border
                 {{ $item->status === 'selesai' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : ($item->status === 'proses' ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-gray-50 border-gray-200 text-gray-700') }}">

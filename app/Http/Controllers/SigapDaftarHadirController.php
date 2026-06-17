@@ -36,6 +36,7 @@ class SigapDaftarHadirController extends Controller
         $totalSelesai  = (clone $base)->where('status', 'selesai')->count();
 
         $kegiatans = (clone $base)
+            ->with(['creator'])
             ->withCount('peserta')
             ->latest()
             ->paginate(10);
