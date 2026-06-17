@@ -20,7 +20,7 @@ class SigapDaftarHadirController extends Controller
     // DASHBOARD — KEGIATAN
     // =========================================================================
 
-    public function index()
+    public function index(Request $request)     
     {
         $user = Auth::user();
 
@@ -30,13 +30,24 @@ class SigapDaftarHadirController extends Controller
             $base->where('created_by', $user->id);
         }
 
+        if ($request->filled('q')) {
+            $keyword = trim($request->get('q'));
+            $base->where('nama_kegiatan', 'like', "%{$keyword}%");
+        }
+
+        // Filter berdasarkan status (draft, proses, selesai)
+        if ($request->filled('status')) {
+            $status = $request->get('status');
+            $base->where('status', $status);
+        }
+
         $totalKegiatan = (clone $base)->count();
         $totalDraft    = (clone $base)->where('status', 'draft')->count();
         $totalProses   = (clone $base)->where('status', 'proses')->count();
         $totalSelesai  = (clone $base)->where('status', 'selesai')->count();
 
         $kegiatans = (clone $base)
-            ->with(['creator'])
+            ->with(['creator']) // Eager loading creator agar tidak N+1 query
             ->withCount('peserta')
             ->latest()
             ->paginate(10);
