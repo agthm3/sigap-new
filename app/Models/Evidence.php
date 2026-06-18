@@ -29,5 +29,8 @@ class Evidence extends Model
     {
         return $this->hasMany(EvidenceFile::class);
     }
-
+    public function evidenceFiles()
+    {
+        return $this->hasMany(\App\Models\EvidenceFile::class, 'evidence_id');
+    }
 }

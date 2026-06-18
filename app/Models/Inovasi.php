@@ -65,6 +65,10 @@ class Inovasi extends Model
     {
         return $this->hasMany(\App\Models\InovasiReviewItem::class, 'inovasi_id');
     }
+    public function evidences()
+    {
+        return $this->hasMany(\App\Models\Evidence::class, 'inovasi_id');
+    }
 
     public function evidenceReviewItems()
     {
