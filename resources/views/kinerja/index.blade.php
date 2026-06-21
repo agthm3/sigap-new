@@ -10,13 +10,13 @@
       </p>
     </div>
 
-    @if($isAdminDemo)
-    <button id="btnTambahKinerja"
-      class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 transition">
-      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M12 5v14M5 12h14"/></svg>
-      Upload Bukti
-    </button>
-    @endif
+  @hasanyrole('admin|verif_kinerja')
+  <button id="btnTambahKinerja"
+    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 transition">
+    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M12 5v14M5 12h14"/></svg>
+    Upload Bukti
+  </button>
+  @endhasanyrole
   </div>
 </section>
 
@@ -240,13 +240,13 @@
                   onclick="copyLink(@js(route('sigap-kinerja.public', $it['id'])))">
             Salin Link
           </button>
-            @if($isAdminDemo)
-              <button type="button"
-                      class="col-span-1 px-3 py-2 rounded-md border border-red-300 text-red-700 hover:bg-red-50 text-sm"
-                      onclick="confirmHapus({{ $it['id'] }}, @js($it['title']))">
-                Hapus
-              </button>
-            @endif
+        @hasanyrole('admin|verif_kinerja')
+          <button type="button"
+                  class="col-span-1 px-3 py-2 rounded-md border border-red-300 text-red-700 hover:bg-red-50 text-sm"
+                  onclick="confirmHapus({{ $it['id'] }}, @js($it['title']))">
+            Hapus
+          </button>
+        @endhasanyrole
         </div>
       </article>
     @empty
@@ -395,13 +395,12 @@
 @endpush
 
 @push('scripts')
-@if($isAdminDemo)
-  {{-- form delete tersembunyi --}}
+@hasanyrole('admin|verif_kinerja')
   <form id="formDeleteKinerja" method="POST" class="hidden">
     @csrf
     @method('DELETE')
   </form>
-@endif
+@endhasanyrole
 <script>
   @if($isAdminDemo)
   const DELETE_BASE = @js(route('sigap-kinerja.destroy', ['id' => '__ID__']));

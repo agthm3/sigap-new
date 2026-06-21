@@ -17,7 +17,7 @@ class SigapKinerjaController extends Controller
      * - Menerima filter: q, category (kode), rhk (kode), month (YYYY-MM)
      * - Mengirim ke view: items (sudah di-map label), categoryOptions (kode+label), rhksByCategory (untuk dependent dropdown)
      */
-    public function index(Request $request)
+public function index(Request $request)
     {
         $cats = config('kinerja.categories', []);
         $categoryOrder = config('kinerja.category_order', array_keys($cats));
@@ -60,10 +60,10 @@ class SigapKinerjaController extends Controller
             ];
         })->all();
 
-        // role admin? (sesuaikan dengan spatie/roles yg kamu pakai)
-        $isAdminDemo = auth()->check() && method_exists(auth()->user(), 'hasRole')
-            ? auth()->user()->hasRole('admin')
-            : true;
+        // Cek apakah user memiliki salah satu role: admin atau verif_kinerja
+        $isAdminDemo = auth()->check() && method_exists(auth()->user(), 'hasAnyRole')
+            ? auth()->user()->hasAnyRole(['admin', 'verif_kinerja'])
+            : false;
 
         return view('kinerja.index', [
             'items'           => $items,
@@ -301,8 +301,13 @@ class SigapKinerjaController extends Controller
     public function destroy(int $id, Request $request)
     {
         $u = auth()->user();
-        $isAdmin = $u && method_exists($u, 'hasRole') ? $u->hasRole('admin') : false;
-        abort_unless($isAdmin, 403, 'Unauthorized');
+        
+        // Memastikan user memiliki role admin ATAU verif_kinerja
+        $isAuthorized = $u && method_exists($u, 'hasAnyRole') 
+            ? $u->hasAnyRole(['admin', 'verif_kinerja']) 
+            : false;
+            
+        abort_unless($isAuthorized, 403, 'Unauthorized');
 
         $this->repo->delete($id);
 

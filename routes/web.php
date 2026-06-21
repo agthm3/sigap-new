@@ -244,17 +244,18 @@ Route::post('/pegawai/profil/avatar', [PegawaiProfilController::class, 'updateAv
     ->name('pegawai.profil.avatar');
 
 //SIGAP KINERJA
-Route::get('/sigap-kinerja', [SigapKinerjaController::class, 'index'])->name('sigap-kinerja.index');
-Route::post('/sigap-kinerja', [SigapKinerjaController::class, 'store'])->name('sigap-kinerja.store');
-
+// Tautan Publik (Bisa diakses siapa saja tanpa batasan role)
 Route::get('/sigap-kinerja/p/{id}', [SigapKinerjaController::class, 'publicShow'])->name('sigap-kinerja.public');
-
 Route::get('/kinerja/y/{year}', [SigapKinerjaController::class, 'annualPublic'])->name('sigap-kinerja.annual-public');
-Route::get('/sigap-kinerja/p/{id}/download-images', [SigapKinerjaController::class, 'downloadImages'])
-    ->name('sigap-kinerja.download-images');
-Route::delete('/sigap-kinerja/{id}', [SigapKinerjaController::class, 'destroy'])->middleware('role:admin')
-    ->name('sigap-kinerja.destroy');
+Route::get('/sigap-kinerja/p/{id}/download-images', [SigapKinerjaController::class, 'downloadImages'])->name('sigap-kinerja.download-images');
 
+// Halaman Utama & Fitur Mutasi (Butuh Proteksi Role)
+Route::get('/sigap-kinerja', [SigapKinerjaController::class, 'index'])->name('sigap-kinerja.index');
+
+Route::middleware(['role:admin|verif_kinerja'])->group(function () {
+    Route::post('/sigap-kinerja', [SigapKinerjaController::class, 'store'])->name('sigap-kinerja.store');
+    Route::delete('/sigap-kinerja/{id}', [SigapKinerjaController::class, 'destroy'])->name('sigap-kinerja.destroy');
+});
 
 Route::get('/sigap-format', [FormatController::class, 'index'])->name('sigap-format.index');
 Route::post('/sigap-format/{id}/unlock', [FormatController::class, 'unlock'])->name('sigap-format.unlock'); // NEW (kode akses)
