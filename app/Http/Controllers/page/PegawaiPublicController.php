@@ -26,6 +26,7 @@ class PegawaiPublicController extends Controller
             'unit'   => $request->input('unit'),
             'status' => 'active',
             'sort'   => $request->input('sort','name'),
+            'role'   => 'employee', 
         ];
         $perPage = 10;
         $results = $this->users->paginateWithFilters($filters, $perPage);
@@ -39,6 +40,9 @@ class PegawaiPublicController extends Controller
         // /pegawai/{user}
     public function show(User $user)
     {
+        if (!$user->hasRole('employee')) {
+            abort(404, 'Pegawai tidak ditemukan.');
+        }
         $user->load(['profile','kompetensis']);
 
         // dokumen pribadi
