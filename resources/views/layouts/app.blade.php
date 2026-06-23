@@ -145,6 +145,7 @@ textarea::placeholder {
           Log Aktivitas
         </a> --}}
 
+        
 
       @hasanyrole('admin|inovator')
         <!-- SIGAP INOVASI -->
