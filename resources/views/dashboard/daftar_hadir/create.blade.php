@@ -10,7 +10,7 @@
   </div>
 
   <form action="{{ route('sigap-daftar-hadir.store') }}" method="POST"
-        class="space-y-6">
+        class="space-y-6" enctype="multipart/form-data">
     @csrf
 
     {{-- ===== INFO KEGIATAN ===== --}}
@@ -49,6 +49,21 @@
         </div>
       </div>
     </div>
+
+    {{-- ===== UPLOAD UNDANGAN & SERTIFIKAT ===== --}}
+    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Upload Undangan (PDF)</label>
+            <input type="file" name="undangan_pdf" accept="application/pdf"
+                   class="block w-full text-sm text-gray-500
+                          file:mr-4 file:py-2 file:px-4
+                          file:rounded-xl file:border-0
+                          file:text-sm file:font-semibold
+                          file:bg-maroon-50 file:text-maroon
+                          hover:file:bg-maroon-100 focus:outline-none">
+            <p class="text-xs text-gray-500 mt-1">Opsional. Jika diisi, akan otomatis digabung dengan Daftar Hadir saat export.</p>
+            @error('undangan_pdf') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+      </div>
 
     {{-- ===== PENANDATANGAN (OPSIONAL) ===== --}}
     <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">

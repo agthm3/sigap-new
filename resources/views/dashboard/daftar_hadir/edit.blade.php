@@ -9,7 +9,7 @@
     <p class="text-sm text-gray-600 mt-1">Di sini admin bisa ubah detail kegiatan dan urutan absen peserta.</p>
   </div>
 
-  <form action="{{ route('sigap-daftar-hadir.update', $kegiatan->uuid) }}" method="POST" class="space-y-4">
+  <form action="{{ route('sigap-daftar-hadir.update', $kegiatan->uuid) }}" enctype="multipart/form-data"  method="POST" class="space-y-4">
     @csrf
     @method('PUT')
 
@@ -40,6 +40,44 @@
         </div>
       </div>
     </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4 mt-2">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Ganti Undangan (PDF)</label>
+          <input type="file" name="undangan_pdf" accept="application/pdf"
+                 class="block w-full text-sm text-gray-500
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-xl file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-maroon-50 file:text-maroon
+                        hover:file:bg-maroon-100 focus:outline-none">
+          
+          @if($kegiatan->undangan_path)
+            <div class="mt-2 flex items-center gap-1.5 text-xs text-emerald-600">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <span>Undangan sudah terupload: 
+                <a href="{{ asset('storage/' . $kegiatan->undangan_path) }}" target="_blank" class="underline font-semibold hover:text-emerald-800">
+                  Lihat File Dokumen
+                </a>
+              </span>
+            </div>
+          @else
+            <p class="text-xs text-gray-400 mt-1">Belum ada file undangan yang dilampirkan.</p>
+          @endif
+          @error('undangan_pdf') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+        </div>
+
+        <div class="flex items-center md:mt-6">
+          <input type="checkbox" name="buat_sertifikat" value="1" id="buat_sertifikat"
+                 {{ old('buat_sertifikat', $kegiatan->buat_sertifikat) ? 'checked' : '' }}
+                 class="h-5 w-5 rounded border-gray-300 text-maroon focus:ring-maroon cursor-pointer">
+          <label for="buat_sertifikat" class="ml-2 block text-sm font-medium text-gray-900 cursor-pointer">
+            Buatkan Sertifikat
+          </label>
+        </div>
+      </div>
 
     <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
       <div class="flex items-center justify-between mb-3">
