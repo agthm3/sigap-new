@@ -725,8 +725,24 @@
           </label>
 
           <label class="block">
-            <span class="text-sm font-semibold text-gray-700">Koordinat <span style="color:red">*</span></span>
-            <input name="koordinat" type="text" required class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Koordinat">
+            <span class="text-sm font-semibold text-gray-700">
+              Koordinat <span style="color:red">*</span>
+            </span>
+            <input
+              name="koordinat"
+              type="text"
+              required
+              maxlength="300"
+              id="koordinat"
+              class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon"
+              placeholder="Koordinat"
+            >
+            <p class="text-xs text-gray-500 mt-1">
+              Maksimal 300 karakter.
+            </p>
+            <p id="koordinatError" class="text-xs text-red-600 mt-1 hidden">
+              Koordinat tidak boleh lebih dari 300 karakter.
+            </p>
           </label>
           <label class="block">
             <span class="text-sm font-semibold text-gray-700">Klasifikasi Inovasi <span style="color:red">*</span></span>
@@ -1144,7 +1160,9 @@
   </div>
 </div>
 @endsection
-
+@error('koordinat')
+  <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+@enderror
 @push('scripts')
   <script>
     // Modal controls
@@ -1407,6 +1425,44 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
   });
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const koordinat = document.getElementById('koordinat');
+  const errorMsg = document.getElementById('koordinatError');
+  const form = document.getElementById('formTambah');
+
+  function validateKoordinat() {
+    if (!koordinat) return true;
+
+    const len = koordinat.value.length;
+
+    if (len > 300) {
+      errorMsg.classList.remove('hidden');
+      koordinat.setCustomValidity('Koordinat maksimal 300 karakter.');
+      return false;
+    }
+
+    errorMsg.classList.add('hidden');
+    koordinat.setCustomValidity('');
+    return true;
+  }
+
+  if (koordinat) {
+    koordinat.addEventListener('input', validateKoordinat);
+    koordinat.addEventListener('blur', validateKoordinat);
+  }
+
+  if (form) {
+    form.addEventListener('submit', function (e) {
+      if (!validateKoordinat()) {
+        e.preventDefault();
+        koordinat.focus();
+      }
+    });
+  }
 });
 </script>
 @endpush
