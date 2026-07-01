@@ -50,8 +50,9 @@
       </div>
     </div>
 
-    {{-- ===== UPLOAD UNDANGAN & SERTIFIKAT ===== --}}
-    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+{{-- ===== UPLOAD UNDANGAN & SERTIFIKAT ===== --}}
+    <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 border-t pt-4">
+        <!-- Input File Undangan PDF -->
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Upload Undangan (PDF)</label>
             <input type="file" name="undangan_pdf" accept="application/pdf"
@@ -61,9 +62,29 @@
                           file:text-sm file:font-semibold
                           file:bg-maroon-50 file:text-maroon
                           hover:file:bg-maroon-100 focus:outline-none">
-            <p class="text-xs text-gray-500 mt-1">Opsional. Jika diisi, akan otomatis digabung dengan Daftar Hadir saat export.</p>
             @error('undangan_pdf') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-      </div>
+        </div>
+
+        <!-- Input Nomor Surat -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nomor Surat/Undangan</label>
+            <input type="text" name="nomor_surat" value="{{ old('nomor_surat', $kegiatan->nomor_surat ?? '') }}"
+                   placeholder="000.9/464/BRIDA/IV/2026"
+                   class="w-full rounded-xl border-gray-300 focus:border-maroon focus:ring-maroon">
+            <p class="text-xs text-gray-500 mt-1">Jika dikosongkan, format nomor sertifikat hanya berisi SERTIF-Urutan.</p>
+            @error('nomor_surat') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+        </div>
+
+        <!-- Checkbox Buatkan Sertifikat -->
+        <div class="flex items-center mt-6">
+            <input type="checkbox" name="buat_sertifikat" value="1" id="buat_sertifikat"
+                   {{ old('buat_sertifikat', $kegiatan->buat_sertifikat ?? 0) ? 'checked' : '' }}
+                   class="h-5 w-5 rounded border-gray-300 text-maroon focus:ring-maroon cursor-pointer">
+            <label for="buat_sertifikat" class="ml-2 block text-sm font-medium text-gray-900 cursor-pointer">
+                Buatkan Sertifikat Kegiatan
+            </label>
+        </div>
+    </div>
 
     {{-- ===== PENANDATANGAN (OPSIONAL) ===== --}}
     <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">

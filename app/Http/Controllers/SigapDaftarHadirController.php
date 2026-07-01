@@ -6,6 +6,8 @@ use App\Models\SigapDaftarHadirKegiatan;
 use App\Models\SigapDaftarHadirPejabat;
 use App\Models\SigapDaftarHadirPenandatangan;
 use App\Models\SigapDaftarHadirPeserta;
+use App\Models\SertifikatKegiatan;
+use App\Models\SertifikatPeserta;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,11 +19,13 @@ use iio\libmergepdf\Merger;
 
 class SigapDaftarHadirController extends Controller
 {
+    // =========================================================================
+    // DASHBOARD — KEGIATAN
+    // =========================================================================
 
     public function index(Request $request)     
     {
         $user = Auth::user();
-
         $base = SigapDaftarHadirKegiatan::query();
 
         if (!$user->hasAnyRole(['admin', 'verif_daftarhadir'])) {
@@ -33,7 +37,6 @@ class SigapDaftarHadirController extends Controller
             $base->where('nama_kegiatan', 'like', "%{$keyword}%");
         }
 
-        // Filter berdasarkan status (draft, proses, selesai)
         if ($request->filled('status')) {
             $status = $request->get('status');
             $base->where('status', $status);
@@ -45,7 +48,7 @@ class SigapDaftarHadirController extends Controller
         $totalSelesai  = (clone $base)->where('status', 'selesai')->count();
 
         $kegiatans = (clone $base)
-            ->with(['creator']) // Eager loading creator agar tidak N+1 query
+            ->with(['creator'])
             ->withCount('peserta')
             ->latest()
             ->paginate(10);
@@ -67,20 +70,33 @@ class SigapDaftarHadirController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nama_kegiatan'               => ['required', 'string', 'max:500'],
-            'hari_tanggal'                => ['required', 'string', 'max:255'],
-            'tempat'                      => ['required', 'string', 'max:255'],
-            'waktu'                       => ['required', 'string', 'max:255'],
-            'undangan_pdf'                => ['nullable', 'file', 'mimes:pdf', 'max:5120'], // Max 5MB
-            'buat_sertifikat'             => ['nullable'],  
-            // Penandatangan — opsional
-            'pejabat.nama_lengkap'        => ['nullable', 'string', 'max:255'],
-            'pejabat.jabatan'             => ['nullable', 'string', 'max:255'],
-            'pejabat.pangkat'             => ['nullable', 'string', 'max:255'],
-            'pejabat.golongan'            => ['nullable', 'string', 'max:20'],
-            'pejabat.nip'                 => ['nullable', 'string', 'max:30'],
-            'pejabat.tempat_ttd'          => ['nullable', 'string', 'max:255'],
-            'pejabat.tanggal_ttd'         => ['nullable', 'string', 'max:255'],
+            'nama_kegiatan'        => ['required', 'string', 'max:500'],
+            'hari_tanggal'         => ['required', 'string', 'max:255'],
+            'tempat'               => ['required', 'string', 'max:255'],
+            'waktu'                => ['required', 'string', 'max:255'],
+            'undangan_pdf'         => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
+            'buat_sertifikat'      => ['nullable'],  
+            'pejabat.nama_lengkap' => ['nullable', 'string', 'max:255'],
+            'pejabat.jabatan'      => ['nullable', 'string', 'max:255'],
+            'pejabat.pangkat'      => ['nullable', 'string', 'max:255'],
+            'pejabat.golongan'     => ['nullable', 'string', 'max:20'],
+            'pejabat.nip'          => ['nullable', 'string', 'max:30'],
+            'pejabat.tempat_ttd'   => ['nullable', 'string', 'max:255'],
+            'pejabat.tanggal_ttd'  => ['nullable', 'string', 'max:255'],
+            'nomor_surat'          => [
+                'nullable', 
+                'string', 
+                'max:255',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->has('buat_sertifikat')) {
+                        $query = SigapDaftarHadirKegiatan::where('nomor_surat', trim($value))
+                            ->where('buat_sertifikat', 1);
+                        if ($query->exists()) {
+                            $fail('Nomor Surat/Undangan ini sudah digunakan pada kegiatan sertifikat lain. Silakan gunakan nomor yang berbeda agar tidak terjadi duplikasi nomor sertifikat.');
+                        }
+                    }
+                }
+            ],
         ]);
 
         $undanganPath = null;
@@ -88,20 +104,20 @@ class SigapDaftarHadirController extends Controller
             $undanganPath = $request->file('undangan_pdf')->store('sigap/daftar-hadir/undangan', 'public');
         }
 
-        DB::transaction(function () use ($request, &$kegiatan, &$undanganPath) {
+        DB::transaction(function () use ($request, &$kegiatan, $undanganPath) {
             $kegiatan = SigapDaftarHadirKegiatan::create([
-                'uuid'          => (string) Str::uuid(),
-                'nama_kegiatan' => $request->nama_kegiatan,
-                'hari_tanggal'  => $request->hari_tanggal,
-                'tempat'        => $request->tempat,
-                'waktu'         => $request->waktu,
-                'status'        => 'draft',
-                'created_by'    => Auth::id(),
+                'uuid'            => (string) Str::uuid(),
+                'nama_kegiatan'   => $request->nama_kegiatan,
+                'hari_tanggal'    => $request->hari_tanggal,
+                'tempat'          => $request->tempat,
+                'waktu'           => $request->waktu,
+                'status'          => 'draft',
+                'created_by'      => Auth::id(),
                 'undangan_path'   => $undanganPath,
                 'buat_sertifikat' => $request->has('buat_sertifikat') ? 1 : 0,
+                'nomor_surat'     => $request->input('nomor_surat'),
             ]);
 
-            // Simpan penandatangan hanya jika nama_lengkap diisi
             $pejabatInput = $request->input('pejabat', []);
             if (!empty($pejabatInput['nama_lengkap'])) {
                 $this->upsertPenandatangan($kegiatan, $pejabatInput);
@@ -116,7 +132,6 @@ class SigapDaftarHadirController extends Controller
     public function show(SigapDaftarHadirKegiatan $kegiatan)
     {
         $user = Auth::user();
-
         if (!$user->hasAnyRole(['admin', 'verif_daftarhadir'])) {
             abort_unless((int) $kegiatan->created_by === (int) $user->id, 403, 'Anda tidak memiliki akses ke kegiatan ini.');
         }
@@ -128,14 +143,12 @@ class SigapDaftarHadirController extends Controller
         ]);
 
         $qrUrl = route('sigap-daftar-hadir.public', $kegiatan->uuid);
-
         return view('dashboard.daftar_hadir.show', compact('kegiatan', 'qrUrl'));
     }
 
     public function edit(SigapDaftarHadirKegiatan $kegiatan)
     {
         $user = Auth::user();
-
         if (!$user->hasAnyRole(['admin', 'verif_daftarhadir'])) {
             abort_unless((int) $kegiatan->created_by === (int) $user->id, 403, 'Anda tidak memiliki akses ke kegiatan ini.');
         }
@@ -151,66 +164,66 @@ class SigapDaftarHadirController extends Controller
     public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
     {
         $user = Auth::user();
-
-        // 1. Validasi Hak Akses (Hanya Admin, Verifikator, atau Pembuat Kegiatan)
         if (!$user->hasAnyRole(['admin', 'verif_daftarhadir'])) {
             abort_unless((int) $kegiatan->created_by === (int) $user->id, 403, 'Anda tidak memiliki akses ke kegiatan ini.');
         }
 
-        // 2. Validasi Input Data Form
         $request->validate([
-            'nama_kegiatan'               => ['required', 'string', 'max:500'],
-            'hari_tanggal'                => ['required', 'string', 'max:255'],
-            'tempat'                      => ['required', 'string', 'max:255'],
-            'waktu'                       => ['required', 'string', 'max:255'],
-            'undangan_pdf'                => ['nullable', 'file', 'mimes:pdf', 'max:5120'], // Max 5MB
-            'buat_sertifikat'             => ['nullable'],
-            
-            // Validasi baris data peserta (jika ada)
-            'peserta'                     => ['sometimes', 'array'],
-            'peserta.*.nama'              => ['required_with:peserta', 'string', 'max:255'],
-            'peserta.*.instansi'          => ['required_with:peserta', 'string', 'max:255'],
-            'peserta.*.gender'            => ['required_with:peserta', 'in:L,P'],
-            'peserta.*.no_hp'             => ['required_with:peserta', 'string', 'max:30'],
-            'peserta.*.email'             => ['nullable', 'email', 'max:255'],
-            'peserta.*.urutan_absen'      => ['required_with:peserta', 'integer', 'min:1'],
-            
-            // Validasi data penandatangan (opsional)
-            'pejabat.nama_lengkap'        => ['nullable', 'string', 'max:255'],
-            'pejabat.jabatan'             => ['nullable', 'string', 'max:255'],
-            'pejabat.pangkat'             => ['nullable', 'string', 'max:255'],
-            'pejabat.golongan'            => ['nullable', 'string', 'max:20'],
-            'pejabat.nip'                 => ['nullable', 'string', 'max:30'],
-            'pejabat.tempat_ttd'          => ['nullable', 'string', 'max:255'],
-            'pejabat.tanggal_ttd'         => ['nullable', 'string', 'max:255'],
+            'nama_kegiatan'        => ['required', 'string', 'max:500'],
+            'hari_tanggal'         => ['required', 'string', 'max:255'],
+            'tempat'               => ['required', 'string', 'max:255'],
+            'waktu'                => ['required', 'string', 'max:255'],
+            'undangan_pdf'         => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
+            'buat_sertifikat'      => ['nullable'],
+            'peserta'              => ['sometimes', 'array'],
+            'peserta.*.nama'       => ['required_with:peserta', 'string', 'max:255'],
+            'peserta.*.instansi'   => ['required_with:peserta', 'string', 'max:255'],
+            'peserta.*.gender'     => ['required_with:peserta', 'in:L,P'],
+            'peserta.*.no_hp'      => ['required_with:peserta', 'string', 'max:30'],
+            'peserta.*.email'      => ['nullable', 'email', 'max:255'],
+            'peserta.*.urutan_absen'=> ['required_with:peserta', 'integer', 'min:1'],
+            'pejabat.nama_lengkap' => ['nullable', 'string', 'max:255'],
+            'pejabat.jabatan'      => ['nullable', 'string', 'max:255'],
+            'pejabat.pangkat'      => ['nullable', 'string', 'max:255'],
+            'pejabat.golongan'     => ['nullable', 'string', 'max:20'],
+            'pejabat.nip'          => ['nullable', 'string', 'max:30'],
+            'pejabat.tempat_ttd'   => ['nullable', 'string', 'max:255'],
+            'pejabat.tanggal_ttd'  => ['nullable', 'string', 'max:255'],
+            'nomor_surat'          => [
+                'nullable', 
+                'string', 
+                'max:255',
+                function ($attribute, $value, $fail) use ($request, $kegiatan) {
+                    if ($request->has('buat_sertifikat')) {
+                        $query = SigapDaftarHadirKegiatan::where('nomor_surat', trim($value))
+                            ->where('buat_sertifikat', 1)
+                            ->where('id', '!=', $kegiatan->id);
+                        if ($query->exists()) {
+                            $fail('Nomor Surat/Undangan ini sudah digunakan pada kegiatan sertifikat lain. Silakan gunakan nomor yang berbeda agar tidak terjadi duplikasi nomor sertifikat.');
+                        }
+                    }
+                }
+            ],
         ]);
 
         DB::transaction(function () use ($request, $kegiatan) {
-            
-            // 3. Logika Upload File Undangan PDF Baru
             if ($request->hasFile('undangan_pdf')) {
-                // Hapus berkas fisik undangan lama dari disk public jika sebelumnya pernah ada
                 if ($kegiatan->undangan_path && Storage::disk('public')->exists($kegiatan->undangan_path)) {
                     Storage::disk('public')->delete($kegiatan->undangan_path);
                 }
-
-                // Simpan berkas baru ke direktori yang ditentukan
-                $path = $request->file('undangan_pdf')->store('sigap/daftar-hadir/undangan', 'public');
-                $kegiatan->undangan_path = $path;
+                $kegiatan->undangan_path = $request->file('undangan_pdf')->store('sigap/daftar-hadir/undangan', 'public');
             }
 
-            // 4. Set Nilai Mutasi Checkbox Sertifikat
             $kegiatan->buat_sertifikat = $request->has('buat_sertifikat') ? 1 : 0;
 
-            // 5. Jalankan Perbaruan Informasi Utama Kegiatan
             $kegiatan->update([
                 'nama_kegiatan' => $request->nama_kegiatan,
                 'hari_tanggal'  => $request->hari_tanggal,
                 'tempat'        => $request->tempat,
                 'waktu'         => $request->waktu,
+                'nomor_surat'   => $request->input('nomor_surat'),
             ]);
 
-            // 6. Proses Update Data Massal Peserta Kegiatan
             $pesertaInput = collect($request->input('peserta', []));
             foreach ($pesertaInput as $id => $row) {
                 $peserta = SigapDaftarHadirPeserta::where('kegiatan_id', $kegiatan->id)
@@ -227,19 +240,16 @@ class SigapDaftarHadirController extends Controller
                 ]);
             }
 
-            // 7. Normalisasi / Re-order Urutan Nomor Absen Peserta (Agar Berurutan Rapi 1, 2, 3...)
             $sorted = $kegiatan->peserta()->orderBy('urutan_absen')->orderBy('created_at')->get();
             $urut = 1;
             foreach ($sorted as $item) {
                 $item->update(['urutan_absen' => $urut++]);
             }
 
-            // 8. Logika Perbaruan / Pembersihan Data Pejabat Penandatangan
             $pejabatInput = $request->input('pejabat', []);
             if (!empty($pejabatInput['nama_lengkap'])) {
                 $this->upsertPenandatangan($kegiatan, $pejabatInput);
             } else {
-                // Jika input nama pejabat dikosongkan, hapus relasi penandatangan (beserta file TTD-nya)
                 $existing = $kegiatan->penandatangan;
                 if ($existing) {
                     if ($existing->ttd_path && Storage::disk('public')->exists($existing->ttd_path)) {
@@ -254,6 +264,7 @@ class SigapDaftarHadirController extends Controller
             ->route('sigap-daftar-hadir.show', $kegiatan->uuid)
             ->with('success', 'Kegiatan dan data peserta berhasil diperbarui.');
     }
+
     public function updateStatus(Request $request, SigapDaftarHadirKegiatan $kegiatan)
     {
         $request->validate([
@@ -262,13 +273,42 @@ class SigapDaftarHadirController extends Controller
 
         $kegiatan->update(['status' => $request->status]);
 
+        if ($request->status === 'selesai' && $kegiatan->buat_sertifikat == 1) {
+            $sertifKegiatan = SertifikatKegiatan::firstOrCreate(
+                [
+                    'nama_kegiatan' => $kegiatan->nama_kegiatan,
+                    'tanggal'       => $kegiatan->hari_tanggal,
+                ],
+                [
+                    'jenis'      => 'Kegiatan Internal',
+                    'keterangan' => 'Auto-generate dari Daftar Hadir: ' . $kegiatan->nama_kegiatan,
+                    'status'     => 'Aktif'
+                ]
+            );
+
+            foreach ($kegiatan->peserta as $p) {
+                // Sekarang menyertakan $kegiatan->id agar terjamin unik total di database
+                $nomorDinamis = $this->formatNomorSertifikat($kegiatan->nomor_surat, $p->urutan_absen, $kegiatan->id);
+                
+                SertifikatPeserta::updateOrCreate(
+                    [
+                        'kegiatan_id'   => $sertifKegiatan->id,
+                        'nama_penerima' => $p->nama,
+                    ],
+                    [
+                        'nomor_sertifikat' => $nomorDinamis,
+                        'instansi'         => $p->instansi,
+                    ]
+                );
+            }
+        }
+
         return back()->with('success', 'Status kegiatan berhasil diperbarui.');
     }
 
     public function destroy(SigapDaftarHadirKegiatan $kegiatan)
     {
         DB::transaction(function () use ($kegiatan) {
-            // Hapus TTD peserta
             foreach ($kegiatan->peserta as $peserta) {
                 if ($peserta->ttd_path && Storage::disk('public')->exists($peserta->ttd_path)) {
                     Storage::disk('public')->delete($peserta->ttd_path);
@@ -276,7 +316,6 @@ class SigapDaftarHadirController extends Controller
             }
             $kegiatan->peserta()->delete();
 
-            // Hapus TTD penandatangan
             $penandatangan = $kegiatan->penandatangan;
             if ($penandatangan) {
                 if ($penandatangan->ttd_path && Storage::disk('public')->exists($penandatangan->ttd_path)) {
@@ -288,9 +327,7 @@ class SigapDaftarHadirController extends Controller
             $kegiatan->delete();
         });
 
-        return redirect()
-            ->route('sigap-daftar-hadir.index')
-            ->with('success', 'Kegiatan berhasil dihapus.');
+        return redirect()->route('sigap-daftar-hadir.index')->with('success', 'Kegiatan berhasil dihapus.');
     }
 
     // =========================================================================
@@ -333,17 +370,13 @@ class SigapDaftarHadirController extends Controller
     public function publicForm(SigapDaftarHadirKegiatan $kegiatan)
     {
         $kegiatan->loadCount('peserta');
-
         return view('dashboard.daftar_hadir.public-form', compact('kegiatan'));
     }
 
     public function searchPeserta(Request $request)
     {
         $q = trim((string) $request->get('q', ''));
-
-        if ($q === '') {
-            return response()->json([]);
-        }
+        if ($q === '') { return response()->json([]); }
 
         $items = SigapDaftarHadirPeserta::query()
             ->where('nama', 'like', "%{$q}%")
@@ -384,7 +417,6 @@ class SigapDaftarHadirController extends Controller
         ]);
 
         $nama = trim($request->nama);
-
         $duplicate = SigapDaftarHadirPeserta::where('kegiatan_id', $kegiatan->id)
             ->whereRaw('LOWER(nama) = ?', [Str::lower($nama)])
             ->exists();
@@ -395,10 +427,7 @@ class SigapDaftarHadirController extends Controller
 
         $ttdPath = null;
         if ($request->filled('ttd_data')) {
-            $ttdPath = $this->saveSignatureBase64(
-                $request->ttd_data,
-                'sigap/daftar-hadir/ttd/' . $kegiatan->id
-            );
+            $ttdPath = $this->saveSignatureBase64($request->ttd_data, 'sigap/daftar-hadir/ttd/' . $kegiatan->id);
         } elseif ($request->filled('existing_ttd_path')) {
             $ttdPath = ltrim(str_replace(asset('storage/'), '', $request->existing_ttd_path), '/');
         }
@@ -423,48 +452,25 @@ class SigapDaftarHadirController extends Controller
             ->with('success_kegiatan', $kegiatan->nama_kegiatan);
     }
 
-    // =========================================================================
-    // PUBLIC FORM — PEJABAT (TTD)
-    // =========================================================================
-
-    /**
-     * Form TTD untuk pejabat penandatangan.
-     * Route: GET /sigap-daftar-hadir/pejabat/{penandatangan:uuid}
-     */
     public function publicFormPejabat(SigapDaftarHadirPenandatangan $penandatangan)
     {
         $penandatangan->load('kegiatan');
-
         return view('dashboard.daftar_hadir.public-form-pejabat', compact('penandatangan'));
     }
 
-    /**
-     * Simpan TTD pejabat.
-     * Route: POST /sigap-daftar-hadir/pejabat/{penandatangan:uuid}
-     */
     public function storePublicPejabat(Request $request, SigapDaftarHadirPenandatangan $penandatangan)
     {
-        // Jika sudah TTD, tidak boleh TTD ulang (opsional — bisa dihapus jika ingin bisa revisi)
         if ($penandatangan->sudah_ttd) {
             return redirect()
                 ->route('sigap-daftar-hadir.pejabat-form', $penandatangan->uuid)
                 ->with('error', 'Tanda tangan sudah tersimpan untuk kegiatan ini.');
         }
 
-        $request->validate([
-            'ttd_data' => ['required', 'string'],
-        ]);
+        $request->validate([ 'ttd_data' => ['required', 'string'] ]);
+        $ttdPath = $this->saveSignatureBase64($request->ttd_data, 'sigap/daftar-hadir/ttd-pejabat/' . $penandatangan->kegiatan_id);
 
-        $ttdPath = $this->saveSignatureBase64(
-            $request->ttd_data,
-            'sigap/daftar-hadir/ttd-pejabat/' . $penandatangan->kegiatan_id
-        );
+        if (!$ttdPath) { return back()->with('error', 'Data TTD tidak valid.'); }
 
-        if (!$ttdPath) {
-            return back()->with('error', 'Data TTD tidak valid.');
-        }
-
-        // Hapus TTD lama jika ada
         if ($penandatangan->ttd_path && Storage::disk('public')->exists($penandatangan->ttd_path)) {
             Storage::disk('public')->delete($penandatangan->ttd_path);
         }
@@ -474,7 +480,6 @@ class SigapDaftarHadirController extends Controller
             'signed_at' => now(),
         ]);
 
-        // Update / insert master pejabat (upsert berdasarkan NIP atau nama)
         if ($penandatangan->nip) {
             SigapDaftarHadirPejabat::updateOrCreate(
                 ['nip' => $penandatangan->nip],
@@ -492,20 +497,10 @@ class SigapDaftarHadirController extends Controller
             ->with('success', 'Tanda tangan berhasil disimpan. Terima kasih, ' . $penandatangan->nama_lengkap . '.');
     }
 
-    // =========================================================================
-    // SEARCH PEJABAT (autocomplete di create/edit form)
-    // =========================================================================
-
-    /**
-     * Route: GET /sigap-daftar-hadir/pejabat/search?q=...
-     */
     public function searchPejabat(Request $request)
     {
         $q = trim((string) $request->get('q', ''));
-
-        if ($q === '') {
-            return response()->json([]);
-        }
+        if ($q === '') { return response()->json([]); }
 
         $items = SigapDaftarHadirPejabat::where('nama_lengkap', 'like', "%{$q}%")
             ->orWhere('nip', 'like', "%{$q}%")
@@ -525,21 +520,12 @@ class SigapDaftarHadirController extends Controller
         return response()->json($items);
     }
 
-    // =========================================================================
-    // VERIFIKASI PUBLIK — QR di footer PDF
-    // =========================================================================
-
-    /**
-     * Halaman verifikasi publik yang ditampilkan saat QR di footer PDF discan.
-     * Route: GET /verifikasi/daftar-hadir/{kegiatan:uuid}
-     */
     public function verifikasi(SigapDaftarHadirKegiatan $kegiatan)
     {
         $kegiatan->load([
             'penandatangan',
             'peserta' => fn ($q) => $q->orderBy('urutan_absen')->orderBy('created_at'),
         ]);
-
         return view('dashboard.daftar_hadir.verifikasi', compact('kegiatan'));
     }
 
@@ -547,36 +533,29 @@ class SigapDaftarHadirController extends Controller
     // EXPORT PDF
     // =========================================================================
 
-  public function exportPdf(SigapDaftarHadirKegiatan $kegiatan)
+    public function exportPdf(SigapDaftarHadirKegiatan $kegiatan)
     {
         $user = Auth::user();
-
-        // 1. Validasi Hak Akses (Hanya Admin, Verifikator, atau Pembuat Kegiatan)
         if (!$user->hasAnyRole(['admin', 'verif_daftarhadir'])) {
             abort_unless((int) $kegiatan->created_by === (int) $user->id, 403, 'Anda tidak memiliki akses.');
         }
 
-        // 2. Batasan Export (Hanya jika status kegiatan sudah selesai)
         abort_unless($kegiatan->status === 'selesai', 403, 'PDF hanya bisa diexport saat kegiatan selesai.');
 
-        // 3. Eager Loading Data Relasi
         $kegiatan->load([
             'penandatangan',
             'peserta' => fn ($q) => $q->orderBy('urutan_absen')->orderBy('created_at'),
         ]);
 
-        // 4. Load Asset Logo Pemerintah Kota & BRIDA ke Base64 (Untuk DomPDF)
         $logoPemkot = $this->loadLogoBase64('logo-pemkot.png');
         $logoBrida  = $this->loadLogoBase64('logo-brida.png');
 
-        // 5. Generate QR Code Verifikasi Publik
         $verifikasiUrl = route('sigap-daftar-hadir.verifikasi', $kegiatan->uuid);
         $qrVerifikasi = base64_encode(
             QrCode::format('svg')->size(120)->margin(1)->generate($verifikasiUrl)
         );
 
-        // 6. Generate Template Daftar Hadir Menggunakan DomPDF
-        $pdf = Pdf::loadView('dashboard.daftar_hadir.pdf', [
+        $pdfUtama = Pdf::loadView('dashboard.daftar_hadir.pdf', [
             'kegiatan'      => $kegiatan,
             'logoPemkot'    => $logoPemkot,
             'logoBrida'     => $logoBrida,
@@ -584,78 +563,84 @@ class SigapDaftarHadirController extends Controller
             'verifikasiUrl' => $verifikasiUrl,
         ])->setPaper('letter', 'portrait');
 
-        // 7. Logika Penggabungan PDF Jika Ada File Undangan Berformat PDF
-        if ($kegiatan->undangan_path && Storage::disk('public')->exists($kegiatan->undangan_path)) {
-            try {
-                $merger = new Merger();
-                
-                // Ambil path fisik dari file undangan di local storage
-                $pathUndangan = storage_path('app/public/' . $kegiatan->undangan_path);
-                
-                // Halaman 1+: Tambahkan file undangan asli di bagian depan
-                $merger->addFile($pathUndangan);
-                
-                // Halaman berikutnya: Tambahkan output HTML/PDF dari daftar hadir DomPDF
-                $merger->addRaw($pdf->output());
-
-                // Proses penggabungan kedua dokumen
-                $mergedPdf = $merger->merge();
-
-                // Kembalikan response berupa download file PDF gabungan
-                return response($mergedPdf)
-                    ->header('Content-Type', 'application/pdf')
-                    ->header('Content-Disposition', 'attachment; filename="daftar-hadir-' . Str::slug($kegiatan->nama_kegiatan) . '.pdf"');
+        try {
+            $merger = new Merger();
             
-            } catch (\Exception $e) {
-                // Fail-safe: Jika merger library error, sistem otomatis mendownload berkas daftar hadir saja
-                return $pdf->download(
-                    'daftar-hadir-' . Str::slug($kegiatan->nama_kegiatan) . '.pdf'
-                );
+            if ($kegiatan->undangan_path && Storage::disk('public')->exists($kegiatan->undangan_path)) {
+                $merger->addFile(storage_path('app/public/' . $kegiatan->undangan_path));
             }
+            
+            $merger->addRaw($pdfUtama->output());
+
+            if ($kegiatan->buat_sertifikat == 1) {
+                $portalSertifikatUrl = 'https://sigap.brida.makassarkota.go.id/sertifikat';
+                $qrSertifikatSvg = base64_encode(
+                    QrCode::format('svg')->size(70)->margin(0)->generate($portalSertifikatUrl)
+                );
+
+                // Cari data master kegiatan sertifikat
+                $sertifKegiatan = SertifikatKegiatan::where('nama_kegiatan', $kegiatan->nama_kegiatan)
+                    ->where('tanggal', $kegiatan->hari_tanggal)
+                    ->first();
+
+                // Mapping mengambil nomor sertifikat sah asli yang tersimpan di database
+                $kegiatan->peserta->transform(function ($p) use ($sertifKegiatan, $kegiatan) {
+                    $nomorSah = null;
+                    if ($sertifKegiatan) {
+                        $nomorSah = SertifikatPeserta::where('kegiatan_id', $sertifKegiatan->id)
+                            ->where('nama_penerima', $p->nama)
+                            ->value('nomor_sertifikat');
+                    }
+                    if (!$nomorSah) {
+                        $nomorSah = $this->formatNomorSertifikat($kegiatan->nomor_surat, $p->urutan_absen, $kegiatan->id);
+                    }
+                    $p->nomor_sertifikat_dinamis = $nomorSah;
+                    return $p;
+                });
+
+                $pdfSertifikat = Pdf::loadView('dashboard.daftar_hadir.pdf_lampiran_sertifikat', [
+                    'kegiatan'     => $kegiatan,
+                    'logoPemkot'   => $logoPemkot,
+                    'logoBrida'    => $logoBrida,
+                    'qrSertifikat' => $qrSertifikatSvg
+                ])->setPaper('letter', 'portrait');
+
+                $merger->addRaw($pdfSertifikat->output());
+            }
+
+            $mergedPdf = $merger->merge();
+            return response($mergedPdf)
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'attachment; filename="dokumen-lengkap-' . Str::slug($kegiatan->nama_kegiatan) . '.pdf"');
+        
+        } catch (\Exception $e) {
+            return $pdfUtama->download('daftar-hadir-saja-' . Str::slug($kegiatan->nama_kegiatan) . '.pdf');
         }
-
-        // 8. Default Return jika tidak melampirkan undangan
-        return $pdf->download(
-            'daftar-hadir-' . Str::slug($kegiatan->nama_kegiatan) . '.pdf'
-        );
     }
-
-    // =========================================================================
-    // PRINT QR
-    // =========================================================================
 
     public function printQr(SigapDaftarHadirKegiatan $kegiatan)
     {
         $user = Auth::user();
-
         if (!$user->hasAnyRole(['admin', 'verif_daftarhadir'])) {
             abort_unless((int) $kegiatan->created_by === (int) $user->id, 403, 'Anda tidak memiliki akses.');
         }
 
         $qrUrl        = route('sigap-daftar-hadir.public', $kegiatan->uuid);
         $instagramUrl = 'https://www.instagram.com/bridakotamakassar/';
-
         return view('dashboard.daftar_hadir.print-qr', compact('kegiatan', 'qrUrl', 'instagramUrl'));
     }
 
-    /**
-     * Print QR khusus pejabat penandatangan.
-     * Route: GET /sigap-daftar-hadir/{kegiatan}/print-qr-pejabat
-     */
     public function printQrPejabat(SigapDaftarHadirKegiatan $kegiatan)
     {
         $user = Auth::user();
-
         if (!$user->hasAnyRole(['admin', 'verif_daftarhadir'])) {
             abort_unless((int) $kegiatan->created_by === (int) $user->id, 403, 'Anda tidak memiliki akses.');
         }
 
         $penandatangan = $kegiatan->penandatangan;
-
         abort_unless($penandatangan !== null, 404, 'Kegiatan ini tidak memiliki data penandatangan.');
 
         $qrPejabatUrl = route('sigap-daftar-hadir.pejabat-form', $penandatangan->uuid);
-
         return view('dashboard.daftar_hadir.print-qr-pejabat', compact('kegiatan', 'penandatangan', 'qrPejabatUrl'));
     }
 
@@ -663,12 +648,8 @@ class SigapDaftarHadirController extends Controller
     // PRIVATE HELPERS
     // =========================================================================
 
-    /**
-     * Buat atau perbarui data penandatangan untuk satu kegiatan.
-     */
     private function upsertPenandatangan(SigapDaftarHadirKegiatan $kegiatan, array $input): void
     {
-        // Cari master pejabat (via NIP jika ada, else nama)
         $pejabatId = null;
         if (!empty($input['nip'])) {
             $master = SigapDaftarHadirPejabat::firstOrCreate(
@@ -681,7 +662,6 @@ class SigapDaftarHadirController extends Controller
                     'created_by'   => Auth::id(),
                 ]
             );
-            // Update data master jika sudah ada
             $master->update([
                 'nama_lengkap' => $input['nama_lengkap'],
                 'jabatan'      => $input['jabatan']      ?? $master->jabatan,
@@ -692,9 +672,7 @@ class SigapDaftarHadirController extends Controller
         }
 
         $existing = $kegiatan->penandatangan;
-
         if ($existing) {
-            // Jangan reset TTD yang sudah ada jika hanya update data
             $existing->update([
                 'pejabat_id'   => $pejabatId ?? $existing->pejabat_id,
                 'nama_lengkap' => $input['nama_lengkap'],
@@ -723,26 +701,46 @@ class SigapDaftarHadirController extends Controller
 
     private function saveSignatureBase64(string $data, string $folder): string
     {
-        if (!Str::startsWith($data, 'data:image/')) {
-            return '';
-        }
-
+        if (!Str::startsWith($data, 'data:image/')) { return ''; }
         [$meta, $content] = explode(',', $data, 2);
 
         $extension = 'png';
-        if (Str::contains($meta, 'image/jpeg')) {
-            $extension = 'jpg';
-        }
+        if (Str::contains($meta, 'image/jpeg')) { $extension = 'jpg'; }
 
         $binary   = base64_decode($content);
         $fileName = Str::uuid() . '.' . $extension;
         $path     = trim($folder, '/') . '/' . $fileName;
 
         Storage::disk('public')->put($path, $binary);
-
         return $path;
     }
 
+    private function formatNomorSertifikat(?string $nomorSurat, int $urutan, int $kegiatanId = 0): string
+    {
+        $paddedUrutan = str_pad($urutan, 2, '0', STR_PAD_LEFT);
+
+        if (empty($nomorSurat)) {
+            $suffix = 'SERTIF-' . $paddedUrutan;
+            if ($kegiatanId > 0) { $suffix .= '-KG' . $kegiatanId; }
+            return '000/' . $suffix . '/BRIDA/' . \Carbon\Carbon::now()->format('Y');
+        }
+
+        $nomorSurat = trim($nomorSurat);
+        $parts = explode('/', $nomorSurat);
+        
+        if (count($parts) > 1) {
+            $tahun = array_pop($parts);
+            $prefix = implode('/', $parts);
+            
+            $suffixSertif = 'SERTIF-' . $paddedUrutan;
+            if ($kegiatanId > 0) {
+                $suffixSertif .= '-KG' . $kegiatanId;
+            }
+            return $prefix . '/' . $suffixSertif . '/' . $tahun;
+        }
+
+        return $nomorSurat . '/SERTIF-' . $paddedUrutan . ($kegiatanId > 0 ? '-KG' . $kegiatanId : '');
+    }
     private function loadLogoBase64(string $filename): ?string
     {
         $candidates = [
