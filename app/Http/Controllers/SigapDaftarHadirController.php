@@ -74,7 +74,30 @@ class SigapDaftarHadirController extends Controller
             'hari_tanggal'         => ['required', 'string', 'max:255'],
             'tempat'               => ['required', 'string', 'max:255'],
             'waktu'                => ['required', 'string', 'max:255'],
-            'undangan_pdf'         => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
+            'undangan_pdf'  => [
+                'nullable', 
+                'file', 
+                'mimes:pdf', 
+                'max:5120', // Max 5MB
+                function ($attribute, $value, $fail) {
+                    // Buka file PDF dan baca 15 karakter pertama di baris paling atas
+                    $handle = fopen($value->getRealPath(), 'r');
+                    $firstLine = fgets($handle, 15);
+                    fclose($handle);
+
+                    // Baris pertama PDF selalu berisi versinya, contoh: %PDF-1.4 atau %PDF-1.7
+                    preg_match('/%PDF-(\d\.\d)/', $firstLine, $matches);
+                    
+                    if (isset($matches[1])) {
+                        $version = (float) $matches[1];
+                        
+                        // Jika versi PDF di atas 1.4 (Canva/iLovePDF biasanya 1.5 - 1.7)
+                        if ($version > 1.4) {
+                            $fail('File PDF ditolak (Terdeteksi versi PDF ' . $version . '). Sistem hanya mendukung PDF versi 1.4 kebawah. Silakan buka file tersebut di browser (Chrome/Edge), tekan Ctrl+P, lalu pilih "Save as PDF" sebelum mengunggahnya kembali.');
+                        }
+                    }
+                }
+            ],
             'buat_sertifikat'      => ['nullable'],  
             'pejabat.nama_lengkap' => ['nullable', 'string', 'max:255'],
             'pejabat.jabatan'      => ['nullable', 'string', 'max:255'],
@@ -173,7 +196,30 @@ class SigapDaftarHadirController extends Controller
             'hari_tanggal'         => ['required', 'string', 'max:255'],
             'tempat'               => ['required', 'string', 'max:255'],
             'waktu'                => ['required', 'string', 'max:255'],
-            'undangan_pdf'         => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
+            'undangan_pdf'  => [
+                'nullable', 
+                'file', 
+                'mimes:pdf', 
+                'max:5120', // Max 5MB
+                function ($attribute, $value, $fail) {
+                    // Buka file PDF dan baca 15 karakter pertama di baris paling atas
+                    $handle = fopen($value->getRealPath(), 'r');
+                    $firstLine = fgets($handle, 15);
+                    fclose($handle);
+
+                    // Baris pertama PDF selalu berisi versinya, contoh: %PDF-1.4 atau %PDF-1.7
+                    preg_match('/%PDF-(\d\.\d)/', $firstLine, $matches);
+                    
+                    if (isset($matches[1])) {
+                        $version = (float) $matches[1];
+                        
+                        // Jika versi PDF di atas 1.4 (Canva/iLovePDF biasanya 1.5 - 1.7)
+                        if ($version > 1.4) {
+                            $fail('File PDF ditolak (Terdeteksi versi PDF ' . $version . '). Sistem hanya mendukung PDF versi 1.4 kebawah. Silakan buka file tersebut di browser (Chrome/Edge), tekan Ctrl+P, lalu pilih "Save as PDF" sebelum mengunggahnya kembali.');
+                        }
+                    }
+                }
+            ],
             'buat_sertifikat'      => ['nullable'],
             'peserta'              => ['sometimes', 'array'],
             'peserta.*.nama'       => ['required_with:peserta', 'string', 'max:255'],
