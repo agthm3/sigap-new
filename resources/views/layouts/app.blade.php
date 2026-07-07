@@ -526,6 +526,16 @@ textarea::placeholder {
       </div>
       @endhasanyrole
         <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">PENGATURAN</div>
+      @hasrole('admin')
+        <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">SISTEM</div>
+        <a href="{{ route('admin.logs') }}" 
+           class="flex items-center gap-3 px-3 py-2 rounded-lg {{ request()->routeIs('admin.logs') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"/>
+          </svg>
+          Sistem Log
+        </a>
+      @endhasrole
         {{-- <a href="{{ route('logout') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M10 17l5-5-5-5"/><path stroke-width="2" d="M4 12h11"/></svg>
           Keluar

@@ -42,8 +42,8 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4 mt-2">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Ganti Undangan (PDF)</label>
+<div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Ganti/Hapus Undangan (PDF)</label>
           <input type="file" name="undangan_pdf" accept="application/pdf"
                  class="block w-full text-sm text-gray-500
                         file:mr-4 file:py-2 file:px-4
@@ -53,19 +53,28 @@
                         hover:file:bg-maroon-100 focus:outline-none">
           
           @if($kegiatan->undangan_path)
-            <div class="mt-2 flex items-center gap-1.5 text-xs text-emerald-600">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              <span>Undangan sudah terupload: 
-                <a href="{{ asset('storage/' . $kegiatan->undangan_path) }}" target="_blank" class="underline font-semibold hover:text-emerald-800">
-                  Lihat File Dokumen
-                </a>
-              </span>
+            <div class="mt-3 flex flex-col gap-2 p-3 bg-gray-50 border border-gray-200 rounded-xl">
+              <div class="flex items-center gap-1.5 text-xs text-emerald-700">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>Undangan tersimpan: 
+                  <a href="{{ asset('storage/' . $kegiatan->undangan_path) }}" target="_blank" class="underline font-bold hover:text-emerald-900">
+                    Lihat File
+                  </a>
+                </span>
+              </div>
+              
+              <label class="inline-flex items-center gap-2 cursor-pointer mt-1 w-max">
+                <input type="checkbox" name="hapus_undangan" value="1" 
+                       class="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500">
+                <span class="text-xs font-semibold text-red-600 hover:text-red-800">Hapus dokumen undangan ini</span>
+              </label>
             </div>
           @else
             <p class="text-xs text-gray-400 mt-1">Belum ada file undangan yang dilampirkan.</p>
           @endif
+          
           @error('undangan_pdf') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
         </div>
 

@@ -184,58 +184,47 @@ class SigapDaftarHadirController extends Controller
         return view('dashboard.daftar_hadir.edit', compact('kegiatan'));
     }
 
-    public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
+public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
     {
         $user = Auth::user();
+
+        // 1. Validasi Hak Akses (Hanya Admin, Verifikator, atau Pembuat Kegiatan)
         if (!$user->hasAnyRole(['admin', 'verif_daftarhadir'])) {
             abort_unless((int) $kegiatan->created_by === (int) $user->id, 403, 'Anda tidak memiliki akses ke kegiatan ini.');
         }
 
+        // 2. Validasi Input Data Form
         $request->validate([
-            'nama_kegiatan'        => ['required', 'string', 'max:500'],
-            'hari_tanggal'         => ['required', 'string', 'max:255'],
-            'tempat'               => ['required', 'string', 'max:255'],
-            'waktu'                => ['required', 'string', 'max:255'],
-            'undangan_pdf'  => [
+            'nama_kegiatan'         => ['required', 'string', 'max:500'],
+            'hari_tanggal'          => ['required', 'string', 'max:255'],
+            'tempat'                => ['required', 'string', 'max:255'],
+            'waktu'                 => ['required', 'string', 'max:255'],
+            'buat_sertifikat'       => ['nullable'],
+            'hapus_undangan'        => ['nullable', 'in:1'],
+            
+            // VALIDASI FILE: Hanya menerima versi PDF 1.4 ke bawah (Anti-Crash Merger)
+            'undangan_pdf'          => [
                 'nullable', 
                 'file', 
                 'mimes:pdf', 
-                'max:5120', // Max 5MB
+                'max:5120', 
                 function ($attribute, $value, $fail) {
-                    // Buka file PDF dan baca 15 karakter pertama di baris paling atas
                     $handle = fopen($value->getRealPath(), 'r');
                     $firstLine = fgets($handle, 15);
                     fclose($handle);
 
-                    // Baris pertama PDF selalu berisi versinya, contoh: %PDF-1.4 atau %PDF-1.7
                     preg_match('/%PDF-(\d\.\d)/', $firstLine, $matches);
-                    
                     if (isset($matches[1])) {
                         $version = (float) $matches[1];
-                        
-                        // Jika versi PDF di atas 1.4 (Canva/iLovePDF biasanya 1.5 - 1.7)
                         if ($version > 1.4) {
                             $fail('File PDF ditolak (Terdeteksi versi PDF ' . $version . '). Sistem hanya mendukung PDF versi 1.4 kebawah. Silakan buka file tersebut di browser (Chrome/Edge), tekan Ctrl+P, lalu pilih "Save as PDF" sebelum mengunggahnya kembali.');
                         }
                     }
                 }
             ],
-            'buat_sertifikat'      => ['nullable'],
-            'peserta'              => ['sometimes', 'array'],
-            'peserta.*.nama'       => ['required_with:peserta', 'string', 'max:255'],
-            'peserta.*.instansi'   => ['required_with:peserta', 'string', 'max:255'],
-            'peserta.*.gender'     => ['required_with:peserta', 'in:L,P'],
-            'peserta.*.no_hp'      => ['required_with:peserta', 'string', 'max:30'],
-            'peserta.*.email'      => ['nullable', 'email', 'max:255'],
-            'peserta.*.urutan_absen'=> ['required_with:peserta', 'integer', 'min:1'],
-            'pejabat.nama_lengkap' => ['nullable', 'string', 'max:255'],
-            'pejabat.jabatan'      => ['nullable', 'string', 'max:255'],
-            'pejabat.pangkat'      => ['nullable', 'string', 'max:255'],
-            'pejabat.golongan'     => ['nullable', 'string', 'max:20'],
-            'pejabat.nip'          => ['nullable', 'string', 'max:30'],
-            'pejabat.tempat_ttd'   => ['nullable', 'string', 'max:255'],
-            'pejabat.tanggal_ttd'  => ['nullable', 'string', 'max:255'],
-            'nomor_surat'          => [
+
+            // VALIDASI ANTISIPASI DUPLIKAT NOMOR SURAT
+            'nomor_surat'           => [
                 'nullable', 
                 'string', 
                 'max:255',
@@ -250,18 +239,47 @@ class SigapDaftarHadirController extends Controller
                     }
                 }
             ],
+            
+            // Validasi baris data peserta (jika ada)
+            'peserta'               => ['sometimes', 'array'],
+            'peserta.*.nama'        => ['required_with:peserta', 'string', 'max:255'],
+            'peserta.*.instansi'    => ['required_with:peserta', 'string', 'max:255'],
+            'peserta.*.gender'      => ['required_with:peserta', 'in:L,P'],
+            'peserta.*.no_hp'       => ['required_with:peserta', 'string', 'max:30'],
+            'peserta.*.email'       => ['nullable', 'email', 'max:255'],
+            'peserta.*.urutan_absen'=> ['required_with:peserta', 'integer', 'min:1'],
+            
+            // Validasi data penandatangan (opsional)
+            'pejabat.nama_lengkap'  => ['nullable', 'string', 'max:255'],
+            'pejabat.jabatan'       => ['nullable', 'string', 'max:255'],
+            'pejabat.pangkat'       => ['nullable', 'string', 'max:255'],
+            'pejabat.golongan'      => ['nullable', 'string', 'max:20'],
+            'pejabat.nip'           => ['nullable', 'string', 'max:30'],
+            'pejabat.tempat_ttd'    => ['nullable', 'string', 'max:255'],
+            'pejabat.tanggal_ttd'   => ['nullable', 'string', 'max:255'],
         ]);
 
         DB::transaction(function () use ($request, $kegiatan) {
-            if ($request->hasFile('undangan_pdf')) {
+            
+            // 3. Logika Penanganan File Undangan (Simpan / Ganti / Hapus)
+            if ($request->has('hapus_undangan') && $request->hapus_undangan == '1') {
+                // Proses Hapus: Musnahkan file dari storage dan set null di database
+                if ($kegiatan->undangan_path && Storage::disk('public')->exists($kegiatan->undangan_path)) {
+                    Storage::disk('public')->delete($kegiatan->undangan_path);
+                }
+                $kegiatan->undangan_path = null;
+            } elseif ($request->hasFile('undangan_pdf')) {
+                // Proses Ganti: Hapus yang lama, simpan yang baru
                 if ($kegiatan->undangan_path && Storage::disk('public')->exists($kegiatan->undangan_path)) {
                     Storage::disk('public')->delete($kegiatan->undangan_path);
                 }
                 $kegiatan->undangan_path = $request->file('undangan_pdf')->store('sigap/daftar-hadir/undangan', 'public');
             }
 
+            // 4. Set Nilai Mutasi Checkbox Sertifikat
             $kegiatan->buat_sertifikat = $request->has('buat_sertifikat') ? 1 : 0;
 
+            // 5. Jalankan Perbaruan Informasi Utama Kegiatan
             $kegiatan->update([
                 'nama_kegiatan' => $request->nama_kegiatan,
                 'hari_tanggal'  => $request->hari_tanggal,
@@ -270,6 +288,7 @@ class SigapDaftarHadirController extends Controller
                 'nomor_surat'   => $request->input('nomor_surat'),
             ]);
 
+            // 6. Proses Update Data Massal Peserta Kegiatan
             $pesertaInput = collect($request->input('peserta', []));
             foreach ($pesertaInput as $id => $row) {
                 $peserta = SigapDaftarHadirPeserta::where('kegiatan_id', $kegiatan->id)
@@ -286,12 +305,14 @@ class SigapDaftarHadirController extends Controller
                 ]);
             }
 
+            // 7. Normalisasi / Re-order Urutan Nomor Absen Peserta
             $sorted = $kegiatan->peserta()->orderBy('urutan_absen')->orderBy('created_at')->get();
             $urut = 1;
             foreach ($sorted as $item) {
                 $item->update(['urutan_absen' => $urut++]);
             }
 
+            // 8. Logika Perbaruan / Pembersihan Data Pejabat Penandatangan
             $pejabatInput = $request->input('pejabat', []);
             if (!empty($pejabatInput['nama_lengkap'])) {
                 $this->upsertPenandatangan($kegiatan, $pejabatInput);

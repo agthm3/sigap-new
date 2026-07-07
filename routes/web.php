@@ -40,6 +40,7 @@ use App\Http\Controllers\SigapSertifikatController;
 use App\Http\Controllers\SigapNarasumberController;
 use App\Http\Controllers\SpjBidangController;
 use App\Http\Controllers\SpjController;
+use Rap2hpoutre\LaravelLogViewer\LogViewerController;
 
 // --- Public
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -650,5 +651,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{uuid}/download', [App\Http\Controllers\SpjController::class, 'downloadPublicReport'])->name('download');
     });
 
+    Route::group(['middleware' => ['auth', 'role:admin']], function () {
+        Route::get('admin/logs', [LogViewerController::class, 'index'])->name('admin.logs');
+    });
     
 });
