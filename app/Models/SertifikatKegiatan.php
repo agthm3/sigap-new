@@ -11,7 +11,8 @@ class SertifikatKegiatan extends Model
         'jenis',
         'tanggal',
         'keterangan',
-        'status'
+        'status',
+        'tempat'
     ];
 
     public function sertifikat()

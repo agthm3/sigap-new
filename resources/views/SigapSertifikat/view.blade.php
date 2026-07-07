@@ -166,9 +166,10 @@ atas partisipasi dalam kegiatan
 {{ $sertifikat->kegiatan->nama_kegiatan }}
 </p>
 
-<p class="mt-4 text-gray-600 max-w-2xl mx-auto">
+<p class="mt-4 text-gray-600 max-w-2xl mx-auto leading-relaxed">
 yang diselenggarakan oleh
-<strong>Badan Riset dan Inovasi Daerah Kota Makassar</strong>
+<strong>Badan Riset dan Inovasi Daerah Kota Makassar</strong><br>
+pada tanggal <strong>{{ $sertifikat->kegiatan->tanggal }}</strong> di <strong>{{ $sertifikat->kegiatan->tempat ?? 'Kota Makassar' }}</strong>
 </p>
 
 </div>

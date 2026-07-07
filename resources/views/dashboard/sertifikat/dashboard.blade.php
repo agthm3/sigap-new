@@ -47,6 +47,7 @@
             <th class="px-4 py-3">Nama Kegiatan</th>
             <th class="px-4 py-3">Jenis</th>
             <th class="px-4 py-3">Tanggal</th>
+            <th class="px-4 py-3">Tempat</th>
             <th class="px-4 py-3">Jumlah Sertifikat</th>
             <th class="px-4 py-3">Status</th>
             <th class="px-4 py-3">Aksi</th>
@@ -69,6 +70,10 @@
             <td class="px-4 py-3">
             {{ $item->tanggal }}
             </td>
+            <td class="px-4 py-3">
+            {{ $item->tempat }}
+            </td>
+
 
             <td class="px-4 py-3">
             0
@@ -163,10 +168,17 @@
         </div>
       </div>
 
-      <div>
-        <label class="text-sm font-semibold text-gray-700">Tanggal / Periode</label>
-        <input type="text" name="tanggal" placeholder="Contoh: 12 Jan – 6 Feb 2026"
-          class="mt-1.5 w-full rounded-lg border border-gray-300 p-2 focus:border-maroon focus:ring-maroon">
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div>
+          <label class="text-sm font-semibold text-gray-700">Tanggal / Periode</label>
+          <input type="text" name="tanggal" placeholder="Contoh: 12 Jan – 6 Feb 2026"
+            class="mt-1.5 w-full rounded-lg border border-gray-300 p-2 focus:border-maroon focus:ring-maroon">
+        </div>
+        <div>
+          <label class="text-sm font-semibold text-gray-700">Tempat</label>
+          <input type="text" name="tempat" placeholder="Contoh: Hotel Claro Makassar"
+            class="mt-1.5 w-full rounded-lg border border-gray-300 p-2 focus:border-maroon focus:ring-maroon">
+        </div>
       </div>
 
       <div>

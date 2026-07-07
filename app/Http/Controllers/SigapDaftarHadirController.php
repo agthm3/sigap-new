@@ -19,10 +19,6 @@ use iio\libmergepdf\Merger;
 
 class SigapDaftarHadirController extends Controller
 {
-    // =========================================================================
-    // DASHBOARD — KEGIATAN
-    // =========================================================================
-
     public function index(Request $request)     
     {
         $user = Auth::user();
@@ -332,7 +328,7 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
             ->with('success', 'Kegiatan dan data peserta berhasil diperbarui.');
     }
 
-    public function updateStatus(Request $request, SigapDaftarHadirKegiatan $kegiatan)
+public function updateStatus(Request $request, SigapDaftarHadirKegiatan $kegiatan)
     {
         $request->validate([
             'status' => ['required', 'in:draft,proses,selesai'],
@@ -340,21 +336,26 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
 
         $kegiatan->update(['status' => $request->status]);
 
+        // JIKA STATUS SELESAI DAN MINTA DIBUATKAN SERTIFIKAT -> GENERATE KE TABEL SERTIFIKAT
         if ($request->status === 'selesai' && $kegiatan->buat_sertifikat == 1) {
-            $sertifKegiatan = SertifikatKegiatan::firstOrCreate(
+            
+            // 1. Buat / Perbarui master kegiatan di tabel sertifikat_kegiatans beserta TANGGAL dan TEMPAT
+            $sertifKegiatan = SertifikatKegiatan::updateOrCreate(
                 [
                     'nama_kegiatan' => $kegiatan->nama_kegiatan,
-                    'tanggal'       => $kegiatan->hari_tanggal,
+                    'tanggal'       => $kegiatan->hari_tanggal, // Mengambil data Hari/Tanggal daftar hadir
                 ],
                 [
+                    'tempat'     => $kegiatan->tempat,       // ← MENYIMPAN DATA TEMPAT DAFTAR HADIR KE SERTIFIKAT
                     'jenis'      => 'Kegiatan Internal',
                     'keterangan' => 'Auto-generate dari Daftar Hadir: ' . $kegiatan->nama_kegiatan,
                     'status'     => 'Aktif'
                 ]
             );
 
+            // 2. Looping seluruh peserta dan buatkan data sertifikatnya
             foreach ($kegiatan->peserta as $p) {
-                // Sekarang menyertakan $kegiatan->id agar terjamin unik total di database
+                // Menyertakan $kegiatan->id agar terjamin unik total di database
                 $nomorDinamis = $this->formatNomorSertifikat($kegiatan->nomor_surat, $p->urutan_absen, $kegiatan->id);
                 
                 SertifikatPeserta::updateOrCreate(
@@ -372,7 +373,7 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
 
         return back()->with('success', 'Status kegiatan berhasil diperbarui.');
     }
-
+    
     public function destroy(SigapDaftarHadirKegiatan $kegiatan)
     {
         DB::transaction(function () use ($kegiatan) {

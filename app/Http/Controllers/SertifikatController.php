@@ -24,12 +24,14 @@ class SertifikatController extends Controller
             'nama_kegiatan' => 'required',
             'jenis' => 'required',
             'tanggal' => 'required',
+            'tempat' => 'required',
             'status' => 'required'
         ]);
 
         SertifikatKegiatan::create([
             'nama_kegiatan' => $request->nama_kegiatan,
             'jenis' => $request->jenis,
+            'tempat' => $request->tempat,
             'tanggal' => $request->tanggal,
             'keterangan' => $request->keterangan,
             'status' => $request->status
