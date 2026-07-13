@@ -835,4 +835,36 @@ public function updateStatus(Request $request, SigapDaftarHadirKegiatan $kegiata
 
         return null;
     }
+
+    // =========================================================================
+    // LIVE PREVIEW ABSENSI
+    // =========================================================================
+
+    public function livePreview(SigapDaftarHadirKegiatan $kegiatan)
+    {
+        // Memastikan hanya pembuat atau admin yang bisa mengakses
+        $user = Auth::user();
+        if (!$user->hasAnyRole(['admin', 'verif_daftarhadir'])) {
+            abort_unless((int) $kegiatan->created_by === (int) $user->id, 403, 'Anda tidak memiliki akses.');
+        }
+
+        return view('dashboard.daftar_hadir.live', compact('kegiatan'));
+    }
+
+    public function liveData(SigapDaftarHadirKegiatan $kegiatan)
+    {
+        // Mengambil data peserta secara realtime untuk di-fetch via AJAX
+        $peserta = $kegiatan->peserta()
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(function($p) {
+                return [
+                    'nama'     => $p->nama,
+                    'instansi' => $p->instansi,
+                    'gender'   => $p->gender, // L atau P
+                ];
+            });
+
+        return response()->json($peserta);
+    }
 }

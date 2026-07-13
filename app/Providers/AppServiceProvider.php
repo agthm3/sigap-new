@@ -19,6 +19,9 @@ class AppServiceProvider extends ServiceProvider
         \SimpleSoftwareIO\QrCode\Facades\QrCode::class,
         'QrCode'
         );  
+        $this->app->bind('path.public', function() {
+            return base_path('../public_html');
+        });
     }
 
     /**

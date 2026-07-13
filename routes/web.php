@@ -541,6 +541,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{kegiatan}/print-qr', [SigapDaftarHadirController::class, 'printQr'])     ->name('print-qr');
         Route::get('/{kegiatan}/print-qr-pejabat',[SigapDaftarHadirController::class, 'printQrPejabat'])->name('print-qr-pejabat');
  
+        Route::get('/{kegiatan}/live', [SigapDaftarHadirController::class, 'livePreview'])->name('live');
+        Route::get('/{kegiatan}/live-data', [SigapDaftarHadirController::class, 'liveData'])->name('live-data');
         // Route search pejabat (autocomplete di form create/edit)
         // Letakkan SEBELUM /{kegiatan} wildcard, bersama route statis lainnya:
         Route::get('/pejabat/search',[SigapDaftarHadirController::class, 'searchPejabat'])->name('search-pejabat');
