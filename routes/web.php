@@ -41,6 +41,7 @@ use App\Http\Controllers\SigapNarasumberController;
 use App\Http\Controllers\SpjBidangController;
 use App\Http\Controllers\SpjController;
 use Rap2hpoutre\LaravelLogViewer\LogViewerController;
+use App\Http\Controllers\SigapIgaController;
 
 // --- Public
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -153,6 +154,14 @@ Route::prefix('/sigap-inovasi')->middleware('auth', 'role:inovator|admin')->grou
     Route::get ('/konfigurasi', [SigapInovasiController::class, 'konfigurasi'])->name('sigap-inovasi.konfigurasi');
     Route::get ('/dashboard',   [SigapInovasiController::class, 'dashboard'])->name('sigap-inovasi.dashboard');
     Route::post('/sigap-inovasi',             [SigapInovasiController::class, 'store'])->name('sigap-inovasi.store');
+
+    // ==========================================
+    // ROUTE BARU: AKUN IGA BSKDN KEMENDAGRI
+    // ==========================================
+    Route::get('/iga', [SigapIgaController::class, 'index'])->name('sigap-iga.index');
+    Route::post('/iga', [SigapIgaController::class, 'store'])->name('sigap-iga.store');
+
+
     // Evidence routes (taruh sebelum {id} agar tidak ketimpa)
     Route::get   ('/sigap-inovasi/{inovasi}/evidence',              [EvidenceController::class,'index'])->name('evidence.index');
     Route::post  ('/sigap-inovasi/{inovasi}/evidence',              [EvidenceController::class,'store'])->name('evidence.store');

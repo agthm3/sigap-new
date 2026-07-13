@@ -176,11 +176,21 @@ textarea::placeholder {
           <a href="{{ route('sigap-inovasi.index') }}"
             class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
             {{ request()->routeIs('sigap-inovasi.index') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path stroke-width="2" d="M3 21h18M9 21V9h6v12M4 10h16v11H4V10zM12 3l8 6H4l8-6z"/>
-          </svg>
-          Inovasi Daerah
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-width="2" d="M3 21h18M9 21V9h6v12M4 10h16v11H4V10zM12 3l8 6H4l8-6z"/>
+            </svg>
+            Inovasi Daerah
           </a>
+          
+          <a href="{{ route('sigap-iga.index') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+            {{ request()->routeIs('sigap-iga.*') ? 'bg-[#002B4C] text-white' : 'hover:bg-gray-100' }}">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-width="2" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            Akun IGA BSKDN
+          </a>
+
           <a href="{{ route('sigap-inovasi.konfigurasi') }}"
             class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
             {{ request()->routeIs('sigap-inovasi.konfigurasi') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
