@@ -56,6 +56,44 @@
       </div>
     </div>
 
+    <!-- SECTION BARU: KONTAK BANTUAN WHATSAPP (DENGAN TEMPLATE PESAN DEFAULT) -->
+    <div class="mt-4 p-5 rounded-2xl border border-amber-200 bg-amber-50/60 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="flex gap-3 items-start sm:items-center">
+        <div class="p-2.5 bg-amber-100 text-amber-900 rounded-xl shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-gray-900">Akun IGA Dinas atau UPT Anda Tidak Ditemukan?</h4>
+          <p class="text-xs text-gray-600 mt-0.5">Jika instansi Anda belum terdaftar dalam pangkalan data, silakan hubungi tim fasilitator BRIDA Makassar melalui jalur koordinasi berikut:</p>
+        </div>
+      </div>
+
+      <!-- Tombol WhatsApp Akses Langsung -->
+      <div class="flex flex-wrap items-center gap-2 shrink-0">
+        <!-- Pak Ikrom -->
+        <a href="https://wa.me/6285255245231?text=tabe%20pak%2C%20saya%20dari%20%5BISI%20NAMA%20DINAS%20ANDA%5D%0A%0Auntuk%20kantor%2Fdinas%20saya%20belum%20ada%20akun%20IGAnya%2C%20mohon%20untuk%20dibuatkan%20atau%20dicekkan%20apakah%20ada%20akun%20untuk%20dinas%2/kantor%20saya%20pak%20%F0%9F%99%8F" 
+           target="_blank" 
+           class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors shadow-sm">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397 0 11.966 0c3.178.001 6.165 1.24 8.413 3.491 2.247 2.253 3.484 5.244 3.481 8.425-.003 6.616-5.34 11.965-11.909 11.965-2.005-.001-3.973-.507-5.729-1.476L0 24zm6.59-4.846c1.62.962 3.204 1.47 4.778 1.471 5.42 0 9.83-4.414 9.833-9.84.002-2.628-1.02-5.101-2.877-6.958C16.466 1.97 13.999.95 11.379.95c-5.424 0-9.832 4.412-9.835 9.84-.001 1.77.477 3.497 1.385 5.085L1.892 22.18l6.305-1.654z"/>
+          </svg>
+          Pak Ikrom (Fasilitator)
+        </a>
+
+        <!-- Pak Budi -->
+        <a href="https://wa.me/6282343447786?text=tabe%20pak%2C%20saya%20dari%20%5BISI%20NAMA%20DINAS%20ANDA%5D%0A%0Auntuk%20kantor%2Fdinas%20saya%20belum%20ada%20akun%20IGAnya%2C%20mohon%20untuk%20dibuatkan%20atau%20dicekkan%20apakah%20ada%20akun%20untuk%20dinas%2/kantor%20saya%20pak%20%F0%9F%99%8F" 
+           target="_blank" 
+           class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors shadow-sm">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397 0 11.966 0c3.178.001 6.165 1.24 8.413 3.491 2.247 2.253 3.484 5.244 3.481 8.425-.003 6.616-5.34 11.965-11.909 11.965-2.005-.001-3.973-.507-5.729-1.476L0 24zm6.59-4.846c1.62.962 3.204 1.47 4.778 1.471 5.42 0 9.83-4.414 9.833-9.84.002-2.628-1.02-5.101-2.877-6.958C16.466 1.97 13.999.95 11.379.95c-5.424 0-9.832 4.412-9.835 9.84-.001 1.77.477 3.497 1.385 5.085L1.892 22.18l6.305-1.654z"/>
+          </svg>
+          Pak Budi (Bidang Inovasi)
+        </a>
+      </div>
+    </div>
+
     <!-- Statistik Ringkas -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
       <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
