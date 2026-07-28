@@ -55,6 +55,13 @@ textarea::placeholder {
   <!-- Chart.js -->
   {{-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> --}}
 @stack('head')
+
+<!-- PWA Meta Tags -->
+<link rel="manifest" href="https://sigap.brida.makassarkota.go.id/manifest.json?v=3">
+<meta name="theme-color" content="#7a2222">
+
+<!-- Apple Touch Icon -->
+<link rel="apple-touch-icon" sizes="192x192" href="https://sigap.brida.makassarkota.go.id/images/icon-192.png">
 </head>
 <body class="bg-gray-50 text-gray-800">
 
@@ -937,5 +944,15 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
  
     @stack('scripts')
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('Service Worker terdaftar:', reg))
+            .catch(err => console.log('Service Worker gagal:', err));
+        });
+      }
+</script>
 </body>
 </html>

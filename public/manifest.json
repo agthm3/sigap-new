@@ -1,0 +1,36 @@
+{
+  "name": "SIGAP SKP Upload Mandiri",
+  "short_name": "SIGAP SKP",
+  "start_url": "https://sigap.brida.makassarkota.go.id/sigap-skp/upload-mandiri",
+  "scope": "https://sigap.brida.makassarkota.go.id/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#7a2222",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://sigap.brida.makassarkota.go.id/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://sigap.brida.makassarkota.go.id/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "https://sigap.brida.makassarkota.go.id/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://sigap.brida.makassarkota.go.id/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

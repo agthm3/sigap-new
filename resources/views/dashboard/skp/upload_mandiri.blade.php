@@ -30,6 +30,13 @@
     body { font-family: Inter, system-ui, sans-serif; }
     [x-cloak] { display: none !important; }
   </style>
+
+<!-- PWA Meta Tags -->
+<link rel="manifest" href="https://sigap.brida.makassarkota.go.id/manifest.json?v=3">
+<meta name="theme-color" content="#7a2222">
+
+<!-- Apple Touch Icon -->
+<link rel="apple-touch-icon" sizes="192x192" href="https://sigap.brida.makassarkota.go.id/images/icon-192.png">
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col justify-between">
 
