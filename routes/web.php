@@ -1,27 +1,19 @@
 <?php
 
 use App\Http\Controllers\Api\UserSearchController;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
-
-use App\Http\Controllers\page\HomeController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\ProfileController;
-
-use App\Http\Controllers\SigapDokumenController;
-use App\Http\Controllers\SigapInovasiController;
-use App\Http\Controllers\EvidenceController;
-use App\Http\Controllers\Dashboard\EvidenceConfigController;
-
-use App\Http\Controllers\SigapPegawaiController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Dashboard\EvidenceConfigController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EvidenceController;
 use App\Http\Controllers\FormatController;
 use App\Http\Controllers\InovasiReviewController;
+use App\Http\Controllers\page\HomeController;
 use App\Http\Controllers\page\PegawaiPublicController as PagePegawaiPublicController;
 use App\Http\Controllers\PegawaiProfilController;
 use App\Http\Controllers\PegawaiProfileController;
 use App\Http\Controllers\PegawaiPublicController;
 use App\Http\Controllers\PersonalDocumentController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfileOrganisasiController;
 use App\Http\Controllers\RewardController;
 use App\Http\Controllers\RisetController;
@@ -30,18 +22,24 @@ use App\Http\Controllers\SigapAbsensiController;
 use App\Http\Controllers\SigapAgendaController;
 use App\Http\Controllers\SigapAutoController;
 use App\Http\Controllers\SigapDaftarHadirController;
+use App\Http\Controllers\SigapDokumenController;
 use App\Http\Controllers\SigapFormatController;
-use App\Http\Controllers\SigapKinerjaController;
-use App\Http\Controllers\SigapRisetController;
+use App\Http\Controllers\SigapIgaController;
 use App\Http\Controllers\SigapInkubatormaController;
+use App\Http\Controllers\SigapInovasiController;
+use App\Http\Controllers\SigapKinerjaController;
+use App\Http\Controllers\SigapNarasumberController;
+use App\Http\Controllers\SigapPegawaiController;
 use App\Http\Controllers\SigapPicController;
 use App\Http\Controllers\SigapPpdController;
+use App\Http\Controllers\SigapRisetController;
 use App\Http\Controllers\SigapSertifikatController;
-use App\Http\Controllers\SigapNarasumberController;
+use App\Http\Controllers\SkpController;
 use App\Http\Controllers\SpjBidangController;
 use App\Http\Controllers\SpjController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Rap2hpoutre\LaravelLogViewer\LogViewerController;
-use App\Http\Controllers\SigapIgaController;
 
 // --- Public
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -664,6 +662,30 @@ Route::middleware(['auth'])->group(function () {
 
     Route::group(['middleware' => ['auth', 'role:admin']], function () {
         Route::get('admin/logs', [LogViewerController::class, 'index'])->name('admin.logs');
+    });
+
+    Route::middleware(['auth'])->group(function () {
+
+        Route::prefix('sigap-skp')->name('sigap-skp.')->group(function () {
+
+            Route::middleware(['role:admin|verif_skp|employee'])->group(function () {
+                Route::get('/', [SkpController::class, 'index'])->name('index');
+                Route::get('/pribadi/ku', [SkpController::class, 'pribadi'])->name('pribadi');
+
+                // ROUTE BARU UPLOAD MANDIRI
+                Route::get('/upload-mandiri', [SkpController::class, 'uploadMandiri'])->name('upload-mandiri');
+                Route::post('/store-mandiri', [SkpController::class, 'storeMandiri'])->name('store-mandiri');
+
+                Route::get('/{slug}', [SkpController::class, 'show'])->name('show');
+            });
+
+            Route::middleware(['role:admin|verif_skp'])->group(function () {
+                Route::post('/store', [SkpController::class, 'store'])->name('store');
+                Route::delete('/{slug}', [SkpController::class, 'destroy'])->name('destroy');
+            });
+
+        });
+
     });
     
 });

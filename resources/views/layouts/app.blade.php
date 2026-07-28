@@ -123,6 +123,50 @@ textarea::placeholder {
           Kinerja
         </a>
         @endhasrole
+        @hasanyrole('admin|verif_skp|employee')
+      <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">
+        SIGAP SKP
+      </div>
+      
+      {{-- Toggle --}}
+      <button id="skpToggle"
+              class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-left">
+        <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 16h6M12 3v2M12 19v2M19 12h2M3 12h2"/>
+          <rect x="5" y="4" width="14" height="16" rx="2" stroke-width="2" />
+        </svg>
+        <span class="font-medium">SIGAP SKP</span>
+        <svg id="skpCaret"
+            class="w-4 h-4 ml-auto transition-transform duration-200"
+            viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-width="2" d="M6 9l6 6 6-6"/>
+        </svg>
+      </button>
+      
+      {{-- Dropdown --}}
+      <div id="skpMenu" class="ml-3 mt-1 space-y-1 hidden">
+        <a href="{{ route('sigap-skp.index') }}"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+          {{ request()->routeIs('sigap-skp.index') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4" stroke-width="2"/>
+            <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          SKP Umum
+        </a>
+        
+        <a href="{{ route('sigap-skp.pribadi') }}"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+          {{ request()->routeIs('sigap-skp.pribadi') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4" stroke-width="2"/>
+          </svg>
+          SKP Pribadi
+        </a>
+      </div>
+      @endhasanyrole
         @hasrole('admin|verificator|employee')
             <a href="{{ route('sigap-agenda.index') }}"
           class="flex items-center gap-3 px-3 py-2 rounded-lg
@@ -852,6 +896,33 @@ document.addEventListener("DOMContentLoaded", function () {
     spjMenu.classList.toggle('hidden');
     spjCaret.classList.toggle('rotate-180', willOpen);
     localStorage.setItem(SPJ_KEY, willOpen ? '1' : '0');
+  });
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const skpToggle = document.getElementById('skpToggle');
+  const skpMenu   = document.getElementById('skpMenu');
+  const skpCaret  = document.getElementById('skpCaret');
+ 
+  if (!skpToggle) return;
+ 
+  const SKP_KEY     = 'sb_skp_open';
+  const isOpenSaved = localStorage.getItem(SKP_KEY) === '1';
+ 
+  // Auto-buka jika sedang di halaman SKP
+  const isOnSKP = window.location.pathname.includes('/sigap-skp');
+ 
+  if (isOpenSaved || isOnSKP) {
+    skpMenu.classList.remove('hidden');
+    skpCaret.classList.add('rotate-180');
+  }
+ 
+  skpToggle.addEventListener('click', () => {
+    const willOpen = skpMenu.classList.contains('hidden');
+    skpMenu.classList.toggle('hidden');
+    skpCaret.classList.toggle('rotate-180', willOpen);
+    localStorage.setItem(SKP_KEY, willOpen ? '1' : '0');
   });
 });
 </script>
