@@ -33,7 +33,17 @@
       </h3>
     </div>
   </div>
+<div class="flex items-center gap-2">
+  <a href="{{ route('sigap-skp.kumpulan.index') }}"
+     class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gray-900 text-white text-xs font-semibold hover:bg-gray-800 transition-colors shadow-sm">
+    📂 Kategori & Rekap Link
+  </a>
 
+  <a href="{{ route('sigap-skp.upload-mandiri') }}"
+     class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors shadow-sm">
+    📷 Upload Mandiri
+  </a>
+</div>
   {{-- Filter Section --}}
   <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
     <form action="{{ route('sigap-skp.pribadi') }}" method="GET" class="flex flex-col sm:flex-row gap-3">

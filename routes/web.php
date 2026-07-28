@@ -666,6 +666,34 @@ Route::middleware(['auth'])->group(function () {
 
    
 
+    // Route::middleware(['auth'])->group(function () {
+
+    //     Route::prefix('sigap-skp')->name('sigap-skp.')->group(function () {
+
+    //         Route::middleware(['role:admin|verif_skp|employee'])->group(function () {
+    //             Route::get('/', [SkpController::class, 'index'])->name('index');
+    //             Route::get('/pribadi/ku', [SkpController::class, 'pribadi'])->name('pribadi');
+
+    //             Route::get('/upload-mandiri', [SkpController::class, 'uploadMandiri'])->name('upload-mandiri');
+    //             Route::post('/store-mandiri', [SkpController::class, 'storeMandiri'])->name('store-mandiri');
+
+    //             Route::get('/{slug}', [SkpController::class, 'show'])->name('show');
+    //         });
+
+    //         Route::middleware(['role:admin|verif_skp'])->group(function () {
+    //             Route::post('/store', [SkpController::class, 'store'])->name('store');
+    //             Route::delete('/{slug}', [SkpController::class, 'destroy'])->name('destroy');
+    //         });
+
+    //     });
+
+    // });
+    Route::get('/sigap-skp/laporan/{slug}', [SkpController::class, 'publicShow'])->name('sigap-skp.public-show');
+    Route::get('/sigap-skp/kumpulan/lihat/{slug}', [SkpController::class, 'publicShowKumpulan'])->name('sigap-skp.kumpulan.public-show');
+
+    // =========================================================================
+    // ROUTE PRIVATE / AUTHENTICATED
+    // =========================================================================
     Route::middleware(['auth'])->group(function () {
 
         Route::prefix('sigap-skp')->name('sigap-skp.')->group(function () {
@@ -677,6 +705,13 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('/upload-mandiri', [SkpController::class, 'uploadMandiri'])->name('upload-mandiri');
                 Route::post('/store-mandiri', [SkpController::class, 'storeMandiri'])->name('store-mandiri');
 
+                // ROUTE KUMPULAN KATEGORI SKP PRIBADI
+                Route::get('/kumpulan', [SkpController::class, 'kumpulanIndex'])->name('kumpulan.index');
+                Route::get('/kumpulan/buat', [SkpController::class, 'kumpulanCreate'])->name('kumpulan.create');
+                Route::post('/kumpulan/simpan', [SkpController::class, 'kumpulanStore'])->name('kumpulan.store');
+                Route::delete('/kumpulan/{slug}', [SkpController::class, 'kumpulanDestroy'])->name('kumpulan.destroy');
+
+                // WILDCARD SLUG HARUS DITARUH PALING BISA
                 Route::get('/{slug}', [SkpController::class, 'show'])->name('show');
             });
 
@@ -687,17 +722,5 @@ Route::middleware(['auth'])->group(function () {
 
         });
 
-    });
-     Route::get('/sigap-skp/laporan/{slug}', [SkpController::class, 'publicShow'])->name('sigap-skp.public-show');
-
-     Route::get('/clear-cache-system', function () {
-        Artisan::call('route:clear');
-        Artisan::call('config:clear');
-        Artisan::call('cache:clear');
-        Artisan::call('view:clear');
-
-        return '<h1 style="color: green; text-align: center; margin-top: 50px;">
-                    ✅ Berhasil! Semua Cache (Route, Config, View, Cache) Telah Dibersihkan.
-                </h1>';
     });
 });

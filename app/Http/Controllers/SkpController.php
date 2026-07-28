@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\SigapAgenda;
 use App\Models\Skp;
 use App\Models\SkpFoto;
+use App\Models\SkpKumpulan;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\ImageManager;
 use Illuminate\Support\Str;
 use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\ImageManager;
+use App\Models\PpdKegiatan;
 
 class SkpController extends Controller
 {
@@ -298,6 +300,129 @@ class SkpController extends Controller
         // Arahkan ke view publik khusus tanpa middleware auth
         return view('dashboard.skp.public_show', compact('skp'));
     }
-        
+
+    public function kumpulanIndex(Request $request)
+    {
+        $userId = auth()->id();
+
+        $kumpulans = SkpKumpulan::where('user_id', $userId)
+            ->latest()
+            ->paginate(10);
+
+        return view('dashboard.skp.kumpulan_index', compact('kumpulans'));
+    }
+
+    /**
+     * Halaman Form Pembuatan Kumpulan SKP Berdasarkan Kategori & Bulan
+     */
+   public function kumpulanCreate(Request $request)
+    {
+        $userId = auth()->id();
+        $bulanTahun = $request->get('bulan', date('Y-m'));
+        $kategori = $request->get('kategori', 'DIREKTIF (TUGAS TAMBAHAN)');
+
+        // Ambil daftar SKP
+        $skpList = Skp::with('fotos')
+            ->whereHas('pegawais', function ($q) use ($userId) {
+                $q->where('users.id', $userId);
+            })
+            ->whereYear('tanggal', substr($bulanTahun, 0, 4))
+            ->whereMonth('tanggal', substr($bulanTahun, 5, 2))
+            ->latest()
+            ->get();
+
+        // Ambil daftar PPD yang melibatkan user login pada bulan yang difilter (berdasarkan created_at)
+        $ppdList = PpdKegiatan::with(['lembar' => function($q) use ($userId) {
+                // Ambil lembar milik pegawai ini saja beserta fotonya untuk thumbnail
+                $q->where('user_id', $userId)->with('fotos');
+            }])
+            ->whereHas('pegawai', function ($q) use ($userId) {
+                $q->where('users.id', $userId);
+            })
+            ->whereYear('created_at', substr($bulanTahun, 0, 4))
+            ->whereMonth('created_at', substr($bulanTahun, 5, 2))
+            ->latest()
+            ->get();
+
+        return view('dashboard.skp.kumpulan_create', compact('skpList', 'ppdList', 'bulanTahun', 'kategori'));
+    }
+
+    // 2. UPDATE: kumpulanStore
+    public function kumpulanStore(Request $request)
+    {
+        $request->validate([
+            'kategori'       => 'required|string',
+            'bulan_tahun'    => 'required|string',
+            'judul_kumpulan' => 'required|string|max:255',
+            'skp_ids'        => 'nullable|array',
+            'ppd_ids'        => 'nullable|array',
+        ]);
+
+        // Pastikan minimal ada 1 SKP atau 1 PPD yang dipilih
+        if (empty($request->skp_ids) && empty($request->ppd_ids)) {
+            return response()->json(['status' => 'error', 'message' => 'Pilih minimal 1 kegiatan SKP atau PPD.'], 400);
+        }
+
+        $kumpulan = SkpKumpulan::create([
+            'user_id'        => auth()->id(),
+            'kategori'       => strtoupper($request->kategori),
+            'bulan_tahun'    => $request->bulan_tahun,
+            'judul_kumpulan' => $request->judul_kumpulan,
+            'skp_ids'        => $request->skp_ids ?? [],
+            'ppd_ids'        => $request->ppd_ids ?? [],
+        ]);
+
+        $publicUrl = route('sigap-skp.kumpulan.public-show', $kumpulan->slug);
+
+        return response()->json([
+            'status'     => 'success',
+            'message'    => 'Kumpulan laporan berhasil dibuat!',
+            'public_url' => $publicUrl,
+            'redirect'   => route('sigap-skp.kumpulan.index')
+        ]);
+    }
+
+    // 3. UPDATE: publicShowKumpulan
+    public function publicShowKumpulan($slug)
+    {
+        $kumpulan = SkpKumpulan::with('user')->where('slug', $slug)->firstOrFail();
+
+        // Data SKP
+        $skpList = [];
+        if (!empty($kumpulan->skp_ids)) {
+            $skpList = Skp::with(['fotos', 'creator'])
+                ->whereIn('id', $kumpulan->skp_ids)
+                ->orderBy('tanggal', 'asc')
+                ->get();
+        }
+
+        // Data PPD
+        $ppdList = [];
+        if (!empty($kumpulan->ppd_ids)) {
+            $ppdList = PpdKegiatan::with(['lembar' => function($q) use ($kumpulan) {
+                    // Hanya load foto dari lembar milik pegawai pembuat rekap ini
+                    $q->where('user_id', $kumpulan->user_id)->with('fotos');
+                }])
+                ->whereIn('id', $kumpulan->ppd_ids)
+                ->latest()
+                ->get();
+        }
+
+        return view('dashboard.skp.kumpulan_public_show', compact('kumpulan', 'skpList', 'ppdList'));
+    }
+    /**
+     * Hapus Kumpulan Rekap SKP
+     */
+    public function kumpulanDestroy($slug)
+    {
+        $kumpulan = SkpKumpulan::where('slug', $slug)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        $kumpulan->delete();
+
+        return redirect()->back()->with('success', 'Kumpulan laporan berhasil dihapus.');
+    }
+
 
 }
