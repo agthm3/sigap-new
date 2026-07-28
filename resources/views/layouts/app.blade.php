@@ -179,7 +179,7 @@ textarea::placeholder {
         @hasrole('admin|verificator|employee')
             <a href="{{ route('sigap-agenda.index') }}"
           class="flex items-center gap-3 px-3 py-2 rounded-lg
-                {{ request()->routeIs('sigap-kinerja.*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+                {{ request()->routeIs('sigap-agenda.*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"/>
             <path d="M16 2v4M8 2v4" stroke-width="2"/>
