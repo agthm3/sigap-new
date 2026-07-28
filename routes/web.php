@@ -664,6 +664,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('admin/logs', [LogViewerController::class, 'index'])->name('admin.logs');
     });
 
+   
+
     Route::middleware(['auth'])->group(function () {
 
         Route::prefix('sigap-skp')->name('sigap-skp.')->group(function () {
@@ -672,7 +674,6 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('/', [SkpController::class, 'index'])->name('index');
                 Route::get('/pribadi/ku', [SkpController::class, 'pribadi'])->name('pribadi');
 
-                // ROUTE BARU UPLOAD MANDIRI
                 Route::get('/upload-mandiri', [SkpController::class, 'uploadMandiri'])->name('upload-mandiri');
                 Route::post('/store-mandiri', [SkpController::class, 'storeMandiri'])->name('store-mandiri');
 
@@ -687,5 +688,16 @@ Route::middleware(['auth'])->group(function () {
         });
 
     });
-    
+     Route::get('/sigap-skp/laporan/{slug}', [SkpController::class, 'publicShow'])->name('sigap-skp.public-show');
+
+     Route::get('/clear-cache-system', function () {
+        Artisan::call('route:clear');
+        Artisan::call('config:clear');
+        Artisan::call('cache:clear');
+        Artisan::call('view:clear');
+
+        return '<h1 style="color: green; text-align: center; margin-top: 50px;">
+                    ✅ Berhasil! Semua Cache (Route, Config, View, Cache) Telah Dibersihkan.
+                </h1>';
+    });
 });

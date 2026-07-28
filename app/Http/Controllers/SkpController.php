@@ -186,85 +186,112 @@ class SkpController extends Controller
         return view('dashboard.skp.upload_mandiri', compact('myAgendas'));
     }
 
-    public function storeMandiri(Request $request)
+public function storeMandiri(Request $request)
     {
+        // 1. Validasi Request Form Input
         $request->validate([
             'source_mode'    => 'required|in:agenda,manual',
+            'agenda_id'      => 'nullable|required_if:source_mode,agenda|exists:sigap_agendas,id',
             'judul_kegiatan' => 'required|string|max:255',
             'tanggal'        => 'required|date',
             'lokasi'         => 'nullable|string|max:255',
             'deskripsi'      => 'nullable|string',
-            'photo_data'     => 'required|string', // Data Base64 / File Gambar
+            'photo_data'     => 'required|string', // Data Base64 Image dari Kamera/Canvas
         ]);
 
-        // 1. Simpan Laporan SKP
+        // 2. Simpan Data Utama SKP (Slug di-generate otomatis oleh Model/booted)
         $skp = Skp::create([
             'agenda_id'     => $request->source_mode === 'agenda' ? $request->agenda_id : null,
-            'judul_kegiatan'=> $request->judul_kegiatan,
-            'tanggal'       => $request->tanggal,
-            'creator_id'    => auth()->id(),
+            'judul_kegiatan' => $request->judul_kegiatan,
+            'tanggal'        => $request->tanggal,
+            'creator_id'     => auth()->id(),
         ]);
 
-        // Otomatis kaitkan pegawai yang sedang login
+        // 3. Otomatis kaitkan Pegawai yang sedang login ke tabel pivot (sigap_skp_user)
         $skp->pegawais()->attach(auth()->id());
 
-        // 2. Olah dan Kompres Foto dari Base64 Kamera / Input File
+        // 4. Olah & Kompres Foto Base64 Menggunakan Intervention Image v3
         if ($request->filled('photo_data')) {
-            $imageParts = explode(";base64,", $request->photo_data);
-            if (count($imageParts) === 2) {
-                $imageBinary = base64_decode($imageParts[1]);
+            $photoData = $request->photo_data;
 
+            // Pisahkan header data URI "data:image/jpeg;base64," dengan payload biner
+            if (str_contains($photoData, ';base64,')) {
+                $imageParts = explode(';base64,', $photoData);
+                $imageBinary = base64_decode($imageParts[1]);
+            } else {
+                $imageBinary = base64_decode($photoData);
+            }
+
+            if ($imageBinary) {
+                // Buat nama file unik berformat .jpg
                 $filename = 'skp_mandiri_' . time() . '_' . Str::random(8) . '.jpg';
                 $relativePath = 'skp_dokumentasi/' . $filename;
 
+                // Inisialisasi Manager Intervention Image v3 (GD Driver)
                 $manager = new ImageManager(new Driver());
                 $image = $manager->read($imageBinary);
+
+                // Scale down resolusi jika lebar melebihi 1200px (rasio tetap terjaga)
                 $image->scaleDown(width: 1200);
+
+                // Encode gambar ke format JPG dengan kualitas 75%
                 $encodedImage = $image->toJpg(quality: 75);
 
+                // Simpan biner file ke Storage Disk Public
                 Storage::disk('public')->put($relativePath, (string) $encodedImage);
 
+                // Simpan relasi foto ke tabel sigap_skp_fotos
                 $skp->fotos()->create([
                     'file_path' => $relativePath
                 ]);
             }
         }
 
-        // Update bagian 3. Susun Teks Caption WhatsApp di SkpController.php
-
+        // 5. Susun Teks Caption WhatsApp & Generate Link Publik
         $userName = auth()->user()->name;
         $tglFormatted = \Carbon\Carbon::parse($request->tanggal)->translatedFormat('d F Y');
 
-        // Buat URL publik langsung ke foto atau detail SKP
-        $skpUrl = route('sigap-skp.show', $skp->slug);
+        // Menggunakan Route Publik tanpa Auth agar WhatsApp Bot Crawler bisa membaca Open Graph Thumbnail
+        $publicSkpUrl = route('sigap-skp.public-show', $skp->slug);
 
         if ($request->source_mode === 'agenda') {
             $caption = "*LAPORAN KEGIATAN (AGENDA)*\n\n"
-                    . "👤 *Pegawai:* {$userName}\n"
-                    . "📌 *Kegiatan:* {$request->judul_kegiatan}\n"
-                    . "📅 *Tanggal:* {$tglFormatted}\n"
-                    . "📍 *Lokasi:* " . ($request->lokasi ?: '-') . "\n\n"
-                    . "📷 *Bukti Laporan:* {$skpUrl}\n\n"
-                    . "_Laporan evidence telah terunggah ke SIGAP SKP._";
+                     . "👤 *Pegawai:* {$userName}\n"
+                     . "📌 *Kegiatan:* {$request->judul_kegiatan}\n"
+                     . "📅 *Tanggal:* {$tglFormatted}\n"
+                     . "📍 *Lokasi:* " . ($request->lokasi ?: '-') . "\n\n"
+                     . "📷 *Lihat Bukti Foto:* {$publicSkpUrl}\n\n"
+                     . "_Laporan evidence telah terunggah ke SIGAP SKP._";
         } else {
             $caption = "*LAPORAN MANDIRI KEGIATAN*\n\n"
-                    . "👤 *Pegawai:* {$userName}\n"
-                    . "📌 *Kegiatan:* {$request->judul_kegiatan}\n"
-                    . "📅 *Tanggal:* {$tglFormatted}\n"
-                    . "📍 *Lokasi:* " . ($request->lokasi ?: '-') . "\n"
-                    . "📝 *Deskripsi:* " . ($request->deskripsi ?: '-') . "\n\n"
-                    . "📷 *Bukti Laporan:* {$skpUrl}\n\n"
-                    . "_Laporan evidence telah terunggah ke SIGAP SKP._";
+                     . "👤 *Pegawai:* {$userName}\n"
+                     . "📌 *Kegiatan:* {$request->judul_kegiatan}\n"
+                     . "📅 *Tanggal:* {$tglFormatted}\n"
+                     . "📍 *Lokasi:* " . ($request->lokasi ?: '-') . "\n"
+                     . "📝 *Deskripsi:* " . ($request->deskripsi ?: '-') . "\n\n"
+                     . "📷 *Lihat Bukti Foto:* {$publicSkpUrl}\n\n"
+                     . "_Laporan evidence telah terunggah ke SIGAP SKP._";
         }
 
         $waUrl = "https://api.whatsapp.com/send?text=" . urlencode($caption);
 
+        // 6. Return JSON Response ke Alpine.js
         return response()->json([
             'status'   => 'success',
+            'message'  => 'Laporan mandiri berhasil disimpan.',
             'wa_url'   => $waUrl,
             'redirect' => route('sigap-skp.pribadi')
         ]);
     }
-    
+    public function publicShow($slug)
+    {
+        $skp = Skp::with(['pegawais', 'creator', 'fotos', 'agenda'])
+            ->where('slug', $slug)
+            ->firstOrFail();
+
+        // Arahkan ke view publik khusus tanpa middleware auth
+        return view('dashboard.skp.public_show', compact('skp'));
+    }
+        
 
 }

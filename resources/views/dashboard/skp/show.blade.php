@@ -1,5 +1,23 @@
 @extends('layouts.app')
-
+@push('head')
+  @php
+    $firstFoto = $skp->fotos->first();
+    // Memastikan URL berawalan HTTPS jika server mendukung
+    $rawUrl = $firstFoto ? asset('storage/' . $firstFoto->file_path) : asset('images/logo.png');
+    $ogImageUrl = str_replace('http://', 'https://', $rawUrl);
+    $fullPageUrl = str_replace('http://', 'https://', request()->fullUrl());
+  @endphp
+  <meta property="og:site_name" content="SIGAP BRIDA" />
+  <meta property="og:title" content="Laporan SKP: {{ $skp->judul_kegiatan }}" />
+  <meta property="og:description" content="Tanggal Kegiatan: {{ \Carbon\Carbon::parse($skp->tanggal)->translatedFormat('d F Y') }} — Laporan Evidence SIGAP SKP." />
+  <meta property="og:image" content="{{ $ogImageUrl }}" />
+  <meta property="og:image:secure_url" content="{{ $ogImageUrl }}" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="{{ $fullPageUrl }}" />
+@endpush
 @section('content')
 <div x-data="skpShow()" class="space-y-6">
 
