@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>Upload Mandiri — SIGAP BRIDA</title>
 
+  <!-- Tailwind CSS & Alpine.js -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -124,11 +125,11 @@
 
       <!-- Select Penugasan Agenda -->
       <div x-show="sourceMode === 'agenda'" class="space-y-1">
-        <label class="block text-[11px] font-bold text-gray-300 uppercase">Pilih Agenda Penugasan Saya</label>
+        <label class="block text-[11px] font-bold text-gray-300 uppercase">Pilih Penugasan Saya</label>
         <select x-model="selectedAgendaId" @change="onAgendaChange" class="w-full rounded-xl text-xs bg-gray-900 border-gray-700 text-white p-2.5 focus:ring-maroon focus:border-maroon">
-          <option value="">-- Pilih Kegiatan Agenda --</option>
-          <template x-for="agenda in myAgendas" :key="agenda.id">
-            <option :value="agenda.id" x-text="agenda.date + ' - ' + agenda.unit_title"></option>
+          <option value="">-- Pilih Penugasan Saya --</option>
+          <template x-for="(agenda, index) in myAgendas" :key="index">
+            <option :value="agenda.id" x-text="'[' + agenda.date + '] ' + agenda.unit_title"></option>
           </template>
         </select>
       </div>
@@ -232,7 +233,6 @@
         }
       },
 
-      // FUNGSI ROTATE FOTO 90 DERAJAT
       rotateImage() {
         this.rotationAngle = (this.rotationAngle + 90) % 360;
       },
@@ -289,7 +289,6 @@
         reader.readAsDataURL(file);
       },
 
-      // Menerapkan Rotasi pada Canvas sebelum Dikirim ke Server
       getFinalRotatedBase64() {
         if (this.rotationAngle === 0) return this.capturedImage;
 
@@ -334,6 +333,13 @@
         this.deskripsiKegiatan = '';
       },
 
+      selectAgendaItem() {
+        if (this.myAgendas.length > 0 && !this.selectedAgendaId) {
+          this.selectedAgendaId = this.myAgendas[0].id;
+          this.onAgendaChange();
+        }
+      },
+
       async submitForm() {
         if (!this.capturedImage) {
           Swal.fire('Perhatian', 'Harap jepret foto evidence terlebih dahulu.', 'warning');
@@ -349,6 +355,7 @@
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              "Accept": "application/json",
               "X-CSRF-TOKEN": "{{ csrf_token() }}"
             },
             body: JSON.stringify({
@@ -364,7 +371,7 @@
 
           const data = await response.json();
 
-          if (data.status === 'success') {
+          if (response.ok && data.status === 'success') {
             Swal.fire({
               icon: 'success',
               title: 'Laporan Berhasil Disimpan!',
@@ -375,9 +382,12 @@
               window.open(data.wa_url, '_blank');
               window.location.href = data.redirect;
             });
+          } else {
+            const errorMsg = data.message || 'Gagal menyimpan data laporan.';
+            Swal.fire('Gagal Menyimpan', errorMsg, 'error');
           }
         } catch (err) {
-          Swal.fire('Error', 'Gagal menyimpan laporan mandiri.', 'error');
+          Swal.fire('Error', 'Terjadi kesalahan sistem saat menyimpan laporan.', 'error');
         } finally {
           this.isLoading = false;
         }

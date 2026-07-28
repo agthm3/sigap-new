@@ -213,22 +213,21 @@
               </div>
             </div>
 
-            <!-- Select Agenda -->
-            <div x-show="sourceMode === 'agenda'" class="p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <label class="block text-sm font-semibold text-gray-700 mb-1">Pilih Agenda <span class="text-red-500">*</span></label>
-              <select name="agenda_id" x-model="selectedAgendaId" @change="fillFromAgenda" class="w-full rounded-lg px-3 py-2 text-sm border-gray-300">
-                <option value="">-- Pilih Kegiatan Agenda --</option>
+            <!-- Select Agenda Penugasan Spesifik -->
+            <div x-show="sourceMode === 'agenda'" class="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-1">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Pilih Penugasan Agenda <span class="text-red-500">*</span></label>
+            <select name="agenda_id" x-model="selectedAgendaId" @change="fillFromAgenda" class="w-full rounded-lg px-3 py-2 text-sm border-gray-300 focus:ring-maroon focus:border-maroon">
+                <option value="">-- Pilih Penugasan Agenda --</option>
                 @foreach($agendas as $agenda)
-                  <option value="{{ $agenda['id'] }}" 
-                          data-title="{{ $agenda['unit_title'] }}" 
-                          data-date="{{ $agenda['date'] }}"
-                          data-assignees="{{ $agenda['assignees'] }}">
-                    {{ \Carbon\Carbon::parse($agenda['date'])->format('d/m/Y') }} - {{ $agenda['unit_title'] }}
-                  </option>
+                <option value="{{ $agenda['id'] }}" 
+                        data-title="{{ $agenda['unit_title'] }}" 
+                        data-date="{{ $agenda['date'] }}"
+                        data-assignees="{{ $agenda['assignees'] }}">
+                    [{{ \Carbon\Carbon::parse($agenda['date'])->format('d/m/Y') }}] {{ Str::limit($agenda['unit_title'], 90) }} @if($agenda['place'] !== '-') (📍 {{ $agenda['place'] }}) @endif
+                </option>
                 @endforeach
-              </select>
+            </select>
             </div>
-
             <!-- Searchable Multi-Select Pegawai -->
             <div x-data="employeeSelect(@js($employees))" 
                  x-ref="empSelectComp"

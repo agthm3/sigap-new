@@ -33,18 +33,26 @@ class SkpController extends Controller
         }
 
         $skps = $query->paginate(9)->withQueryString();
-        
         $employees = User::role('employee')->select('id', 'name')->get(); 
-        
-        $agendas = SigapAgenda::with('items')->orderBy('date', 'desc')->get()->map(function($agenda) {
-            $assigneesText = $agenda->items->pluck('assignees')->filter()->implode(', ');
-            return [
-                'id' => $agenda->id,
-                'unit_title' => $agenda->unit_title,
-                'date' => $agenda->date,
-                'assignees' => $assigneesText
-            ];
-        });
+
+        // OLAH SUB-ITEM PENUGASAN SECARA SPESIFIK
+        $agendas = [];
+        $rawAgendas = SigapAgenda::with('items')->orderBy('date', 'desc')->get();
+
+        foreach ($rawAgendas as $agenda) {
+            foreach ($agenda->items as $item) {
+                // Ambil deskripsi penugasan spesifik (misal: "Menghadiri acara Penyusunan Dokumen...")
+                $judulSpesifik = !empty($item->description) ? $item->description : $agenda->unit_title;
+
+                $agendas[] = [
+                    'id'          => $agenda->id,
+                    'unit_title'  => $judulSpesifik, // Menggunakan judul penugasan spesifik
+                    'date'        => $agenda->date,
+                    'place'       => $item->place ?? '-',
+                    'assignees'   => $item->assignees ?? ''
+                ];
+            }
+        }
 
         $total_dokumentasi = SkpFoto::count();
 
@@ -164,44 +172,51 @@ class SkpController extends Controller
     {
         $userName = auth()->user()->name;
 
-        // Ambil SIGAP AGENDA yang menugaskan pegawai login ini
-        $myAgendas = SigapAgenda::with('items')
+        $myAgendas = [];
+        $rawAgendas = SigapAgenda::with('items')
             ->whereHas('items', function ($q) use ($userName) {
                 $q->where('assignees', 'like', '%' . $userName . '%');
             })
             ->orderBy('date', 'desc')
-            ->get()
-            ->map(function ($agenda) {
-                $item = $agenda->items->first();
-                return [
-                    'id'          => $agenda->id,
-                    'unit_title'  => $agenda->unit_title,
-                    'date'        => $agenda->date,
-                    'place'       => $item->place ?? '-',
-                    'time_text'   => $item->time_text ?? '-',
-                    'description' => $item->description ?? '',
-                ];
-            });
+            ->get();
+
+        foreach ($rawAgendas as $agenda) {
+            foreach ($agenda->items as $item) {
+                // Filter hanya item yang menugaskan pegawai yang sedang login
+                if (str_contains(strtolower($item->assignees ?? ''), strtolower($userName))) {
+                    $judulSpesifik = !empty($item->description) ? $item->description : $agenda->unit_title;
+
+                    $myAgendas[] = [
+                        'id'          => $agenda->id,
+                        'unit_title'  => $judulSpesifik, // Judul spesifik penugasan pegawai
+                        'date'        => $agenda->date,
+                        'place'       => $item->place ?? '-',
+                        'time_text'   => $item->time_text ?? '-',
+                        'description' => $item->description ?? '',
+                    ];
+                }
+            }
+        }
 
         return view('dashboard.skp.upload_mandiri', compact('myAgendas'));
     }
 
-public function storeMandiri(Request $request)
+    public function storeMandiri(Request $request)
     {
         // 1. Validasi Request Form Input
         $request->validate([
             'source_mode'    => 'required|in:agenda,manual',
-            'agenda_id'      => 'nullable|required_if:source_mode,agenda|exists:sigap_agendas,id',
-            'judul_kegiatan' => 'required|string|max:255',
+            'agenda_id'      => 'nullable', // Dibuat nullable agar tidak gagal validasi 302
+            'judul_kegiatan' => 'required|string|max:500',
             'tanggal'        => 'required|date',
             'lokasi'         => 'nullable|string|max:255',
             'deskripsi'      => 'nullable|string',
-            'photo_data'     => 'required|string', // Data Base64 Image dari Kamera/Canvas
+            'photo_data'     => 'required|string', // Data Base64 Image
         ]);
 
-        // 2. Simpan Data Utama SKP (Slug di-generate otomatis oleh Model/booted)
+        // 2. Simpan Data Utama SKP
         $skp = Skp::create([
-            'agenda_id'     => $request->source_mode === 'agenda' ? $request->agenda_id : null,
+            'agenda_id'     => ($request->source_mode === 'agenda' && $request->filled('agenda_id')) ? $request->agenda_id : null,
             'judul_kegiatan' => $request->judul_kegiatan,
             'tanggal'        => $request->tanggal,
             'creator_id'     => auth()->id(),
@@ -214,7 +229,6 @@ public function storeMandiri(Request $request)
         if ($request->filled('photo_data')) {
             $photoData = $request->photo_data;
 
-            // Pisahkan header data URI "data:image/jpeg;base64," dengan payload biner
             if (str_contains($photoData, ';base64,')) {
                 $imageParts = explode(';base64,', $photoData);
                 $imageBinary = base64_decode($imageParts[1]);
@@ -223,24 +237,18 @@ public function storeMandiri(Request $request)
             }
 
             if ($imageBinary) {
-                // Buat nama file unik berformat .jpg
                 $filename = 'skp_mandiri_' . time() . '_' . Str::random(8) . '.jpg';
                 $relativePath = 'skp_dokumentasi/' . $filename;
 
-                // Inisialisasi Manager Intervention Image v3 (GD Driver)
                 $manager = new ImageManager(new Driver());
                 $image = $manager->read($imageBinary);
 
-                // Scale down resolusi jika lebar melebihi 1200px (rasio tetap terjaga)
                 $image->scaleDown(width: 1200);
 
-                // Encode gambar ke format JPG dengan kualitas 75%
                 $encodedImage = $image->toJpg(quality: 75);
 
-                // Simpan biner file ke Storage Disk Public
                 Storage::disk('public')->put($relativePath, (string) $encodedImage);
 
-                // Simpan relasi foto ke tabel sigap_skp_fotos
                 $skp->fotos()->create([
                     'file_path' => $relativePath
                 ]);
@@ -251,31 +259,29 @@ public function storeMandiri(Request $request)
         $userName = auth()->user()->name;
         $tglFormatted = \Carbon\Carbon::parse($request->tanggal)->translatedFormat('d F Y');
 
-        // Menggunakan Route Publik tanpa Auth agar WhatsApp Bot Crawler bisa membaca Open Graph Thumbnail
         $publicSkpUrl = route('sigap-skp.public-show', $skp->slug);
 
         if ($request->source_mode === 'agenda') {
             $caption = "*LAPORAN KEGIATAN (AGENDA)*\n\n"
-                     . "👤 *Pegawai:* {$userName}\n"
-                     . "📌 *Kegiatan:* {$request->judul_kegiatan}\n"
-                     . "📅 *Tanggal:* {$tglFormatted}\n"
-                     . "📍 *Lokasi:* " . ($request->lokasi ?: '-') . "\n\n"
-                     . "📷 *Lihat Bukti Foto:* {$publicSkpUrl}\n\n"
-                     . "_Laporan evidence telah terunggah ke SIGAP SKP._";
+                    . "👤 *Pegawai:* {$userName}\n"
+                    . "📌 *Kegiatan:* {$request->judul_kegiatan}\n"
+                    . "📅 *Tanggal:* {$tglFormatted}\n"
+                    . "📍 *Lokasi:* " . ($request->lokasi ?: '-') . "\n\n"
+                    . "📷 *Lihat Bukti Foto:* {$publicSkpUrl}\n\n"
+                    . "_Laporan evidence telah terunggah ke SIGAP SKP._";
         } else {
             $caption = "*LAPORAN MANDIRI KEGIATAN*\n\n"
-                     . "👤 *Pegawai:* {$userName}\n"
-                     . "📌 *Kegiatan:* {$request->judul_kegiatan}\n"
-                     . "📅 *Tanggal:* {$tglFormatted}\n"
-                     . "📍 *Lokasi:* " . ($request->lokasi ?: '-') . "\n"
-                     . "📝 *Deskripsi:* " . ($request->deskripsi ?: '-') . "\n\n"
-                     . "📷 *Lihat Bukti Foto:* {$publicSkpUrl}\n\n"
-                     . "_Laporan evidence telah terunggah ke SIGAP SKP._";
+                    . "👤 *Pegawai:* {$userName}\n"
+                    . "📌 *Kegiatan:* {$request->judul_kegiatan}\n"
+                    . "📅 *Tanggal:* {$tglFormatted}\n"
+                    . "📍 *Lokasi:* " . ($request->lokasi ?: '-') . "\n"
+                    . "📝 *Deskripsi:* " . ($request->deskripsi ?: '-') . "\n\n"
+                    . "📷 *Lihat Bukti Foto:* {$publicSkpUrl}\n\n"
+                    . "_Laporan evidence telah terunggah ke SIGAP SKP._";
         }
 
         $waUrl = "https://api.whatsapp.com/send?text=" . urlencode($caption);
 
-        // 6. Return JSON Response ke Alpine.js
         return response()->json([
             'status'   => 'success',
             'message'  => 'Laporan mandiri berhasil disimpan.',
