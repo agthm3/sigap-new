@@ -702,8 +702,12 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('/', [SkpController::class, 'index'])->name('index');
                 Route::get('/pribadi/ku', [SkpController::class, 'pribadi'])->name('pribadi');
 
+                Route::get('/monitoring', [SkpController::class, 'monitoring'])->name('monitoring');
+
                 Route::get('/upload-mandiri', [SkpController::class, 'uploadMandiri'])->name('upload-mandiri');
                 Route::post('/store-mandiri', [SkpController::class, 'storeMandiri'])->name('store-mandiri');
+
+                Route::post('/store-pdf', [SkpController::class, 'storePdf'])->name('store-pdf');
 
                 // ROUTE KUMPULAN KATEGORI SKP PRIBADI
                 Route::get('/kumpulan', [SkpController::class, 'kumpulanIndex'])->name('kumpulan.index');

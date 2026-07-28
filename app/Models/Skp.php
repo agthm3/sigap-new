@@ -12,6 +12,17 @@ class Skp extends Model
 
     protected $table = 'sigap_skps';
     protected $guarded = ['id'];
+    protected $fillable = [
+        'slug',
+        'agenda_id',
+        'judul_kegiatan',
+        'kategori',
+        'tipe_evidence', // Added
+        'file_pdf_path', // Added
+        'deskripsi',     // Added
+        'tanggal',
+        'creator_id',
+    ];
 
     protected static function booted()
     {

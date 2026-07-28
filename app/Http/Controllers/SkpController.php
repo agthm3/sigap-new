@@ -142,7 +142,6 @@ class SkpController extends Controller
     {
         $userId = auth()->id();
 
-        // Query hanya SKP yang melibatkan User Login
         $query = Skp::with(['pegawais', 'creator', 'fotos'])
             ->withCount('fotos')
             ->whereHas('pegawais', function ($q) use ($userId) {
@@ -150,19 +149,28 @@ class SkpController extends Controller
             })
             ->latest();
 
-        // Filter berdasarkan nama kegiatan
+        // Filter Nama Kegiatan / Judul
         if ($request->filled('search')) {
             $query->where('judul_kegiatan', 'like', '%' . $request->search . '%');
         }
 
-        // Filter berdasarkan tanggal
+        // Filter Tanggal
         if ($request->filled('tanggal')) {
             $query->whereDate('tanggal', $request->tanggal);
         }
 
+        // Filter Kategori (Misal: TUPOKSI / DIREKTIF)
+        if ($request->filled('kategori')) {
+            $query->where('kategori', $request->kategori);
+        }
+
+        // Filter Tipe Evidence (Misal: foto / pdf)
+        if ($request->filled('tipe_evidence')) {
+            $query->where('tipe_evidence', $request->tipe_evidence);
+        }
+
         $skps = $query->paginate(9)->withQueryString();
 
-        // Hitung total dokumentasi foto milik kegiatan pegawai ini
         $total_dokumentasi = SkpFoto::whereHas('skp.pegawais', function ($q) use ($userId) {
             $q->where('users.id', $userId);
         })->count();
@@ -424,5 +432,105 @@ class SkpController extends Controller
         return redirect()->back()->with('success', 'Kumpulan laporan berhasil dihapus.');
     }
 
+    public function storePdf(Request $request)
+    {
+        $request->validate([
+            'judul_kegiatan' => 'required|string|max:255',
+            'tanggal'        => 'required|date',
+            'kategori'       => 'nullable|string|max:100',
+            'deskripsi'      => 'nullable|string',
+            'dokumen_pdf'    => 'required|file|mimes:pdf|max:10240', // Maksimal 10MB (10240 KB)
+        ], [
+            'dokumen_pdf.mimes' => 'Berkas yang diunggah harus berformat PDF.',
+            'dokumen_pdf.max'   => 'Ukuran dokumen PDF tidak boleh melebihi 10 MB.',
+        ]);
+
+        if ($request->hasFile('dokumen_pdf')) {
+            $file = $request->file('dokumen_pdf');
+            $filename = 'skp_doc_' . time() . '_' . Str::random(8) . '.pdf';
+            $relativePath = $file->storeAs('skp_dokumen', $filename, 'public');
+
+            $skp = Skp::create([
+                'judul_kegiatan' => $request->judul_kegiatan,
+                'kategori'       => $request->kategori ?? 'TUPOKSI',
+                'tipe_evidence'  => 'pdf',
+                'file_pdf_path'  => $relativePath,
+                'deskripsi'      => $request->deskripsi,
+                'tanggal'        => $request->tanggal,
+                'creator_id'     => auth()->id(),
+            ]);
+
+            // Otomatis tautkan ke pegawai yang login
+            $skp->pegawais()->attach(auth()->id());
+
+            return redirect()->back()->with('success', 'Dokumen PDF SKP berhasil diunggah.');
+        }
+
+        return redirect()->back()->with('error', 'Gagal mengunggah dokumen PDF.');
+    }
+    public function monitoring(Request $request)
+    {
+        // Tangkap bulan & tahun dari filter (Format: YYYY-MM, Default: Bulan & Tahun saat ini)
+        $bulanTahun = $request->get('bulan', date('Y-m'));
+
+        // Ambil seluruh user dengan role 'employee' (Pegawai)
+        $employees = User::role('employee')
+            ->select('id', 'name', 'nip', 'email')
+            ->orderBy('name', 'asc')
+            ->get();
+
+        $sudahMengisi = [];
+        $belumMengisi = [];
+
+        foreach ($employees as $employee) {
+            // Cek apakah pegawai sudah membuat Kumpulan SKP Kategori di bulan tersebut
+            $kumpulans = SkpKumpulan::where('user_id', $employee->id)
+                ->where('bulan_tahun', $bulanTahun)
+                ->latest()
+                ->get();
+
+            $jumlahKumpulan = $kumpulans->count();
+
+            if ($jumlahKumpulan > 0) {
+                // Ambil kumpulans terakhir yang dibuat
+                $kumpulanTerakhir = $kumpulans->first();
+
+                // Hitung total item kegiatan (SKP + PPD) yang digabungkan
+                $totalKegiatan = (is_array($kumpulanTerakhir->skp_ids) ? count($kumpulanTerakhir->skp_ids) : 0) 
+                            + (is_array($kumpulanTerakhir->ppd_ids) ? count($kumpulanTerakhir->ppd_ids) : 0);
+
+                $sudahMengisi[] = [
+                    'id'              => $employee->id,
+                    'name'            => $employee->name,
+                    'nip'             => $employee->nip ?? '-',
+                    'total_kumpulan'  => $jumlahKumpulan,
+                    'judul_kumpulan'  => $kumpulanTerakhir->judul_kumpulan,
+                    'kategori'        => $kumpulanTerakhir->kategori,
+                    'total_kegiatan'  => $totalKegiatan,
+                    'slug'            => $kumpulanTerakhir->slug,
+                    'tgl_dibuat'      => $kumpulanTerakhir->created_at->translatedFormat('d F Y (H:i)'),
+                ];
+            } else {
+                $belumMengisi[] = [
+                    'id'   => $employee->id,
+                    'name' => $employee->name,
+                    'nip'  => $employee->nip ?? '-',
+                ];
+            }
+        }
+
+        $totalPegawai = $employees->count();
+        $totalSudah = count($sudahMengisi);
+        $totalBelum = count($belumMengisi);
+
+        return view('dashboard.skp.monitoring', compact(
+            'sudahMengisi',
+            'belumMengisi',
+            'bulanTahun',
+            'totalPegawai',
+            'totalSudah',
+            'totalBelum'
+        ));
+    }
 
 }

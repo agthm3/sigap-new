@@ -1,187 +1,226 @@
 @extends('layouts.app')
 
 @section('content')
-<div x-data="skpPribadi()" class="space-y-6">
+<div x-data="{ openModalPdf: false }" class="space-y-6">
 
-  {{-- Header --}}
-  <section class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+  {{-- Header & Akses Tombol --}}
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b pb-4">
     <div>
       <h1 class="text-xl sm:text-2xl font-extrabold text-gray-900">
-        SIGAP <span class="text-maroon">SKP Pribadi</span>
+        SKP <span class="text-maroon">Pribadi Saya</span>
       </h1>
-      <p class="text-sm text-gray-600 mt-0.5">
-        Daftar laporan kegiatan dan evidence di mana Anda ditautkan/terlibat.
+      <p class="text-xs text-gray-500 mt-0.5">
+        Kelola riwayat bukti kegiatan kinerja (Foto Evidence & Dokumen PDF).
       </p>
     </div>
 
-    <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gray-100 border border-gray-200 text-xs font-semibold text-gray-700">
-      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-      Pegawai: {{ auth()->user()->name }}
-    </div>
-  </section>
+    <div class="flex items-center gap-2 flex-wrap">
+      {{-- Tombol Modal PDF --}}
+      <button type="button" @click="openModalPdf = true"
+              class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-700 text-white text-xs font-bold hover:bg-red-800 transition-colors shadow-sm">
+        📄 Upload Dokumen (PDF)
+      </button>
 
-  {{-- Stats Ringkas --}}
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-      <p class="text-sm text-gray-500">Total Kegiatan Saya</p>
-      <h3 class="text-2xl font-extrabold text-gray-900">{{ $skps->total() ?? 0 }}</h3> 
-    </div>
-    <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-      <p class="text-sm text-gray-500">Total Foto Dokumentasi Terkait</p>
-      <h3 class="text-2xl font-extrabold text-maroon">
-        {{ $total_dokumentasi ?? 0 }}
-      </h3>
+      {{-- Tombol Rekap Link --}}
+      <a href="{{ route('sigap-skp.kumpulan.index') }}"
+         class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gray-900 text-white text-xs font-semibold hover:bg-gray-800 transition-colors shadow-sm">
+        📂 Kategori & Rekap Link
+      </a>
+
+      {{-- Tombol Kamera Mandiri --}}
+      <a href="{{ route('sigap-skp.upload-mandiri') }}"
+         class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors shadow-sm">
+        📷 Kamera Mandiri
+      </a>
     </div>
   </div>
-<div class="flex items-center gap-2">
-  <a href="{{ route('sigap-skp.kumpulan.index') }}"
-     class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gray-900 text-white text-xs font-semibold hover:bg-gray-800 transition-colors shadow-sm">
-    📂 Kategori & Rekap Link
-  </a>
 
-  <a href="{{ route('sigap-skp.upload-mandiri') }}"
-     class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors shadow-sm">
-    📷 Upload Mandiri
-  </a>
-</div>
-  {{-- Filter Section --}}
-  <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-    <form action="{{ route('sigap-skp.pribadi') }}" method="GET" class="flex flex-col sm:flex-row gap-3">
-      
-      <div class="flex-1">
-        <input type="text" name="search" value="{{ request('search') }}" 
-               placeholder="Cari nama kegiatan saya..." 
-               class="w-full rounded-lg px-3 py-2 text-sm border-gray-300">
-      </div>
+  {{-- Stats Mini --}}
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div class="bg-white rounded-2xl border p-4 shadow-sm">
+      <p class="text-xs font-semibold text-gray-500">Total Kegiatan Saya</p>
+      <h3 class="text-2xl font-extrabold text-gray-900 mt-1">{{ $skps->total() }}</h3>
+    </div>
+    <div class="bg-white rounded-2xl border p-4 shadow-sm">
+      <p class="text-xs font-semibold text-gray-500">Total File Dokumentasi Foto</p>
+      <h3 class="text-2xl font-extrabold text-maroon mt-1">{{ $total_dokumentasi }}</h3>
+    </div>
+  </div>
 
-      <div class="w-full sm:w-48">
-        <input type="date" name="tanggal" value="{{ request('tanggal') }}" 
-               class="w-full rounded-lg px-3 py-2 text-sm border-gray-300">
-      </div>
+  {{-- BARIS FILTER PENCARIAN & KATEGORI --}}
+  <form method="GET" action="{{ route('sigap-skp.pribadi') }}" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+    
+    {{-- Search Judul --}}
+    <div>
+      <label class="block text-[11px] font-bold text-gray-600 mb-1">Cari Kegiatan</label>
+      <input type="text" name="search" value="{{ request('search') }}" placeholder="Kata kunci judul..." class="w-full text-xs rounded-xl border-gray-300 p-2 focus:ring-maroon focus:border-maroon">
+    </div>
 
-      <button type="submit" class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-semibold hover:bg-gray-800 transition-colors">
-        Filter
+    {{-- Filter Tanggal --}}
+    <div>
+      <label class="block text-[11px] font-bold text-gray-600 mb-1">Tanggal</label>
+      <input type="date" name="tanggal" value="{{ request('tanggal') }}" class="w-full text-xs rounded-xl border-gray-300 p-2 focus:ring-maroon focus:border-maroon">
+    </div>
+
+    {{-- Filter Kategori --}}
+    <div>
+      <label class="block text-[11px] font-bold text-gray-600 mb-1">Kategori SKP</label>
+      <select name="kategori" class="w-full text-xs rounded-xl border-gray-300 p-2 focus:ring-maroon focus:border-maroon">
+        <option value="">-- Semua Kategori --</option>
+        <option value="TUPOKSI" {{ request('kategori') === 'TUPOKSI' ? 'selected' : '' }}>TUPOKSI</option>
+        <option value="DIREKTIF (TUGAS TAMBAHAN)" {{ request('kategori') === 'DIREKTIF (TUGAS TAMBAHAN)' ? 'selected' : '' }}>DIREKTIF (TUGAS TAMBAHAN)</option>
+      </select>
+    </div>
+
+    {{-- Filter Tipe Evidence --}}
+    <div>
+      <label class="block text-[11px] font-bold text-gray-600 mb-1">Tipe Berkas</label>
+      <select name="tipe_evidence" class="w-full text-xs rounded-xl border-gray-300 p-2 focus:ring-maroon focus:border-maroon">
+        <option value="">-- Semua Tipe --</option>
+        <option value="foto" {{ request('tipe_evidence') === 'foto' ? 'selected' : '' }}>📷 Foto Evidence</option>
+        <option value="pdf" {{ request('tipe_evidence') === 'pdf' ? 'selected' : '' }}>📄 Dokumen PDF</option>
+      </select>
+    </div>
+
+    {{-- Tombol Filter & Reset --}}
+    <div class="flex items-end gap-1.5">
+      <button type="submit" class="flex-1 py-2 bg-gray-900 text-white text-xs font-bold rounded-xl hover:bg-gray-800 transition-colors shadow-sm">
+        🔍 Filter
       </button>
-      
-      @if(request()->anyFilled(['search', 'tanggal']))
-        <a href="{{ route('sigap-skp.pribadi') }}" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-200 text-center">
-          Reset
+      @if(request()->anyFilled(['search', 'tanggal', 'kategori', 'tipe_evidence']))
+        <a href="{{ route('sigap-skp.pribadi') }}" class="px-3 py-2 bg-gray-100 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-200 transition-colors">
+          ↺ Reset
         </a>
       @endif
-    </form>
-  </div>
+    </div>
+  </form>
 
-  {{-- GRID CARD SKP PRIBADI --}}
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-    @forelse($skps as $item)
+  {{-- GRID DAFTAR SKP (Foto & PDF) --}}
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+    @forelse($skps as $skp)
       @php
-        $firstFoto = $item->fotos->first();
-        $thumbUrl = $firstFoto ? asset('storage/' . $firstFoto->file_path) : null;
-        $showUrl = route('sigap-skp.show', $item->slug);
+        $isPdf = $skp->tipe_evidence === 'pdf';
+        $foto = $skp->fotos->first();
       @endphp
-      <div class="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+      <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
         <div>
-          {{-- Thumbnail Foto --}}
-          <div class="relative h-48 w-full bg-gray-100 border-b overflow-hidden">
-            @if($thumbUrl)
-              <img src="{{ $thumbUrl }}" alt="{{ $item->judul_kegiatan }}" class="w-full h-full object-cover">
+          {{-- Preview Box --}}
+          <div class="h-44 w-full bg-gray-100 relative overflow-hidden flex items-center justify-center border-b">
+            @if($isPdf)
+              <div class="flex flex-col items-center gap-1 text-red-600 p-4 text-center">
+                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                <span class="text-[10px] font-bold uppercase tracking-wider bg-red-100 px-2 py-0.5 rounded text-red-800">Dokumen PDF</span>
+              </div>
+            @elseif($foto)
+              <img src="{{ asset('storage/' . $foto->file_path) }}" class="w-full h-full object-cover">
             @else
-              <div class="flex flex-col items-center justify-center h-full text-gray-400">
-                <svg class="w-10 h-10 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21" stroke-width="2"/></svg>
-                <span class="text-xs">Tidak ada gambar</span>
-              </div>
+              <span class="text-xs text-gray-400">Tidak ada gambar</span>
             @endif
 
-            {{-- Badges --}}
-            <div class="absolute top-3 right-3 flex gap-1.5">
-              <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-black/60 text-white backdrop-blur-sm">
-                📷 {{ $item->fotos_count }} Foto
-              </span>
-            </div>
-
-            @if($item->agenda_id)
-              <div class="absolute top-3 left-3">
-                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-maroon text-white shadow">
-                  Agenda
-                </span>
-              </div>
-            @endif
+            <span class="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-bold bg-black/60 text-white backdrop-blur">
+              {{ $skp->kategori ?? 'TUPOKSI' }}
+            </span>
           </div>
 
-          {{-- Konten Card --}}
-          <div class="p-4 space-y-3">
-            <div>
-              <p class="text-xs font-semibold text-gray-500 mb-0.5">
-                📅 {{ \Carbon\Carbon::parse($item->tanggal)->translatedFormat('d M Y') }}
-              </p>
-              <h3 class="font-bold text-gray-900 text-base line-clamp-2 hover:text-maroon transition-colors">
-                <a href="{{ $showUrl }}">{{ $item->judul_kegiatan }}</a>
-              </h3>
-            </div>
-
-            {{-- Pegawai Terlibat Lainnya --}}
-            <div>
-              <p class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Rekan Tim Terlibat:</p>
-              <div class="flex flex-wrap gap-1">
-                @forelse($item->pegawais as $pegawai)
-                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border {{ $pegawai->id === auth()->id() ? 'bg-maroon/10 text-maroon border-maroon/30 font-semibold' : 'bg-gray-100 text-gray-800 border-gray-200' }}">
-                    👤 {{ $pegawai->id === auth()->id() ? 'Saya' : $pegawai->name }}
-                  </span>
-                @empty
-                  <span class="text-xs text-gray-400 italic">Tidak ada pegawai lain</span>
-                @endforelse
-              </div>
-            </div>
+          {{-- Detail Info --}}
+          <div class="p-4 space-y-1">
+            <span class="text-[10px] font-bold text-gray-400">📅 {{ \Carbon\Carbon::parse($skp->tanggal)->translatedFormat('d F Y') }}</span>
+            <h4 class="font-bold text-sm text-gray-900 leading-snug line-clamp-2">{{ $skp->judul_kegiatan }}</h4>
+            @if($skp->deskripsi)
+              <p class="text-xs text-gray-500 line-clamp-2 mt-1">{{ $skp->deskripsi }}</p>
+            @endif
           </div>
         </div>
 
-        {{-- Footer Card & Action Buttons --}}
-        <div class="p-4 pt-0 border-t border-gray-100 mt-3 flex items-center justify-between gap-2">
-          {{-- TOMBOL SALIN LINK --}}
-          <button type="button" 
-                  @click="copyToClipboard('{{ $showUrl }}')" 
-                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" stroke-width="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke-width="2"/></svg>
-            Salin Link
-          </button>
+        {{-- Action Button --}}
+        <div class="p-4 border-t bg-gray-50 flex items-center justify-between">
+          @if($isPdf)
+            <a href="{{ asset('storage/' . $skp->file_pdf_path) }}" target="_blank" class="text-xs font-bold text-red-700 hover:underline flex items-center gap-1">
+              📥 Buka Dokumen PDF
+            </a>
+          @else
+            <a href="{{ route('sigap-skp.show', $skp->slug) }}" class="text-xs font-bold text-maroon hover:underline">
+              Lihat Foto
+            </a>
+          @endif
 
-          <a href="{{ $showUrl }}" class="px-3.5 py-1.5 rounded-lg bg-gray-900 text-white text-xs font-semibold hover:bg-gray-800 transition-colors">
-            Lihat Detail
-          </a>
+          <form action="{{ route('sigap-skp.destroy', $skp->slug) }}" method="POST" onsubmit="return confirm('Hapus laporan ini?');">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="text-xs text-red-500 hover:text-red-700 font-semibold">Hapus</button>
+          </form>
         </div>
       </div>
     @empty
-      <div class="col-span-full rounded-2xl border border-gray-200 bg-white p-12 text-center text-gray-500 space-y-2">
-        <svg class="w-12 h-12 mx-auto text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="2"/><path d="M12 8v4m0 4h.01" stroke-width="2"/></svg>
-        <p class="font-medium text-gray-700">Belum ada laporan SKP tempat Anda ditautkan.</p>
-        <p class="text-xs text-gray-400">Laporan kegiatan yang melibatkan nama Anda akan muncul secara otomatis di sini.</p>
+      <div class="col-span-full p-8 text-center text-gray-400 italic bg-white rounded-2xl border">
+        Tidak ada laporan SKP yang sesuai dengan filter pencarian.
       </div>
     @endforelse
   </div>
 
-  <div class="mt-4">
-    {{ $skps->links() ?? '' }}
+  <div>
+    {{ $skps->links() }}
+  </div>
+
+  {{-- MODAL POP-UP UPLOAD DOKUMEN PDF --}}
+  <div x-show="openModalPdf" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
+      
+      {{-- Backdrop --}}
+      <div x-show="openModalPdf" x-transition.opacity class="fixed inset-0 bg-gray-900/70 backdrop-blur-sm" @click="openModalPdf = false"></div>
+
+      {{-- Modal Box --}}
+      <div x-show="openModalPdf" x-transition class="relative bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full border border-gray-100 p-6 space-y-4">
+        
+        <div class="flex items-center justify-between border-b pb-3">
+          <div class="flex items-center gap-2">
+            <span class="p-2 bg-red-100 text-red-700 rounded-xl">📄</span>
+            <h3 class="text-base font-bold text-gray-900">Upload Dokumen SKP (PDF)</h3>
+          </div>
+          <button type="button" @click="openModalPdf = false" class="text-gray-400 hover:text-gray-600 font-bold">✕</button>
+        </div>
+
+        <form action="{{ route('sigap-skp.store-pdf') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+          @csrf
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Judul Dokumen / Kegiatan <span class="text-red-500">*</span></label>
+            <input type="text" name="judul_kegiatan" required placeholder="Tulis judul berkas/kegiatan SKP..." class="w-full text-xs rounded-xl border-gray-300 p-2.5 focus:ring-maroon focus:border-maroon">
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-gray-700 mb-1">Tanggal Kegiatan <span class="text-red-500">*</span></label>
+              <input type="date" name="tanggal" value="{{ date('Y-m-d') }}" required class="w-full text-xs rounded-xl border-gray-300 p-2.5 focus:ring-maroon focus:border-maroon">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-700 mb-1">Kategori SKP</label>
+              <select name="kategori" class="w-full text-xs rounded-xl border-gray-300 p-2.5 focus:ring-maroon focus:border-maroon">
+                <option value="TUPOKSI">TUPOKSI</option>
+                <option value="DIREKTIF (TUGAS TAMBAHAN)">DIREKTIF (TUGAS TAMBAHAN)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Deskripsi Ringkas</label>
+            <textarea name="deskripsi" rows="2" placeholder="Catatan/deskripsi singkat terkait dokumen..." class="w-full text-xs rounded-xl border-gray-300 p-2.5 focus:ring-maroon focus:border-maroon"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Pilih Berkas PDF <span class="text-red-500">* (Max 10 MB)</span></label>
+            <input type="file" name="dokumen_pdf" accept="application/pdf" required class="block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100">
+          </div>
+
+          <div class="pt-2 flex items-center justify-end gap-2">
+            <button type="button" @click="openModalPdf = false" class="px-4 py-2 rounded-xl border text-xs font-bold text-gray-600 hover:bg-gray-50">Batal</button>
+            <button type="submit" class="px-5 py-2 rounded-xl bg-red-700 text-white text-xs font-bold hover:bg-red-800 shadow">Unggah Dokumen 🚀</button>
+          </div>
+        </form>
+
+      </div>
+    </div>
   </div>
 
 </div>
 @endsection
-
-@push('scripts')
-<script>
-function skpPribadi() {
-  return {
-    copyToClipboard(url) {
-      navigator.clipboard.writeText(url).then(() => {
-        Swal.fire({
-          icon: 'success',
-          title: 'Link Disalin!',
-          text: 'URL detail SKP telah tersalin ke clipboard.',
-          timer: 1500,
-          showConfirmButton: false
-        });
-      });
-    }
-  }
-}
-</script>
-@endpush
