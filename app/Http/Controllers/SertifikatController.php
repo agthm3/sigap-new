@@ -103,4 +103,19 @@ class SertifikatController extends Controller
 
         return response()->download($file);
     }
+
+    public function destroy($id)
+    {
+        $kegiatan = SertifikatKegiatan::findOrFail($id);
+
+        // Hapus semua peserta/sertifikat yang terikat dengan kegiatan ini
+        SertifikatPeserta::where('kegiatan_id', $id)->delete();
+
+        // Hapus data kegiatan utama
+        $kegiatan->delete();
+
+        return redirect()
+            ->route('sigap-sertifikat.dashboard')
+            ->with('success', 'Kegiatan sertifikat beserta seluruh data terkait berhasil dihapus.');
+    }
 }

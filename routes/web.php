@@ -418,13 +418,23 @@ Route::get('/profil-kontak', [ProfileOrganisasiController::class, 'kontak'])->na
 Route::get('/dashboard-sertifikat', [SertifikatController::class, 'index'])
     ->middleware('auth')
     ->name('sigap-sertifikat.dashboard');
-    Route::prefix('sertifikat-kegiatan')
-->middleware('auth')
-->group(function () {
-Route::post('/store', [SertifikatController::class, 'store'])
-        ->name('sertifikat-kegiatan.store');
 
+Route::prefix('sertifikat-kegiatan')
+    ->middleware('auth')
+    ->group(function () {
+        Route::post('/store', [SertifikatController::class, 'store'])
+            ->name('sertifikat-kegiatan.store');
+            
+        Route::delete('/{id}', [SertifikatController::class, 'destroy'])
+            ->name('sertifikat-kegiatan.destroy');
+    });
+Route::get('/clear-route-cache', function () {
+    \Illuminate\Support\Facades\Artisan::call('route:clear');
+    \Illuminate\Support\Facades\Artisan::call('config:clear');
+    \Illuminate\Support\Facades\Artisan::call('cache:clear');
+    return 'Route & Cache berhasil dibersihkan!';
 });
+
 Route::middleware('auth')->group(function(){
 
 Route::get('/sertifikat-kegiatan/{id}',
