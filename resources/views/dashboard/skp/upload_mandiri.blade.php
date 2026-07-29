@@ -29,18 +29,20 @@
   <style>
     body { font-family: Inter, system-ui, sans-serif; }
     [x-cloak] { display: none !important; }
+    .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
   </style>
 
-<!-- PWA Meta Tags -->
-<link rel="manifest" href="https://sigap.brida.makassarkota.go.id/manifest.json?v=3">
-<meta name="theme-color" content="#7a2222">
+  <!-- PWA Meta Tags -->
+  <link rel="manifest" href="https://sigap.brida.makassarkota.go.id/manifest.json?v=3">
+  <meta name="theme-color" content="#7a2222">
 
-<!-- Apple Touch Icon -->
-<link rel="apple-touch-icon" sizes="192x192" href="https://sigap.brida.makassarkota.go.id/images/icon-192.png">
+  <!-- Apple Touch Icon -->
+  <link rel="apple-touch-icon" sizes="192x192" href="https://sigap.brida.makassarkota.go.id/images/icon-192.png">
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col justify-between">
 
-  <div x-data="kameraMandiri(@js($myAgendas))" class="w-full max-w-lg mx-auto flex-1 flex flex-col justify-between p-4 space-y-4">
+  <div x-data="kameraMandiri(@js($myAgendas), {{ auth()->id() }})" class="w-full max-w-lg mx-auto flex-1 flex flex-col justify-between p-4 space-y-4">
 
     {{-- TOP BAR --}}
     <div class="flex items-center justify-between py-2 border-b border-gray-800">
@@ -150,6 +152,23 @@
                  class="w-full rounded-xl text-xs bg-gray-900 border-gray-700 text-white p-2.5" :class="sourceMode === 'agenda' ? 'opacity-70 cursor-not-allowed' : ''">
         </div>
 
+        {{-- INPUT CENTANG REKAN SE-TIM (HANYA MUNCUL JIKA ADA PEGAWAI LAIN DITUGASKAN DI AGENDA INI) --}}
+        <div x-show="sourceMode === 'agenda' && anggotaLain.length > 0" class="space-y-1.5 p-3 rounded-2xl bg-gray-900/90 border border-amber-500/30">
+          <div class="flex items-center justify-between">
+            <label class="text-[11px] font-bold text-amber-400">👥 Rekan Se-tim yang Hadir / Ikut Foto:</label>
+            <span class="text-[10px] text-gray-400 font-normal" x-text="selectedPegawaiIds.length + ' Dipilih'"></span>
+          </div>
+
+          <div class="space-y-1.5 max-h-40 overflow-y-auto pr-1 scrollbar-thin mt-1">
+            <template x-for="pegawai in anggotaLain" :key="pegawai.id">
+              <label class="flex items-center justify-between p-2 rounded-xl bg-gray-800 hover:bg-gray-700/80 border border-gray-700 cursor-pointer transition-colors">
+                <span class="text-xs text-gray-200 font-semibold" x-text="pegawai.name"></span>
+                <input type="checkbox" :value="pegawai.id" x-model="selectedPegawaiIds" class="rounded text-maroon focus:ring-maroon w-4 h-4 bg-gray-900 border-gray-600">
+              </label>
+            </template>
+          </div>
+        </div>
+
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="block text-[11px] font-bold text-gray-300">Tanggal <span class="text-red-400">*</span></label>
@@ -178,11 +197,10 @@
       </button>
 
     </form>
-
   </div>
 
   <script>
-  function kameraMandiri(myAgendasList) {
+  function kameraMandiri(myAgendasList, currentUserId) {
     return {
       stream: null,
       capturedImage: null,
@@ -194,8 +212,13 @@
       tanggalKegiatan: new Date().toISOString().split('T')[0],
       lokasiKegiatan: '',
       deskripsiKegiatan: '',
-      facingMode: 'environment',
+      facingMode: 'user',
       isLoading: false,
+
+      // VARIABEL REKAN SE-TIM SPECIFIC
+      anggotaLain: [],        // Hanya berisi rekan kerja se-tim pada agenda terpilih
+      selectedPegawaiIds: [], // ID yang dicentang hadir di foto
+      currentUserId: currentUserId,
 
       init() {
         this.startCamera();
@@ -207,6 +230,7 @@
         }
       },
 
+      // ================== FUNGSI KAMERA UTAMA ==================
       async startCamera() {
         this.stopCamera();
         try {
@@ -217,11 +241,15 @@
               height: { ideal: 720 } 
             } 
           });
-          this.$refs.video.srcObject = this.stream;
+          if (this.$refs.video) {
+            this.$refs.video.srcObject = this.stream;
+          }
         } catch (err) {
           try {
             this.stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            this.$refs.video.srcObject = this.stream;
+            if (this.$refs.video) {
+              this.$refs.video.srcObject = this.stream;
+            }
           } catch(e) {
             console.error("Kamera tidak diizinkan atau tidak ditemukan.");
           }
@@ -246,11 +274,14 @@
 
       takeSnapshot() {
         const video = this.$refs.video;
+        if (!video) return;
+
         const canvas = document.createElement('canvas');
         canvas.width = video.videoWidth || 1280;
         canvas.height = video.videoHeight || 720;
         const ctx = canvas.getContext('2d');
 
+        // Cermin gambar jika menggunakan kamera depan
         if (this.facingMode === 'user') {
           ctx.translate(canvas.width, 0);
           ctx.scale(-1, 1);
@@ -258,7 +289,7 @@
 
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         
-        this.capturedImage = canvas.toDataURL('image/jpeg', 0.75);
+        this.capturedImage = canvas.toDataURL('image/jpeg', 0.85);
         this.rotationAngle = 0;
         this.stopCamera();
       },
@@ -289,15 +320,16 @@
             canvas.height = height;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
-            this.capturedImage = canvas.toDataURL('image/jpeg', 0.75);
+            this.capturedImage = canvas.toDataURL('image/jpeg', 0.85);
             this.rotationAngle = 0;
+            this.stopCamera();
           };
         };
         reader.readAsDataURL(file);
       },
 
       getFinalRotatedBase64() {
-        if (this.rotationAngle === 0) return this.capturedImage;
+        if (this.rotationAngle === 0) return Promise.resolve(this.capturedImage);
 
         return new Promise((resolve) => {
           const img = new Image();
@@ -318,11 +350,12 @@
             ctx.rotate((this.rotationAngle * Math.PI) / 180);
             ctx.drawImage(img, -img.width / 2, -img.height / 2);
 
-            resolve(canvas.toDataURL('image/jpeg', 0.75));
+            resolve(canvas.toDataURL('image/jpeg', 0.85));
           };
         });
       },
 
+      // ================== FUNGSI FORM & AGENDA ==================
       onAgendaChange() {
         const selected = this.myAgendas.find(a => a.id == this.selectedAgendaId);
         if (selected) {
@@ -330,6 +363,17 @@
           this.tanggalKegiatan = selected.date;
           this.lokasiKegiatan = selected.place;
           this.deskripsiKegiatan = selected.description;
+
+          if (selected.pegawais && Array.isArray(selected.pegawais)) {
+            this.anggotaLain = selected.pegawais;
+            this.selectedPegawaiIds = selected.pegawais.map(p => p.id);
+          } else {
+            this.anggotaLain = [];
+            this.selectedPegawaiIds = [];
+          }
+        } else {
+          this.anggotaLain = [];
+          this.selectedPegawaiIds = [];
         }
       },
 
@@ -338,6 +382,8 @@
         this.judulKegiatan = '';
         this.lokasiKegiatan = '';
         this.deskripsiKegiatan = '';
+        this.anggotaLain = [];
+        this.selectedPegawaiIds = [];
       },
 
       selectAgendaItem() {
@@ -347,6 +393,7 @@
         }
       },
 
+      // ================== FUNGSI SUBMIT FORM ==================
       async submitForm() {
         if (!this.capturedImage) {
           Swal.fire('Perhatian', 'Harap jepret foto evidence terlebih dahulu.', 'warning');
@@ -372,23 +419,69 @@
               tanggal: this.tanggalKegiatan,
               lokasi: this.lokasiKegiatan,
               deskripsi: this.deskripsiKegiatan,
-              photo_data: finalPhoto
+              photo_data: finalPhoto,
+              pegawai_ids: this.selectedPegawaiIds
             })
           });
 
           const data = await response.json();
 
-          if (response.ok && data.status === 'success') {
-            Swal.fire({
-              icon: 'success',
-              title: 'Laporan Berhasil Disimpan!',
-              text: 'Membuka WhatsApp untuk membagikan laporan...',
-              timer: 2000,
-              showConfirmButton: false
-            }).then(() => {
-              window.open(data.wa_url, '_blank');
-              window.location.href = data.redirect;
-            });
+          if (response.ok && (data.status === 'success' || data.success)) {
+            const redirectUrl = data.redirect || "{{ route('sigap-skp.pribadi') }}";
+            const origWaUrl = data.wa_url || data.wa_message;
+            
+            // Ekstrak teks pesan pesan WA
+            let waText = '';
+            try {
+              const urlObj = new URL(origWaUrl);
+              waText = urlObj.searchParams.get('text') || '';
+            } catch(e) {
+              waText = origWaUrl;
+            }
+
+            // Deteksi perangkat iOS (iPhone/iPad)
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+            if (isIOS) {
+              // Universal Scheme iOS untuk WhatsApp
+              const iosWaScheme = 'whatsapp://send?text=' + encodeURIComponent(waText);
+
+              Swal.fire({
+                icon: 'success',
+                title: 'Laporan Berhasil Disimpan!',
+                text: 'Tekan tombol di bawah untuk membuka aplikasi WhatsApp.',
+                showCancelButton: true,
+                confirmButtonText: '📲 Buka WhatsApp',
+                cancelButtonText: 'Ke SKP Pribadi',
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#4b5563',
+                allowOutsideClick: false
+              }).then((result) => {
+                if (result.isConfirmed) {
+                  window.location.href = iosWaScheme;
+                  setTimeout(() => {
+                    window.location.href = redirectUrl;
+                  }, 1500);
+                } else {
+                  window.location.href = redirectUrl;
+                }
+              });
+
+            } else {
+              // Android & Desktop (Buka Otomatis)
+              Swal.fire({
+                icon: 'success',
+                title: 'Laporan Berhasil Disimpan!',
+                text: 'Membuka WhatsApp...',
+                timer: 1500,
+                showConfirmButton: false
+              }).then(() => {
+                window.open(origWaUrl, '_blank');
+                window.location.href = redirectUrl;
+              });
+            }
+
           } else {
             const errorMsg = data.message || 'Gagal menyimpan data laporan.';
             Swal.fire('Gagal Menyimpan', errorMsg, 'error');
