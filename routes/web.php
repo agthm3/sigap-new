@@ -556,6 +556,21 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/pejabat/search',[SigapDaftarHadirController::class, 'searchPejabat'])->name('search-pejabat');
     });
 });
+
+// Route Publik - Riwayat Peserta SIGAP Daftar Hadir
+Route::prefix('sigap-daftar-hadir')->name('sigap-daftar-hadir.')->group(function () {
+    Route::get('/public/riwayat-peserta', 
+        [SigapDaftarHadirController::class, 'publicRiwayatPeserta'])
+        ->name('public.riwayat-peserta');
+
+    Route::get('/public/riwayat-peserta/detail', 
+        [SigapDaftarHadirController::class, 'publicRiwayatPesertaDetail'])
+        ->name('public.riwayat-peserta.detail');
+
+    Route::get('/public/{kegiatan}/pdf', 
+            [SigapDaftarHadirController::class, 'publicExportPdf'])
+            ->name('public.export-pdf');
+});
  
 Route::get('/sigap-daftar-hadir/scan/{kegiatan:uuid}', [SigapDaftarHadirController::class, 'publicForm'])
     ->name('sigap-daftar-hadir.public');

@@ -867,4 +867,126 @@ public function updateStatus(Request $request, SigapDaftarHadirKegiatan $kegiata
 
         return response()->json($peserta);
     }
+
+    // =========================================================================
+    // PUBLIC RIWAYAT PESERTA
+    // =========================================================================
+
+  public function publicRiwayatPeserta(Request $request)
+    {
+        $q       = trim((string) $request->get('q', ''));
+        $results = collect();
+
+        if ($q !== '') {
+            $results = SigapDaftarHadirPeserta::with('kegiatan')
+                ->where('nama', 'like', "%{$q}%")
+                ->orderBy('nama')
+                ->get()
+                ->groupBy(fn ($p) => Str::lower(trim($p->nama)));
+        }
+
+        $totalPesertaTerdaftar = SigapDaftarHadirPeserta::distinct('nama')->count('nama');
+        $totalPartisipasi      = SigapDaftarHadirPeserta::count();
+
+        // DIPERBARUI: Diarahkan ke folder publik SigapDaftarHadir/riwayat/
+        return view('SigapDaftarHadir.riwayat.index', compact(
+            'q', 
+            'results', 
+            'totalPesertaTerdaftar', 
+            'totalPartisipasi'
+        ));
+    }
+
+    public function publicRiwayatPesertaDetail(Request $request)
+    {
+        $nama = trim((string) $request->get('nama', ''));
+        abort_if($nama === '', 400, 'Parameter nama diperlukan.');
+
+        $pesertaList = SigapDaftarHadirPeserta::with('kegiatan')
+            ->whereRaw('LOWER(nama) = ?', [Str::lower($nama)])
+            ->orderByDesc('created_at')
+            ->get();
+
+        // DIPERBARUI: Diarahkan ke folder publik SigapDaftarHadir/riwayat/
+        return view('SigapDaftarHadir.riwayat.detail', compact('nama', 'pesertaList'));
+    }
+
+    public function publicExportPdf(SigapDaftarHadirKegiatan $kegiatan)
+    {
+        // Keamanan: Hanya kegiatan yang sudah SELESAI yang boleh diunduh publik
+        abort_unless($kegiatan->status === 'selesai', 403, 'Dokumen daftar hadir hanya dapat diunduh jika kegiatan telah selesai.');
+
+        $kegiatan->load([
+            'penandatangan',
+            'peserta' => fn ($q) => $q->orderBy('urutan_absen')->orderBy('created_at'),
+        ]);
+
+        $logoPemkot = $this->loadLogoBase64('logo-pemkot.png');
+        $logoBrida  = $this->loadLogoBase64('logo-brida.png');
+
+        $verifikasiUrl = route('sigap-daftar-hadir.verifikasi', $kegiatan->uuid);
+        $qrVerifikasi = base64_encode(
+            QrCode::format('svg')->size(120)->margin(1)->generate($verifikasiUrl)
+        );
+
+        $pdfUtama = Pdf::loadView('dashboard.daftar_hadir.pdf', [
+            'kegiatan'      => $kegiatan,
+            'logoPemkot'    => $logoPemkot,
+            'logoBrida'     => $logoBrida,
+            'qrVerifikasi'  => $qrVerifikasi,
+            'verifikasiUrl' => $verifikasiUrl,
+        ])->setPaper('letter', 'portrait');
+
+        try {
+            $merger = new Merger();
+            
+            if ($kegiatan->undangan_path && Storage::disk('public')->exists($kegiatan->undangan_path)) {
+                $merger->addFile(storage_path('app/public/' . $kegiatan->undangan_path));
+            }
+            
+            $merger->addRaw($pdfUtama->output());
+
+            if ($kegiatan->buat_sertifikat == 1) {
+                $portalSertifikatUrl = 'https://sigap.brida.makassarkota.go.id/sertifikat';
+                $qrSertifikatSvg = base64_encode(
+                    QrCode::format('svg')->size(70)->margin(0)->generate($portalSertifikatUrl)
+                );
+
+                $sertifKegiatan = SertifikatKegiatan::where('nama_kegiatan', $kegiatan->nama_kegiatan)
+                    ->where('tanggal', $kegiatan->hari_tanggal)
+                    ->first();
+
+                $kegiatan->peserta->transform(function ($p) use ($sertifKegiatan, $kegiatan) {
+                    $nomorSah = null;
+                    if ($sertifKegiatan) {
+                        $nomorSah = SertifikatPeserta::where('kegiatan_id', $sertifKegiatan->id)
+                            ->where('nama_penerima', $p->nama)
+                            ->value('nomor_sertifikat');
+                    }
+                    if (!$nomorSah) {
+                        $nomorSah = $this->formatNomorSertifikat($kegiatan->nomor_surat, $p->urutan_absen, $kegiatan->id);
+                    }
+                    $p->nomor_sertifikat_dinamis = $nomorSah;
+                    return $p;
+                });
+
+                $pdfSertifikat = Pdf::loadView('dashboard.daftar_hadir.pdf_lampiran_sertifikat', [
+                    'kegiatan'     => $kegiatan,
+                    'logoPemkot'   => $logoPemkot,
+                    'logoBrida'    => $logoBrida,
+                    'qrSertifikat' => $qrSertifikatSvg
+                ])->setPaper('letter', 'portrait');
+
+                $merger->addRaw($pdfSertifikat->output());
+            }
+
+            $mergedPdf = $merger->merge();
+            return response($mergedPdf)
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'attachment; filename="dokumen-lengkap-' . Str::slug($kegiatan->nama_kegiatan) . '.pdf"');
+        
+        } catch (\Exception $e) {
+            return $pdfUtama->download('daftar-hadir-saja-' . Str::slug($kegiatan->nama_kegiatan) . '.pdf');
+        }
+    }
 }

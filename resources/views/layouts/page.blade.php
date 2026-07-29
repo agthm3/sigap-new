@@ -106,6 +106,7 @@
             <li><a href="{{ route('sigap-absensi.home') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Absensi</a></li>
             <li><a href="{{ route('sigap-ppd.public') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP PPD</a></li>
             <li><a href="{{ route('sigap-pic.public') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP PIC</a></li>
+            <li><a href="{{ route('sigap-daftar-hadir.public.riwayat-peserta') }}" class="block px-4 py-2 hover:bg-gray-100 font-medium text-maroon">SIGAP Riwayat Peserta</a></li>
           </ul>
         </div>
       </div>
@@ -202,6 +203,7 @@
             <li><a href="{{ route('sigap-absensi.home') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Absensi</a></li>
             <li><a href="{{ route('sigap-ppd.public') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP PPD</a></li>
             <li><a href="{{ route('sigap-pic.public') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP PIC</a></li>
+            <li><a href="{{ route('sigap-daftar-hadir.public.riwayat-peserta') }}" class="block px-4 py-2 hover:bg-gray-100 font-medium text-maroon">SIGAP Riwayat Peserta</a></li>
           </ul>
         </div>
       </div>
