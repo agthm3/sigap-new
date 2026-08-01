@@ -79,7 +79,7 @@ textarea::placeholder {
       </div>
 
       <nav class="p-3 space-y-1 overflow-y-auto h-[calc(100vh-4rem)] scrollbar-thin">
-        @hasrole('admin')
+        @hasrole('admin|employee')
         <a href="{{ route('home.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg    {{ request()->routeIs('home.index') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M3 10l9-7 9 7v8a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V12H9v6a2 2 0 0 1-2 2H3z"/></svg>
           Dashboard

@@ -101,9 +101,9 @@ Route::post('/pegawai/dokumen/{doc}/reveal', [PersonalDocumentController::class,
 Route::get('/pegawai/dokumen/{doc}/preview', [PersonalDocumentController::class,'preview'])
     ->name('pegawai.docs.preview');
 
-// --- Dashboard (pakai middleware milikmu)
+// --- Dashboard 
 Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'role:admin'])
+    ->middleware(['auth', 'role:admin|employee']) 
     ->name('home.index');
 
 // --- SIGAP Pegawai (tanpa resource, middleware milikmu tetap)
@@ -690,29 +690,6 @@ Route::middleware(['auth'])->group(function () {
     });
 
    
-
-    // Route::middleware(['auth'])->group(function () {
-
-    //     Route::prefix('sigap-skp')->name('sigap-skp.')->group(function () {
-
-    //         Route::middleware(['role:admin|verif_skp|employee'])->group(function () {
-    //             Route::get('/', [SkpController::class, 'index'])->name('index');
-    //             Route::get('/pribadi/ku', [SkpController::class, 'pribadi'])->name('pribadi');
-
-    //             Route::get('/upload-mandiri', [SkpController::class, 'uploadMandiri'])->name('upload-mandiri');
-    //             Route::post('/store-mandiri', [SkpController::class, 'storeMandiri'])->name('store-mandiri');
-
-    //             Route::get('/{slug}', [SkpController::class, 'show'])->name('show');
-    //         });
-
-    //         Route::middleware(['role:admin|verif_skp'])->group(function () {
-    //             Route::post('/store', [SkpController::class, 'store'])->name('store');
-    //             Route::delete('/{slug}', [SkpController::class, 'destroy'])->name('destroy');
-    //         });
-
-    //     });
-
-    // });
     Route::get('/sigap-skp/laporan/{slug}', [SkpController::class, 'publicShow'])->name('sigap-skp.public-show');
     Route::get('/sigap-skp/kumpulan/lihat/{slug}', [SkpController::class, 'publicShowKumpulan'])->name('sigap-skp.kumpulan.public-show');
 
