@@ -484,6 +484,75 @@ textarea::placeholder {
         SIGAP PPD
       </a>
       @endhasanyrole
+    @hasanyrole('admin|verif_magang|magang')
+      <!-- SECTION HEADER: SIGAP MAGANG -->
+      <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">
+        SIGAP MAGANG
+      </div>
+
+      <!-- Toggle Button -->
+      <button id="magangToggle"
+              class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-left transition-colors">
+        <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5z"/>
+          <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
+        </svg>
+        <span class="font-medium">SIGAP Magang</span>
+        <svg id="magangCaret"
+            class="w-4 h-4 ml-auto transition-transform duration-200"
+            viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-width="2" d="M6 9l6 6 6-6"/>
+        </svg>
+      </button>
+
+      <!-- Dropdown Menu Items -->
+      <div id="magangMenu" class="ml-3 mt-1 space-y-1 hidden">
+        <!-- Menu Utama Batch Magang (Tampil untuk Semua Role Magang/Verif/Admin) -->
+        <a href="{{ route('magang.index') }}"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+          {{ request()->routeIs('magang.index*') || request()->routeIs('magang.batch*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" d="M4 5h16v14H4z"/>
+            <path stroke-width="2" d="M8 9h8M8 13h5"/>
+          </svg>
+          Batch Magang
+        </a>
+
+        <!-- Menu Khusus Mahasiswa / Peserta Magang: Logbook Saya -->
+        @role('magang')
+        <a href="{{ route('magang.logbook.index') }}"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+          {{ request()->routeIs('magang.logbook.*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path stroke-width="2" d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          Logbook Saya
+        </a>
+        @endrole
+
+        <!-- Menu Khusus Admin & Verif Magang: Monitoring Magang -->
+        @hasanyrole('admin|verif_magang')
+        <a href="{{ route('magang.monitoring-logbook') }}"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+          {{ request()->routeIs('magang.monitoring-logbook*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+          Monitoring Magang
+        </a>
+
+        <!-- MENU BARU: Riwayat Magang -->
+        <a href="{{ route('magang.riwayat.index') }}" 
+          class="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-colors {{ request()->routeIs('magang.riwayat*') ? 'bg-maroon text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span>Riwayat Magang</span>
+        </a>
+        @endhasanyrole
+      </div>
+    @endhasanyrole
       @hasanyrole('admin|verif_daftarhadir|employee')
       <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">
         SIGAP DAFTAR HADIR
@@ -596,6 +665,15 @@ textarea::placeholder {
       </div>
       @endhasanyrole
         <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">PENGATURAN</div>
+        @hasrole('admin')
+        <a href="{{ route('roles.index') }}"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg {{ request()->routeIs('roles.*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          Manajemen Role
+        </a>
+        @endhasrole
       @hasrole('admin')
         <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">SISTEM</div>
         <a href="{{ route('admin.logs') }}" 
@@ -627,10 +705,36 @@ textarea::placeholder {
             <button id="sidebarToggle" class="lg:hidden inline-flex items-center justify-center w-9 h-9 rounded-md border border-gray-300">
                 <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
             </button>
-            <div class="relative">
-                <input class="pl-9 pr-3 py-2 rounded-lg border border-gray-300 focus:ring-maroon focus:border-maroon w-[56vw] max-w-md" placeholder="Cari cepat (dokumen, pegawai, alias…)" />
-                <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-width="2" d="M21 21l-4.3-4.3M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></svg>
-            </div>
+                <!-- SEARCH BAR TRIGGER (EYE-CATCHING & RESPONSIVE) -->
+                <div x-data class="w-full sm:w-80 md:w-96 lg:w-[28rem] transition-all">
+                  <button type="button" 
+                          onclick="window.dispatchEvent(new CustomEvent('open-global-search'))"
+                          @click="$dispatch('cmd-k')"
+                          class="group w-full flex items-center justify-between px-3.5 py-2 rounded-xl bg-gray-100/80 hover:bg-white border border-gray-200/80 hover:border-maroon/40 shadow-sm hover:shadow-md transition-all duration-200 text-left">
+                    
+                    <!-- Sisi Kiri: Ikon & Teks Placeholder -->
+                    <div class="flex items-center gap-2.5 min-w-0">
+                      <div class="w-7 h-7 rounded-lg bg-maroon/10 group-hover:bg-maroon text-maroon group-hover:text-white flex items-center justify-center transition-colors shrink-0">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 21l-4.3-4.3M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/>
+                        </svg>
+                      </div>
+                      
+                      <div class="flex flex-col truncate">
+                        <span class="text-xs font-bold text-gray-700 group-hover:text-maroon transition-colors truncate">Pencarian Cepat Menu...</span>
+                        <span class="text-[10px] text-gray-400 font-medium truncate">Cari SPJ, Logbook, Magang, SKP...</span>
+                      </div>
+                    </div>
+
+                    <!-- Sisi Kanan: Kategori Badge & Shortcut Ctrl+K -->
+                    <div class="flex items-center gap-1.5 shrink-0 pl-2">
+                      <span class="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white group-hover:bg-maroon/10 border border-gray-200 group-hover:border-maroon/20 text-[10px] font-extrabold text-gray-500 group-hover:text-maroon transition-colors shadow-2xs">
+                        ⌘ K
+                      </span>
+                    </div>
+
+                  </button>
+                </div>
             </div>
 
           @auth
@@ -953,6 +1057,501 @@ document.addEventListener("DOMContentLoaded", function () {
             .catch(err => console.log('Service Worker gagal:', err));
         });
       }
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const magangToggle = document.getElementById('magangToggle');
+  const magangMenu   = document.getElementById('magangMenu');
+  const magangCaret  = document.getElementById('magangCaret');
+
+  if (!magangToggle) return;
+
+  const MAGANG_KEY  = 'sb_magang_open';
+  const isOpenSaved = localStorage.getItem(MAGANG_KEY) === '1';
+
+  const isOnMagang = window.location.pathname.includes('/dashboard/magang');
+
+  if (isOpenSaved || isOnMagang) {
+    magangMenu.classList.remove('hidden');
+    magangCaret.classList.add('rotate-180');
+  }
+
+  magangToggle.addEventListener('click', () => {
+    const willOpen = magangMenu.classList.contains('hidden');
+    magangMenu.classList.toggle('hidden');
+    magangCaret.classList.toggle('rotate-180', willOpen);
+    localStorage.setItem(MAGANG_KEY, willOpen ? '1' : '0');
+  });
+});
+</script>
+<div x-data="globalSearch()" 
+         @keydown.window.prevent.cmd.k="openSearch()"
+         @keydown.window.prevent.ctrl.k="openSearch()"
+         x-show="isOpen" 
+         x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto bg-gray-900/60 backdrop-blur-sm flex items-start justify-center pt-16 sm:pt-24 p-4">
+      
+      <div @click.away="closeSearch()" 
+           class="relative w-full max-w-xl rounded-2xl bg-white shadow-2xl border border-gray-100 overflow-hidden transform transition-all">
+        
+        <!-- Input Search Bar -->
+        <div class="flex items-center px-4 border-b border-gray-100 bg-gray-50/50">
+          <template x-if="selectedParent">
+            <button type="button" @click="resetToParentList()" class="mr-2 p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-200 transition-colors" title="Kembali ke pencarian awal">
+              ←
+            </button>
+          </template>
+
+          <span class="text-gray-400 font-bold text-lg">🔍</span>
+          
+          <input type="text" 
+                 x-ref="searchInput"
+                 x-model="searchQuery" 
+                 @keydown.arrow-down.prevent="navigateResults('down')"
+                 @keydown.arrow-up.prevent="navigateResults('up')"
+                 @keydown.enter.prevent="selectCurrentResult()"
+                 @keydown.escape="handleEscape()"
+                 :placeholder="selectedParent ? 'Pilih sub-menu ' + selectedParent.title + '...' : 'Cari menu (misal: SIGAP SPJ, Logbook, Magang)...'"
+                 class="w-full bg-transparent border-0 py-4 pl-3 pr-4 text-sm font-medium text-gray-800 focus:ring-0 focus:outline-none placeholder-gray-400">
+                 
+          <span class="text-[10px] font-extrabold text-gray-400 bg-gray-200/60 px-2 py-1 rounded-md">ESC</span>
+        </div>
+
+        <!-- Breadcrumb Indicator jika Parent Terpilih -->
+        <template x-if="selectedParent">
+          <div class="px-4 py-2 bg-maroon/5 border-b border-maroon/10 flex items-center justify-between text-xs font-semibold text-maroon">
+            <span>Kategori Terpilih: <strong x-text="selectedParent.title"></strong></span>
+            <button type="button" @click="resetToParentList()" class="hover:underline text-[11px]">Ganti Menu</button>
+          </div>
+        </template>
+
+        <!-- Results List -->
+        <div class="max-h-80 overflow-y-auto p-2 space-y-1">
+          
+          <!-- Mode 1: Pencarian Utama -->
+          <template x-if="!selectedParent">
+            <div>
+              <template x-for="(item, index) in filteredResults" :key="item.id">
+                <div @click="handleItemClick(item)"
+                     @mouseenter="selectedIndex = index"
+                     :class="{ 'bg-maroon text-white': selectedIndex === index, 'text-gray-700 hover:bg-gray-100': selectedIndex !== index }"
+                     class="flex items-center justify-between px-3.5 py-2.5 rounded-xl cursor-pointer text-xs font-semibold transition-colors">
+                  
+                  <div class="flex items-center gap-2.5">
+                    <span x-text="item.icon" class="text-base"></span>
+                    <div>
+                      <p x-text="item.title" class="font-bold"></p>
+                      <p x-text="item.description" :class="selectedIndex === index ? 'text-white/80' : 'text-gray-400'" class="text-[11px] font-normal"></p>
+                    </div>
+                  </div>
+
+                  <template x-if="item.isParent">
+                    <span :class="selectedIndex === index ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-900 border border-amber-200'" 
+                          class="px-2 py-0.5 rounded-md text-[10px] font-extrabold flex items-center gap-1">
+                      <span x-text="item.subMenus ? item.subMenus.length + ' Sub-Menu' : 'Sub-Menu'"></span>
+                      <span>↵</span>
+                    </span>
+                  </template>
+                </div>
+              </template>
+
+              <template x-if="filteredResults.length === 0">
+                <div class="py-8 text-center text-xs text-gray-400">
+                  Menu atau kata kunci tidak ditemukan.
+                </div>
+              </template>
+            </div>
+          </template>
+
+          <!-- Mode 2: Tampilan Sub-Menu dari Parent -->
+          <template x-if="selectedParent">
+            <div>
+              <template x-for="(sub, index) in filteredSubMenus" :key="sub.url">
+                <div @click="goToUrl(sub.url)"
+                     @mouseenter="selectedIndex = index"
+                     :class="{ 'bg-maroon text-white': selectedIndex === index, 'text-gray-700 hover:bg-gray-100': selectedIndex !== index }"
+                     class="flex items-center justify-between px-3.5 py-2.5 rounded-xl cursor-pointer text-xs font-semibold transition-colors">
+                  
+                  <div class="flex items-center gap-2.5">
+                    <span x-text="sub.icon" class="text-base"></span>
+                    <div>
+                      <p x-text="sub.title" class="font-bold"></p>
+                      <p x-text="sub.description" :class="selectedIndex === index ? 'text-white/80' : 'text-gray-400'" class="text-[11px] font-normal"></p>
+                    </div>
+                  </div>
+
+                  <span :class="selectedIndex === index ? 'text-white' : 'text-gray-400'" class="text-xs">Buka →</span>
+                </div>
+              </template>
+            </div>
+          </template>
+
+        </div>
+
+        <!-- Footer Help Bar -->
+        <div class="px-4 py-2.5 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-400">
+          <div class="flex items-center gap-3">
+            <span><kbd class="font-semibold bg-gray-200 px-1 rounded">↑↓</kbd> Navigasi</span>
+            <span><kbd class="font-semibold bg-gray-200 px-1 rounded">↵</kbd> Pilih</span>
+          </div>
+          <span>SIGAP Navigasi Cepat</span>
+        </div>
+
+      </div>
+    </div>
+
+<!-- SCRIPT ALPINE JS FOR GLOBAL SEARCH -->
+<script>
+function globalSearch() {
+  return {
+    isOpen: false,
+    searchQuery: '',
+    selectedIndex: 0,
+    selectedParent: null,
+
+    init() {
+      window.addEventListener('open-global-search', () => this.openSearch());
+      window.addEventListener('cmd-k', () => this.openSearch());
+    },
+
+    // DAFTAR MENU DENGAN FILTER ROLE DINAMIS
+    menuTree: [
+      @auth
+        @php
+          $u = auth()->user();
+          $isAdmin = $u->hasRole('admin');
+        @endphp
+
+        // 1. SIGAP MAGANG
+        @if($isAdmin || $u->hasAnyRole(['verif_magang', 'magang']))
+        {
+          id: 'magang-group',
+          title: 'SIGAP Magang',
+          description: 'Pendaftaran, Logbook, Tes Ketik & Monitoring Magang',
+          icon: '🎓',
+          isParent: true,
+          subMenus: [
+            { title: 'Batch Magang', description: 'Informasi umum & pendaftaran batch', url: "{{ route('magang.index') }}", icon: '🏠' },
+            @if($isAdmin || $u->hasRole('magang'))
+            { title: 'Logbook Saya', description: 'Pelaporan harian & evaluasi ketik 10 jari', url: "{{ route('magang.logbook.index') }}", icon: '📝' },
+            @endif
+            @if($isAdmin || $u->hasRole('verif_magang'))
+            { title: 'Monitoring Magang', description: 'Pantau keaktifan harian & izin susulan', url: "{{ route('magang.monitoring-logbook') }}", icon: '📋' },
+            { title: 'Riwayat Magang', description: 'Arsip batch & dokumen lulusan magang', url: "{{ route('magang.riwayat.index') }}", icon: '📁' },
+            @endif
+          ]
+        },
+        @endif
+
+        // 2. SIGAP PPD
+        @if($isAdmin || $u->hasAnyRole(['verif_ppd', 'employee']))
+        {
+          id: 'ppd-single',
+          title: 'SIGAP PPD',
+          description: 'Perencanaan, Pengendalian, dan Evaluasi Pembangunan Daerah',
+          icon: '📑',
+          isParent: false,
+          url: "{{ route('sigap-ppd.index') }}"
+        },
+        @endif
+
+        // 3. SIGAP SPJ
+        @if($isAdmin || $u->hasRole('operator_spj'))
+        {
+          id: 'spj-group',
+          title: 'SIGAP SPJ',
+          description: 'Kelola SPJ, Laporan Sub-Kegiatan & Struktur Bidang',
+          icon: '📄',
+          isParent: true,
+          subMenus: [
+            { title: 'Laporan Sub-Kegiatan', description: 'Kelola draf & berkas SPJ kegiatan', url: "{{ route('sigap-spj.index') }}", icon: '📝' },
+            @if($isAdmin)
+            { title: 'Struktur Bidang', description: 'Pengaturan bidang & master SPJ', url: "{{ route('sigap-spj.bidang.index') }}", icon: '🏗️' },
+            @endif
+          ]
+        },
+        @endif
+
+        // 4. SIGAP SKP
+        @if($isAdmin || $u->hasAnyRole(['verif_skp', 'employee']))
+        {
+          id: 'skp-group',
+          title: 'SIGAP SKP',
+          description: 'Sasaran Kinerja Pegawai Umum, Pribadi & Monitoring',
+          icon: '📊',
+          isParent: true,
+          subMenus: [
+            { title: 'SKP Umum', description: 'Daftar sasaran kinerja umum pegawai', url: "{{ route('sigap-skp.index') }}", icon: '👥' },
+            { title: 'SKP Pribadi', description: 'Sasaran kinerja individu Anda', url: "{{ route('sigap-skp.pribadi') }}", icon: '👤' },
+            { title: 'Monitoring SKP', description: 'Pantau capaian SKP berkala', url: "{{ route('sigap-skp.monitoring') }}", icon: '📈' },
+          ]
+        },
+        @endif
+
+        // 5. SIGAP ABSENSI
+        @if($isAdmin || $u->hasAnyRole(['verificator_absensi', 'employee']))
+        {
+          id: 'absensi-group',
+          title: 'SIGAP Absensi',
+          description: 'Pencatatan Kehadiran, Rekap Harian & Rekap Bulanan',
+          icon: '⏰',
+          isParent: true,
+          subMenus: [
+            @if($isAdmin || $u->hasRole('employee'))
+            { title: 'Absen Saya', description: 'Pencatatan hadir & pulang harian', url: "{{ route('sigap-absensi.index') }}", icon: '📌' },
+            @endif
+            @if($isAdmin || $u->hasRole('verificator_absensi'))
+            { title: 'Dashboard Absensi', description: 'Ringkasan presensi pegawai', url: "{{ route('sigap-absensi.dashboard') }}", icon: '🖥️' },
+            { title: 'Rekap Harian', description: 'Laporan rekapitulasi harian', url: "{{ route('sigap-absensi.rekap-harian') }}", icon: '📅' },
+            { title: 'Rekap Bulanan', description: 'Laporan rekapitulasi bulanan', url: "{{ route('sigap-absensi.rekap-bulanan') }}", icon: '📆' },
+            @endif
+          ]
+        },
+        @endif
+
+        // 6. SIGAP INOVASI
+        @if($isAdmin || $u->hasRole('inovator'))
+        {
+          id: 'inovasi-group',
+          title: 'SIGAP Inovasi',
+          description: 'Dashboard Inovasi, Inovasi Daerah & IGA BSKDN',
+          icon: '💡',
+          isParent: true,
+          subMenus: [
+            { title: 'Dashboard Inovasi', description: 'Ringkasan capaian inovasi daerah', url: "{{ route('sigap-inovasi.dashboard') }}", icon: '🏠' },
+            { title: 'Inovasi Daerah', description: 'Katalog & pengusulan inovasi daerah', url: "{{ route('sigap-inovasi.index') }}", icon: '🏛️' },
+            { title: 'Akun IGA BSKDN', description: 'Pengelolaan akun IGA Kemendagri', url: "{{ route('sigap-iga.index') }}", icon: '🛡️' },
+            { title: 'Konfigurasi Inovasi', description: 'Pengaturan kriteria inovasi', url: "{{ route('sigap-inovasi.konfigurasi') }}", icon: '⚙️' },
+          ]
+        },
+        @endif
+
+        // 7. SIGAP DAFTAR HADIR
+        @if($isAdmin || $u->hasAnyRole(['verif_daftarhadir', 'employee']))
+        {
+          id: 'daftar-hadir-group',
+          title: 'SIGAP Daftar Hadir',
+          description: 'Daftar Kegiatan, Riwayat Peserta & Kesediaan Narasumber',
+          icon: '📋',
+          isParent: true,
+          subMenus: [
+            { title: 'Daftar Kegiatan', description: 'Presensi acara & rapat dinas', url: "{{ route('sigap-daftar-hadir.index') }}", icon: '📅' },
+            @if($isAdmin)
+            { title: 'Riwayat Peserta', description: 'Rekap kehadiran peserta rapat', url: "{{ route('sigap-daftar-hadir.riwayat-peserta') }}", icon: '👥' },
+            @endif
+            { title: 'Permintaan Kesediaan Narasumber', description: 'Pengelolaan narasumber kegiatan', url: "{{ route('sigap-narasumber.index') }}", icon: '🎙️' },
+          ]
+        },
+        @endif
+
+        // 8. SIGAP INKUBATORMA
+        @if($isAdmin || $u->hasAnyRole(['verifikator_inkubatorma', 'user']))
+        {
+          id: 'inkubatorma-group',
+          title: 'SIGAP Inkubatorma',
+          description: 'Inkubator Bisnis & Pengembangan Inovasi Masyarakat',
+          icon: '🚀',
+          isParent: true,
+          subMenus: [
+            { title: 'Dashboard Inkubatorma', description: 'Ringkasan tenant & inkubasi', url: "{{ route('sigap-inkubatorma.dashboard') }}", icon: '📊' },
+          ]
+        },
+        @endif
+
+        // 9. SIGAP RISET
+        @if($isAdmin || $u->hasRole('researcher'))
+        {
+          id: 'riset-group',
+          title: 'SIGAP Riset',
+          description: 'Kajian, Penelitian & Kelayakan Daerah',
+          icon: '🔬',
+          isParent: true,
+          subMenus: [
+            { title: 'Dashboard Riset', description: 'Portofolio penelitian daerah', url: "{{ route('riset.index') }}", icon: '📚' },
+          ]
+        },
+        @endif
+
+        // 10. SIGAP SERTIFIKAT & FORMAT
+        @if($isAdmin || $u->hasRole('employee'))
+        {
+          id: 'sertifikat-group',
+          title: 'SIGAP Sertifikat',
+          description: 'Generasi & Verifikasi Sertifikat Digital',
+          icon: '📜',
+          isParent: true,
+          subMenus: [
+            { title: 'Dashboard Sertifikat', description: 'Katalog & pembuatan sertifikat', url: "{{ route('sigap-sertifikat.dashboard') }}", icon: '🏆' },
+          ]
+        },
+        {
+          id: 'format-group',
+          title: 'SIGAP Format',
+          description: 'Template Dokumen Resmi & Format Persuratan',
+          icon: '📂',
+          isParent: true,
+          subMenus: [
+            { title: 'Katalog Template Format', description: 'Unduh template dokumen resmi', url: "{{ route('format.index') }}", icon: '📁' },
+          ]
+        },
+        {
+          id: 'single-dokumen',
+          title: 'SIGAP Dokumen',
+          description: 'Pencarian & pengelolaan dokumen resmi',
+          icon: '🔍',
+          isParent: false,
+          url: "{{ route('sigap-dokumen.index') }}"
+        },
+        @endif
+
+        // 11. MENU UMUM (DAPAT DIAKSES SEMUA USER LOGGED IN)
+        {
+          id: 'single-agenda',
+          title: 'Agenda Kegiatan',
+          description: 'Jadwal & kalender agenda dinas kantor',
+          icon: '📅',
+          isParent: false,
+          url: "{{ route('sigap-agenda.index') }}"
+        },
+        {
+          id: 'single-profil',
+          title: 'Profil Pegawai Saya',
+          description: 'Pengaturan data diri & foto profil',
+          icon: '👤',
+          isParent: false,
+          url: "{{ route('pegawai.profil') }}"
+        },
+
+        // 12. KHUSUS ADMIN
+        @if($isAdmin)
+        {
+          id: 'single-pegawai',
+          title: 'SIGAP Pegawai',
+          description: 'Manajemen Data & Informasi Pegawai BRIDA',
+          icon: '👥',
+          isParent: false,
+          url: "{{ route('sigap-pegawai.index') }}"
+        },
+        {
+          id: 'single-pic',
+          title: 'SIGAP PIC',
+          description: 'Penanggung Jawab & Person in Charge Kegiatan',
+          icon: '📌',
+          isParent: false,
+          url: "{{ route('sigap-pic.index') }}"
+        },
+        {
+          id: 'single-roles',
+          title: 'Manajemen Role & Akses',
+          description: 'Pengaturan hak akses pengguna',
+          icon: '🛡️',
+          isParent: false,
+          url: "{{ route('roles.index') }}"
+        },
+        {
+          id: 'single-logs',
+          title: 'Sistem Log',
+          description: 'Catatan aktivitas sistem & audit trail',
+          icon: '🖥️',
+          isParent: false,
+          url: "{{ route('admin.logs') }}"
+        },
+        @endif
+      @endauth
+    ],
+
+    get filteredResults() {
+      if (!this.searchQuery.trim()) return this.menuTree;
+      const q = this.searchQuery.toLowerCase();
+      return this.menuTree.filter(item => {
+        const matchTitle = item.title.toLowerCase().includes(q);
+        const matchDesc = item.description.toLowerCase().includes(q);
+        const matchSub = item.subMenus && item.subMenus.some(sub => sub.title.toLowerCase().includes(q));
+        return matchTitle || matchDesc || matchSub;
+      });
+    },
+
+    get filteredSubMenus() {
+      if (!this.selectedParent) return [];
+      if (!this.searchQuery.trim()) return this.selectedParent.subMenus;
+      const q = this.searchQuery.toLowerCase();
+      return this.selectedParent.subMenus.filter(sub => 
+        sub.title.toLowerCase().includes(q) || sub.description.toLowerCase().includes(q)
+      );
+    },
+
+    openSearch() {
+      this.isOpen = true;
+      this.searchQuery = '';
+      this.selectedParent = null;
+      this.selectedIndex = 0;
+      this.$nextTick(() => {
+        if (this.$refs.searchInput) this.$refs.searchInput.focus();
+      });
+    },
+
+    closeSearch() {
+      this.isOpen = false;
+    },
+
+    handleEscape() {
+      if (this.selectedParent) {
+        this.resetToParentList();
+      } else {
+        this.closeSearch();
+      }
+    },
+
+    handleItemClick(item) {
+      if (item.isParent) {
+        this.selectedParent = item;
+        this.searchQuery = '';
+        this.selectedIndex = 0;
+        this.$nextTick(() => {
+          if (this.$refs.searchInput) this.$refs.searchInput.focus();
+        });
+      } else {
+        this.goToUrl(item.url);
+      }
+    },
+
+    selectCurrentResult() {
+      if (!this.selectedParent) {
+        const current = this.filteredResults[this.selectedIndex];
+        if (current) this.handleItemClick(current);
+      } else {
+        const currentSub = this.filteredSubMenus[this.selectedIndex];
+        if (currentSub) this.goToUrl(currentSub.url);
+      }
+    },
+
+    resetToParentList() {
+      this.selectedParent = null;
+      this.searchQuery = '';
+      this.selectedIndex = 0;
+      this.$nextTick(() => {
+        if (this.$refs.searchInput) this.$refs.searchInput.focus();
+      });
+    },
+
+    navigateResults(direction) {
+      const max = this.selectedParent ? this.filteredSubMenus.length : this.filteredResults.length;
+      if (max === 0) return;
+      if (direction === 'down') {
+        this.selectedIndex = (this.selectedIndex + 1) % max;
+      } else if (direction === 'up') {
+        this.selectedIndex = (this.selectedIndex - 1 + max) % max;
+      }
+    },
+
+    goToUrl(url) {
+      this.closeSearch();
+      if (url && url !== '#') {
+        window.location.href = url;
+      }
+    }
+  }
+}
 </script>
 </body>
 </html>

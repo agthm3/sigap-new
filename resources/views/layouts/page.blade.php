@@ -5,6 +5,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>SIGAP BRIDA — Sistem Informasi Gabungan Arsip & Privasi</title>
+  
   <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -45,29 +46,26 @@
 <!-- Top Bar -->
 <header x-data="{ mobileOpen:false }" class="border-b border-maroon/10 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 sticky top-0 z-50">
   <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-  <a href="{{ route('home') }}">
-    <div class="flex items-center gap-3">
+    <a href="{{ route('home') }}">
+      <div class="flex items-center gap-3">
+        {{-- Logo --}}
+        <img 
+          src="{{ asset('images/logo-sigap.png') }}" 
+          alt="Logo SIGAP BRIDA"
+          class="h-10 w-auto sm:h-11 md:h-12 object-contain"
+        >
 
-      {{-- Logo --}}
-      <img 
-        src="{{ asset('images/logo-sigap.png') }}" 
-        alt="Logo SIGAP BRIDA"
-        class="h-10 w-auto sm:h-11 md:h-12 object-contain"
-      >
-
-      {{-- Text --}}
-      <div class="leading-tight">
-        <p class="text-sm sm:text-base font-semibold text-maroon">
-          SIGAP
-        </p>
-
-        <p class="text-[10px] sm:text-[11px] text-gray-500">
-          Sistem Informasi Gabungan Arsip & Pegawai
-        </p>
+        {{-- Text --}}
+        <div class="leading-tight">
+          <p class="text-sm sm:text-base font-semibold text-maroon">
+            SIGAP
+          </p>
+          <p class="text-[10px] sm:text-[11px] text-gray-500">
+            Sistem Informasi Gabungan Arsip & Pegawai
+          </p>
+        </div>
       </div>
-
-    </div>
-  </a>
+    </a>
 
     {{-- DESKTOP NAV --}}
     <nav class="hidden md:flex items-center gap-6 text-sm">
@@ -84,7 +82,6 @@
           </svg>
         </button>
 
-        <!-- Panel dropdown; bungkus dengan container yang juga memicu open agar tidak hilang saat mouse pindah -->
         <div
           x-show="open"
           @mouseenter="open=true" @mouseleave="open=false"
@@ -110,6 +107,7 @@
           </ul>
         </div>
       </div>
+
       {{-- Dropdown Profil BRIDA --}}
       <div x-data="{open:false}" @keydown.escape.window="open=false" class="relative">
         <button
@@ -140,31 +138,41 @@
           </ul>
         </div>
       </div>
-      {{-- Link lain --}}
+
+      {{-- Link Navigasi --}}
       <a href="#fitur" class="hover:text-maroon">Fitur</a>
       <a href="#bagaimana" class="hover:text-maroon">Cara Kerja</a>
       <a href="#kontak" class="hover:text-maroon">Kontak</a>
 
-      {{-- Auth / Role buttons --}}
-      @if(!Auth::check())
-        <a href="{{ route('login') }}" class="px-4 py-2 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">Masuk</a>
-      @endif
+      {{-- Auth / Best Practice Dashboard Route Evaluator --}}
+      @guest
+        <a href="{{ route('login') }}" class="px-4 py-2 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">
+          Masuk
+        </a>
+      @endguest
 
-      @role('admin')
-        <a href="{{ route('home.index') }}" class="px-4 py-2 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">Admin Dashboard</a>
-      @endrole
-      @role('user')
-        <a href="{{ route('pegawai.profil') }}" class="px-4 py-2 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">User Dashboard</a>
-      @endrole
-      @role('employee')
-        <a href="{{ route('pegawai.profil') }}" class="px-4 py-2 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">Dashboard Pegawai</a>
-      @endrole
-      @role('inovator')
-        <a href="{{ route('sigap-inovasi.dashboard') }}" class="px-4 py-2 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">Inovator Dashboard</a>
-      @endrole
+      @auth
+        @php
+          $u = auth()->user();
+          // Hierarki penentuan route dashboard berdasarkan role tertinggi
+          if ($u->hasRole('admin')) {
+              $dashboardRoute = route('home.index');
+          } elseif ($u->hasRole('inovator')) {
+              $dashboardRoute = route('sigap-inovasi.dashboard');
+          } elseif ($u->hasAnyRole(['magang', 'verif_magang'])) {
+              $dashboardRoute = route('magang.index');
+          } else {
+              $dashboardRoute = route('pegawai.profil');
+          }
+        @endphp
+
+        <a href="{{ $dashboardRoute }}" class="px-4 py-2 rounded-md bg-maroon text-white hover:bg-maroon-800 transition font-medium text-xs">
+          Dashboard Panel
+        </a>
+      @endauth
     </nav>
 
-    {{-- Mobile burger --}}
+    {{-- Mobile Burger Button --}}
     <button @click="mobileOpen=!mobileOpen" class="md:hidden inline-flex items-center px-3 py-2 rounded-md border border-maroon text-maroon" aria-label="Menu">
       <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
@@ -207,6 +215,7 @@
           </ul>
         </div>
       </div>
+
       {{-- Accordion Profil BRIDA --}}
       <div x-data="{ open:false }" class="border rounded-lg">
         <button @click="open=!open" class="w-full flex items-center justify-between px-4 py-3">
@@ -226,69 +235,67 @@
           </ul>
         </div>
       </div>
-      {{-- Link biasa --}}
+
+      {{-- Link Biasa --}}
       <a href="#fitur" class="block px-4 py-2 rounded-md hover:bg-gray-50">Fitur</a>
       <a href="#bagaimana" class="block px-4 py-2 rounded-md hover:bg-gray-50">Cara Kerja</a>
       <a href="#kontak" class="block px-4 py-2 rounded-md hover:bg-gray-50">Kontak</a>
 
-      {{-- Auth / Role buttons --}}
-      @if(!Auth::check())
-        <a href="{{ route('login') }}" class="block text-center px-4 py-2 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">Masuk</a>
-      @endif
+      {{-- Auth Button (Mobile) --}}
+      @guest
+        <a href="{{ route('login') }}" class="block text-center px-4 py-2 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">
+          Masuk
+        </a>
+      @endguest
 
-      @role('admin')
-        <a href="{{ route('home.index') }}" class="block text-center px-4 py-2 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">Admin Dashboard</a>
-      @endrole
-      @role('user')
-        <a href="{{ route('pegawai.profil') }}" class="block text-center px-4 py-2 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">User Dashboard</a>
-      @endrole
-      @role('employee')
-        <a href="{{ route('pegawai.profil') }}" class="block text-center px-4 py-2 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">Dashboard Pegawai</a>
-      @endrole
-      @role('inovator')
-        <a href="{{ route('sigap-inovasi.dashboard') }}" class="block text-center px-4 py-2 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition">Inovator Dashboard</a>
-      @endrole
+      @auth
+        <a href="{{ $dashboardRoute }}" class="block text-center px-4 py-2 rounded-md bg-maroon text-white hover:bg-maroon-800 transition font-medium">
+          Dashboard Panel
+        </a>
+      @endauth
     </div>
   </div>
 </header>
 
-  <!-- Main Content -->
-  <main>
-    @yield('content')
-  </main>
-  <!-- Footer -->
-  <footer id="kontak" class="border-t border-gray-200">
-    <div class="max-w-7xl mx-auto px-4 py-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-8 text-sm">
-      <div>
-        <p class="font-extrabold text-maroon">SIGAP BRIDA</p>
-        <p class="mt-2 text-gray-600">BRIDA Kota Makassar</p>
-        <p class="text-gray-500 mt-1">© 2025. All rights reserved.</p>
-      </div>
-      <div>
-        <p class="font-semibold">Navigasi</p>
-        <ul class="mt-2 space-y-1 text-gray-600">
-          <li><a href="#fitur" class="hover:text-maroon">Fitur</a></li>
-          <li><a href="#bagaimana" class="hover:text-maroon">Cara Kerja</a></li>
-          <li><a href="#" class="hover:text-maroon">Kebijakan Privasi</a></li>
-        </ul>
-      </div>
-      <div>
-        <p class="font-semibold">Bantuan</p>
-        <ul class="mt-2 space-y-1 text-gray-600">
-          <li><a href="#" class="hover:text-maroon">FAQ</a></li>
-          <li><a href="#" class="hover:text-maroon">Panduan Pengguna</a></li>
-          <li><a href="#" class="hover:text-maroon">Hubungi Admin</a></li>
-          <li><a href="{{ route('reward.index') }}" class="hover:text-maroon"><strong>Reward ⭐⭐⭐⭐</strong></a></li>
-          <li><a href="{{ route('about') }}" class="hover:text-maroon"><strong>Klik untuk kejutan🎉</strong></a></li>
-        </ul>
-      </div>
-      <div>
-        <p class="font-semibold">Kontak</p>
-        <p class="mt-2 text-gray-600">Jl. Ahmad Yani No 2 Kecamatan Ujung Pandang, Kota Makassar, Sulawesi Selatan.</p>
-        <p class="text-gray-600">balitbangdamks@gmail.com</p>
-      </div>
+<!-- Main Content -->
+<main>
+  @yield('content')
+</main>
+
+<!-- Footer -->
+<footer id="kontak" class="border-t border-gray-200">
+  <div class="max-w-7xl mx-auto px-4 py-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-8 text-sm">
+    <div>
+      <p class="font-extrabold text-maroon">SIGAP BRIDA</p>
+      <p class="mt-2 text-gray-600">BRIDA Kota Makassar</p>
+      <p class="text-gray-500 mt-1">© {{ date('Y') }}. All rights reserved.</p>
     </div>
-  </footer>
-    @stack('scripts')
+    <div>
+      <p class="font-semibold">Navigasi</p>
+      <ul class="mt-2 space-y-1 text-gray-600">
+        <li><a href="#fitur" class="hover:text-maroon">Fitur</a></li>
+        <li><a href="#bagaimana" class="hover:text-maroon">Cara Kerja</a></li>
+        <li><a href="#" class="hover:text-maroon">Kebijakan Privasi</a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="font-semibold">Bantuan</p>
+      <ul class="mt-2 space-y-1 text-gray-600">
+        <li><a href="#" class="hover:text-maroon">FAQ</a></li>
+        <li><a href="#" class="hover:text-maroon">Panduan Pengguna</a></li>
+        <li><a href="#" class="hover:text-maroon">Hubungi Admin</a></li>
+        <li><a href="{{ route('reward.index') }}" class="hover:text-maroon"><strong>Reward ⭐⭐⭐⭐</strong></a></li>
+        <li><a href="{{ route('about') }}" class="hover:text-maroon"><strong>Klik untuk kejutan🎉</strong></a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="font-semibold">Kontak</p>
+      <p class="mt-2 text-gray-600">Jl. Ahmad Yani No 2 Kecamatan Ujung Pandang, Kota Makassar, Sulawesi Selatan.</p>
+      <p class="text-gray-600">balitbangdamks@gmail.com</p>
+    </div>
+  </div>
+</footer>
+
+@stack('scripts')
 </body>
 </html>

@@ -84,4 +84,11 @@ class User extends Authenticatable
     {
         return $this->hasMany(PpdLembarLaporan::class);
     }
+
+    public function batches()
+    {
+        return $this->belongsToMany(MagangBatch::class, 'magang_peserta', 'user_id', 'magang_batch_id')
+                    ->withPivot('instansi_asal', 'jurusan', 'status')
+                    ->withTimestamps();
+    }
 }

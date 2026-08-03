@@ -1,5 +1,4 @@
 <?php
-
 use App\Http\Controllers\Api\UserSearchController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Dashboard\EvidenceConfigController;
@@ -7,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EvidenceController;
 use App\Http\Controllers\FormatController;
 use App\Http\Controllers\InovasiReviewController;
+use App\Http\Controllers\MagangController;
 use App\Http\Controllers\page\HomeController;
 use App\Http\Controllers\page\PegawaiPublicController as PagePegawaiPublicController;
 use App\Http\Controllers\PegawaiProfilController;
@@ -17,6 +17,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfileOrganisasiController;
 use App\Http\Controllers\RewardController;
 use App\Http\Controllers\RisetController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SertifikatController;
 use App\Http\Controllers\SigapAbsensiController;
 use App\Http\Controllers\SigapAgendaController;
@@ -728,5 +729,46 @@ Route::middleware(['auth'])->group(function () {
 
         });
 
+    });
+    Route::middleware(['auth'])->prefix('dashboard/magang')->name('magang.')->group(function () {
+
+        // 1. Dashboard Utama & Detail Batch (Akses Semua Role Magang/Verif/Admin)
+        Route::get('/', [MagangController::class, 'index'])->name('index');
+        Route::get('/batch/{id}', [MagangController::class, 'showBatch'])->name('batch.show');
+
+        // 2. Akses Khusus Admin & Verif Magang (Kelola Batch, Peserta, Monitoring & Izin Susulan)
+        Route::middleware(['role:admin|verif_magang'])->group(function () {
+            // Kelola Batch Magang
+            Route::post('/batch', [MagangController::class, 'storeBatch'])->name('batch.store');
+            Route::delete('/batch/{id}', [MagangController::class, 'destroyBatch'])->name('batch.destroy');
+            Route::post('/batch/{id}/add-peserta', [MagangController::class, 'addPeserta'])->name('batch.add-peserta');
+
+            // Monitoring Logbook & Izin Susulan
+            Route::get('/monitoring-logbook', [MagangController::class, 'monitoringLogbook'])->name('monitoring-logbook');
+            Route::post('/izin-susulan', [MagangController::class, 'storeIzinSusulan'])->name('izin-susulan.store');
+            Route::post('/izin-susulan/revoke', [MagangController::class, 'revokeIzinSusulan'])->name('izin-susulan.revoke');
+
+            // Riwayat Magang
+            Route::get('/riwayat', [MagangController::class, 'riwayatIndex'])->name('riwayat.index');
+            Route::get('/riwayat/batch/{batchId}', [MagangController::class, 'riwayatShowBatch'])->name('riwayat.show-batch');
+            Route::get('/riwayat/batch/{batchId}/peserta/{userId}', [MagangController::class, 'riwayatShowPeserta'])->name('riwayat.show-peserta');
+        });
+
+        // 3. Akses Khusus Peserta Magang (Join Batch & Pengisian Logbook)
+        Route::middleware(['role:magang'])->group(function () {
+            Route::post('/batch/{id}/join', [MagangController::class, 'joinBatch'])->name('batch.join');
+            Route::get('/logbook', [MagangController::class, 'indexLogbook'])->name('logbook.index');
+            Route::post('/logbook', [MagangController::class, 'storeLogbook'])->name('logbook.store');
+
+            // Route Mini Game Ketik 10 Jari
+            Route::get('/typing-game', [MagangController::class, 'typingGame'])->name('typing-game');
+            Route::post('/typing-game/save-score', [MagangController::class, 'saveTypingScore'])->name('typing-game.save-score');
+        });
+
+    });
+
+    Route::middleware(['auth', 'role:admin'])->group(function () {
+        // Pengaturan > Manajemen Role
+        Route::resource('roles', RoleController::class)->except(['show']);
     });
 });
