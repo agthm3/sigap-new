@@ -210,9 +210,7 @@
               @endif
             </td>
             <td class="px-4 py-3.5 text-right">
-              <!-- DILENGKAPI EVENT ONCLICK PENGECEKAN PERANGKAT LAPTOP / HP -->
               <a href="{{ route('magang.typing-game') }}"
-                 onclick="return checkDeviceForTypingGame(event)"
                  class="inline-block px-3 py-1.5 rounded-lg bg-amber-600 text-white hover:bg-amber-700 text-xs font-semibold shadow-sm transition-colors">
                 {{ $hasTypingPass ? 'Ulangi Tes' : '🎮 Mainkan Mini Game Ketik' }}
               </a>
@@ -363,37 +361,13 @@
 <script>
 let activityCount = 0;
 
-// FUNGSI PENGECEKAN PERANGKAT PERAMBAT (HP / LAPTOP)
-function checkDeviceForTypingGame(event) {
-  // Mengecek User Agent HP / Tablet atau ukuran lebar layar < 1024px
-  const isMobileUserAgent = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  const isMobileScreen = window.innerWidth < 1024;
-
-  if (isMobileUserAgent || isMobileScreen) {
-    event.preventDefault(); // Mencegah membuka tautan/route game
-
-    if (typeof Swal !== 'undefined') {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Akses Ditolak',
-        html: 'Anda tidak dapat mengerjakan tes ketik 10 jari melalui <strong>Handphone / Perangkat Seluler</strong>.<br><br>Silakan buka halaman ini menggunakan <strong>Laptop / Komputer (PC)</strong> dengan Keyboard fisik.',
-        confirmButtonColor: '#7a2222',
-        confirmButtonText: 'Saya Mengerti'
-      });
-    } else {
-      alert('Akses Ditolak!\n\nAnda tidak dapat mengerjakan tes ketik 10 jari melalui Handphone.\nSilakan buka halaman ini melalui Laptop / Komputer menggunakan Keyboard fisik.');
-    }
-    return false;
-  }
-  return true;
-}
-
 function openLogbookModal(kategori, title, tanggal, existingLogs, isPenutupan = false) {
   document.getElementById('modalTitle').innerText = title;
   document.getElementById('inputTanggal').value = tanggal;
   document.getElementById('displayTanggal').value = tanggal;
   document.getElementById('inputKategori').value = kategori;
 
+  // Tampilkan/Sembunyikan Input PDF Laporan Akhir
   const pdfContainer = document.getElementById('pdfUploadContainer');
   if (isPenutupan) {
     pdfContainer.classList.remove('hidden');
