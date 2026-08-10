@@ -160,6 +160,9 @@
           <th class="px-5 py-3 text-left">Jurusan</th>
           <th class="px-5 py-3 text-left">Tanggal Bergabung</th>
           <th class="px-5 py-3 text-left">Status</th>
+          @hasanyrole('admin|verif_magang')
+            <th class="px-5 py-3 text-right">Aksi</th>
+          @endhasanyrole
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
@@ -190,10 +193,36 @@
                 {{ strtoupper($peserta->pivot->status) }}
               </span>
             </td>
+
+            <!-- Kolom Edit & Hapus Peserta khusus Admin & Verif Magang -->
+            @hasanyrole('admin|verif_magang')
+              <td class="px-5 py-3 text-right">
+                <div class="inline-flex items-center gap-1.5">
+                  <!-- Tombol Edit -->
+                  <button type="button"
+                          onclick="openEditPesertaModal({{ $peserta->id }}, '{{ addslashes($peserta->name) }}', '{{ addslashes($peserta->pivot->instansi_asal) }}', '{{ addslashes($peserta->pivot->jurusan) }}')"
+                          class="px-2.5 py-1 rounded-lg border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-600 hover:text-white text-xs font-semibold transition-colors">
+                    Edit
+                  </button>
+
+                  <!-- Tombol Hapus -->
+                  <form action="{{ route('magang.batch.remove-peserta', [$batch->id, $peserta->id]) }}" 
+                        method="POST" 
+                        onsubmit="return confirmRemovePeserta(event, '{{ $peserta->name }}')">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" 
+                            class="px-2.5 py-1 rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white text-xs font-semibold transition-colors">
+                      Hapus
+                    </button>
+                  </form>
+                </div>
+              </td>
+            @endhasanyrole
           </tr>
         @empty
           <tr>
-            <td colspan="5" class="px-5 py-8 text-center text-gray-500">
+            <td colspan="{{ auth()->user()->hasAnyRole(['admin', 'verif_magang']) ? 6 : 5 }}" class="px-5 py-8 text-center text-gray-500">
               Belum ada peserta yang bergabung pada batch magang ini.
             </td>
           </tr>
@@ -248,6 +277,47 @@
         </button>
         <button type="submit" class="px-4 py-2 rounded-xl bg-maroon text-white text-xs font-semibold hover:bg-maroon-800" {{ $users->isEmpty() ? 'disabled' : '' }}>
           Simpan Peserta
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Pop-Up Edit Data Peserta Magang -->
+<div id="modalEditPeserta" class="fixed inset-0 z-50 hidden overflow-y-auto bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
+    <div class="flex items-center justify-between border-b pb-3">
+      <h3 class="text-lg font-bold text-gray-900">Edit Data Peserta Magang</h3>
+      <button type="button" onclick="closeEditPesertaModal()" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+    </div>
+
+    <form id="formEditPeserta" method="POST" class="mt-4 space-y-4">
+      @csrf
+      @method('PUT')
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Nama Mahasiswa</label>
+        <input type="text" id="editNamaMahasiswa" disabled class="w-full bg-gray-100 rounded-lg px-3 py-2 text-sm font-semibold text-gray-700">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Instansi / Asal Kampus <span class="text-red-500">*</span></label>
+        <input type="text" id="editInstansiAsal" name="instansi_asal" required placeholder="Contoh: Universitas Hasanuddin / UPN"
+               class="w-full rounded-lg px-3 py-2 text-sm">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Jurusan / Program Studi <span class="text-red-500">*</span></label>
+        <input type="text" id="editJurusan" name="jurusan" required placeholder="Contoh: Teknik Geologi / Ilmu Komputer"
+               class="w-full rounded-lg px-3 py-2 text-sm">
+      </div>
+
+      <div class="flex justify-end gap-2 pt-4 border-t">
+        <button type="button" onclick="closeEditPesertaModal()" class="px-4 py-2 rounded-xl border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-100">
+          Batal
+        </button>
+        <button type="submit" class="px-4 py-2 rounded-xl bg-maroon text-white text-xs font-semibold hover:bg-maroon-800">
+          Simpan Perubahan
         </button>
       </div>
     </form>
@@ -308,6 +378,44 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
+
+function openEditPesertaModal(userId, userName, instansi, jurusan) {
+  const form = document.getElementById('formEditPeserta');
+  form.action = `/dashboard/magang/batch/{{ $batch->id }}/peserta/${userId}`;
+  
+  document.getElementById('editNamaMahasiswa').value = userName;
+  document.getElementById('editInstansiAsal').value = instansi;
+  document.getElementById('editJurusan').value = jurusan;
+
+  document.getElementById('modalEditPeserta')?.classList.remove('hidden');
+}
+
+function closeEditPesertaModal() {
+  document.getElementById('modalEditPeserta')?.classList.add('hidden');
+}
+
+function confirmRemovePeserta(event, userName) {
+  if (typeof Swal !== 'undefined') {
+    event.preventDefault();
+    const form = event.target;
+    Swal.fire({
+      title: 'Keluarkan Peserta?',
+      text: `Apakah Anda yakin ingin mengeluarkan ${userName} dari batch magang ini? Seluruh logbook terkait juga akan dibersihkan.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#7a2222',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Ya, Keluarkan',
+      cancelButtonText: 'Batal'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        form.submit();
+      }
+    });
+    return false;
+  }
+  return confirm(`Apakah Anda yakin ingin mengeluarkan ${userName} dari batch magang ini?`);
+}
 
 function openAddPesertaModal() {
   document.getElementById('modalAddPeserta')?.classList.remove('hidden');

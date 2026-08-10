@@ -589,4 +589,47 @@ class MagangController extends Controller
             'regulerLogs'
         ));
     }
+
+    public function removePeserta($batchId, $userId)
+    {
+        $batch = MagangBatch::findOrFail($batchId);
+
+        // Lepaskan relasi peserta di tabel pivot magang_peserta
+        $batch->peserta()->detach($userId);
+
+        // Opsional: Hapus logbook peserta di batch ini agar data tetap bersih
+        MagangLogbook::where('magang_batch_id', $batchId)
+            ->where('user_id', $userId)
+            ->delete();
+
+        DB::table('magang_izin_susulan')
+            ->where('magang_batch_id', $batchId)
+            ->where('user_id', $userId)
+            ->delete();
+
+        return back()->with('success', 'Berhasil mengeluarkan mahasiswa dari batch magang.');
+    }
+    public function updatePeserta(Request $request, $batchId, $userId)
+    {
+        $batch = MagangBatch::findOrFail($batchId);
+
+        $request->validate([
+            'instansi_asal' => 'required|string|max:255',
+            'jurusan'       => 'required|string|max:255',
+        ]);
+
+        // Pastikan peserta terdaftar di batch ini
+        if (!$batch->peserta()->where('user_id', $userId)->exists()) {
+            return back()->with('error', 'Mahasiswa tidak ditemukan pada batch ini.');
+        }
+
+        // Update data pada tabel pivot magang_peserta
+        $batch->peserta()->updateExistingPivot($userId, [
+            'instansi_asal' => $request->instansi_asal,
+            'jurusan'       => $request->jurusan,
+            'updated_at'    => now(),
+        ]);
+
+        return back()->with('success', 'Berhasil memperbarui data peserta magang.');
+    }
 }

@@ -736,6 +736,7 @@ Route::middleware(['auth'])->group(function () {
         // 1. Dashboard Utama & Detail Batch (Akses Semua Role Magang/Verif/Admin)
         Route::get('/', [MagangController::class, 'index'])->name('index');
         Route::get('/batch/{id}', [MagangController::class, 'showBatch'])->name('batch.show');
+        
 
         // 2. Akses Khusus Admin & Verif Magang (Kelola Batch, Peserta, Monitoring & Izin Susulan)
         Route::middleware(['role:admin|verif_magang'])->group(function () {
@@ -743,6 +744,11 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/batch', [MagangController::class, 'storeBatch'])->name('batch.store');
             Route::delete('/batch/{id}', [MagangController::class, 'destroyBatch'])->name('batch.destroy');
             Route::post('/batch/{id}/add-peserta', [MagangController::class, 'addPeserta'])->name('batch.add-peserta');
+            
+            
+            // ROUTE BARU: Hapus / Keluarkan Peserta dari Batch Magang
+            Route::put('/batch/{batchId}/peserta/{userId}', [MagangController::class, 'updatePeserta'])->name('batch.update-peserta');
+            Route::delete('/batch/{batchId}/peserta/{userId}', [MagangController::class, 'removePeserta'])->name('batch.remove-peserta');
 
             // Monitoring Logbook & Izin Susulan
             Route::get('/monitoring-logbook', [MagangController::class, 'monitoringLogbook'])->name('monitoring-logbook');
