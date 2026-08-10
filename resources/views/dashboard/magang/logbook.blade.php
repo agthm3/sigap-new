@@ -457,7 +457,7 @@ function addActivityRow(kegiatanVal = '', fotoUrl = '') {
   `;
 
   document.getElementById('activitiesContainer').appendChild(card);
-  updateAddButtonState();
+  updateAddButtonState(); 
 }
 
 function removeActivityRow(index) {

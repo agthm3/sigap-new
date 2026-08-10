@@ -69,12 +69,13 @@
 
     {{-- DESKTOP NAV --}}
     <nav class="hidden md:flex items-center gap-6 text-sm">
-      {{-- Dropdown Jenis Layanan (desktop) --}}
-      <div x-data="{open:false}" @keydown.escape.window="open=false" class="relative">
+      
+      {{-- DESKTOP NAV: Jenis Layanan (Mega Menu 2 Kolom) --}}
+      <div x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" @keydown.escape.window="open = false" class="relative py-2">
         <button
-          @mouseenter="open=true" @mouseleave="open=false" @click="open=!open"
+          @click="open = !open"
           :aria-expanded="open"
-          class="inline-flex items-center gap-1 hover:text-maroon focus:outline-none"
+          class="inline-flex items-center gap-1 hover:text-maroon focus:outline-none font-medium"
         >
           Jenis Layanan
           <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,38 +83,72 @@
           </svg>
         </button>
 
+        <!-- Container Pembungkus Dropdown dengan Invisible Hover Bridge -->
         <div
           x-show="open"
-          @mouseenter="open=true" @mouseleave="open=false"
-          x-transition.origin.top.left
-          class="absolute top-full left-0 mt-2 w-56 rounded-lg bg-white border border-gray-200 shadow-lg z-50"
+          x-transition:enter="transition ease-out duration-150"
+          x-transition:enter-start="opacity-0 translate-y-1"
+          x-transition:enter-end="opacity-100 translate-y-0"
+          class="absolute top-full -left-4 pt-2 z-50"
         >
-          <ul class="py-2 text-sm text-gray-700">
-            <li><a href="{{ route('home.index') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Dokumen</a></li>
-            <li><a href="{{ route('home.pegawai') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Pegawai</a></li>
-            <li><a href="{{ route('sigap-auto.index') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Auto</a></li>
-            <li><a href="#" class="block px-4 py-2 hover:bg-gray-100">SIGAP SKPRD</a></li>
-            <li><a href="#" class="block px-4 py-2 hover:bg-gray-100">SIGAP Open Data</a></li>
-            <li><a href="{{ route('sigap-format.index') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Format</a></li>
-            <li><a href="{{ route('sigap-inovasi.home') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Inovasi</a></li>
-            <li><a href="{{ route('sigap-riset.index') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Riset</a></li>
-            <li><a href="{{ route('sigap-kinerja.index') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Kinerja</a></li>
-            <li><a href="{{ route('sigap-agenda.index') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Agenda</a></li>
-            <li><a href="{{ route('sigap-inkubatorma.index') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Inkubatorma</a></li>
-            <li><a href="{{ route('sigap-absensi.home') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Absensi</a></li>
-            <li><a href="{{ route('sigap-ppd.public') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP PPD</a></li>
-            <li><a href="{{ route('sigap-pic.public') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP PIC</a></li>
-            <li><a href="{{ route('sigap-daftar-hadir.public.riwayat-peserta') }}" class="block px-4 py-2 hover:bg-gray-100 font-medium text-maroon">SIGAP Riwayat Peserta</a></li>
-          </ul>
+          <div class="w-[480px] rounded-xl bg-white border border-gray-100 shadow-xl p-4">
+            <div class="grid grid-cols-2 gap-4">
+              
+              <!-- Kategori 1: Dokumen & Pegawai -->
+              <div>
+                <p class="px-3 text-[11px] font-bold uppercase tracking-wider text-maroon mb-1">Dokumen & Pegawai</p>
+                <ul class="space-y-0.5 text-xs text-gray-700">
+                  <li><a href="{{ route('home.index') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Dokumen</a></li>
+                  <li><a href="{{ route('home.pegawai') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Pegawai</a></li>
+                  <li><a href="{{ route('sigap-absensi.home') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Absensi</a></li>
+                  <li><a href="{{ route('sigap-kinerja.index') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Kinerja</a></li>
+                  <li><a href="{{ route('sigap-agenda.index') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Agenda</a></li>
+                  <li><a href="{{ route('sigap-pic.public') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP PIC</a></li>
+                </ul>
+              </div>
+
+              <!-- Kategori 2: Riset & Inovasi -->
+              <div>
+                <p class="px-3 text-[11px] font-bold uppercase tracking-wider text-maroon mb-1">Riset & Inovasi</p>
+                <ul class="space-y-0.5 text-xs text-gray-700">
+                  <li><a href="{{ route('sigap-inovasi.home') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Inovasi</a></li>
+                  <li><a href="{{ route('sigap-riset.index') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Riset</a></li>
+                  <li><a href="{{ route('sigap-inkubatorma.index') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Inkubatorma</a></li>
+                  <li><a href="{{ route('sigap-ppd.public') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP PPD</a></li>
+                </ul>
+              </div>
+
+              <!-- Kategori 3: Layanan Publik & Utility -->
+              <div class="col-span-2 border-t border-gray-100 pt-3">
+                <p class="px-3 text-[11px] font-bold uppercase tracking-wider text-maroon mb-1">Layanan Publik & Utility</p>
+                <div class="grid grid-cols-2 gap-x-4 text-xs text-gray-700">
+                  <ul class="space-y-0.5">
+                    <li>
+                      <a href="{{ route('sigap-pdf.landing') }}" class="block px-3 py-1.5 rounded-md bg-maroon-50 font-bold text-maroon hover:bg-maroon-100 transition flex items-center justify-between">
+                        <span>SIGAP PDF</span>
+                        <span class="text-[9px] bg-maroon text-white px-1.5 py-0.2 rounded">Privacy First</span>
+                      </a>
+                    </li>
+                    <li><a href="{{ route('sigap-auto.index') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Auto</a></li>
+                    <li><a href="{{ route('sigap-format.index') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Format</a></li>
+                  </ul>
+                  <ul class="space-y-0.5">
+                    <li><a href="#" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP SKPRD</a></li>
+                    <li><a href="#" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Open Data</a></li>
+                    <li><a href="{{ route('sigap-daftar-hadir.public.riwayat-peserta') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Riwayat Peserta</a></li>
+                  </ul>
+                </div>
+              </div>
+
+            </div>
+          </div>
         </div>
       </div>
 
       {{-- Dropdown Profil BRIDA --}}
-      <div x-data="{open:false}" @keydown.escape.window="open=false" class="relative">
+      <div x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" @keydown.escape.window="open = false" class="relative py-2">
         <button
-          @mouseenter="open=true" 
-          @mouseleave="open=false" 
-          @click="open=!open"
+          @click="open = !open"
           class="inline-flex items-center gap-1 hover:text-maroon focus:outline-none"
         >
           Profil BRIDA
@@ -124,18 +159,20 @@
 
         <div
           x-show="open"
-          @mouseenter="open=true"
-          @mouseleave="open=false"
-          x-transition.origin.top.left
-          class="absolute top-full left-0 mt-2 w-56 rounded-lg bg-white border border-gray-200 shadow-lg z-50"
+          x-transition:enter="transition ease-out duration-150"
+          x-transition:enter-start="opacity-0 translate-y-1"
+          x-transition:enter-end="opacity-100 translate-y-0"
+          class="absolute top-full left-0 pt-2 z-50"
         >
-          <ul class="py-2 text-sm text-gray-700">
-            <li><a href="{{ route('profil.struktur') }}" class="block px-4 py-2 hover:bg-gray-100">Struktur Organisasi</a></li>
-            <li><a href="{{ route('profil.visimisi') }}" class="block px-4 py-2 hover:bg-gray-100">Visi & Misi</a></li>
-            <li><a href="{{ route('profil.berita') }}" class="block px-4 py-2 hover:bg-gray-100">Berita BRIDA</a></li>
-            <li><a href="{{ route('profil.tentang') }}" class="block px-4 py-2 hover:bg-gray-100">Tentang BRIDA</a></li>
-            <li><a href="{{ route('profil.kontak') }}" class="block px-4 py-2 hover:bg-gray-100">Kontak</a></li>
-          </ul>
+          <div class="w-56 rounded-lg bg-white border border-gray-200 shadow-lg">
+            <ul class="py-2 text-sm text-gray-700">
+              <li><a href="{{ route('profil.struktur') }}" class="block px-4 py-2 hover:bg-gray-100">Struktur Organisasi</a></li>
+              <li><a href="{{ route('profil.visimisi') }}" class="block px-4 py-2 hover:bg-gray-100">Visi & Misi</a></li>
+              <li><a href="{{ route('profil.berita') }}" class="block px-4 py-2 hover:bg-gray-100">Berita BRIDA</a></li>
+              <li><a href="{{ route('profil.tentang') }}" class="block px-4 py-2 hover:bg-gray-100">Tentang BRIDA</a></li>
+              <li><a href="{{ route('profil.kontak') }}" class="block px-4 py-2 hover:bg-gray-100">Kontak</a></li>
+            </ul>
+          </div>
         </div>
       </div>
 
@@ -187,7 +224,7 @@
   >
     <div class="max-w-7xl mx-auto px-4 py-4 space-y-3 text-sm">
 
-      {{-- Accordion Jenis Layanan (mobile) --}}
+      {{-- Accordion Jenis Layanan (mobile - Terkategori) --}}
       <div x-data="{ open:false }" class="border rounded-lg">
         <button @click="open=!open" class="w-full flex items-center justify-between px-4 py-3">
           <span class="font-semibold text-gray-800">Jenis Layanan</span>
@@ -195,24 +232,49 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
-        <div x-show="open" x-transition x-collapse class="border-t">
-          <ul class="py-2 text-gray-700">
-            <li><a href="{{ route('home.index') }}" class="block px-4 py-2 hover:bg-gray-50">SIGAP Dokumen</a></li>
-            <li><a href="{{ route('home.pegawai') }}" class="block px-4 py-2 hover:bg-gray-50">SIGAP Pegawai</a></li>
-            <li><a href="{{ route('sigap-auto.index') }}" class="block px-4 py-2 hover:bg-gray-50">SIGAP Auto</a></li>
-            <li><a href="#" class="block px-4 py-2 hover:bg-gray-50">SIGAP SKPRD</a></li>
-            <li><a href="#" class="block px-4 py-2 hover:bg-gray-50">SIGAP Open Data</a></li>
-            <li><a href="{{ route('sigap-format.index') }}" class="block px-4 py-2 hover:bg-gray-50">SIGAP Format</a></li>
-            <li><a href="{{ route('sigap-inovasi.home') }}" class="block px-4 py-2 hover:bg-gray-50">SIGAP Inovasi</a></li>
-            <li><a href="{{ route('sigap-riset.index') }}" class="block px-4 py-2 hover:bg-gray-50">SIGAP Riset</a></li>
-            <li><a href="{{ route('sigap-kinerja.index') }}" class="block px-4 py-2 hover:bg-gray-50">SIGAP Kinerja</a></li>
-            <li><a href="{{ route('sigap-agenda.index') }}" class="block px-4 py-2 hover:bg-gray-50">SIGAP Agenda</a></li>
-            <li><a href="{{ route('sigap-inkubatorma.index') }}" class="block px-4 py-2 hover:bg-gray-50">SIGAP Inkubatorma</a></li>
-            <li><a href="{{ route('sigap-absensi.home') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP Absensi</a></li>
-            <li><a href="{{ route('sigap-ppd.public') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP PPD</a></li>
-            <li><a href="{{ route('sigap-pic.public') }}" class="block px-4 py-2 hover:bg-gray-100">SIGAP PIC</a></li>
-            <li><a href="{{ route('sigap-daftar-hadir.public.riwayat-peserta') }}" class="block px-4 py-2 hover:bg-gray-100 font-medium text-maroon">SIGAP Riwayat Peserta</a></li>
-          </ul>
+        
+        <div x-show="open" x-transition x-collapse class="border-t bg-gray-50 p-3 space-y-3">
+          
+          <!-- Kelompok 1 -->
+          <div>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-maroon px-1 mb-1">Dokumen & Pegawai</p>
+            <div class="space-y-1 text-sm bg-white rounded-md p-1 border border-gray-100">
+              <a href="{{ route('home.index') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Dokumen</a>
+              <a href="{{ route('home.pegawai') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Pegawai</a>
+              <a href="{{ route('sigap-absensi.home') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Absensi</a>
+              <a href="{{ route('sigap-kinerja.index') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Kinerja</a>
+              <a href="{{ route('sigap-agenda.index') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Agenda</a>
+              <a href="{{ route('sigap-pic.public') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP PIC</a>
+            </div>
+          </div>
+
+          <!-- Kelompok 2 -->
+          <div>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-maroon px-1 mb-1">Riset & Inovasi</p>
+            <div class="space-y-1 text-sm bg-white rounded-md p-1 border border-gray-100">
+              <a href="{{ route('sigap-inovasi.home') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Inovasi</a>
+              <a href="{{ route('sigap-riset.index') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Riset</a>
+              <a href="{{ route('sigap-inkubatorma.index') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Inkubatorma</a>
+              <a href="{{ route('sigap-ppd.public') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP PPD</a>
+            </div>
+          </div>
+
+          <!-- Kelompok 3 -->
+          <div>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-maroon px-1 mb-1">Layanan Publik & Utility</p>
+            <div class="space-y-1 text-sm bg-white rounded-md p-1 border border-gray-100">
+              <a href="{{ route('sigap-pdf.landing') }}" class="block px-3 py-1.5 bg-maroon-50 text-maroon font-bold rounded flex items-center justify-between">
+                <span>SIGAP PDF</span>
+                <span class="text-[9px] bg-maroon text-white px-1.5 py-0.2 rounded">Privacy First</span>
+              </a>
+              <a href="{{ route('sigap-auto.index') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Auto</a>
+              <a href="{{ route('sigap-format.index') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Format</a>
+              <a href="#" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP SKPRD</a>
+              <a href="#" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Open Data</a>
+              <a href="{{ route('sigap-daftar-hadir.public.riwayat-peserta') }}" class="block px-3 py-1.5 text-maroon font-semibold hover:bg-gray-50 rounded">SIGAP Riwayat Peserta</a>
+            </div>
+          </div>
+
         </div>
       </div>
 
