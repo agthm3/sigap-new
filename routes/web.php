@@ -129,13 +129,15 @@ Route::get('/sigap-pegawai/export', [SigapPegawaiController::class, 'export'])
 Route::delete('/sigap-pegawai/{user}/avatar', [SigapPegawaiController::class,'destroyAvatar'])
     ->middleware(['auth','permission:pegawai.manage'])
     ->name('sigap-pegawai.avatar.destroy');
-
+    Route::post('/sigap-pegawai/{user}/docs', [SigapPegawaiController::class, 'uploadDokumenPegawai'])->name('sigap-pegawai.docs.store');
 // --- SIGAP Dokumen (tanpa resource)
 Route::prefix('sigap-dokumen')->middleware(['auth', 'role:employee|admin'])->name('sigap-dokumen.')->group(function () {
     Route::get('/', [SigapDokumenController::class, 'index'])->name('index');
     Route::post('/', [SigapDokumenController::class, 'store'])->name('store');
     Route::get('/{document}', [SigapDokumenController::class, 'show'])->name('show');
     Route::get('/{document}/download', [SigapDokumenController::class, 'download'])->name('download');
+
+
 
     Route::middleware('role:admin')->group(function () {
         Route::get('/{document}/edit', [SigapDokumenController::class, 'edit'])->name('edit');

@@ -2,17 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\PegawaiExport;
+use App\Http\Controllers\Controller;
 use App\Models\PegawaiKompetensi;
+use App\Models\PersonalDocument;
 use App\Models\User;
+use App\Repositories\PersonalDocumentRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
-use Spatie\Permission\Models\Role;
-use Illuminate\Support\Facades\Storage;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\PegawaiExport;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
+use Spatie\Permission\Models\Role;
 
 class SigapPegawaiController extends Controller
 {
@@ -62,15 +66,15 @@ class SigapPegawaiController extends Controller
     {
         $user->load(['profile','kompetensis']);
 
+        // [TAMBAHAN] Load dokumen pribadi untuk ditampilkan di view
+        $docs = $user->personalDocuments()->latest()->get();
+
         $roles         = Role::where('guard_name','web')->pluck('name')->all();
-        
-        // ini untuk checklist (role yang dimiliki user)
         $userRoleNames = $user->getRoleNames()->all();
         $unitCategories = config('unit.categories');
 
-        return view('dashboard.pegawai.edit', compact('user','roles','userRoleNames', 'unitCategories'));
+        return view('dashboard.pegawai.edit', compact('user','roles','userRoleNames', 'unitCategories', 'docs'));
     }
-
     public function update(Request $request, User $user)
     {
         $validRoleNames = Role::where('guard_name','web')->pluck('name')->all();
@@ -252,5 +256,45 @@ class SigapPegawaiController extends Controller
 
         return Excel::download(new PegawaiExport($filters), 'pegawai.xlsx');
     }
- 
+    public function uploadDokumenPegawai(Request $request, User $user)
+    {
+        // Validasi input
+        $data = $request->validate([
+            'type'             => ['required','in:ktp,kk,npwp,bpjs,ijazah,sk,buku_rekening,other'],
+            'title'            => ['required','string','max:255'],
+            'file'             => ['required','file','mimes:pdf,jpg,jpeg,png','max:4096'],
+            'access_code'      => ['nullable','string','min:4','max:50'],
+            'access_code_hint' => ['nullable','string','max:100'],
+        ]);
+
+        $payload = [
+            'user_id'            => $user->id,
+            'type'               => $data['type'],
+            'title'              => $data['title'],
+            'status'             => 'verified', // Karena diupload admin, bisa langsung verified
+            'uploaded_by'        => auth()->id(), // Catat admin yang mengunggah
+            'access_code_enc'    => null,
+            'access_code_hash'   => null,
+            'access_code_set_at' => null,
+            'access_code_hint'   => $data['access_code_hint'] ?? null,
+            'mime'               => $request->file('file')->getMimeType(),
+            'size'               => $request->file('file')->getSize(),
+        ];
+
+        // Jika admin menyetel PIN
+        if (filled($data['access_code'])) {
+            $payload['access_code_enc']    = Crypt::encryptString($data['access_code']);
+            $payload['access_code_hash']   = Hash::make($data['access_code']);
+            $payload['access_code_set_at'] = now();
+        }
+
+        // Simpan file ke Storage private (TIDAK PUBLIK)
+        $path = $request->file('file')->store('personal_documents', 'private');
+        $payload['path'] = $path;
+
+        // Simpan ke database
+        PersonalDocument::create($payload);
+
+        return back()->with('success', 'Dokumen pribadi pegawai berhasil ditambahkan dan disimpan secara privat.');
+    }
 }
