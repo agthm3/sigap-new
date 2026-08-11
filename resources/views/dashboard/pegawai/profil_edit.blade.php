@@ -47,7 +47,6 @@
 <h3 class="section-title">Informasi Akun</h3>
 
 <div class="grid sm:grid-cols-2 gap-4">
-
 <label>
 <span>Nama Lengkap</span>
 <input name="name" class="input" value="{{ old('name',$user->name) }}">
@@ -65,13 +64,17 @@
 
 <label>
 <span>Password Baru (opsional)</span>
-<input type="password" name="password" class="input">
+<input type="password" name="password" class="input" placeholder="Kosongkan jika tidak diganti">
+</label>
+<label>
+<span>Konfirmasi Password</span>
+<input type="password" name="password_confirmation" class="input">
 </label>
 
 </div>
 </div>
 
-<hr>
+<hr class="my-6">
 
 {{-- ================= TAB NAV ================= --}}
 <div>
@@ -79,14 +82,12 @@
 
 <div class="border-b mt-4">
 <nav class="flex gap-6 text-sm font-semibold">
-
 <button type="button" class="tab-btn border-b-2 border-maroon pb-2" data-tab="identitas">Identitas</button>
 <button type="button" class="tab-btn pb-2" data-tab="kepegawaian">Kepegawaian</button>
 <button type="button" class="tab-btn pb-2" data-tab="alamat">Alamat & Administrasi</button>
 <button type="button" class="tab-btn pb-2" data-tab="keluarga">Keluarga</button>
 <button type="button" class="tab-btn pb-2" data-tab="pendidikan">Pendidikan</button>
 <button type="button" class="tab-btn pb-2" data-tab="kompetensi">Kompetensi</button>
-
 </nav>
 </div>
 </div>
@@ -127,6 +128,7 @@
 <label>
 <span>Status Perkawinan</span>
 <select name="status_perkawinan" class="input">
+<option value="">-</option>
 <option value="Belum Kawin" @selected(old('status_perkawinan',$profile->status_perkawinan ?? '')=='Belum Kawin')>Belum Kawin</option>
 <option value="Kawin" @selected(old('status_perkawinan',$profile->status_perkawinan ?? '')=='Kawin')>Kawin</option>
 <option value="Cerai" @selected(old('status_perkawinan',$profile->status_perkawinan ?? '')=='Cerai')>Cerai</option>
@@ -158,7 +160,6 @@
 <span>Keterangan</span>
 <input name="keterangan" class="input" value="{{ old('keterangan',$profile->keterangan ?? '') }}">
 </label>
-
 </div>
 </div>
 
@@ -245,7 +246,6 @@
 <span>Unit Organisasi (Unor)</span>
 <input name="unor" class="input" value="{{ old('unor',$profile->unor ?? '') }}">
 </label>
-
 </div>
 </div>
 
@@ -330,6 +330,7 @@
 <label>
 <span>Pendidikan Terakhir</span>
 <select name="pendidikan_terakhir" class="input">
+<option value="">-</option>
 <option value="SMA" @selected(old('pendidikan_terakhir',$profile->pendidikan_terakhir ?? '')=='SMA')>SMA</option>
 <option value="D3" @selected(old('pendidikan_terakhir',$profile->pendidikan_terakhir ?? '')=='D3')>D3</option>
 <option value="S1" @selected(old('pendidikan_terakhir',$profile->pendidikan_terakhir ?? '')=='S1')>S1</option>
@@ -350,6 +351,7 @@
 
 </div>
 </div>
+
 {{-- ================= KOMPETENSI / SERTIFIKAT ================= --}}
 <div id="tab-kompetensi" class="tab-content hidden mt-5">
 
@@ -367,30 +369,25 @@
 
 <label>
 <span>Nama Sertifikat</span>
-<input name="nama_sertifikat[]" class="input"
-value="{{ $k->nama_sertifikat }}">
+<input name="nama_sertifikat[]" class="input" value="{{ $k->nama_sertifikat }}">
 </label>
 
 <label>
 <span>Bidang Sertifikat</span>
-<input name="bidang_sertifikat[]" class="input"
-value="{{ $k->bidang_sertifikat }}">
+<input name="bidang_sertifikat[]" class="input" value="{{ $k->bidang_sertifikat }}">
 </label>
 
 <label>
 <span>Tahun Sertifikat</span>
-<input type="number" name="tahun_sertifikat[]" class="input"
-value="{{ $k->tahun_sertifikat }}">
+<input type="number" name="tahun_sertifikat[]" class="input" value="{{ $k->tahun_sertifikat }}">
 </label>
 
 <label>
-<span>Upload File Sertifikat</span>
+<span>Upload File Sertifikat Baru (Opsional)</span>
 <input type="file" name="file_sertifikat[]" class="input">
 
 @if($k->file_path)
-<a href="{{ asset('storage/'.$k->file_path) }}"
-target="_blank"
-class="text-sm text-maroon underline mt-2 block">
+<a href="{{ asset('storage/'.$k->file_path) }}" target="_blank" class="text-sm text-maroon underline mt-2 block">
 Lihat File
 </a>
 @endif
@@ -402,16 +399,15 @@ Lihat File
 
 </div>
 
-<button type="button"
-onclick="addKompetensi()"
-class="mt-4 px-4 py-2 bg-maroon text-white rounded-lg hover:bg-maroon-800">
+<button type="button" onclick="addKompetensi()" class="mt-4 px-4 py-2 bg-maroon text-white rounded-lg hover:bg-maroon-800">
 + Tambah Sertifikat
 </button>
 
 </div>
-<hr>
 
-<button class="px-6 py-2 bg-maroon text-white rounded-lg">
+<hr class="my-6">
+
+<button type="submit" class="px-6 py-2 bg-maroon text-white rounded-lg hover:bg-maroon-800 font-semibold shadow">
 Simpan Perubahan
 </button>
 
@@ -428,35 +424,29 @@ document.querySelectorAll(".tab-btn").forEach(btn=>{
         document.getElementById("tab-"+btn.dataset.tab).classList.remove("hidden")
     }
 })
-</script>
-<script>
+
 function addKompetensi(){
 let wrapper=document.getElementById('kompetensi-wrapper');
 
 wrapper.insertAdjacentHTML('beforeend',`
 <div class="border p-4 rounded-xl bg-gray-50 mt-4">
 <div class="grid sm:grid-cols-2 gap-4">
-
 <label>
 <span>Nama Sertifikat</span>
 <input name="nama_sertifikat[]" class="input">
 </label>
-
 <label>
 <span>Bidang Sertifikat</span>
 <input name="bidang_sertifikat[]" class="input">
 </label>
-
 <label>
 <span>Tahun Sertifikat</span>
 <input type="number" name="tahun_sertifikat[]" class="input">
 </label>
-
 <label>
 <span>Upload File Sertifikat</span>
 <input type="file" name="file_sertifikat[]" class="input">
 </label>
-
 </div>
 </div>
 `);

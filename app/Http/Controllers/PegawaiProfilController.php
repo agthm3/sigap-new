@@ -55,7 +55,7 @@ class PegawaiProfilController extends Controller
     {
         $user = $request->user();
 
-        $validated = $request->validate([
+      $validated = $request->validate([
             'name'      => 'required|string|max:255',
             'email'     => 'required|email|max:255|unique:users,email,' . $user->id,
             'nomor_hp'  => 'nullable|string|max:20',
@@ -80,8 +80,9 @@ class PegawaiProfilController extends Controller
             'atasan_langsung'       => 'nullable|string|max:100',
             'golongan_ruang'        => 'nullable|string|max:50',
             'tmt_golongan'          => 'nullable|date',
-            'masa_kerja_tahun'      => 'nullable|integer',
-            'masa_kerja_bulan'      => 'nullable|integer',
+            // UBAH integer jadi numeric supaya tidak error saat string kosong
+            'masa_kerja_tahun'      => 'nullable|numeric', 
+            'masa_kerja_bulan'      => 'nullable|numeric',
             'tmt_jabatan'           => 'nullable|date',
             'eselon'                => 'nullable|string|max:50',
             'jabatan_struktural'    => 'nullable|string|max:100',
@@ -100,12 +101,12 @@ class PegawaiProfilController extends Controller
 
             'nama_pasangan'         => 'nullable|string|max:100',
             'pekerjaan_pasangan'    => 'nullable|string|max:100',
-            'jumlah_anak'           => 'nullable|integer',
+            'jumlah_anak'           => 'nullable|numeric',
             'kontak_darurat'        => 'nullable|string|max:100',
 
             'pendidikan_terakhir'   => 'nullable|string|max:50',
             'jurusan'               => 'nullable|string|max:100',
-            'tahun_lulus'           => 'nullable|integer',
+            'tahun_lulus'           => 'nullable|numeric',
         ]);
 
         /*

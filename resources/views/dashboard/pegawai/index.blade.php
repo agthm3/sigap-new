@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-      <!-- Header -->
+  <!-- Header -->
   <section class="max-w-7xl mx-auto px-4">
     <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
       <div>
@@ -9,11 +9,14 @@
         <p class="text-sm text-gray-600 mt-1">Kelola data pegawai untuk akses dokumen dan arsip privasi.</p>
       </div>
       <div class="flex flex-wrap gap-2">
+        @hasrole('admin')
         <a href="{{ route('sigap-pegawai.create') }}" class="px-3 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 text-sm">Tambah Pegawai</a>
+        @endhasrole
         <button id="btnExport" class="px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-sm">Export CSV</button>
       </div>
     </div>
   </section>
+
   <!-- Modal Export -->
   <div id="exportModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
     <div class="bg-white rounded-xl p-6 w-full max-w-lg">
@@ -66,7 +69,7 @@
         @csrf
         <div class="lg:col-span-2">
           <label class="text-sm font-semibold text-gray-700">Cari</label>
-          <input id="f_q" name="q" type="search" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Nama / Username / NIP / Unit">
+          <input id="f_q" name="q" value="{{ request('q') }}" type="search" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Nama / Username / NIP / Unit">
         </div>
         <div>
           <label class="text-sm font-semibold text-gray-700">Unit</label>
@@ -80,142 +83,173 @@
             @endforeach
           </select>
         </div>
+        
+        {{-- Hanya Admin yang bisa melihat/memfilter Role, Verif Pegawai tidak perlu --}}
+        @hasrole('admin')
         <div>
           <label class="text-sm font-semibold text-gray-700">Role</label>
           <select id="f_role" name="role" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
             <option value="">Semua</option>
               @foreach($roles as $role)
-                <option value="{{ $role }}">{{ $role }}</option>
+                <option value="{{ $role }}" @selected(request('role') == $role)>{{ $role }}</option>
               @endforeach
           </select>
         </div>
+        @endhasrole
+
         <div>
           <label class="text-sm font-semibold text-gray-700">Status</label>
           <select id="f_status" name="status" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
             <option value="">Semua</option>
-            <option value="active">Aktif</option>
-            <option value="inactive">Nonaktif</option>
+            <option value="active" @selected(request('status') == 'active')>Aktif</option>
+            <option value="inactive" @selected(request('status') == 'inactive')>Nonaktif</option>
           </select>
         </div>
         <div>
           <label class="text-sm font-semibold text-gray-700">Urutkan</label>
           <select id="sort" name="sort" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon">
-            <option value="latest">Terbaru</option>
-            <option value="name">Nama (A-Z)</option>
-            <option value="unit">Unit (A-Z)</option>
+            <option value="latest" @selected(request('sort') == 'latest')>Terbaru</option>
+            <option value="name" @selected(request('sort') == 'name')>Nama (A-Z)</option>
+            <option value="unit" @selected(request('sort') == 'unit')>Unit (A-Z)</option>
           </select>
         </div>
         <div class="col-span-full flex items-end gap-2">
-          <button class="px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800">Terapkan</button>
-          <a href="{{ route('sigap-pegawai.index') }}" type="reset" class="px-4 py-2 rounded-lg  border border-gray-300 hover:bg-gray-50" >Reset</a>
+          <button type="submit" class="px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800">Terapkan</button>
+          <a href="{{ route('sigap-pegawai.index') }}" class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700">Reset</a>
         </div>
-    </form>
+      </form>
     </div>
   </section>
 
   <!-- Table -->
   <section class="max-w-7xl mx-auto px-4 py-6">
-    <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-      <div class="px-4 py-3 bg-gray-50 text-sm text-gray-700 flex items-center justify-between">
-        <span id="countInfo">Menampilkan {{ $users->count() }} pegawai</span>
-        <div class="flex items-center gap-2">
-          <label class="text-sm text-gray-600">Tampilkan</label>
-          <select id="pageSize" class="text-sm rounded-md border-gray-300 focus:border-maroon focus:ring-maroon">
-            <option>10</option>
-            <option selected>25</option>
-            <option>50</option>
+    <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+      <div class="px-4 py-3 bg-gray-50/50 text-sm text-gray-700 flex flex-wrap items-center justify-between border-b border-gray-100">
+        <span id="countInfo" class="font-medium">Menampilkan {{ $users->count() }} pegawai</span>
+        <form method="GET" action="{{ route('sigap-pegawai.index') }}" class="flex items-center gap-2 mt-2 sm:mt-0">
+          <!-- Pertahankan filter lain saat mengganti page size -->
+          @if(request('q')) <input type="hidden" name="q" value="{{ request('q') }}"> @endif
+          @if(request('unit')) <input type="hidden" name="unit" value="{{ request('unit') }}"> @endif
+          @if(request('role')) <input type="hidden" name="role" value="{{ request('role') }}"> @endif
+          @if(request('status')) <input type="hidden" name="status" value="{{ request('status') }}"> @endif
+          @if(request('sort')) <input type="hidden" name="sort" value="{{ request('sort') }}"> @endif
+
+          <label class="text-sm text-gray-600 font-medium">Tampilkan</label>
+          <select name="per_page" onchange="this.form.submit()" class="text-sm rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon px-3 py-1.5 cursor-pointer">
+            <option value="10" @selected(request('per_page') == '10')>10</option>
+            <option value="25" @selected(request('per_page', '25') == '25')>25</option>
+            <option value="50" @selected(request('per_page') == '50')>50</option>
           </select>
-        </div>
+        </form>
       </div>
 
       <div class="overflow-x-auto">
         <table class="min-w-full text-sm">
           <thead class="bg-white">
-            <tr class="text-left border-b">
-              <th class="px-4 py-3">Pegawai</th>
-              <th class="px-4 py-3">NIP</th>
-              <th class="px-4 py-3">Unit</th>
-              <th class="px-4 py-3">Role</th>
-              <th class="px-4 py-3">Kontak</th>
-              <th class="px-4 py-3">Status</th>
-              <th class="px-4 py-3">Aksi</th>
+            <tr class="text-left border-b border-gray-200 text-gray-600">
+              <th class="px-4 py-3 font-semibold">Pegawai</th>
+              <th class="px-4 py-3 font-semibold">NIP</th>
+              <th class="px-4 py-3 font-semibold">Unit</th>
+              <th class="px-4 py-3 font-semibold">Role</th>
+              <th class="px-4 py-3 font-semibold">Kontak</th>
+              <th class="px-4 py-3 font-semibold">Status</th>
+              <th class="px-4 py-3 font-semibold text-right">Aksi</th>
             </tr>
           </thead>
-          <tbody class="divide-y">
+          <tbody class="divide-y divide-gray-100">
             @forelse ($users as $e)
-              <tr>
+              <tr class="hover:bg-gray-50/50 transition-colors">
                 <td class="px-4 py-3">
                   <div class="flex items-center gap-3">
-                    <img class="w-10 h-10 rounded-full object-cover"
+                    <img class="w-10 h-10 rounded-full object-cover border border-gray-200 shadow-sm"
                     src="{{ $e->profile_photo_path ? asset('storage/'.$e->profile_photo_path) : asset('images/avatar-placeholder.png') }}"
                     alt="">
                     <div>
-                      <p class="font-medium text-gray-900">{{ $e->name }}</p>
-                      <p class="text-xs text-gray-600">{{ '@'.$e->username }}</p>
+                      <p class="font-bold text-gray-900">{{ $e->name }}</p>
+                      <p class="text-xs text-gray-500">{{ '@'.$e->username }}</p>
                     </div>
                   </div>
                 </td>
-                <td class="px-4 py-3">{{ $e->nip ?: '—' }}</td>
-                <td class="px-4 py-3">{{ $e->unit }}</td>
+                <td class="px-4 py-3 font-medium text-gray-700">{{ $e->nip ?: '—' }}</td>
+                <td class="px-4 py-3 text-gray-600">{{ $e->unit ?: '—' }}</td>
                 <td class="px-4 py-3">
-                  @php($roleNames = $e->getRoleNames())
-                  @forelse($roleNames as $rn)
-                    <span class="px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700 mr-1">{{ $rn }}</span>
-                  @empty
-                    <span class="text-xs text-gray-500">—</span>
-                  @endforelse
+                  <div class="flex flex-wrap gap-1">
+                    @php($roleNames = $e->getRoleNames())
+                    @forelse($roleNames as $rn)
+                      <span class="px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-gray-100 border border-gray-200 text-gray-700">{{ $rn }}</span>
+                    @empty
+                      <span class="text-xs text-gray-400">—</span>
+                    @endforelse
+                  </div>
                 </td>
                 <td class="px-4 py-3 text-xs">
-                  <div>{{ $e->email ?: '—' }}</div>
-                  <div class="text-gray-500">{{ $e->phone ?: '—' }}</div>
+                  <div class="font-medium text-gray-800">{{ $e->email ?: '—' }}</div>
+                  <div class="text-gray-500 mt-0.5">{{ $e->nomor_hp ?: '—' }}</div>
                 </td>
                 <td class="px-4 py-3">
-                  <span class="px-2 py-0.5 rounded text-xs {{ $e->status==='active' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600' }}">
-                    {{ $e->status==='active' ? 'Aktif' : 'Nonaktif' }}
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide {{ $e->status==='active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-100' }}">
+                    <span class="w-1.5 h-1.5 rounded-full {{ $e->status==='active' ? 'bg-emerald-500' : 'bg-rose-500' }}"></span>
+                    {{ $e->status==='active' ? 'AKTIF' : 'NONAKTIF' }}
                   </span>
                 </td>
                 <td class="px-4 py-3">
-                  <div class="flex flex-wrap gap-2">
-                    <a href="{{ route('sigap-pegawai.edit', $e->id) }}" class="px-3 py-1.5 rounded-md border hover:bg-gray-50">Edit</a>
+                  <div class="flex flex-wrap items-center justify-end gap-2">
+                    
+                    {{-- Tombol Lihat (Tampil untuk Admin & Verif Pegawai) --}}
+                    <a href="{{ route('sigap-pegawai.show', $e->id) }}" class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-100 font-semibold text-xs shadow-sm transition-colors">
+                      Lihat
+                    </a>
+                    
+                    {{-- Tombol Edit & Hapus (Hanya tampil untuk Admin) --}}
+                    @hasrole('admin')
+                    <a href="{{ route('sigap-pegawai.edit', $e->id) }}" class="px-3 py-1.5 rounded-lg border border-blue-200 text-blue-700 bg-blue-50/50 hover:bg-blue-100 font-semibold text-xs shadow-sm transition-colors">
+                      Edit
+                    </a>
+                    
                     <form action="{{ route('sigap-pegawai.destroy', $e) }}" method="POST"
-                          onsubmit="return confirm('Hapus pegawai ini?')">
+                          onsubmit="return confirm('Apakah Anda yakin ingin menghapus data pegawai ini secara permanen?')">
                       @csrf @method('DELETE')
-                      <button class="px-3 py-1.5 rounded-md border text-red-700 border-red-300 hover:bg-red-50">Hapus</button>
+                      <button type="submit" class="px-3 py-1.5 rounded-lg border border-red-200 text-red-700 bg-red-50/50 hover:bg-red-100 font-semibold text-xs shadow-sm transition-colors">
+                        Hapus
+                      </button>
                     </form>
+                    @endhasrole
+
                   </div>
                 </td>
               </tr>
             @empty
               <tr>
-                <td colspan="7" class="px-4 py-6 text-center text-gray-500">Belum ada data pegawai.</td>
+                <td colspan="7" class="px-4 py-10 text-center">
+                  <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-3">
+                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                  </div>
+                  <p class="text-sm font-medium text-gray-900">Belum ada data pegawai.</p>
+                  <p class="text-xs text-gray-500 mt-1">Gunakan tombol 'Tambah Pegawai' untuk memasukkan data baru.</p>
+                </td>
               </tr>
             @endforelse
           </tbody>
-
         </table>
       </div>
 
       <!-- Pagination -->
-      <div class="px-4 py-3 flex items-center justify-between">
-        <p class="text-sm text-gray-600">
+      @if($users->hasPages())
+      <div class="px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-100 bg-white">
+        <p class="text-sm text-gray-500 font-medium">
           Halaman {{ $users->currentPage() }} dari {{ $users->lastPage() }}
         </p>
-        <div>
-          {{ $users->links() }}
+        <div class="overflow-x-auto w-full sm:w-auto">
+          {{ $users->withQueryString()->links() }}
         </div>
       </div>
-
-
-    <!-- Empty -->
-    <div id="empty" class="mt-6 hidden">
-      <div class="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center">
-        <p class="text-sm text-gray-700">Belum ada data pegawai.</p>
-        <a href="{{ route('sigap-pegawai.create') }}" class="inline-flex mt-3 px-4 py-2 rounded-lg bg-maroon text-white hover:bg-maroon-800 text-sm">Tambah Pegawai</a>
-      </div>
+      @endif
     </div>
+
   </section>
 @endsection
 
+@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -239,3 +273,4 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 </script>
+@endpush

@@ -199,9 +199,10 @@ margin-top:6px;
           <label>
           <span>Status Perkawinan</span>
           <select name="status_perkawinan" class="input">
-          <option>Belum Kawin</option>
-          <option>Kawin</option>
-          <option>Cerai</option>
+            <option value="">-</option>
+            <option value="Belum Kawin" @selected(old('status_perkawinan',$user->profile->status_perkawinan ?? '')=='Belum Kawin')>Belum Kawin</option>
+            <option value="Kawin" @selected(old('status_perkawinan',$user->profile->status_perkawinan ?? '')=='Kawin')>Kawin</option>
+            <option value="Cerai" @selected(old('status_perkawinan',$user->profile->status_perkawinan ?? '')=='Cerai')>Cerai</option>
           </select>
           </label>
 
@@ -243,99 +244,89 @@ margin-top:6px;
 
           <!-- ================= KEPEGAWAIAN ================= -->
           <div class="tab-content hidden mt-5" id="tab-kepegawaian">
+            <div class="grid sm:grid-cols-2 gap-4">
 
-          <div class="grid sm:grid-cols-2 gap-4">
+              <label>
+              <span>Status Pegawai</span>
+              <select name="status_pegawai" class="input">
+                <option value="">-</option>
+                <option value="PNS" @selected(old('status_pegawai',$user->profile->status_pegawai ?? '')=='PNS')>PNS</option>
+                <option value="PPPK" @selected(old('status_pegawai',$user->profile->status_pegawai ?? '')=='PPPK')>PPPK</option>
+                <option value="Non ASN" @selected(old('status_pegawai',$user->profile->status_pegawai ?? '')=='Non ASN')>Non ASN</option>
+              </select>
+              </label>
 
-          <label>
-          <span>Status Pegawai</span>
-          <select name="status_pegawai" class="input">
-          <option value="">-</option>
-          <option>PNS</option>
-          <option>PPPK</option>
-          <option>Non ASN</option>
-          </select>
-          </label>
+              <label>
+              <span>Jabatan</span>
+              <input name="jabatan" class="input" value="{{ old('jabatan',$user->profile->jabatan ?? '') }}">
+              </label>
 
-          <label>
-          <span>Jabatan</span>
-          <input name="jabatan" class="input"
-          value="{{ old('jabatan',$user->profile->jabatan ?? '') }}">
-          </label>
+              <label>
+              <span>Golongan</span>
+              <input name="golongan" class="input" value="{{ old('golongan',$user->profile->golongan ?? '') }}">
+              </label>
 
-          <label>
-          <span>Golongan</span>
-          <input name="golongan" class="input"
-          value="{{ old('golongan',$user->profile->golongan ?? '') }}">
-          </label>
+              <label>
+              <span>TMT PNS</span>
+              <input type="date" name="tmt_pns" class="input" value="{{ old('tmt_pns',$user->profile->tmt_pns ?? '') }}">
+              </label>
 
-          <label>
-          <span>TMT PNS</span>
-          <input type="date" name="tmt_pns" class="input"
-          value="{{ old('tmt_pns',$user->profile->tmt_pns ?? '') }}">
-          </label>
+              <label>
+              <span>Atasan Langsung</span>
+              <input name="atasan_langsung" class="input" value="{{ old('atasan_langsung',$user->profile->atasan_langsung ?? '') }}">
+              </label>
 
-          <label>
-          <span>Atasan Langsung</span>
-          <input name="atasan_langsung" class="input"
-          value="{{ old('atasan_langsung',$user->profile->atasan_langsung ?? '') }}">
-          </label>
+              <label>
+              <span>Golongan Ruang</span>
+              <input name="golongan_ruang" class="input" value="{{ old('golongan_ruang',$user->profile->golongan_ruang ?? '') }}">
+              </label>
 
-          <label>
-          <span>Golongan Ruang</span>
-          <input name="golongan_ruang" class="input"
-          value="{{ old('golongan_ruang',$user->profile->golongan_ruang ?? '') }}">
-          </label>
+              <label>
+              <span>TMT Golongan</span>
+              <input type="date" name="tmt_golongan" class="input" value="{{ old('tmt_golongan',$user->profile->tmt_golongan ?? '') }}">
+              </label>
 
-          <label>
-          <span>TMT Golongan</span>
-          <input type="date" name="tmt_golongan" class="input"
-          value="{{ old('tmt_golongan',$user->profile->tmt_golongan ?? '') }}">
-          </label>
+              <label>
+              <span>Masa Kerja (Tahun)</span>
+              <input type="number" name="masa_kerja_tahun" class="input" value="{{ old('masa_kerja_tahun',$user->profile->masa_kerja_tahun ?? '') }}">
+              </label>
 
-          <label>
-          <span>Masa Kerja (Tahun)</span>
-            <input type="number" name="masa_kerja_tahun" class="input"
-            value="{{ old('masa_kerja_tahun',$user->profile->masa_kerja_tahun ?? '') }}">
-          </label>
+              <label>
+              <span>Masa Kerja (Bulan)</span>
+              <input type="number" name="masa_kerja_bulan" class="input" value="{{ old('masa_kerja_bulan',$user->profile->masa_kerja_bulan ?? '') }}">
+              </label>
 
-          <label>
-          <span>Masa Kerja (Bulan)</span>
-          <input type="number" name="masa_kerja_bulan" class="input"
-            value="{{ old('masa_kerja_bulan',$user->profile->masa_kerja_bulan ?? '') }}">
-          </label>
+              <label>
+              <span>TMT Jabatan</span>
+              <input type="date" name="tmt_jabatan" class="input" value="{{ old('tmt_jabatan',$user->profile->tmt_jabatan ?? '') }}">
+              </label>
 
-          <label>
-          <span>TMT Jabatan</span>
-          <input type="date" name="tmt_jabatan" class="input"
-          value="{{ old('tmt_jabatan',$user->profile->tmt_jabatan ?? '') }}">
-          </label>
+              <label>
+              <span>Eselon</span>
+              <input name="eselon" class="input" value="{{ old('eselon',$user->profile->eselon ?? '') }}">
+              </label>
 
-          <label>
-          <span>Eselon</span>
-          <input name="eselon" class="input">
-          </label>
+              <label>
+              <span>Jabatan Struktural</span>
+              <input name="jabatan_struktural" class="input" value="{{ old('jabatan_struktural',$user->profile->jabatan_struktural ?? '') }}">
+              </label>
 
-          <label>
-          <span>Jabatan Struktural</span>
-          <input name="jabatan_struktural" class="input">
-          </label>
+              <label>
+              <span>Jabatan Fungsional</span>
+              <input name="jabatan_fungsional" class="input" value="{{ old('jabatan_fungsional',$user->profile->jabatan_fungsional ?? '') }}">
+              </label>
 
-          <label>
-          <span>Jabatan Fungsional</span>
-          <input name="jabatan_fungsional" class="input">
-          </label>
+              <label>
+              <span>Jabatan Teknis</span>
+              <input name="jabatan_teknis" class="input" value="{{ old('jabatan_teknis',$user->profile->jabatan_teknis ?? '') }}">
+              </label>
 
-          <label>
-          <span>Jabatan Teknis</span>
-          <input name="jabatan_teknis" class="input">
-          </label>
+              <label>
+              <span>Unit Organisasi (Unor)</span>
+              <input name="unor" class="input" value="{{ old('unor',$user->profile->unor ?? '') }}">
+              </label>
 
-          <label>
-          <span>Unit Organisasi (Unor)</span>
-          <input name="unor" class="input">
-          </label>
-
-          </div>
+            </div>
           </div>
 
 
@@ -397,60 +388,59 @@ margin-top:6px;
 
 
           <!-- ================= KELUARGA ================= -->
-          <div class="tab-content hidden mt-5" id="tab-keluarga">
+         <div class="tab-content hidden mt-5" id="tab-keluarga">
+            <div class="grid sm:grid-cols-2 gap-4">
 
-          <div class="grid sm:grid-cols-2 gap-4">
+              <label>
+              <span>Nama Pasangan</span>
+              <input name="nama_pasangan" class="input" value="{{ old('nama_pasangan',$user->profile->nama_pasangan ?? '') }}">
+              </label>
 
-          <label>
-          <span>Nama Pasangan</span>
-          <input name="nama_pasangan" class="input">
-          </label>
+              <label>
+              <span>Pekerjaan Pasangan</span>
+              <input name="pekerjaan_pasangan" class="input" value="{{ old('pekerjaan_pasangan',$user->profile->pekerjaan_pasangan ?? '') }}">
+              </label>
 
-          <label>
-          <span>Pekerjaan Pasangan</span>
-          <input name="pekerjaan_pasangan" class="input">
-          </label>
+              <label>
+              <span>Jumlah Anak</span>
+              <input type="number" name="jumlah_anak" class="input" value="{{ old('jumlah_anak',$user->profile->jumlah_anak ?? '') }}">
+              </label>
 
-          <label>
-          <span>Jumlah Anak</span>
-          <input type="number" name="jumlah_anak" class="input">
-          </label>
+              <label>
+              <span>Kontak Darurat</span>
+              <input name="kontak_darurat" class="input" value="{{ old('kontak_darurat',$user->profile->kontak_darurat ?? '') }}">
+              </label>
 
-          <label>
-          <span>Kontak Darurat</span>
-          <input name="kontak_darurat" class="input">
-          </label>
-
-          </div>
+            </div>
           </div>
 
           {{-- PENDIDIKAN --}}
-          <div class="tab-content hidden mt-5" id="tab-pendidikan">
+         <div class="tab-content hidden mt-5" id="tab-pendidikan">
+            <div class="grid sm:grid-cols-2 gap-4">
 
-          <div class="grid sm:grid-cols-2 gap-4">
+              <label>
+              <span>Pendidikan Terakhir</span>
+              <select name="pendidikan_terakhir" class="input">
+                <option value="">-</option>
+                <option value="SMA" @selected(old('pendidikan_terakhir',$user->profile->pendidikan_terakhir ?? '')=='SMA')>SMA</option>
+                <option value="D3" @selected(old('pendidikan_terakhir',$user->profile->pendidikan_terakhir ?? '')=='D3')>D3</option>
+                <option value="S1" @selected(old('pendidikan_terakhir',$user->profile->pendidikan_terakhir ?? '')=='S1')>S1</option>
+                <option value="S2" @selected(old('pendidikan_terakhir',$user->profile->pendidikan_terakhir ?? '')=='S2')>S2</option>
+                <option value="S3" @selected(old('pendidikan_terakhir',$user->profile->pendidikan_terakhir ?? '')=='S3')>S3</option>
+              </select>
+              </label>
 
-          <label>
-          <span>Pendidikan Terakhir</span>
-          <select name="pendidikan_terakhir" class="input">
-          <option>SMA</option>
-          <option>D3</option>
-          <option>S1</option>
-          <option>S2</option>
-          <option>S3</option>
-          </select>
-          </label>
+              <label>
+              <span>Jurusan</span>
+              <input name="jurusan" class="input" value="{{ old('jurusan',$user->profile->jurusan ?? '') }}">
+              </label>
 
-          <label>
-          <span>Jurusan</span>
-          <input name="jurusan" class="input">
-          </label>
+              <label>
+              <span>Tahun Lulus</span>
+              <input type="number" name="tahun_lulus" class="input" value="{{ old('tahun_lulus',$user->profile->tahun_lulus ?? '') }}">
+              </label>
 
-          <label>
-          <span>Tahun Lulus</span>
-          <input type="number" name="tahun_lulus" class="input">
-          </label>
-
-          </div>
+            </div>
           </div>
 
           {{-- sertifikat --}}

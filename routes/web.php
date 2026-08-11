@@ -109,12 +109,13 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     ->name('home.index');
 
 // --- SIGAP Pegawai (tanpa resource, middleware milikmu tetap)
-Route::get   ('/sigap-pegawai',          [SigapPegawaiController::class, 'index'])->middleware('auth', 'role:admin')->name('sigap-pegawai.index');
+Route::get   ('/sigap-pegawai',          [SigapPegawaiController::class, 'index'])->middleware('auth', 'role:admin|verif_pegawai')->name('sigap-pegawai.index');
 Route::get   ('/sigap-pegawai/create',   [SigapPegawaiController::class, 'create'])->name('sigap-pegawai.create');
 Route::post  ('/sigap-pegawai',          [SigapPegawaiController::class, 'store'])->name('sigap-pegawai.store');
 
 // admin create user (UBAH path supaya tidak bentrok)
 Route::post  ('/sigap-pegawai/users',    [RegisteredUserController::class, 'adminStore'])->name('sigap-pegawai.users.store');
+Route::get   ('/sigap-pegawai/{user}',      [SigapPegawaiController::class, 'show'])->middleware('auth', 'role:admin|verif_pegawai')->name('sigap-pegawai.show');
 
 // edit / update / delete
 Route::get   ('/sigap-pegawai/{user}/edit', [SigapPegawaiController::class, 'edit'])->name('sigap-pegawai.edit');

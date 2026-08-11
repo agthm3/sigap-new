@@ -21,6 +21,15 @@ class SigapPegawaiController extends Controller
     public function index(Request $request)
     {
         $filters = $request->only(['q','unit','role','status','sort']);
+        
+        $user = auth()->user();
+
+        // JIKA USER ADALAH VERIF_PEGAWAI, PAKSA FILTER ROLE KE 'employee'
+        // agar mereka tidak bisa melihat data admin atau superadmin.
+        if ($user->hasRole('verif_pegawai') && !$user->hasRole('admin')) {
+            $filters['role'] = 'employee';
+        }
+
         $perPage = (int) $request->input('per_page', 25);
         $users   = $this->repo->paginateWithFilters($filters, $perPage);
         $roles   = Role::where('guard_name','web')->pluck('name')->all();
@@ -28,6 +37,16 @@ class SigapPegawaiController extends Controller
         $unitCategories = config('unit.categories');
 
         return view('dashboard.pegawai.index', compact('users','filters','roles', 'unitCategories'));
+    }
+
+    public function show(User $user) 
+    {
+        // Load relasi profil, sertifikat, dan dokumen
+        $user->load(['profile', 'kompetensis']);
+        $docs = $user->personalDocuments()->latest()->get();
+        $userRoleNames = $user->getRoleNames()->all();
+
+        return view('dashboard.pegawai.show', compact('user', 'docs', 'userRoleNames'));
     }
 
     public function create()
@@ -61,6 +80,7 @@ class SigapPegawaiController extends Controller
             'email'    => ['required','email','max:255',"unique:users,email,{$user->id}"],
             'username' => ['required','string','max:50',"unique:users,username,{$user->id}"],
             'nip'      => ['nullable','string','max:50'],
+            'nomor_hp' => ['nullable','string','max:20'], 
             'unit'     => ['nullable','string','max:100'],
             'status'   => ['nullable','in:active,inactive'],
             'password' => ['nullable','confirmed', \Illuminate\Validation\Rules\Password::defaults()],
