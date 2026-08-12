@@ -66,7 +66,7 @@ class SkpController extends Controller
         $request->validate([
             'pegawai_ids'   => 'required|array',
             'pegawai_ids.*' => 'exists:users,id',
-            'judul_kegiatan'=> 'required|string|max:255',
+            'judul_kegiatan'=> 'required|string|max:500',
             'tanggal'       => 'required|date',
             'dokumentasi'   => 'required|array',
             'dokumentasi.*' => 'image|mimes:jpeg,png,jpg,webp|max:20480', // Max 20MB per file sebelum dikompres
