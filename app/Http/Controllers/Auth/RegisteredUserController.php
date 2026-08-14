@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Notifications\SendOtpNotification;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,8 +33,6 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-
-        // dd($request->all());
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
@@ -45,8 +44,10 @@ class RegisteredUserController extends Controller
             'status' => ['nullable', 'string', 'max:50'],
             'role' => ['nullable', 'string', 'in:admin,user,employee,verificator,inovator,pending'],
             'nomor_hp' => ['nullable', 'string', 'max:15'],
-            
         ]);
+
+        // Generate 6 Digit OTP
+        $otp = (string) random_int(100000, 999999);
 
         $user = User::create([
             'name' => $request->name,
@@ -57,15 +58,19 @@ class RegisteredUserController extends Controller
             'username' => $request->username,
             'profile_photo_path' => $request->profile_photo_path,
             'status' => $request->status ?? 'active',
-            'role' => 'pending',
             'nomor_hp' => $request->nomor_hp,
+            'otp_code' => $otp,
+            'otp_expires_at' => now()->addMinutes(10),
         ]);
 
         event(new Registered($user));
 
         Auth::login($user);
 
-        return redirect(route('home', absolute: false));
+        // Kirimkan Notifikasi Email OTP
+        $user->notify(new SendOtpNotification($otp));
+
+        return redirect()->route('verification.notice');
     }
 
     public function adminStore(Request $request): RedirectResponse
@@ -83,7 +88,7 @@ class RegisteredUserController extends Controller
             'roles'    => ['nullable','array'],
             'roles.*'  => ['string', Rule::in($validRoles)],
             'nomor_hp' => ['nullable','string','max:15'],
-            // ⬇️ foto profil
+            // foto profil
             'avatar'   => ['nullable','image','mimes:jpg,jpeg,png','max:2048'],
         ]);
 

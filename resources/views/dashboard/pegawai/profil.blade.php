@@ -6,11 +6,82 @@
   {{-- Breadcrumb --}}
   <nav class="max-w-7xl mx-auto px-4 py-4 text-sm">
     <ol class="flex flex-wrap items-center gap-1 text-gray-600">
-      <li><a href="{{ route('home.index') }}" class="hover:text-maroon">Dashboard</a></li>
+      <li><a href="{{ route('home') }}" class="hover:text-maroon">Dashboard</a></li>
       <li>›</li>
       <li class="text-gray-900 font-semibold">Profil Pegawai</li>
     </ol>
   </nav>
+
+{{-- ================= CEK JIKA USER TIDAK PUNYA ROLE ================= --}}
+@if(empty($roleNames))
+  {{-- 1. Banner Alert di atas Card Profil --}}
+  <section class="max-w-7xl mx-auto px-4 mt-2">
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start sm:items-center gap-4 shadow-sm">
+          <div class="p-2 bg-amber-100 rounded-lg text-amber-600 shrink-0">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          </div>
+          <div class="flex-1">
+              <h4 class="font-bold text-amber-900 text-sm">Akun Menunggu Verifikasi Admin</h4>
+              <p class="text-sm text-amber-800 mt-1">Anda belum dapat mengakses menu lain karena status akun masih <strong>Pending</strong>. Silakan lengkapi data profil Anda. Jika ada keperluan lain, hubungi Admin.</p>
+          </div>
+          <div class="shrink-0 mt-3 sm:mt-0">
+              <a href="https://wa.me/6282396768528" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-sm transition-colors">
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.183-.573c.978.582 1.894.869 3.145.871 3.181 0 5.768-2.585 5.768-5.766 0-3.181-2.587-5.767-5.765-5.767zm3.283 8.361c-.161.453-.952.885-1.31.954-.356.07-.733.153-2.327-.506-1.921-.796-3.136-2.736-3.233-2.868-.096-.13-.768-1.02-.768-1.947 0-.927.48-1.385.649-1.564.169-.178.369-.224.492-.224.123 0 .245.002.353.007.112.006.262-.043.4.286.138.33.473 1.15.516 1.238.042.089.071.192.015.304-.057.112-.085.178-.168.277-.085.099-.178.217-.253.305-.084.099-.174.208-.073.383.101.175.449.743.968 1.206.671.597 1.226.782 1.405.87.178.089.284.075.39-.047.106-.123.456-.529.58-.711.123-.183.245-.152.404-.093.159.059 1.006.474 1.177.56.171.085.285.129.327.2.042.072.042.417-.119.87z"/></svg>
+                  WhatsApp Admin
+              </a>
+          </div>
+      </div>
+  </section>
+
+  {{-- 2. Modal Pop-up (Alpine.js) --}}
+  <div x-data="{ openWelcomeModal: true }">
+      <template x-teleport="body">
+          <div x-show="openWelcomeModal" x-cloak class="fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6">
+              <!-- Backdrop -->
+              <div x-show="openWelcomeModal" 
+                   x-transition.opacity 
+                   class="absolute inset-0 bg-black/60 backdrop-blur-sm" 
+                   @click="openWelcomeModal = false"></div>
+
+              <!-- Modal Panel -->
+              <div x-show="openWelcomeModal"
+                   x-transition:enter="transition ease-out duration-300"
+                   x-transition:enter-start="opacity-0 translate-y-8 scale-95"
+                   x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                   x-transition:leave="transition ease-in duration-200"
+                   x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                   x-transition:leave-end="opacity-0 translate-y-8 scale-95"
+                   class="relative w-full max-w-md bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden text-center border-t-8 border-maroon">
+                  
+                  <div class="p-8">
+                      <div class="mx-auto w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
+                          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                      </div>
+                      
+                      <h3 class="text-2xl font-extrabold text-gray-900 mb-2">Registrasi Berhasil!</h3>
+                      <p class="text-sm text-gray-600 mb-4 leading-relaxed">
+                          Selamat datang di <strong>SIGAP BRIDA</strong>. Untuk saat ini Anda belum bisa melakukan aktivitas lain karena admin belum mengatur hak akses <i>(role)</i> ke akun Anda.
+                      </p>
+                      <p class="text-sm text-gray-600 mb-6 leading-relaxed">
+                          Jika ada sesuatu yang diperlukan atau ingin mengaktifkan role Anda, silakan hubungi admin via WhatsApp dengan menjelaskan kebutuhan Anda.
+                      </p>
+
+                      <div class="space-y-3">
+                          <a href="https://wa.me/6282396768528" target="_blank" class="w-full flex justify-center items-center gap-2 py-3 px-4 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-colors">
+                              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.183-.573c.978.582 1.894.869 3.145.871 3.181 0 5.768-2.585 5.768-5.766 0-3.181-2.587-5.767-5.765-5.767zm3.283 8.361c-.161.453-.952.885-1.31.954-.356.07-.733.153-2.327-.506-1.921-.796-3.136-2.736-3.233-2.868-.096-.13-.768-1.02-.768-1.947 0-.927.48-1.385.649-1.564.169-.178.369-.224.492-.224.123 0 .245.002.353.007.112.006.262-.043.4.286.138.33.473 1.15.516 1.238.042.089.071.192.015.304-.057.112-.085.178-.168.277-.085.099-.178.217-.253.305-.084.099-.174.208-.073.383.101.175.449.743.968 1.206.671.597 1.226.782 1.405.87.178.089.284.075.39-.047.106-.123.456-.529.58-.711.123-.183.245-.152.404-.093.159.059 1.006.474 1.177.56.171.085.285.129.327.2.042.072.042.417-.119.87z"/></svg>
+                              Hubungi Admin (082396768528)
+                          </a>
+                          <button @click="openWelcomeModal = false" class="w-full py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors">
+                              Tutup & Lihat Profil
+                          </button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </template>
+  </div>
+@endif
+
 {{-- ================= PROFIL PEGAWAI TAB ================= --}}
 @if($user->profile)
 

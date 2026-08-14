@@ -1,5 +1,8 @@
 <?php
 use App\Http\Controllers\Api\UserSearchController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Auth\OtpVerificationController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Dashboard\EvidenceConfigController;
 use App\Http\Controllers\DashboardController;
@@ -43,6 +46,22 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Rap2hpoutre\LaravelLogViewer\LogViewerController;
 
+
+Route::middleware('auth')->group(function () {
+    Route::get('verify-email', EmailVerificationPromptController::class)
+                ->name('verification.notice');
+
+    // Route untuk verifikasi OTP & Kirim Ulang OTP
+    Route::post('verify-otp', [OtpVerificationController::class, 'verify'])
+                ->name('verification.otp.verify');
+
+    Route::post('resend-otp', [OtpVerificationController::class, 'resend'])
+                ->middleware('throttle:6,1')
+                ->name('verification.otp.resend');
+
+    Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
+                ->name('logout');
+});
 // --- Public
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/hasil', [HomeController::class, 'show'])->name('home.show');
