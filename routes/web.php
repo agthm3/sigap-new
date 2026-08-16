@@ -627,6 +627,26 @@ Route::prefix('dashboard/narasumber')->name('sigap-narasumber.')->middleware(['a
 Route::get('/narasumber/kesediaan/{kegiatan:uuid}', [SigapNarasumberController::class, 'publicForm'])->name('sigap-narasumber.public');
 Route::post('/narasumber/kesediaan/{kegiatan:uuid}', [SigapNarasumberController::class, 'storePublic'])->name('sigap-narasumber.store-public');
 
+    Route::prefix('pdf')->name('sigap-pdf.')->group(function () {
+        Route::get('/', [SigapPdfController::class, 'landing'])->name('landing');
+        Route::get('/merge', [SigapPdfController::class, 'merge'])->name('merge');
+        Route::get('/compress', [SigapPdfController::class, 'compress'])->name('compress');
+        Route::get('/split', [SigapPdfController::class, 'split'])->name('split');
+        Route::get('/rotate', [SigapPdfController::class, 'rotate'])->name('rotate');
+        Route::get('/extract', [SigapPdfController::class, 'extract'])->name('extract');
+        Route::get('/delete-pages', [SigapPdfController::class, 'deletePages'])->name('delete-pages');
+        Route::get('/reorder', [SigapPdfController::class, 'reorder'])->name('reorder');
+        Route::get('/watermark', [SigapPdfController::class, 'watermark'])->name('watermark');
+        Route::get('/add-password', [SigapPdfController::class, 'addPassword'])->name('add-password');
+        Route::get('/remove-metadata', [SigapPdfController::class, 'removeMetadata'])->name('remove-metadata');
+        Route::get('/jpg-to-pdf', [SigapPdfController::class, 'jpgToPdf'])->name('jpg-to-pdf');
+        Route::get('/png-to-pdf', [SigapPdfController::class, 'pngToPdf'])->name('png-to-pdf');
+        Route::get('/pdf-to-image', [SigapPdfController::class, 'pdfToImage'])->name('pdf-to-image');
+        Route::get('/delete-pages', [SigapPdfController::class, 'deletePages'])->name('delete-pages');
+        Route::get('/change-version', [SigapPdfController::class, 'changeVersion'])->name('change-version');
+        Route::post('/add-password', [SigapPdfController::class, 'processAddPassword'])->name('add-password.process');
+    });
+
 
 Route::middleware(['auth'])->group(function () {
     
@@ -800,24 +820,5 @@ Route::middleware(['auth'])->group(function () {
         // Pengaturan > Manajemen Role
         Route::resource('roles', RoleController::class)->except(['show']);
     });
-    
-    Route::prefix('pdf')->name('sigap-pdf.')->group(function () {
-        Route::get('/', [SigapPdfController::class, 'landing'])->name('landing');
-        Route::get('/merge', [SigapPdfController::class, 'merge'])->name('merge');
-        Route::get('/compress', [SigapPdfController::class, 'compress'])->name('compress');
-        Route::get('/split', [SigapPdfController::class, 'split'])->name('split');
-        Route::get('/rotate', [SigapPdfController::class, 'rotate'])->name('rotate');
-        Route::get('/extract', [SigapPdfController::class, 'extract'])->name('extract');
-        Route::get('/delete-pages', [SigapPdfController::class, 'deletePages'])->name('delete-pages');
-        Route::get('/reorder', [SigapPdfController::class, 'reorder'])->name('reorder');
-        Route::get('/watermark', [SigapPdfController::class, 'watermark'])->name('watermark');
-        Route::get('/add-password', [SigapPdfController::class, 'addPassword'])->name('add-password');
-        Route::get('/remove-metadata', [SigapPdfController::class, 'removeMetadata'])->name('remove-metadata');
-        Route::get('/jpg-to-pdf', [SigapPdfController::class, 'jpgToPdf'])->name('jpg-to-pdf');
-        Route::get('/png-to-pdf', [SigapPdfController::class, 'pngToPdf'])->name('png-to-pdf');
-        Route::get('/pdf-to-image', [SigapPdfController::class, 'pdfToImage'])->name('pdf-to-image');
-        Route::get('/delete-pages', [SigapPdfController::class, 'deletePages'])->name('delete-pages');
-    Route::get('/change-version', [SigapPdfController::class, 'changeVersion'])->name('change-version');
-        Route::post('/add-password', [SigapPdfController::class, 'processAddPassword'])->name('add-password.process');
-    });
 });
+
