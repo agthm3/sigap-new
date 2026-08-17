@@ -71,7 +71,9 @@
             <div class="min-w-0">
               <div class="text-[10px] font-bold uppercase tracking-wider text-maroon">Penyedia Jasa Lainnya (PJLP)</div>
               <h3 class="text-sm font-extrabold text-gray-900 truncate">{{ $user->name }}</h3>
-              <p class="text-xs text-gray-600 truncate">{{ $profile->jabatan ?? 'Tenaga Kebersihan' }}</p>
+            <p class="text-xs text-gray-600 truncate">
+                {{ $profile->jabatan ?? 'Penyedia Jasa Lainnya Perorangan (PJLP)' }}
+              </p>
               <p class="text-[11px] text-gray-500 font-medium truncate">{{ $user->unit ?: 'BRIDA Kota Makassar' }}</p>
             </div>
           </div>

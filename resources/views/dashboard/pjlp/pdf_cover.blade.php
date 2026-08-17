@@ -89,7 +89,7 @@
       border: none !important;
     }
     .label {
-      width: 28%;
+      width: 32%;
       font-weight: bold;
       color: #374151;
     }
@@ -177,7 +177,21 @@
           <tr>
             <td class="label">Jabatan / Tugas Pokok</td>
             <td>:</td>
-            <td>{{ $profile->jabatan ?? 'Tenaga Kebersihan Lingkungan Kantor' }}</td>
+            <td>
+              <b>
+                @php
+                  $rawJabatan = strtolower($profile->jabatan ?? '');
+                  if (str_contains($rawJabatan, 'sopir') || str_contains($rawJabatan, 'pengemudi') || str_contains($rawJabatan, 'driver')) {
+                      $tugasPokok = 'Pengemudi / Sopir Kantor';
+                  } elseif (str_contains($rawJabatan, 'kebersihan') || str_contains($rawJabatan, 'cleaner') || empty($rawJabatan)) {
+                      $tugasPokok = 'Tenaga Kebersihan Lingkungan Kantor';
+                  } else {
+                      $tugasPokok = $profile->jabatan;
+                  }
+                @endphp
+                {{ $tugasPokok }}
+              </b>
+            </td>
           </tr>
           <tr>
             <td class="label">Unit Kerja / OPD</td>
