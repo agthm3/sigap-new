@@ -243,10 +243,27 @@ class SkpController extends Controller
             'agenda_id'      => 'nullable|exists:sigap_agendas,id',
             'judul_kegiatan' => 'required|string|max:255',
             'tanggal'        => 'required|date',
-            'photo_data'     => 'required|string',
+            'photo_data'     => 'nullable', // bisa array atau string
             'pegawai_ids'    => 'nullable|array',
             'pegawai_ids.*'  => 'exists:users,id',
         ]);
+
+        // Kumpulkan list foto base64
+        $photos = [];
+        if ($request->filled('photo_data')) {
+            if (is_array($request->photo_data)) {
+                $photos = $request->photo_data;
+            } else {
+                $photos = [$request->photo_data];
+            }
+        }
+
+        if (empty($photos)) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Harap sertakan minimal satu foto dokumentasi evidence.'
+            ], 422);
+        }
 
         // 2. Simpan Data Utama SKP
         $skp = Skp::create([
@@ -259,26 +276,25 @@ class SkpController extends Controller
             'creator_id'     => auth()->id(),
         ]);
 
-        // 3. Hubungkan ID Pegawai Pengambil Foto dengan Pegawai Terpilih Lainnya
+        // 3. Hubungkan ID Pegawai
         $targetPegawaiIds = array_unique(array_merge([auth()->id()], $request->pegawai_ids ?? []));
         $skp->pegawais()->sync($targetPegawaiIds);
 
-        // 4. Decode String Base64 Photo Data & Simpan ke Storage
-        if ($request->filled('photo_data')) {
-            $photoData = $request->photo_data;
-            
-            if (preg_match('/^data:image\/(\w+);base64,/', $photoData, $type)) {
+        // 4. Decode Setiap Foto Base64 & Simpan ke Storage
+        foreach ($photos as $photoData) {
+            if (empty($photoData)) continue;
+
+            $type = 'jpg';
+            if (preg_match('/^data:image\/(\w+);base64,/', $photoData, $match)) {
+                $type = strtolower($match[1]);
                 $photoData = substr($photoData, strpos($photoData, ',') + 1);
-                $type = strtolower($type[1]);
-            } else {
-                $type = 'jpg';
             }
 
-            $photoData = base64_decode($photoData);
+            $decoded = base64_decode($photoData);
 
-            if ($photoData !== false) {
-                $fileName = 'skp_fotos/' . uniqid() . '.' . $type;
-                Storage::disk('public')->put($fileName, $photoData);
+            if ($decoded !== false) {
+                $fileName = 'skp_fotos/' . uniqid() . '_' . Str::random(6) . '.' . $type;
+                Storage::disk('public')->put($fileName, $decoded);
 
                 $skp->fotos()->create([
                     'file_path' => $fileName,
@@ -287,18 +303,16 @@ class SkpController extends Controller
             }
         }
 
-        // 5. Format Format Nama Pegawai per Poin
+        // 5. Format Daftar Nama Pegawai
         $daftarPegawai = User::whereIn('id', $targetPegawaiIds)->pluck('name')->toArray();
         
         if (count($daftarPegawai) > 1) {
-            // Jika lebih dari 1 orang, buat daftar berpoin (bullet)
             $listPegawaiStr = "\n" . implode("\n", array_map(fn($nama) => "  • " . $nama, $daftarPegawai));
         } else {
-            // Jika 1 orang saja, sejajarkan secara langsung
             $listPegawaiStr = " " . ($daftarPegawai[0] ?? auth()->user()->name);
         }
 
-        // 6. Susun Pesan WhatsApp Rapi
+        // 6. Susun Pesan WhatsApp
         $waMessage = "📸 *DOKUMENTASI EVIDENCE SKP MANDIRI*\n"
                    . "━━━━━━━━━━━━━━━━━━━━━━━━\n"
                    . "📌 *Kegiatan:* " . $skp->judul_kegiatan . "\n"
@@ -315,6 +329,7 @@ class SkpController extends Controller
             'redirect' => route('sigap-skp.pribadi')
         ]);
     }
+    
     public function publicShow($slug)
     {
         $skp = Skp::with(['pegawais', 'creator', 'fotos', 'agenda'])
