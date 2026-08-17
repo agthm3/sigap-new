@@ -171,6 +171,19 @@
                <p class="mt-1 text-sm text-gray-600">Akses data pegawai (seperti KTP, KK) dengan filter canggih. Setiap download dicatat log-nya untuk keamanan.</p>
             </div>
         </a>
+        <a href="{{ route('sigap-pjlp.public') }}">
+          <div class="p-6 rounded-xl border border-gray-200 hover:shadow-lg transition">
+            <div class="w-10 h-10 rounded-lg bg-maroon/10 text-maroon flex items-center justify-center">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+              </svg>
+            </div>
+            <h4 class="mt-4 font-semibold">SIGAP <span><strong class="text-maroon">PJLP</strong></span></h4>
+            <p class="mt-1 text-sm text-gray-600">
+              Sistem Informasi Pengelolaan Evidence & Logbook PJLP. Pantau dokumentasi aktivitas harian tenaga kebersihan BRIDA secara transparan.
+            </p>
+          </div>
+        </a>
         <a href="{{ route('sigap-auto.index') }}">
         <div class="p-6 rounded-xl border border-gray-200 hover:shadow-lg transition">
           <div class="w-10 h-10 rounded-lg bg-maroon/10 text-maroon flex items-center justify-center">

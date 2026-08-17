@@ -553,6 +553,62 @@ textarea::placeholder {
         @endhasanyrole
       </div>
     @endhasanyrole
+@hasanyrole('admin|superadmin|verif_pjlp|pjlp')
+      <!-- SECTION HEADER: SIGAP PJLP -->
+      <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">
+        SIGAP PJLP
+      </div>
+
+      <!-- Toggle Button -->
+      <button id="pjlpToggle"
+              class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-left transition-colors">
+        <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+        </svg>
+        <span class="font-medium">SIGAP PJLP</span>
+        <svg id="pjlpCaret"
+            class="w-4 h-4 ml-auto transition-transform duration-200"
+            viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-width="2" d="M6 9l6 6 6-6"/>
+        </svg>
+      </button>
+
+      <!-- Dropdown Menu Items -->
+      <div id="pjlpMenu" class="ml-3 mt-1 space-y-1 hidden">
+        <!-- 1. Monitoring Logbook (Admin, Superadmin & Verifikator) -->
+        @hasanyrole('admin|superadmin|verif_pjlp')
+        <a href="{{ route('sigap-pjlp.monitoring') }}"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+          {{ request()->routeIs('sigap-pjlp.monitoring*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+          Monitoring PJLP
+        </a>
+        @endhasanyrole
+
+        <!-- 2. Logbook Harian (PJLP isi sendiri / Admin & Verif bisa kelola/isikan) -->
+        <a href="{{ route('sigap-pjlp.index') }}"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+          {{ request()->routeIs('sigap-pjlp.index*') || request()->routeIs('sigap-pjlp.show*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path stroke-width="2" d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          Logbook Pekerjaan
+        </a>
+
+        <!-- 3. Riwayat / History Logbook -->
+        <a href="{{ route('sigap-pjlp.history') }}"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+          {{ request()->routeIs('sigap-pjlp.history*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          History Laporan
+        </a>
+      </div>
+      @endhasanyrole
       @hasanyrole('admin|verif_daftarhadir|employee')
       <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">
         SIGAP DAFTAR HADIR
@@ -1242,6 +1298,23 @@ function globalSearch() {
           ]
         },
         @endif
+        // SIGAP PJLP
+        @if($isAdmin || $u->hasAnyRole(['superadmin', 'verif_pjlp', 'pjlp']))
+        {
+          id: 'pjlp-group',
+          title: 'SIGAP PJLP',
+          description: 'Logbook Harian, Evidence Kebersihan & Monitoring PJLP',
+          icon: '🧹',
+          isParent: true,
+          subMenus: [
+            @if($isAdmin || $u->hasAnyRole(['superadmin', 'verif_pjlp']))
+            { title: 'Monitoring PJLP', description: 'Pantau progress & verifikasi logbook PJLP', url: "{{ route('sigap-pjlp.monitoring') }}", icon: '📋' },
+            @endif
+            { title: 'Logbook Pekerjaan', description: 'Input & kelola evidence pekerjaan harian', url: "{{ route('sigap-pjlp.index') }}", icon: '📝' },
+            { title: 'History Laporan', description: 'Arsip logbook & dokumen gaji bulanan', url: "{{ route('sigap-pjlp.history') }}", icon: '📁' },
+          ]
+        },
+        @endif
 
         // 2. SIGAP PPD
         @if($isAdmin || $u->hasAnyRole(['verif_ppd', 'employee']))
@@ -1552,6 +1625,33 @@ function globalSearch() {
     }
   }
 }
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const pjlpToggle = document.getElementById('pjlpToggle');
+  const pjlpMenu   = document.getElementById('pjlpMenu');
+  const pjlpCaret  = document.getElementById('pjlpCaret');
+
+  if (!pjlpToggle) return;
+
+  const PJLP_KEY  = 'sb_pjlp_open';
+  const isOpenSaved = localStorage.getItem(PJLP_KEY) === '1';
+
+  // Auto-buka jika sedang berada di route SIGAP PJLP
+  const isOnPjlp = window.location.pathname.includes('/sigap-pjlp');
+
+  if (isOpenSaved || isOnPjlp) {
+    pjlpMenu?.classList.remove('hidden');
+    pjlpCaret?.classList.add('rotate-180');
+  }
+
+  pjlpToggle.addEventListener('click', () => {
+    const willOpen = pjlpMenu.classList.contains('hidden');
+    pjlpMenu.classList.toggle('hidden');
+    pjlpCaret.classList.toggle('rotate-180', willOpen);
+    localStorage.setItem(PJLP_KEY, willOpen ? '1' : '0');
+  });
+});
 </script>
 </body>
 </html>

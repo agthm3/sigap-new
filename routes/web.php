@@ -16,6 +16,8 @@ use App\Http\Controllers\PegawaiProfilController;
 use App\Http\Controllers\PegawaiProfileController;
 use App\Http\Controllers\PegawaiPublicController;
 use App\Http\Controllers\PersonalDocumentController;
+use App\Http\Controllers\PjlpLogbookController;
+use App\Http\Controllers\PjlpVerificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfileOrganisasiController;
 use App\Http\Controllers\RewardController;
@@ -513,6 +515,7 @@ Route::middleware(['auth'])->group(function () {
         ->name('sigap-absensi.rekap-harian.pdf');
 });
 
+Route::get('/sigap-pjlp', [PjlpLogbookController::class, 'publicIndex'])->name('sigap-pjlp.public');
 
 Route::get('/sigap-ppd', [SigapPpdController::class, 'publicIndex'])
     ->name('sigap-ppd.public');
@@ -821,6 +824,32 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['auth', 'role:admin'])->group(function () {
         // Pengaturan > Manajemen Role
         Route::resource('roles', RoleController::class)->except(['show']);
+    });
+
+    Route::get('/verifikasi-pjlp/{id}', [PjlpVerificationController::class, 'verify'])->name('public.pjlp.verify');
+
+    Route::middleware(['auth'])->group(function () {
+
+    // SIGAP PJLP Routes
+    Route::prefix('sigap-pjlp')->name('sigap-pjlp.')->group(function () {
+                
+            // Menu PJLP
+            Route::get('/logbook', [PjlpLogbookController::class, 'index'])->name('index');
+            Route::post('/periode/{id}/upload-gaji', [PjlpLogbookController::class, 'uploadDaftarGaji'])->name('upload-gaji');
+            Route::post('/logbook/{id}/update', [PjlpLogbookController::class, 'updateLogbook'])->name('update-logbook');
+            Route::get('/periode/{id}/export-pdf', [PjlpLogbookController::class, 'exportPdf'])->name('export-pdf');
+
+            // Menu History Laporan
+             Route::get('/history', [PjlpLogbookController::class, 'history'])->name('history');
+
+            // Menu Monitoring & Aksi Verifikator/Admin
+            Route::middleware(['role:admin|superadmin|verif_pjlp'])->group(function () {
+                Route::get('/monitoring', [PjlpLogbookController::class, 'monitoring'])->name('monitoring');
+                Route::get('/monitoring/user/{userId}', [PjlpLogbookController::class, 'showUserLogbook'])->name('show-user');
+                Route::post('/logbook/{id}/verify', [PjlpLogbookController::class, 'verifyLogbook'])->name('verify');
+                Route::post('/logbook/{id}/admin-update', [PjlpLogbookController::class, 'updateByAdmin'])->name('admin-update');
+            });
+        });
     });
 });
 

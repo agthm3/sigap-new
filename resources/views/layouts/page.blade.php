@@ -100,6 +100,7 @@
                 <ul class="space-y-0.5 text-xs text-gray-700">
                   <li><a href="{{ route('home.index') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Dokumen</a></li>
                   <li><a href="{{ route('home.pegawai') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Pegawai</a></li>
+                  <li><a href="{{ route('sigap-pjlp.public') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition font-medium">SIGAP PJLP</a></li>
                   <li><a href="{{ route('sigap-absensi.home') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Absensi</a></li>
                   <li><a href="{{ route('sigap-kinerja.index') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Kinerja</a></li>
                   <li><a href="{{ route('sigap-agenda.index') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Agenda</a></li>
@@ -241,6 +242,7 @@
             <div class="space-y-1 text-sm bg-white rounded-md p-1 border border-gray-100">
               <a href="{{ route('home.index') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Dokumen</a>
               <a href="{{ route('home.pegawai') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Pegawai</a>
+              <a href="{{ route('sigap-pjlp.public') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded font-medium">SIGAP PJLP</a>
               <a href="{{ route('sigap-absensi.home') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Absensi</a>
               <a href="{{ route('sigap-kinerja.index') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Kinerja</a>
               <a href="{{ route('sigap-agenda.index') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Agenda</a>
