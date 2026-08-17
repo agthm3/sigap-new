@@ -207,7 +207,7 @@ function kumpulanEditApp() {
       ppd_ids: @json(array_map('intval', (array)($kumpulan->ppd_ids ?? [])))
     },
     
-    submitEditForm() {
+    async submitEditForm() {
       if (this.form.skp_ids.length === 0 && this.form.ppd_ids.length === 0) {
         Swal.fire('Perhatian', 'Pilih minimal 1 kegiatan SKP atau PPD!', 'warning');
         return;
@@ -215,19 +215,30 @@ function kumpulanEditApp() {
 
       this.isLoading = true;
 
-      fetch("{{ route('sigap-skp.kumpulan.update', $kumpulan->slug) }}", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          "X-CSRF-TOKEN": "{{ csrf_token() }}"
-        },
-        body: JSON.stringify(this.form)
-      })
-      .then(r => r.json())
-      .then(data => {
-        this.isLoading = false;
-        if (data.status === 'success') {
+      try {
+        const response = await fetch("{{ route('sigap-skp.kumpulan.update', $kumpulan->slug) }}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "X-CSRF-TOKEN": "{{ csrf_token() }}",
+            "X-HTTP-Method-Override": "PUT"
+          },
+          body: JSON.stringify({
+            _method: 'PUT',
+            ...this.form
+          })
+        });
+
+        const rawText = await response.text();
+        let data;
+        try {
+          data = JSON.parse(rawText);
+        } catch (e) {
+          throw new Error('Server mengembalikan respons non-JSON: ' + rawText.substring(0, 150));
+        }
+
+        if (response.ok && data.status === 'success') {
           Swal.fire({
             icon: 'success', 
             title: 'Berhasil!', 
@@ -235,16 +246,18 @@ function kumpulanEditApp() {
             timer: 1500, 
             showConfirmButton: false
           }).then(() => {
-            window.location.href = data.redirect;
+            window.location.href = data.redirect || "{{ route('sigap-skp.kumpulan.index') }}";
           });
         } else {
-          Swal.fire('Error', data.message || 'Gagal menyimpan.', 'error');
+          const errorMsg = data.message || (data.errors ? Object.values(data.errors).flat().join('<br>') : 'Gagal memperbarui data.');
+          Swal.fire('Gagal Menyimpan', errorMsg, 'error');
         }
-      })
-      .catch(err => {
+      } catch (err) {
+        console.error(err);
+        Swal.fire('Error Server', err.message || 'Terjadi kesalahan sistem saat menyimpan data.', 'error');
+      } finally {
         this.isLoading = false;
-        Swal.fire('Error', 'Terjadi kesalahan jaringan.', 'error');
-      });
+      }
     }
   }
 }
