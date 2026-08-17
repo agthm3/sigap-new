@@ -69,8 +69,19 @@
             <!-- Nama PJLP (Hanya jika Admin/Verifikator) -->
             @if($isAdminOrVerif)
               <td class="px-4 py-3.5">
-                <div class="font-bold text-gray-800">{{ $item->user->name ?? '-' }}</div>
-                <div class="text-[11px] text-gray-400">{{ $item->user->email ?? '' }}</div>
+                <div class="flex items-center gap-2.5">
+                  @if($item->user && $item->user->profile_photo_path)
+                    <img src="{{ asset('storage/' . $item->user->profile_photo_path) }}" alt="Foto" class="w-7 h-7 rounded-full object-cover shrink-0 ring-1 ring-gray-200">
+                  @else
+                    <div class="w-7 h-7 rounded-full bg-maroon/10 text-maroon font-bold flex items-center justify-center text-[10px] shrink-0">
+                      {{ $item->user ? substr($item->user->name, 0, 1) : '-' }}
+                    </div>
+                  @endif
+                  <div>
+                    <div class="font-bold text-gray-800">{{ $item->user->name ?? '-' }}</div>
+                    <div class="text-[11px] text-gray-400">{{ $item->user->email ?? '' }}</div>
+                  </div>
+                </div>
               </td>
             @endif
 

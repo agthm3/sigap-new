@@ -7,7 +7,7 @@
       Monitoring <span class="text-maroon">SIGAP PJLP</span>
     </h1>
     <p class="text-sm text-gray-600 mt-0.5">
-      Pantau progres pengisian logbook harian dan dokumen gaji seluruh PJLP.
+      Pantau progres pengisian logbook harian, evidence foto, dan dokumen gaji seluruh tenaga PJLP.
     </p>
   </div>
 
@@ -56,7 +56,7 @@
   <div class="px-5 py-4 border-b bg-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
     <div>
       <h2 class="font-bold text-gray-900 text-sm">Daftar PJLP & Capaian Bulan {{ \Carbon\Carbon::createFromFormat('Y-m', $bulanTahun)->translatedFormat('F Y') }}</h2>
-      <p class="text-xs text-gray-500 mt-0.5">Klik tombol <b>"Periksa Logbook"</b> untuk memverifikasi atau mengisi atas nama.</p>
+      <p class="text-xs text-gray-500 mt-0.5">Klik tombol <b>"Periksa"</b> untuk memverifikasi evidence harian atau melengkapi atas nama PJLP.</p>
     </div>
 
     <!-- Search PJLP -->
@@ -67,7 +67,7 @@
                class="pl-8 pr-3 py-1.5 rounded-xl border text-xs focus:ring-0 w-48 sm:w-60">
         <span class="absolute left-2.5 top-2 text-gray-400 text-xs">🔍</span>
       </div>
-      <button type="submit" class="px-3 py-1.5 bg-gray-800 text-white rounded-xl text-xs font-semibold">Cari</button>
+      <button type="submit" class="px-3 py-1.5 bg-gray-800 text-white rounded-xl text-xs font-semibold hover:bg-gray-900 transition">Cari</button>
     </form>
   </div>
 
@@ -83,18 +83,24 @@
           <th class="px-4 py-3.5 text-center font-bold text-red-600">Ditolak</th>
           <th class="px-4 py-3.5 text-center font-bold">Daftar Gaji</th>
           <th class="px-4 py-3.5 text-left font-bold w-40">Progres</th>
-          <th class="px-4 py-3.5 text-center font-bold w-28">Aksi</th>
+          <th class="px-4 py-3.5 text-center font-bold w-36">Aksi</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
         @forelse($monitoringData as $item)
           <tr class="hover:bg-gray-50/80 transition-colors">
-            <!-- Nama PJLP -->
+            <!-- Nama PJLP & Foto Profil -->
             <td class="px-4 py-3.5">
               <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-maroon/10 text-maroon font-bold flex items-center justify-center text-xs shrink-0">
-                  {{ substr($item->user->name, 0, 1) }}
-                </div>
+                @if($item->user->profile_photo_path)
+                  <img src="{{ asset('storage/' . $item->user->profile_photo_path) }}" 
+                       alt="{{ $item->user->name }}" 
+                       class="w-8 h-8 rounded-full object-cover ring-1 ring-gray-200 shrink-0">
+                @else
+                  <div class="w-8 h-8 rounded-full bg-maroon/10 text-maroon font-bold flex items-center justify-center text-xs shrink-0">
+                    {{ substr($item->user->name, 0, 1) }}
+                  </div>
+                @endif
                 <div>
                   <div class="font-bold text-gray-900">{{ $item->user->name }}</div>
                   <div class="text-[11px] text-gray-500">{{ $item->user->email }}</div>
@@ -102,7 +108,7 @@
               </div>
             </td>
 
-            <td class="px-4 py-3.5 text-center font-semibold">{{ $item->total_hari }}</td>
+            <td class="px-4 py-3.5 text-center font-semibold text-gray-700">{{ $item->total_hari }}</td>
             <td class="px-4 py-3.5 text-center font-semibold text-gray-800">{{ $item->terisi }}</td>
             <td class="px-4 py-3.5 text-center font-bold text-emerald-600">{{ $item->terverifikasi }}</td>
             <td class="px-4 py-3.5 text-center font-bold text-blue-600">{{ $item->menunggu }}</td>
@@ -111,9 +117,10 @@
             <!-- Status Dokumen Gaji -->
             <td class="px-4 py-3.5 text-center">
               @if($item->has_gaji)
-                <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 border border-emerald-200 text-emerald-700">
+                <a href="{{ asset('storage/' . $item->periode->file_daftar_gaji) }}" target="_blank"
+                   class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition">
                   ✓ PDF Ada
-                </span>
+                </a>
               @else
                 <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-400">
                   Belum Ada
@@ -127,19 +134,29 @@
                 <div class="bg-maroon h-2 rounded-full transition-all duration-300" style="width: {{ $item->persen_progress }}%"></div>
               </div>
               <div class="flex justify-between items-center text-[10px] font-bold text-gray-500 mt-1">
-                <span>{{ $item->persen_progress }}% Selesai</span>
+                <span>{{ $item->persen_progress }}% Terisi</span>
                 @if($item->is_lengkap)
-                  <span class="text-emerald-600 font-extrabold">Lengkap</span>
+                  <span class="text-emerald-600 font-extrabold">✓ Lengkap</span>
                 @endif
               </div>
             </td>
 
-            <!-- Tombol Buka Detail & Verifikasi -->
-            <td class="px-4 py-3.5 text-center">
-              <a href="{{ route('sigap-pjlp.show-user', ['userId' => $item->user->id, 'bulan_tahun' => $bulanTahun]) }}"
-                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-maroon text-maroon hover:bg-maroon hover:text-white text-xs font-bold transition shadow-2xs">
-                Periksa
-              </a>
+            <!-- Tombol Aksi -->
+            <td class="px-4 py-3.5 text-center whitespace-nowrap">
+              <div class="flex items-center justify-center gap-1.5">
+                <a href="{{ route('sigap-pjlp.show-user', ['userId' => $item->user->id, 'bulan_tahun' => $bulanTahun]) }}"
+                   class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-maroon text-maroon hover:bg-maroon hover:text-white text-xs font-bold transition shadow-2xs">
+                  Periksa
+                </a>
+
+                @if($item->is_lengkap && $item->periode)
+                  <a href="{{ route('sigap-pjlp.export-pdf', $item->periode->id) }}"
+                     class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gray-800 text-white hover:bg-gray-900 text-xs font-bold transition shadow-2xs"
+                     title="Export PDF Laporan">
+                    PDF
+                  </a>
+                @endif
+              </div>
             </td>
           </tr>
         @empty

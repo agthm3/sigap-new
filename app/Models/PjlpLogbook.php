@@ -17,7 +17,8 @@ class PjlpLogbook extends Model
         'tanggal',
         'hari',
         'deskripsi_pekerjaan',
-        'foto_evidence',
+        'foto_evidence',    // Kolom lama dipertahankan untuk backward compatibility
+        'foto_evidences',   // Kolom baru untuk multi-foto (array)
         'status',
         'catatan_verifikator',
         'created_by_user_id',
@@ -26,6 +27,7 @@ class PjlpLogbook extends Model
 
     protected $casts = [
         'tanggal' => 'date',
+        'foto_evidences' => 'array', // Otomatis mengkonversi JSON database ke Array PHP
     ];
 
     public function periode(): BelongsTo

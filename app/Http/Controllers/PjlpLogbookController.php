@@ -2,25 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Models\PjlpLogbook;
 use App\Models\PjlpPeriode;
+use App\Models\PjlpLogbook;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;
-use Carbon\CarbonPeriod;
 use iio\libmergepdf\Merger;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 
 class PjlpLogbookController extends Controller
 {
+    /**
+     * Halaman Utama Pengisian Logbook PJLP & Kelola Logbook (Admin/Verif)
+     */
     public function index(Request $request)
     {
         $authUser = Auth::user();
-        // Cek apakah yang login adalah Admin / Superadmin / Verifikator
         $isAdminOrVerif = $authUser->hasAnyRole(['admin', 'superadmin', 'verif_pjlp']);
         $bulanTahun = $request->get('bulan_tahun', Carbon::now()->format('Y-m'));
 
@@ -28,25 +29,22 @@ class PjlpLogbookController extends Controller
         $targetUser = $authUser;
 
         if ($isAdminOrVerif) {
-            // Ambil semua user yang memiliki role 'pjlp'
             $pjlpUsers = User::role('pjlp')->orderBy('name', 'asc')->get();
 
-            // Jika ada request user_id terpilih dari dropdown
             if ($request->filled('user_id')) {
                 $targetUser = $pjlpUsers->where('id', $request->user_id)->first() ?? $pjlpUsers->first() ?? $authUser;
             } else {
-                // Default pilih PJLP pertama jika ada, jika belum ada PJLP pakai auth user
                 $targetUser = $pjlpUsers->first() ?? $authUser;
             }
         }
 
-        // 1. Ambil atau Buat Header Periode untuk TARGET USER (bukan auth user jika admin yang login)
+        // 1. Ambil atau Buat Header Periode untuk Target User
         $periode = PjlpPeriode::firstOrCreate(
             ['user_id' => $targetUser->id, 'bulan_tahun' => $bulanTahun],
             ['status_laporan' => 'draft']
         );
 
-        // 2. Generate Hari Kerja (Senin-Jumat) Jika Belum Ada
+        // 2. Generate Hari Kerja (Senin-Jumat) Jika Belum Dibuat
         if ($periode->logbooks()->count() === 0) {
             $startDate = Carbon::createFromFormat('Y-m', $bulanTahun)->startOfMonth();
             $endDate = $startDate->copy()->endOfMonth();
@@ -94,13 +92,23 @@ class PjlpLogbookController extends Controller
         ));
     }
 
+    /**
+     * Upload / Ganti Dokumen Daftar Gaji (PDF)
+     */
     public function uploadDaftarGaji(Request $request, $periodeId)
     {
         $request->validate([
-            'file_daftar_gaji' => 'required|file|mimes:pdf|max:5120', // Maksimal 5MB
+            'file_daftar_gaji' => 'required|file|mimes:pdf|max:5120',
         ]);
 
-        $periode = PjlpPeriode::where('user_id', Auth::id())->findOrFail($periodeId);
+        $authUser = Auth::user();
+        $isAdminOrVerif = $authUser->hasAnyRole(['admin', 'superadmin', 'verif_pjlp']);
+
+        $periodeQuery = PjlpPeriode::query();
+        if (!$isAdminOrVerif) {
+            $periodeQuery->where('user_id', $authUser->id);
+        }
+        $periode = $periodeQuery->findOrFail($periodeId);
 
         if ($periode->file_daftar_gaji && Storage::disk('public')->exists($periode->file_daftar_gaji)) {
             Storage::disk('public')->delete($periode->file_daftar_gaji);
@@ -112,48 +120,63 @@ class PjlpLogbookController extends Controller
         return back()->with('success', 'Dokumen Daftar Gaji berhasil diunggah.');
     }
 
+    /**
+     * Update Logbook & Multi-Evidence Harian (Maks 3 Foto)
+     */
     public function updateLogbook(Request $request, $id)
     {
         $request->validate([
             'deskripsi_pekerjaan' => 'required|string|max:1000',
-            'foto_evidence' => 'nullable|image|mimes:jpg,jpeg,png|max:4096',
+            'foto_evidences' => 'nullable|array|max:3',
+            'foto_evidences.*' => 'image|mimes:jpg,jpeg,png|max:4096',
         ]);
 
         $authUser = Auth::user();
         $isAdminOrVerif = $authUser->hasAnyRole(['admin', 'superadmin', 'verif_pjlp']);
 
-        // Cari logbook berdasarkan ID
         $logbook = PjlpLogbook::with('periode')->findOrFail($id);
 
-        // Keamanan: Jika bukan admin/verif, pastikan logbook ini adalah milik user yang sedang login
         if (!$isAdminOrVerif && $logbook->periode->user_id !== $authUser->id) {
-            abort(403, 'Anda tidak memiliki akses ke logbook ini.');
+            abort(403, 'Anda tidak memiliki hak akses ke logbook ini.');
         }
 
         $data = [
             'deskripsi_pekerjaan' => $request->deskripsi_pekerjaan,
-            // Jika PJLP yang mengisi -> 'diajukan', jika admin/verifikator yang mengisikan -> 'terverifikasi'
             'status' => $isAdminOrVerif ? 'terverifikasi' : 'diajukan',
             'updated_by_user_id' => $authUser->id,
         ];
 
-        if ($request->hasFile('foto_evidence')) {
-            if ($logbook->foto_evidence && Storage::disk('public')->exists($logbook->foto_evidence)) {
-                Storage::disk('public')->delete($logbook->foto_evidence);
+        if ($request->hasFile('foto_evidences')) {
+            // Hapus file lama jika ada
+            $oldFiles = is_array($logbook->foto_evidences) ? $logbook->foto_evidences : ($logbook->foto_evidence ? [$logbook->foto_evidence] : []);
+            foreach ($oldFiles as $oldFile) {
+                if (Storage::disk('public')->exists($oldFile)) {
+                    Storage::disk('public')->delete($oldFile);
+                }
             }
-            $data['foto_evidence'] = $request->file('foto_evidence')->store('pjlp/evidence', 'public');
+
+            // Simpan file baru (maks 3 foto)
+            $paths = [];
+            foreach ($request->file('foto_evidences') as $file) {
+                $paths[] = $file->store('pjlp/evidence', 'public');
+            }
+            $data['foto_evidences'] = $paths;
+            $data['foto_evidence'] = null;
         }
 
         $logbook->update($data);
 
         return back()->with('success', 'Evidence tanggal ' . $logbook->tanggal->format('d/m/Y') . ' berhasil disimpan.');
     }
-        public function monitoring(Request $request)
+
+    /**
+     * Halaman Monitoring Seluruh PJLP (Role: Admin, Superadmin, Verif PJLP)
+     */
+    public function monitoring(Request $request)
     {
         $bulanTahun = $request->get('bulan_tahun', Carbon::now()->format('Y-m'));
         $search = $request->get('search');
 
-        // Ambil seluruh user dengan role 'pjlp'
         $pjlpUsersQuery = User::role('pjlp');
 
         if ($search) {
@@ -162,7 +185,7 @@ class PjlpLogbookController extends Controller
 
         $pjlpUsers = $pjlpUsersQuery->orderBy('name', 'asc')->get();
 
-        // Hitung struktur hari kerja standar (Senin-Jumat) pada bulan tersebut
+        // Hitung struktur hari kerja
         $startDate = Carbon::createFromFormat('Y-m', $bulanTahun)->startOfMonth();
         $endDate = $startDate->copy()->endOfMonth();
         $totalHariKerja = 0;
@@ -172,15 +195,13 @@ class PjlpLogbookController extends Controller
             }
         }
 
-        // Ambil seluruh data periode & logbook terkait bulan ini
         $periodes = PjlpPeriode::with('logbooks')
             ->where('bulan_tahun', $bulanTahun)
             ->whereIn('user_id', $pjlpUsers->pluck('id'))
             ->get()
             ->keyBy('user_id');
 
-        // Olah data matriks & statistik untuk monitoring
-        $monitoringData = $pjlpUsers->map(function ($user) use ($periodes, $totalHariKerja, $bulanTahun) {
+        $monitoringData = $pjlpUsers->map(function ($user) use ($periodes, $totalHariKerja) {
             $periode = $periodes->get($user->id);
             $logbooks = $periode ? $periode->logbooks : collect();
 
@@ -207,7 +228,6 @@ class PjlpLogbookController extends Controller
             ];
         });
 
-        // Statistik Ringkasan Atas
         $summary = [
             'total_pjlp' => $pjlpUsers->count(),
             'lengkap' => $monitoringData->where('is_lengkap', true)->count(),
@@ -227,20 +247,18 @@ class PjlpLogbookController extends Controller
     }
 
     /**
-     * Detail Logbook PJLP Tertentu (Verifikator/Admin dapat verifikasi/tolak/isikan atas nama)
+     * Detail Logbook PJLP Tertentu untuk Verifikator
      */
     public function showUserLogbook(Request $request, $userId)
     {
         $targetUser = User::role('pjlp')->findOrFail($userId);
         $bulanTahun = $request->get('bulan_tahun', Carbon::now()->format('Y-m'));
 
-        // Buat atau ambil periode untuk PJLP target
         $periode = PjlpPeriode::firstOrCreate(
             ['user_id' => $targetUser->id, 'bulan_tahun' => $bulanTahun],
             ['status_laporan' => 'draft']
         );
 
-        // Inisialisasi hari kerja jika belum terbentuk
         if ($periode->logbooks()->count() === 0) {
             $startDate = Carbon::createFromFormat('Y-m', $bulanTahun)->startOfMonth();
             $endDate = $startDate->copy()->endOfMonth();
@@ -303,36 +321,46 @@ class PjlpLogbookController extends Controller
             'updated_by_user_id' => Auth::id(),
         ]);
 
-        $pesan = $request->status === 'terverifikasi' 
-            ? 'Logbook tanggal ' . $logbook->tanggal->format('d/m/Y') . ' berhasil disetujui.' 
+        $pesan = $request->status === 'terverifikasi'
+            ? 'Logbook tanggal ' . $logbook->tanggal->format('d/m/Y') . ' berhasil disetujui.'
             : 'Logbook tanggal ' . $logbook->tanggal->format('d/m/Y') . ' ditolak.';
 
         return back()->with('success', $pesan);
     }
 
     /**
-     * Admin / Verifikator Mengisikan atau Mengedit Logbook Atas Nama PJLP
+     * Admin/Verifikator Mengisikan / Mengedit Evidence Atas Nama PJLP
      */
     public function updateByAdmin(Request $request, $id)
     {
         $request->validate([
             'deskripsi_pekerjaan' => 'required|string|max:1000',
-            'foto_evidence' => 'nullable|image|mimes:jpg,jpeg,png|max:4096',
+            'foto_evidences' => 'nullable|array|max:3',
+            'foto_evidences.*' => 'image|mimes:jpg,jpeg,png|max:4096',
         ]);
 
         $logbook = PjlpLogbook::findOrFail($id);
 
         $data = [
             'deskripsi_pekerjaan' => $request->deskripsi_pekerjaan,
-            'status' => 'terverifikasi', // Otomatis terverifikasi jika diinput oleh admin/verifikator
+            'status' => 'terverifikasi',
             'updated_by_user_id' => Auth::id(),
         ];
 
-        if ($request->hasFile('foto_evidence')) {
-            if ($logbook->foto_evidence && Storage::disk('public')->exists($logbook->foto_evidence)) {
-                Storage::disk('public')->delete($logbook->foto_evidence);
+        if ($request->hasFile('foto_evidences')) {
+            $oldFiles = is_array($logbook->foto_evidences) ? $logbook->foto_evidences : ($logbook->foto_evidence ? [$logbook->foto_evidence] : []);
+            foreach ($oldFiles as $oldFile) {
+                if (Storage::disk('public')->exists($oldFile)) {
+                    Storage::disk('public')->delete($oldFile);
+                }
             }
-            $data['foto_evidence'] = $request->file('foto_evidence')->store('pjlp/evidence', 'public');
+
+            $paths = [];
+            foreach ($request->file('foto_evidences') as $file) {
+                $paths[] = $file->store('pjlp/evidence', 'public');
+            }
+            $data['foto_evidences'] = $paths;
+            $data['foto_evidence'] = null;
         }
 
         $logbook->update($data);
@@ -340,6 +368,9 @@ class PjlpLogbookController extends Controller
         return back()->with('success', 'Evidence berhasil diisikan atas nama PJLP.');
     }
 
+    /**
+     * History & Arsip Laporan Bulanan PJLP
+     */
     public function history(Request $request)
     {
         $user = Auth::user();
@@ -348,7 +379,6 @@ class PjlpLogbookController extends Controller
 
         $isAdminOrVerif = $user->hasAnyRole(['admin', 'superadmin', 'verif_pjlp']);
 
-        // Query dasar periode dengan relasi user dan logbooks
         $periodesQuery = PjlpPeriode::with(['user', 'logbooks'])
             ->where('bulan_tahun', 'like', "{$tahun}-%")
             ->orderBy('bulan_tahun', 'desc');
@@ -359,7 +389,6 @@ class PjlpLogbookController extends Controller
             }
             $pjlpUsers = User::role('pjlp')->orderBy('name', 'asc')->get();
         } else {
-            // Jika login sebagai PJLP, hanya tampilkan histori miliknya
             $periodesQuery->where('user_id', $user->id);
             $pjlpUsers = collect();
         }
@@ -397,7 +426,9 @@ class PjlpLogbookController extends Controller
         ));
     }
 
-
+    /**
+     * Export Laporan Bulanan PJLP & Penggabungan PDF Daftar Gaji
+     */
     public function exportPdf($periodeId)
     {
         $authUser = Auth::user();
@@ -413,7 +444,7 @@ class PjlpLogbookController extends Controller
         $profile = $user->profile;
         $logbooks = $periode->logbooks()->orderBy('tanggal', 'asc')->get();
 
-        // 1. Convert Pas Foto Profil User ke Base64
+        // 1. Convert Foto Profil User ke Base64 (Untuk DomPDF)
         $fotoProfilBase64 = null;
         if ($user->profile_photo_path && Storage::disk('public')->exists($user->profile_photo_path)) {
             $path = Storage::disk('public')->path($user->profile_photo_path);
@@ -424,17 +455,24 @@ class PjlpLogbookController extends Controller
             }
         }
 
-        // 2. Convert Evidence Foto ke Base64 & Chunk per 6 item (3 Kiri, 3 Kanan per Halaman Letter)
+        // 2. Convert Seluruh Foto Evidence ke Base64 (Mendukung Multi-Foto tanpa error append property)
         $logbooksProcessed = $logbooks->map(function ($item) {
-            $item->foto_base64 = null;
-            if ($item->foto_evidence && Storage::disk('public')->exists($item->foto_evidence)) {
-                $path = Storage::disk('public')->path($item->foto_evidence);
-                if (file_exists($path)) {
-                    $type = pathinfo($path, PATHINFO_EXTENSION);
-                    $data = file_get_contents($path);
-                    $item->foto_base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+            $tempFotosBase64 = [];
+            $fotos = is_array($item->foto_evidences) ? $item->foto_evidences : ($item->foto_evidence ? [$item->foto_evidence] : []);
+
+            foreach ($fotos as $foto) {
+                if (Storage::disk('public')->exists($foto)) {
+                    $path = Storage::disk('public')->path($foto);
+                    if (file_exists($path)) {
+                        $type = pathinfo($path, PATHINFO_EXTENSION);
+                        $data = file_get_contents($path);
+                        $tempFotosBase64[] = 'data:image/' . $type . ';base64,' . base64_encode($data);
+                    }
                 }
             }
+
+            // Assign langsung array utuh ke property model
+            $item->fotos_base64 = $tempFotosBase64;
             return $item;
         });
 
@@ -446,16 +484,14 @@ class PjlpLogbookController extends Controller
             QrCode::format('svg')->size(75)->errorCorrection('H')->generate($verifyUrl)
         );
 
-        // Metadata Tanggal
         $firstDate = $logbooks->first() ? $logbooks->first()->tanggal->translatedFormat('d F Y') : '-';
         $lastDate = $logbooks->last() ? $logbooks->last()->tanggal->translatedFormat('d F Y') : '-';
         $namaBulanTahun = Carbon::createFromFormat('Y-m', $periode->bulan_tahun)->translatedFormat('F Y');
 
-        // Total statistik
         $totalHariKerja = $logbooks->count();
         $totalTerverifikasi = $logbooks->where('status', 'terverifikasi')->count();
 
-        // 4. Render Bagian 1: Cover & Data Diri Dasar Pegawai
+        // 4. Render Cover & Evidence PDF via DomPDF
         $pdfCover = Pdf::loadView('dashboard.pjlp.pdf_cover', compact(
             'periode',
             'user',
@@ -469,7 +505,6 @@ class PjlpLogbookController extends Controller
             'totalTerverifikasi'
         ))->setPaper('letter', 'portrait')->output();
 
-        // 5. Render Bagian 3: Halaman Lampiran Evidence Logbook dengan Judul Pemisah
         $pdfEvidence = Pdf::loadView('dashboard.pjlp.pdf_evidence', compact(
             'periode',
             'user',
@@ -480,28 +515,25 @@ class PjlpLogbookController extends Controller
             'namaBulanTahun'
         ))->setPaper('letter', 'portrait')->output();
 
-        // 6. Satukan dengan PDF Daftar Gaji (Bagian 2) via Merger
+        // 5. Gabungkan dengan Dokumen PDF Daftar Gaji via Merger
         $cleanUserName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $user->name);
         $fileName = 'Laporan_Bulanan_PJLP_' . $cleanUserName . '_' . $periode->bulan_tahun . '.pdf';
 
         $merger = new Merger();
 
-        // Temp file Cover
         $tempCoverPath = tempnam(sys_get_temp_dir(), 'sigap_cov_');
         file_put_contents($tempCoverPath, $pdfCover);
         $merger->addFile($tempCoverPath);
 
-        // Sisipkan PDF Daftar Gaji di tengah jika ada
         if ($periode->file_daftar_gaji && Storage::disk('public')->exists($periode->file_daftar_gaji)) {
             $pathDaftarGaji = Storage::disk('public')->path($periode->file_daftar_gaji);
             try {
                 $merger->addFile($pathDaftarGaji);
             } catch (\Exception $e) {
-                // Lanjut jika PDF gaji corrupt
+                // Lewati jika file lampiran gaji corrupt
             }
         }
 
-        // Temp file Evidence Logbook
         $tempEvidencePath = tempnam(sys_get_temp_dir(), 'sigap_evi_');
         file_put_contents($tempEvidencePath, $pdfEvidence);
         $merger->addFile($tempEvidencePath);
@@ -527,19 +559,27 @@ class PjlpLogbookController extends Controller
         }
     }
 
+    /**
+     * Halaman Publikasi Logbook PJLP untuk Portal Publik
+     */
     public function publicIndex(Request $request)
     {
         $q = $request->get('q');
         $kategoriBulan = $request->get('bulan_tahun');
 
-        // Ambil periode yang memiliki logbook terverifikasi dengan foto
         $query = PjlpPeriode::with(['user.profile', 'logbooks' => function ($q) {
             $q->where('status', 'terverifikasi')
-              ->whereNotNull('foto_evidence')
+              ->where(function($sub) {
+                  $sub->whereNotNull('foto_evidence')
+                      ->orWhereNotNull('foto_evidences');
+              })
               ->orderBy('tanggal', 'asc');
         }])->whereHas('logbooks', function ($q) {
             $q->where('status', 'terverifikasi')
-              ->whereNotNull('foto_evidence');
+              ->where(function($sub) {
+                  $sub->whereNotNull('foto_evidence')
+                      ->orWhereNotNull('foto_evidences');
+              });
         });
 
         if ($q) {
@@ -554,24 +594,39 @@ class PjlpLogbookController extends Controller
 
         $periodes = $query->orderBy('bulan_tahun', 'desc')->paginate(9);
 
-        // Map data logbooks menjadi array sederhana untuk Alpine.js
+        // Map data foto ke dalam format slide sederhana untuk rotasi otomatis
         $periodes->getCollection()->transform(function ($periode) {
-            $periode->slides = $periode->logbooks->map(function ($log) {
-                return [
-                    'foto' => asset('storage/' . $log->foto_evidence),
-                    'tanggal' => $log->tanggal->format('d/m/Y'),
-                    'deskripsi' => $log->deskripsi_pekerjaan,
-                    'hari' => $log->hari
-                ];
+            $periode->slides = $periode->logbooks->flatMap(function ($log) {
+                $fotos = is_array($log->foto_evidences) ? $log->foto_evidences : ($log->foto_evidence ? [$log->foto_evidence] : []);
+                $slides = [];
+                foreach ($fotos as $foto) {
+                    $slides[] = [
+                        'foto' => asset('storage/' . $foto),
+                        'tanggal' => $log->tanggal->format('d/m/Y'),
+                        'deskripsi' => $log->deskripsi_pekerjaan,
+                        'hari' => $log->hari
+                    ];
+                }
+                return $slides;
             })->values();
             return $periode;
         });
 
-        // Statistik
-        $totalPjlp = \App\Models\User::role('pjlp')->count();
-        $totalEvidence = PjlpLogbook::where('status', 'terverifikasi')->whereNotNull('foto_evidence')->count();
+        $totalPjlp = User::role('pjlp')->count();
+        $totalEvidence = PjlpLogbook::where('status', 'terverifikasi')
+            ->where(function($sub) {
+                $sub->whereNotNull('foto_evidence')
+                    ->orWhereNotNull('foto_evidences');
+            })->count();
         $totalPeriode = PjlpPeriode::count();
 
-        return view('dashboard.pjlp.public', compact('periodes', 'q', 'kategoriBulan', 'totalPjlp', 'totalEvidence', 'totalPeriode'));
+        return view('dashboard.pjlp.public', compact(
+            'periodes',
+            'q',
+            'kategoriBulan',
+            'totalPjlp',
+            'totalEvidence',
+            'totalPeriode'
+        ));
     }
 }

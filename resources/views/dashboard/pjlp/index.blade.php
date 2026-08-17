@@ -62,7 +62,7 @@
       <div class="flex items-center gap-2.5">
         <span class="text-base">👤</span>
         <div class="text-xs text-blue-900">
-          Sedang membuka logbook milik: <strong class="font-bold">{{ $targetUser->name }}</strong> ({{ $targetUser->email }}). Data yang Anda simpan akan tercatat atas nama petugas yang menginput.
+          Sedang membuka logbook milik: <strong class="font-bold">{{ $targetUser->name }}</strong> ({{ $targetUser->email }}). Data yang disimpan akan tercatat audit pengisinya.
         </div>
       </div>
       <a href="{{ route('sigap-pjlp.monitoring', ['bulan_tahun' => $bulanTahun]) }}" class="text-xs font-bold text-blue-700 hover:underline shrink-0">
@@ -150,7 +150,7 @@
         <thead class="bg-gray-50 text-[11px] uppercase tracking-wider text-gray-600 border-b border-gray-200">
           <tr>
             <th class="px-4 py-3.5 text-left font-bold">Hari & Tanggal</th>
-            <th class="px-4 py-3.5 text-center font-bold w-28">Evidence Foto</th>
+            <th class="px-4 py-3.5 text-center font-bold w-36">Evidence Foto (Maks 3)</th>
             <th class="px-4 py-3.5 text-left font-bold">Deskripsi Pekerjaan</th>
             <th class="px-4 py-3.5 text-center font-bold w-36">Status</th>
             <th class="px-4 py-3.5 text-left font-bold">Catatan Verifikator</th>
@@ -159,21 +159,28 @@
         </thead>
         <tbody class="divide-y divide-gray-100">
           @forelse($logbooks as $item)
+            @php
+              $fotos = is_array($item->foto_evidences) ? $item->foto_evidences : ($item->foto_evidence ? [$item->foto_evidence] : []);
+            @endphp
             <tr class="hover:bg-gray-50/80 transition-colors">
               <td class="px-4 py-3.5 whitespace-nowrap">
                 <div class="font-bold text-gray-900">{{ $item->hari }}</div>
                 <div class="text-xs text-gray-500 font-medium">{{ \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') }}</div>
               </td>
 
-              <!-- Foto Evidence -->
+              <!-- Foto Evidence (Multi Thumbnail) -->
               <td class="px-4 py-3.5 text-center">
-                @if($item->foto_evidence)
-                  <img src="{{ asset('storage/' . $item->foto_evidence) }}" 
-                       alt="Evidence" 
-                       class="w-12 h-12 rounded-lg object-cover mx-auto ring-1 ring-gray-200 shadow-2xs hover:scale-105 transition cursor-pointer"
-                       @click="openEditModalById({{ $item->id }})">
+                @if(count($fotos) > 0)
+                  <div class="flex items-center justify-center gap-1.5 flex-wrap max-w-[130px] mx-auto">
+                    @foreach($fotos as $foto)
+                      <img src="{{ asset('storage/' . $foto) }}" 
+                           alt="Evidence" 
+                           class="w-8 h-8 rounded-lg object-cover ring-1 ring-gray-200 shadow-2xs hover:scale-110 transition cursor-pointer"
+                           @click="openEditModalById({{ $item->id }})">
+                    @endforeach
+                  </div>
                 @else
-                  <div class="w-12 h-12 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center mx-auto text-gray-400 text-xs">
+                  <div class="w-10 h-10 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center mx-auto text-gray-400 text-xs">
                     -
                   </div>
                 @endif
@@ -239,7 +246,7 @@
     </div>
   </div>
 
-  <!-- MODAL PENGISIAN EVIDENCE & LOGBOOK DENGAN AUTO COMPRESS -->
+  <!-- MODAL PENGISIAN EVIDENCE & MULTI-FOTO DENGAN CLIENT-SIDE AUTO COMPRESS -->
   <div x-show="modalOpen" 
        x-cloak
        class="fixed inset-0 z-50 overflow-y-auto bg-gray-900/60 backdrop-blur-xs flex items-center justify-center p-4">
@@ -255,28 +262,40 @@
         <button type="button" @click="modalOpen = false" class="text-gray-400 hover:text-gray-700 font-bold text-lg">✕</button>
       </div>
 
-      <form :action="'/sigap-pjlp/logbook/' + (activeLogbook ? activeLogbook.id : '') + '/update'" 
+      <form :action="getUpdateUrl()" 
             method="POST" 
             enctype="multipart/form-data" 
             class="p-5 space-y-4">
         @csrf
 
-        <!-- Foto Evidence -->
+        <!-- Multi-Foto Evidence (Maks 3) -->
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">Unggah Foto Kegiatan / Evidence <span class="text-red-500">*</span></label>
-          <div class="flex items-center gap-3">
-            <template x-if="previewUrl">
-              <img :src="previewUrl" class="w-16 h-16 rounded-xl object-cover ring-1 ring-gray-200 shadow-2xs">
-            </template>
+          <label class="block text-xs font-bold text-gray-700 mb-1">
+            Unggah Foto Evidence (Maksimal 3 Foto) <span class="text-red-500">*</span>
+          </label>
+          <div class="flex flex-col gap-3">
+            <!-- Galeri Pratinjau Foto -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-1" x-show="previewUrls.length > 0">
+              <template x-for="(url, idx) in previewUrls" :key="idx">
+                <div class="relative group shrink-0">
+                  <img :src="url" class="w-16 h-16 rounded-xl object-cover ring-1 ring-gray-200 shadow-2xs">
+                  <span class="absolute top-1 right-1 bg-black/60 text-white text-[9px] px-1 rounded-full font-bold" x-text="idx + 1"></span>
+                </div>
+              </template>
+            </div>
+
+            <!-- Input File Multi -->
             <div class="flex-1">
               <input type="file" 
                      x-ref="fileInput"
-                     name="foto_evidence" 
+                     name="foto_evidences[]" 
                      accept="image/*"
-                     @change="handleImageUpload($event)"
+                     multiple
+                     max="3"
+                     @change="handleFilesUpload($event)"
                      class="w-full text-xs file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-maroon/10 file:text-maroon hover:file:bg-maroon/20">
               
-              <!-- Info Kompresi Real-time -->
+              <!-- Info Kompresi -->
               <template x-if="compressInfo">
                 <p class="text-[11px] text-emerald-600 font-medium mt-1 flex items-center gap-1" x-text="compressInfo"></p>
               </template>
@@ -285,7 +304,7 @@
               </template>
             </div>
           </div>
-          <p class="text-[10px] text-gray-400 mt-1">Otomatis dioptimasi & dikompresi ke resolusi maksimal 1280px agar upload cepat.</p>
+          <p class="text-[10px] text-gray-400 mt-1">Pilih 1 s.d. 3 foto sekaligus. Mengunggah foto baru akan menggantikan evidence sebelumnya.</p>
         </div>
 
         <!-- Deskripsi Pekerjaan -->
@@ -296,7 +315,7 @@
                     rows="3" 
                     x-model="activeLogbook.deskripsi_pekerjaan" 
                     required 
-                    placeholder="Contoh: Membersihkan seluruh area lobby utama dan menyapu halaman depan." 
+                    placeholder="Contoh: Membersihkan seluruh area lobby utama, mengepel selasar, dan menyapu halaman depan." 
                     class="w-full rounded-xl text-xs p-3"></textarea>
         </div>
 
@@ -310,7 +329,7 @@
                   :class="isCompressing ? 'opacity-50 cursor-not-allowed' : 'hover:bg-maroon-800'"
                   class="px-4 py-2 rounded-xl bg-maroon text-white text-xs font-bold shadow-sm transition">
             <span x-show="!isCompressing">Simpan Evidence</span>
-            <span x-show="isCompressing">Memproses...</span>
+            <span x-show="isCompressing">Memproses Foto...</span>
           </button>
         </div>
       </form>
@@ -325,50 +344,74 @@
 function pjlpLogbookComponent() {
   return {
     modalOpen: false,
-    activeLogbook: { id: '', hari: '', tanggal: '', deskripsi_pekerjaan: '', foto_evidence: '' },
-    previewUrl: null,
+    activeLogbook: { id: '', hari: '', tanggal: '', deskripsi_pekerjaan: '' },
+    previewUrls: [],
     compressInfo: null,
     isCompressing: false,
     logbooks: {!! json_encode($logbooks) !!},
+
+    getUpdateUrl() {
+      if (!this.activeLogbook || !this.activeLogbook.id) return '#';
+      const baseUrl = "{{ url('sigap-pjlp/logbook') }}";
+      return `${baseUrl}/${this.activeLogbook.id}/update`;
+    },
 
     openEditModalById(id) {
       const item = this.logbooks.find(l => l.id === id);
       if (!item) return;
       this.activeLogbook = Object.assign({}, item);
-      this.previewUrl = item.foto_evidence ? ('/storage/' + item.foto_evidence) : null;
+      
+      let fotos = Array.isArray(item.foto_evidences) ? item.foto_evidences : [];
+      if (fotos.length === 0 && item.foto_evidence) {
+        fotos = [item.foto_evidence];
+      }
+      
+      this.previewUrls = fotos.map(path => '/storage/' + path);
       this.compressInfo = null;
       this.isCompressing = false;
       this.modalOpen = true;
     },
 
     /**
-     * Logic Kompresi Gambar Client-Side berbasis Canvas API
+     * Kompresi Client-Side Multi-File (Maksimal 3 Foto)
      */
-    async handleImageUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
+    async handleFilesUpload(event) {
+      const files = Array.from(event.target.files);
+      if (files.length === 0) return;
 
-      if (!file.type.match(/image.*/)) {
-        Swal.fire('Format Salah', 'Harap pilih file gambar (JPG, PNG).', 'error');
+      if (files.length > 3) {
+        Swal.fire('Batas Maksimal', 'Anda hanya dapat memilih maksimal 3 foto dalam satu hari kerja.', 'warning');
+        event.target.value = '';
         return;
       }
 
       this.isCompressing = true;
       this.compressInfo = null;
+      this.previewUrls = [];
+      const dt = new DataTransfer();
 
       try {
-        const originalSizeKB = (file.size / 1024).toFixed(1);
-        const compressedFile = await this.compressImage(file, 1280, 0.75);
-        const compressedSizeKB = (compressedFile.size / 1024).toFixed(1);
+        let totalOriginal = 0;
+        let totalCompressed = 0;
 
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(compressedFile);
-        this.$refs.fileInput.files = dataTransfer.files;
+        for (let file of files) {
+          if (!file.type.match(/image.*/)) continue;
+          totalOriginal += file.size;
 
-        this.previewUrl = URL.createObjectURL(compressedFile);
-        this.compressInfo = `✓ Terkompresi: ${originalSizeKB} KB → ${compressedSizeKB} KB`;
+          const compressed = await this.compressImage(file, 1280, 0.75);
+          totalCompressed += compressed.size;
+
+          dt.items.add(compressed);
+          this.previewUrls.push(URL.createObjectURL(compressed));
+        }
+
+        this.$refs.fileInput.files = dt.files;
+
+        const origKB = (totalOriginal / 1024).toFixed(1);
+        const compKB = (totalCompressed / 1024).toFixed(1);
+        this.compressInfo = `✓ ${dt.files.length} Foto Terkompresi: ${origKB} KB → ${compKB} KB`;
       } catch (err) {
-        console.error("Gagal mengompres gambar:", err);
+        console.error("Gagal mengompresi gambar:", err);
       } finally {
         this.isCompressing = false;
       }
@@ -405,10 +448,7 @@ function pjlpLogbookComponent() {
             ctx.drawImage(img, 0, 0, width, height);
 
             canvas.toBlob((blob) => {
-              if (!blob) {
-                reject(new Error('Canvas blob conversion failed'));
-                return;
-              }
+              if (!blob) return reject(new Error('Canvas blob failed'));
               const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
                 type: 'image/jpeg',
                 lastModified: Date.now()

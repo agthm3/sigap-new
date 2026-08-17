@@ -62,7 +62,7 @@
       background-color: #ffffff;
     }
 
-    /* Wrapper Frame Foto untuk Mencegah Gambar Gepeng & Memaksimalkan Tinggi */
+    /* Wrapper Frame Foto Multi-Foto */
     .img-container {
       width: 100%;
       height: 175px;
@@ -74,12 +74,26 @@
       display: block;
       margin-bottom: 4px;
       overflow: hidden;
+      white-space: nowrap;
     }
 
-    /* Solusi Anti-Gepeng DomPDF: Batasi max dimensi & biarkan rasio asli */
+    /* Tabel Pembungkus Multi-Foto di dalam Container */
+    .img-inner-table {
+      width: 100%;
+      height: 175px;
+      border-collapse: collapse;
+    }
+    .img-inner-table td {
+      vertical-align: middle;
+      text-align: center;
+      padding: 1px 2px;
+      border: none;
+    }
+
+    /* Solusi Anti-Gepeng DomPDF Multi-Foto */
     .evidence-img {
       max-width: 100%;
-      max-height: 175px;
+      max-height: 171px;
       width: auto;
       height: auto;
       display: inline-block;
@@ -194,10 +208,23 @@
                 <span class="status-badge">{{ strtoupper($item->status) }}</span>
               </div>
               
-              <!-- Container Frame Foto -->
+              <!-- Container Frame Multi-Foto -->
               <div class="img-container">
-                @if($item->foto_base64)
-                  <img src="{{ $item->foto_base64 }}" class="evidence-img" alt="Foto Evidence">
+                @php
+                  $fotos = $item->fotos_base64 ?? ($item->foto_base64 ? [$item->foto_base64] : []);
+                  $count = count($fotos);
+                @endphp
+
+                @if($count > 0)
+                  <table class="img-inner-table">
+                    <tr>
+                      @foreach($fotos as $fotoBase64)
+                        <td style="width: {{ round(100 / $count) }}%;">
+                          <img src="{{ $fotoBase64 }}" class="evidence-img" alt="Foto Evidence">
+                        </td>
+                      @endforeach
+                    </tr>
+                  </table>
                 @else
                   <div class="no-img-box">Evidence Tidak Tersedia</div>
                 @endif

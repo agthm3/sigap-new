@@ -29,11 +29,11 @@
             </p>
 
             <div class="mt-7 flex flex-wrap justify-center gap-3">
-                <a href="#daftar" class="px-6 py-3 rounded-xl bg-white text-maroon font-semibold text-base hover:bg-white/90 transition">
+                <a href="#daftar" class="px-6 py-3 rounded-xl bg-white text-maroon font-semibold text-base hover:bg-white/90 transition shadow-sm">
                     Lihat Galeri Kinerja
                 </a>
                 
-                {{-- Tombol Khusus Akses Internal (Berubah warna & bentuk agar berbeda) --}}
+                {{-- Tombol Khusus Akses Internal --}}
                 @auth
                     @hasanyrole('admin|superadmin|verif_pjlp|pjlp')
                         <a href="{{ route('sigap-pjlp.index') }}" class="px-6 py-3 rounded-xl bg-amber-500 text-amber-950 font-bold text-base hover:bg-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.4)] transition border border-amber-300">
@@ -54,15 +54,15 @@
 <section class="py-14 bg-white border-b border-gray-100">
     <div class="max-w-7xl mx-auto px-4">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm text-center">
+            <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-xs text-center">
                 <p class="text-sm font-semibold text-gray-500">Total Tenaga PJLP</p>
                 <h3 class="text-3xl font-extrabold text-maroon mt-1">{{ $totalPjlp }}</h3>
             </div>
-            <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm text-center">
+            <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-xs text-center">
                 <p class="text-sm font-semibold text-gray-500">Total Laporan Bulanan</p>
                 <h3 class="text-3xl font-extrabold text-maroon mt-1">{{ $totalPeriode }}</h3>
             </div>
-            <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm text-center">
+            <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-xs text-center">
                 <p class="text-sm font-semibold text-gray-500">Evidence Terverifikasi</p>
                 <h3 class="text-3xl font-extrabold text-maroon mt-1">{{ $totalEvidence }}</h3>
             </div>
@@ -102,39 +102,79 @@
         <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             @forelse($periodes as $item)
             
-            <!-- ALPINE.JS Carousel Logic -->
+            <!-- ALPINE.JS Carousel Logic dengan Manual Control & Auto-Rotate -->
             <article x-data="{
                          currentIndex: 0,
+                         timer: null,
                          slides: {{ json_encode($item->slides) }},
                          init() {
+                             this.startTimer();
+                         },
+                         startTimer() {
                              if(this.slides.length > 1) {
-                                 setInterval(() => {
-                                     this.currentIndex = (this.currentIndex + 1) % this.slides.length;
-                                 }, 3500); // Ganti foto setiap 3.5 detik
+                                 this.timer = setInterval(() => {
+                                     this.nextSlide();
+                                 }, 3500);
                              }
+                         },
+                         resetTimer() {
+                             if(this.timer) clearInterval(this.timer);
+                             this.startTimer();
+                         },
+                         nextSlide() {
+                             this.currentIndex = (this.currentIndex + 1) % this.slides.length;
+                         },
+                         prevSlide() {
+                             this.currentIndex = (this.currentIndex - 1 + this.slides.length) % this.slides.length;
+                         },
+                         showModal(url, desc, date) {
+                             Swal.fire({
+                                 imageUrl: url,
+                                 imageAlt: 'Evidence Foto',
+                                 title: date,
+                                 text: desc,
+                                 showConfirmButton: false,
+                                 showCloseButton: true,
+                             });
                          }
                      }" 
                      class="rounded-3xl border border-gray-200 bg-white shadow-sm overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col relative group">
                 
-                <!-- Badge Bulan & Nama -->
+                <!-- Badge Bulan & Counter Foto -->
                 <div class="absolute top-3 left-3 right-3 z-20 flex justify-between items-start pointer-events-none">
-                    <span class="px-3 py-1 rounded-full bg-white/90 backdrop-blur text-maroon text-xs font-extrabold shadow-sm border border-white/40">
+                    <span class="px-3 py-1 rounded-full bg-white/95 backdrop-blur text-maroon text-xs font-extrabold shadow-sm border border-white/40">
                         {{ \Carbon\Carbon::createFromFormat('Y-m', $item->bulan_tahun)->translatedFormat('F Y') }}
                     </span>
                     <span class="px-2 py-1 bg-black/60 backdrop-blur text-white text-[10px] font-bold rounded-lg shadow-sm">
-                        <span x-text="currentIndex + 1"></span> / <span x-text="slides.length"></span> Foto
+                        <span x-text="slides.length > 0 ? (currentIndex + 1) : 0"></span> / <span x-text="slides.length"></span> Foto
                     </span>
                 </div>
 
-                <!-- Bagian Gambar (Rotating) -->
+                <!-- Bagian Gambar (Rotating dengan Tombol Navigasi) -->
                 <div class="h-64 w-full bg-gray-100 relative overflow-hidden">
                     <template x-for="(slide, index) in slides" :key="index">
                         <img :src="slide.foto" 
                              x-show="currentIndex === index"
                              x-transition.opacity.duration.700ms
+                             @click="showModal(slide.foto, slide.deskripsi, slide.hari + ', ' + slide.tanggal)"
                              alt="Evidence" 
-                             class="absolute inset-0 w-full h-full object-cover">
+                             class="absolute inset-0 w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-500">
                     </template>
+
+                    <!-- Tombol Navigasi Manual (Muncul Saat Hover) -->
+                    <template x-if="slides.length > 1">
+                        <div class="absolute inset-0 flex items-center justify-between px-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                            <button type="button" @click.stop="prevSlide(); resetTimer();" 
+                                    class="w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center text-xs font-bold hover:bg-black/70 pointer-events-auto transition">
+                                ‹
+                            </button>
+                            <button type="button" @click.stop="nextSlide(); resetTimer();" 
+                                    class="w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center text-xs font-bold hover:bg-black/70 pointer-events-auto transition">
+                                ›
+                            </button>
+                        </div>
+                    </template>
+
                     <!-- Fallback jika array kosong -->
                     <template x-if="slides.length === 0">
                         <div class="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100 text-sm font-semibold">
@@ -144,28 +184,36 @@
                 </div>
 
                 <!-- Bagian Informasi (Rotating Text) -->
-                <div class="p-5 flex-1 flex flex-col">
-                    <div class="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
-                        @if($item->user->profile_photo_path)
-                            <img src="{{ asset('storage/' . $item->user->profile_photo_path) }}" alt="Foto" class="w-10 h-10 rounded-full object-cover ring-2 ring-gray-100">
-                        @else
-                            <div class="w-10 h-10 rounded-full bg-maroon/10 text-maroon font-bold flex items-center justify-center text-sm">
-                                {{ substr($item->user->name, 0, 1) }}
+                <div class="p-5 flex-1 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center gap-3 mb-3 pb-3 border-b border-gray-100">
+                            @if($item->user->profile_photo_path)
+                                <img src="{{ asset('storage/' . $item->user->profile_photo_path) }}" alt="Foto" class="w-10 h-10 rounded-full object-cover ring-2 ring-gray-100 shrink-0">
+                            @else
+                                <div class="w-10 h-10 rounded-full bg-maroon/10 text-maroon font-bold flex items-center justify-center text-sm shrink-0">
+                                    {{ substr($item->user->name, 0, 1) }}
+                                </div>
+                            @endif
+                            <div class="min-w-0">
+                                <h3 class="font-extrabold text-gray-900 leading-tight truncate">{{ $item->user->name }}</h3>
+                                <p class="text-[11px] text-gray-500 font-medium truncate">{{ $item->user->profile->jabatan ?? 'Tenaga Kebersihan' }}</p>
                             </div>
-                        @endif
-                        <div>
-                            <h3 class="font-extrabold text-gray-900 leading-none">{{ $item->user->name }}</h3>
-                            <p class="text-[11px] text-gray-500 font-medium mt-1">{{ $item->user->profile->jabatan ?? 'Tenaga Kebersihan' }}</p>
                         </div>
+
+                        <!-- Detail Kegiatan Rotating -->
+                        <template x-if="slides.length > 0">
+                            <div>
+                                <p class="text-xs font-bold text-maroon mb-1" x-text="slides[currentIndex].hari + ', ' + slides[currentIndex].tanggal"></p>
+                                <p class="text-xs text-gray-700 leading-relaxed font-medium line-clamp-3" x-text="slides[currentIndex].deskripsi"></p>
+                            </div>
+                        </template>
                     </div>
 
-                    <!-- Detail Kegiatan Rotating -->
-                    <template x-if="slides.length > 0">
-                        <div class="flex-1">
-                            <p class="text-xs font-bold text-maroon mb-1.5" x-text="slides[currentIndex].hari + ', ' + slides[currentIndex].tanggal"></p>
-                            <p class="text-sm text-gray-700 leading-relaxed font-medium line-clamp-3" x-text="slides[currentIndex].deskripsi"></p>
-                        </div>
-                    </template>
+                    <!-- Footer Kartu -->
+                    <div class="mt-4 pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-400">
+                        <span>Unit: {{ $item->user->unit ?: 'BRIDA' }}</span>
+                        <span class="font-semibold text-emerald-600">✓ Terverifikasi</span>
+                    </div>
                 </div>
             </article>
             
