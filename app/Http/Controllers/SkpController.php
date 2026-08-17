@@ -345,7 +345,32 @@ class SkpController extends Controller
         $bulanTahun = $request->get('bulan', date('Y-m'));
         $kategori = $request->get('kategori', 'DIREKTIF (TUGAS TAMBAHAN)');
 
-        // Ambil daftar SKP
+        // 1. Ambil seluruh Kumpulan yang sudah pernah dibuat oleh user di bulan ini
+        $existingKumpulans = SkpKumpulan::where('user_id', $userId)
+            ->where('bulan_tahun', $bulanTahun)
+            ->get();
+
+        // 2. Petakan ID SKP & PPD ke kategori kumpulan tempat mereka terdaftar
+        $usedSkpCategories = [];
+        $usedPpdCategories = [];
+
+        foreach ($existingKumpulans as $kump) {
+            $katName = $kump->kategori;
+
+            if (!empty($kump->skp_ids) && is_array($kump->skp_ids)) {
+                foreach ($kump->skp_ids as $skpId) {
+                    $usedSkpCategories[$skpId][] = $katName;
+                }
+            }
+
+            if (!empty($kump->ppd_ids) && is_array($kump->ppd_ids)) {
+                foreach ($kump->ppd_ids as $ppdId) {
+                    $usedPpdCategories[$ppdId][] = $katName;
+                }
+            }
+        }
+
+        // 3. Ambil daftar SKP user di bulan terpilih
         $skpList = Skp::with('fotos')
             ->whereHas('pegawais', function ($q) use ($userId) {
                 $q->where('users.id', $userId);
@@ -355,9 +380,8 @@ class SkpController extends Controller
             ->latest()
             ->get();
 
-        // Ambil daftar PPD yang melibatkan user login pada bulan yang difilter (berdasarkan created_at)
+        // 4. Ambil daftar PPD user di bulan terpilih
         $ppdList = PpdKegiatan::with(['lembar' => function($q) use ($userId) {
-                // Ambil lembar milik pegawai ini saja beserta fotonya untuk thumbnail
                 $q->where('user_id', $userId)->with('fotos');
             }])
             ->whereHas('pegawai', function ($q) use ($userId) {
@@ -368,7 +392,14 @@ class SkpController extends Controller
             ->latest()
             ->get();
 
-        return view('dashboard.skp.kumpulan_create', compact('skpList', 'ppdList', 'bulanTahun', 'kategori'));
+        return view('dashboard.skp.kumpulan_create', compact(
+            'skpList', 
+            'ppdList', 
+            'bulanTahun', 
+            'kategori', 
+            'usedSkpCategories', 
+            'usedPpdCategories'
+        ));
     }
 
     // 2. UPDATE: kumpulanStore
@@ -402,6 +433,112 @@ class SkpController extends Controller
             'status'     => 'success',
             'message'    => 'Kumpulan laporan berhasil dibuat!',
             'public_url' => $publicUrl,
+            'redirect'   => route('sigap-skp.kumpulan.index')
+        ]);
+    }
+
+    public function kumpulanEdit($slug)
+    {
+        $userId = auth()->id();
+        
+        // Cari data kumpulan yang sedang diedit
+        $kumpulan = SkpKumpulan::where('slug', $slug)
+            ->where('user_id', $userId)
+            ->firstOrFail();
+
+        $bulanTahun = $kumpulan->bulan_tahun;
+        $kategori = $kumpulan->kategori;
+
+        // Ambil kumpulan lain milik user di bulan yang sama (kecuali yang sedang diedit)
+        $otherKumpulans = SkpKumpulan::where('user_id', $userId)
+            ->where('bulan_tahun', $bulanTahun)
+            ->where('id', '!=', $kumpulan->id)
+            ->get();
+
+        $usedSkpCategories = [];
+        $usedPpdCategories = [];
+
+        foreach ($otherKumpulans as $kump) {
+            $katName = $kump->kategori;
+
+            if (!empty($kump->skp_ids) && is_array($kump->skp_ids)) {
+                foreach ($kump->skp_ids as $skpId) {
+                    $usedSkpCategories[$skpId][] = $katName;
+                }
+            }
+
+            if (!empty($kump->ppd_ids) && is_array($kump->ppd_ids)) {
+                foreach ($kump->ppd_ids as $ppdId) {
+                    $usedPpdCategories[$ppdId][] = $katName;
+                }
+            }
+        }
+
+        // Ambil daftar SKP di bulan yang sama
+        $skpList = Skp::with('fotos')
+            ->whereHas('pegawais', function ($q) use ($userId) {
+                $q->where('users.id', $userId);
+            })
+            ->whereYear('tanggal', substr($bulanTahun, 0, 4))
+            ->whereMonth('tanggal', substr($bulanTahun, 5, 2))
+            ->latest()
+            ->get();
+
+        // Ambil daftar PPD di bulan yang sama
+        $ppdList = PpdKegiatan::with(['lembar' => function($q) use ($userId) {
+                $q->where('user_id', $userId)->with('fotos');
+            }])
+            ->whereHas('pegawai', function ($q) use ($userId) {
+                $q->where('users.id', $userId);
+            })
+            ->whereYear('created_at', substr($bulanTahun, 0, 4))
+            ->whereMonth('created_at', substr($bulanTahun, 5, 2))
+            ->latest()
+            ->get();
+
+        return view('dashboard.skp.kumpulan_edit', compact(
+            'kumpulan', 
+            'skpList', 
+            'ppdList', 
+            'bulanTahun', 
+            'kategori',
+            'usedSkpCategories',
+            'usedPpdCategories'
+        ));
+    }
+
+    public function kumpulanUpdate(Request $request, $slug)
+    {
+        $request->validate([
+            'kategori'       => 'required|string',
+            'bulan_tahun'    => 'required|string',
+            'judul_kumpulan' => 'required|string|max:255',
+            'skp_ids'        => 'nullable|array',
+            'ppd_ids'        => 'nullable|array',
+        ]);
+
+        // Pastikan minimal ada 1 SKP atau 1 PPD yang dipilih
+        if (empty($request->skp_ids) && empty($request->ppd_ids)) {
+            return response()->json(['status' => 'error', 'message' => 'Pilih minimal 1 kegiatan SKP atau PPD.'], 400);
+        }
+
+        $kumpulan = SkpKumpulan::where('slug', $slug)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        // Update data ke database
+        $kumpulan->update([
+            'kategori'       => strtoupper($request->kategori),
+            'bulan_tahun'    => $request->bulan_tahun,
+            'judul_kumpulan' => $request->judul_kumpulan,
+            'skp_ids'        => $request->skp_ids ?? [],
+            'ppd_ids'        => $request->ppd_ids ?? [],
+        ]);
+
+        return response()->json([
+            'status'     => 'success',
+            'message'    => 'Kumpulan laporan berhasil diperbarui!',
+            'public_url' => route('sigap-skp.kumpulan.public-show', $kumpulan->slug),
             'redirect'   => route('sigap-skp.kumpulan.index')
         ]);
     }
@@ -448,14 +585,16 @@ class SkpController extends Controller
         return redirect()->back()->with('success', 'Kumpulan laporan berhasil dihapus.');
     }
 
-    public function storePdf(Request $request)
+public function storePdf(Request $request)
     {
         $request->validate([
             'judul_kegiatan' => 'required|string|max:255',
             'tanggal'        => 'required|date',
             'kategori'       => 'nullable|string|max:100',
             'deskripsi'      => 'nullable|string',
-            'dokumen_pdf'    => 'required|file|mimes:pdf|max:10240', // Maksimal 10MB (10240 KB)
+            'dokumen_pdf'    => 'required|file|mimes:pdf|max:10240', // Maksimal 10MB
+            'pegawai_ids'    => 'nullable|array',
+            'pegawai_ids.*'  => 'exists:users,id',
         ], [
             'dokumen_pdf.mimes' => 'Berkas yang diunggah harus berformat PDF.',
             'dokumen_pdf.max'   => 'Ukuran dokumen PDF tidak boleh melebihi 10 MB.',
@@ -476,8 +615,10 @@ class SkpController extends Controller
                 'creator_id'     => auth()->id(),
             ]);
 
-            // Otomatis tautkan ke pegawai yang login
-            $skp->pegawais()->attach(auth()->id());
+            // Jika ada pegawai_ids yang dipilih (dari SKP Umum), attach daftar tersebut
+            // Jika kosong (dari SKP Pribadi), otomatis attach ke user login
+            $targetPegawai = !empty($request->pegawai_ids) ? $request->pegawai_ids : [auth()->id()];
+            $skp->pegawais()->sync($targetPegawai);
 
             return redirect()->back()->with('success', 'Dokumen PDF SKP berhasil diunggah.');
         }

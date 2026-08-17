@@ -10,24 +10,35 @@
         SIGAP <span class="text-maroon">SKP Umum</span>
       </h1>
       <p class="text-sm text-gray-600 mt-0.5">
-        Laporan evidence dan dokumentasi kegiatan pegawai.
+        Laporan evidence dan dokumentasi kegiatan pegawai (Foto & Dokumen PDF).
       </p>
     </div>
 
-    <div class="flex items-center gap-2">
-    <a href="{{ route('sigap-skp.upload-mandiri') }}"
-        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors shadow-sm">
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3" stroke-width="2"/></svg>
-        Upload Mandiri
-    </a>
+    <div class="flex items-center gap-2 flex-wrap">
+      {{-- Tombol Upload Mandiri --}}
+      <a href="{{ route('sigap-skp.upload-mandiri') }}"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors shadow-sm">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3" stroke-width="2"/></svg>
+          Upload Mandiri
+      </a>
 
-    @hasanyrole('admin|verif_skp')
+      {{-- Tombol Upload Dokumen PDF --}}
+      <button @click="openModalPdf = true"
+              type="button"
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-700 text-white text-sm font-semibold hover:bg-red-800 transition-colors shadow-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          Upload PDF
+      </button>
+
+      {{-- Tombol Tambah SKP Foto --}}
+      @hasanyrole('admin|verif_skp')
         <button @click="openModal = true"
-        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-maroon text-white text-sm font-semibold hover:bg-maroon-800 transition-colors shadow-sm">
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
-        Tambah SKP
+                type="button"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-maroon text-white text-sm font-semibold hover:bg-maroon-800 transition-colors shadow-sm">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
+          Tambah SKP Foto
         </button>
-    @endhasanyrole
+      @endhasanyrole
     </div>
   </section>
 
@@ -87,15 +98,21 @@
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
     @forelse($skps as $item)
       @php
+        $isPdf = $item->tipe_evidence === 'pdf';
         $firstFoto = $item->fotos->first();
         $thumbUrl = $firstFoto ? asset('storage/' . $firstFoto->file_path) : null;
         $showUrl = route('sigap-skp.show', $item->slug);
       @endphp
       <div class="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
         <div>
-          {{-- Thumbnail Foto --}}
+          {{-- Thumbnail Foto / PDF --}}
           <div class="relative h-48 w-full bg-gray-100 border-b overflow-hidden">
-            @if($thumbUrl)
+            @if($isPdf)
+              <div class="flex flex-col items-center justify-center h-full text-red-600 bg-red-50/50 p-4 text-center">
+                <svg class="w-12 h-12 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                <span class="text-[10px] font-bold uppercase tracking-wider bg-red-100 px-2 py-0.5 rounded text-red-800">Dokumen PDF</span>
+              </div>
+            @elseif($thumbUrl)
               <img src="{{ $thumbUrl }}" alt="{{ $item->judul_kegiatan }}" class="w-full h-full object-cover">
             @else
               <div class="flex flex-col items-center justify-center h-full text-gray-400">
@@ -106,9 +123,15 @@
 
             {{-- Badges --}}
             <div class="absolute top-3 right-3 flex gap-1.5">
-              <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-black/60 text-white backdrop-blur-sm">
-                📷 {{ $item->fotos_count }} Foto
-              </span>
+              @if($isPdf)
+                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-red-700 text-white shadow">
+                  📄 PDF
+                </span>
+              @else
+                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-black/60 text-white backdrop-blur-sm">
+                  📷 {{ $item->fotos_count }} Foto
+                </span>
+              @endif
             </div>
 
             @if($item->agenda_id)
@@ -127,8 +150,15 @@
                 📅 {{ \Carbon\Carbon::parse($item->tanggal)->translatedFormat('d M Y') }}
               </p>
               <h3 class="font-bold text-gray-900 text-base line-clamp-2 hover:text-maroon transition-colors">
-                <a href="{{ $showUrl }}">{{ $item->judul_kegiatan }}</a>
+                @if($isPdf)
+                  <a href="{{ asset('storage/' . $item->file_pdf_path) }}" target="_blank">{{ $item->judul_kegiatan }}</a>
+                @else
+                  <a href="{{ $showUrl }}">{{ $item->judul_kegiatan }}</a>
+                @endif
               </h3>
+              @if($item->deskripsi)
+                <p class="text-xs text-gray-500 line-clamp-2 mt-1">{{ $item->deskripsi }}</p>
+              @endif
             </div>
 
             {{-- Pegawai Terlibat --}}
@@ -151,16 +181,22 @@
         <div class="p-4 pt-0 border-t border-gray-100 mt-3 flex items-center justify-between gap-2">
           {{-- TOMBOL SALIN LINK --}}
           <button type="button" 
-                  @click="copyToClipboard('{{ $showUrl }}')" 
+                  @click="copyToClipboard('{{ $isPdf ? asset('storage/' . $item->file_pdf_path) : $showUrl }}')" 
                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" stroke-width="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke-width="2"/></svg>
             Salin Link
           </button>
 
           <div class="flex items-center gap-1.5">
-            <a href="{{ $showUrl }}" class="px-3 py-1.5 rounded-lg bg-gray-900 text-white text-xs font-semibold hover:bg-gray-800 transition-colors">
-              Buka
-            </a>
+            @if($isPdf)
+              <a href="{{ asset('storage/' . $item->file_pdf_path) }}" target="_blank" class="px-3 py-1.5 rounded-lg bg-red-700 text-white text-xs font-semibold hover:bg-red-800 transition-colors flex items-center gap-1">
+                📥 Buka PDF
+              </a>
+            @else
+              <a href="{{ $showUrl }}" class="px-3 py-1.5 rounded-lg bg-gray-900 text-white text-xs font-semibold hover:bg-gray-800 transition-colors">
+                Buka
+              </a>
+            @endif
 
             @hasanyrole('admin|verif_skp')
               <form action="{{ route('sigap-skp.destroy', $item->slug) }}" method="POST" class="inline form-delete">
@@ -186,7 +222,7 @@
     {{ $skps->links() ?? '' }}
   </div>
 
-  {{-- MODAL TAMBAH SKP --}}
+  {{-- MODAL TAMBAH SKP FOTO --}}
   <div x-show="openModal" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto">
     <div x-show="openModal" x-transition class="fixed inset-0 bg-gray-900/50 transition-opacity" @click="openModal = false"></div>
 
@@ -196,7 +232,7 @@
         <form action="{{ route('sigap-skp.store') }}" method="POST" enctype="multipart/form-data">
           @csrf
           <div class="bg-white p-6 space-y-4">
-            <h3 class="text-lg font-bold text-gray-900 border-b pb-2">Tambah Laporan SKP</h3>
+            <h3 class="text-lg font-bold text-gray-900 border-b pb-2">Tambah Laporan SKP Foto</h3>
             
             <!-- Pilihan Sumber Kegiatan -->
             <div>
@@ -215,19 +251,20 @@
 
             <!-- Select Agenda Penugasan Spesifik -->
             <div x-show="sourceMode === 'agenda'" class="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-1">
-            <label class="block text-sm font-semibold text-gray-700 mb-1">Pilih Penugasan Agenda <span class="text-red-500">*</span></label>
-            <select name="agenda_id" x-model="selectedAgendaId" @change="fillFromAgenda" class="w-full rounded-lg px-3 py-2 text-sm border-gray-300 focus:ring-maroon focus:border-maroon">
-                <option value="">-- Pilih Penugasan Agenda --</option>
-                @foreach($agendas as $agenda)
-                <option value="{{ $agenda['id'] }}" 
-                        data-title="{{ $agenda['unit_title'] }}" 
-                        data-date="{{ $agenda['date'] }}"
-                        data-assignees="{{ $agenda['assignees'] }}">
-                    [{{ \Carbon\Carbon::parse($agenda['date'])->format('d/m/Y') }}] {{ Str::limit($agenda['unit_title'], 90) }} @if($agenda['place'] !== '-') (📍 {{ $agenda['place'] }}) @endif
-                </option>
-                @endforeach
-            </select>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Pilih Penugasan Agenda <span class="text-red-500">*</span></label>
+              <select name="agenda_id" x-model="selectedAgendaId" @change="fillFromAgenda" class="w-full rounded-lg px-3 py-2 text-sm border-gray-300 focus:ring-maroon focus:border-maroon">
+                  <option value="">-- Pilih Penugasan Agenda --</option>
+                  @foreach($agendas as $agenda)
+                  <option value="{{ $agenda['id'] }}" 
+                          data-title="{{ $agenda['unit_title'] }}" 
+                          data-date="{{ $agenda['date'] }}"
+                          data-assignees="{{ $agenda['assignees'] }}">
+                      [{{ \Carbon\Carbon::parse($agenda['date'])->format('d/m/Y') }}] {{ Str::limit($agenda['unit_title'], 90) }} @if($agenda['place'] !== '-') (📍 {{ $agenda['place'] }}) @endif
+                  </option>
+                  @endforeach
+              </select>
             </div>
+
             <!-- Searchable Multi-Select Pegawai -->
             <div x-data="employeeSelect(@js($employees))" 
                  x-ref="empSelectComp"
@@ -278,46 +315,25 @@
               </div>
             </div>
 
-            <!-- Upload Dokumentasi Foto dengan Indikator Kompresi -->
-        <!-- Upload Dokumentasi Foto Multi-File dengan Live Preview -->
+            <!-- Upload Dokumentasi Foto -->
             <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">
-                Upload Foto Dokumentasi <span class="text-red-500">*</span>
-            </label>
-            
-            <input x-ref="fileInput"
-                    type="file" 
-                    name="dokumentasi[]" 
-                    multiple 
-                    required 
-                    accept="image/*" 
-                    @change="handleImageUpload($event)"
-                    class="w-full text-sm border border-gray-300 rounded-lg p-2 focus:ring-maroon focus:border-maroon">
+              <label class="block text-sm font-semibold text-gray-700 mb-1">
+                  Upload Foto Dokumentasi <span class="text-red-500">*</span>
+              </label>
+              
+              <input x-ref="fileInput"
+                      type="file" 
+                      name="dokumentasi[]" 
+                      multiple 
+                      required 
+                      accept="image/*" 
+                      @change="handleImageUpload($event)"
+                      class="w-full text-sm border border-gray-300 rounded-lg p-2 focus:ring-maroon focus:border-maroon">
 
-            <!-- Indikator Kompresi Client-side -->
-            <p x-show="isCompressing" class="text-xs text-amber-600 font-semibold mt-1.5 animate-pulse flex items-center gap-1" style="display: none;">
-                <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="4" class="opacity-25"/><path d="M4 12a8 8 0 018-8v8H4z" class="opacity-75"/></svg>
-                Mengompresi beberapa foto otomatis... Silakan tunggu sejenak.
-            </p>
-
-            <!-- Live Preview Grid Foto yang Siap Diunggah -->
-            <div x-show="imagePreviews.length > 0" class="mt-3 space-y-1.5" style="display: none;">
-                <p class="text-xs font-semibold text-gray-600">Pratinjau Foto Terpilih (<span x-text="imagePreviews.length"></span> foto):</p>
-                <div class="grid grid-cols-3 sm:grid-cols-4 gap-2.5 max-h-48 overflow-y-auto p-2 border border-gray-200 bg-gray-50 rounded-xl scrollbar-thin">
-                <template x-for="(img, index) in imagePreviews" :key="index">
-                    <div class="relative group aspect-square rounded-lg overflow-hidden border border-gray-300 bg-white shadow-sm">
-                    <img :src="img.url" class="w-full h-full object-cover">
-                    <span class="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/60 text-white text-[9px] rounded font-mono" x-text="img.size"></span>
-                    <button type="button" 
-                            @click="removeSelectedImage(index)" 
-                            class="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-90 hover:opacity-100 hover:scale-110 transition-all shadow" 
-                            title="Hapus foto ini">
-                        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                    </div>
-                </template>
-                </div>
-            </div>
+              <p x-show="isCompressing" class="text-xs text-amber-600 font-semibold mt-1.5 animate-pulse flex items-center gap-1" style="display: none;">
+                  <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="4" class="opacity-25"/><path d="M4 12a8 8 0 018-8v8H4z" class="opacity-75"/></svg>
+                  Mengompresi beberapa foto otomatis... Silakan tunggu sejenak.
+              </p>
             </div>
 
           </div>
@@ -331,6 +347,99 @@
     </div>
   </div>
 
+  {{-- MODAL UPLOAD DOKUMEN PDF (DENGAN PILIHAN PEGAWAI) --}}
+  <div x-show="openModalPdf" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto">
+    <div x-show="openModalPdf" x-transition.opacity class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" @click="openModalPdf = false"></div>
+
+    <div class="flex min-h-full items-center justify-center p-4">
+      <div x-show="openModalPdf" x-transition class="relative transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all sm:w-full sm:max-w-xl p-6 space-y-4 border border-gray-100">
+        
+        <div class="flex items-center justify-between border-b pb-3">
+          <div class="flex items-center gap-2">
+            <span class="p-2 bg-red-100 text-red-700 rounded-xl">📄</span>
+            <h3 class="text-base font-bold text-gray-900">Upload Dokumen SKP (PDF)</h3>
+          </div>
+          <button type="button" @click="openModalPdf = false" class="text-gray-400 hover:text-gray-600 font-bold">✕</button>
+        </div>
+
+        <form action="{{ route('sigap-skp.store-pdf') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+          @csrf
+
+          <!-- Searchable Multi-Select Pegawai untuk PDF -->
+          <div x-data="employeeSelect(@js($employees))" 
+               x-ref="empSelectPdfComp"
+               @click.outside="open = false" 
+               class="relative">
+            
+            <label class="block text-xs font-bold text-gray-700 mb-1">
+              Pegawai yang Ditugaskan / Terlibat <span class="text-red-500">*</span>
+            </label>
+            
+            <div class="min-h-[42px] p-1.5 border border-gray-300 rounded-xl bg-white flex flex-wrap items-center gap-1.5 cursor-text" @click="openDropdown()">
+              <template x-for="emp in selectedEmployees" :key="emp.id">
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-red-50 text-red-700 text-xs font-semibold border border-red-200">
+                  <span x-text="emp.name"></span>
+                  <button type="button" @click.stop="removeEmployee(emp.id)" class="text-red-700/70 hover:text-red-700">&times;</button>
+                  <input type="hidden" name="pegawai_ids[]" :value="emp.id">
+                </span>
+              </template>
+
+              <input x-ref="searchInput" type="text" x-model="search" @focus="open = true" @input="open = true"
+                     placeholder="Cari & pilih pegawai..." class="flex-1 min-w-[120px] outline-none border-none !p-1 text-xs bg-transparent !border-0 focus:!ring-0">
+            </div>
+
+            <div x-show="open" x-cloak class="absolute z-[100] left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl scrollbar-thin py-1">
+              <template x-for="emp in filteredEmployees" :key="emp.id">
+                <div @click="toggleEmployee(emp)" class="px-3 py-2 text-xs text-gray-800 hover:bg-red-50 hover:text-red-700 cursor-pointer flex items-center justify-between" :class="{'bg-red-50 font-semibold text-red-700': isSelected(emp.id)}">
+                  <span x-text="emp.name"></span>
+                  <svg x-show="isSelected(emp.id)" class="w-4 h-4 text-red-700" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline stroke-width="3" points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+              </template>
+              <div x-show="filteredEmployees.length === 0" class="px-3 py-2 text-xs text-gray-400 text-center italic">
+                Pegawai tidak ditemukan.
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Judul Dokumen / Kegiatan <span class="text-red-500">*</span></label>
+            <input type="text" name="judul_kegiatan" required placeholder="Tulis judul berkas/kegiatan SKP..." class="w-full text-xs rounded-xl border-gray-300 p-2.5 focus:ring-maroon focus:border-maroon">
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-gray-700 mb-1">Tanggal Kegiatan <span class="text-red-500">*</span></label>
+              <input type="date" name="tanggal" value="{{ date('Y-m-d') }}" required class="w-full text-xs rounded-xl border-gray-300 p-2.5 focus:ring-maroon focus:border-maroon">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-700 mb-1">Kategori SKP</label>
+              <select name="kategori" class="w-full text-xs rounded-xl border-gray-300 p-2.5 focus:ring-maroon focus:border-maroon">
+                <option value="TUPOKSI">TUPOKSI</option>
+                <option value="DIREKTIF (TUGAS TAMBAHAN)">DIREKTIF (TUGAS TAMBAHAN)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Deskripsi Ringkas</label>
+            <textarea name="deskripsi" rows="2" placeholder="Catatan/deskripsi singkat terkait dokumen..." class="w-full text-xs rounded-xl border-gray-300 p-2.5 focus:ring-maroon focus:border-maroon"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Pilih Berkas PDF <span class="text-red-500">* (Max 10 MB)</span></label>
+            <input type="file" name="dokumen_pdf" accept="application/pdf" required class="block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100">
+          </div>
+
+          <div class="pt-2 flex items-center justify-end gap-2 border-t">
+            <button type="button" @click="openModalPdf = false" class="px-4 py-2 rounded-xl border text-xs font-bold text-gray-600 hover:bg-gray-50">Batal</button>
+            <button type="submit" class="px-5 py-2 rounded-xl bg-red-700 text-white text-xs font-bold hover:bg-red-800 shadow">Unggah Dokumen 🚀</button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
 </div>
 @endsection
 
@@ -339,6 +448,7 @@
 function skpData() {
   return {
     openModal: false,
+    openModalPdf: false,
     sourceMode: 'agenda',
     selectedAgendaId: '',
     judulKegiatan: '',
@@ -383,7 +493,6 @@ function skpData() {
       }
     },
 
-    // FITUR KOMPRESI CLIENT-SIDE VIA CANVAS
     async handleImageUpload(e) {
       const files = Array.from(e.target.files);
       if (files.length === 0) return;
@@ -394,7 +503,6 @@ function skpData() {
       for (let file of files) {
         if (file.type.startsWith('image/')) {
           try {
-            // Kompresi ke max-width 1200px dan quality 0.75
             const compressedBlob = await this.compressImageCanvas(file, 1200, 0.75);
             const compressedFile = new File([compressedBlob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
               type: 'image/jpeg',
@@ -402,7 +510,7 @@ function skpData() {
             });
             dataTransfer.items.add(compressedFile);
           } catch (err) {
-            dataTransfer.items.add(file); // Fallback jika browser gagal mengompres
+            dataTransfer.items.add(file);
           }
         } else {
           dataTransfer.items.add(file);

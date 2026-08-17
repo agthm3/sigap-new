@@ -759,6 +759,8 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('/kumpulan', [SkpController::class, 'kumpulanIndex'])->name('kumpulan.index');
                 Route::get('/kumpulan/buat', [SkpController::class, 'kumpulanCreate'])->name('kumpulan.create');
                 Route::post('/kumpulan/simpan', [SkpController::class, 'kumpulanStore'])->name('kumpulan.store');
+                Route::get('/kumpulan/{slug}/edit', [SkpController::class, 'kumpulanEdit'])->name('kumpulan.edit');
+                Route::put('/kumpulan/{slug}', [SkpController::class, 'kumpulanUpdate'])->name('kumpulan.update');
                 Route::delete('/kumpulan/{slug}', [SkpController::class, 'kumpulanDestroy'])->name('kumpulan.destroy');
 
                 // WILDCARD SLUG HARUS DITARUH PALING BISA
