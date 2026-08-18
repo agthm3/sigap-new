@@ -26,6 +26,12 @@
          class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-maroon text-white text-sm font-semibold hover:bg-maroon-800 transition shadow-sm">
         📄 Export PDF Laporan
       </a>
+    @else
+      <button type="button" 
+              onclick="Swal.fire('Logbook Belum Lengkap', 'Seluruh hari kerja ({{ $totalTerisi }}/{{ $totalHariKerja }} hari) harus terisi terlebih dahulu untuk mengunduh laporan PDF.', 'info')"
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-200 text-gray-400 text-sm font-semibold cursor-not-allowed">
+        📄 Export PDF (Terkunci)
+      </button>
     @endif
   </section>
 
@@ -38,7 +44,7 @@
       <div>
         <p class="text-xs font-bold text-gray-900">Dokumen Daftar Gaji Periode Ini</p>
         <p class="text-[11px] text-gray-500">
-          {{ $hasDaftarGaji ? 'Berkas daftar gaji resmi sudah diunggah.' : 'Berkas belum diunggah oleh PJLP atau Petugas.' }}
+          {{ $hasDaftarGaji ? 'Berkas daftar gaji resmi sudah diunggah dan terlampir.' : 'Berkas belum diunggah (Opsional, laporan tetap dapat diekspor).' }}
         </p>
       </div>
     </div>

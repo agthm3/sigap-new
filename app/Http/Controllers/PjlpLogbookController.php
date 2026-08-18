@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Illuminate\Support\Facades\Log;
 
 class PjlpLogbookController extends Controller
 {
@@ -75,7 +76,9 @@ class PjlpLogbookController extends Controller
         $totalTerisi = $logbooks->whereNotIn('status', ['belum_diisi'])->count();
         $totalTerverifikasi = $logbooks->where('status', 'terverifikasi')->count();
         $hasDaftarGaji = !empty($periode->file_daftar_gaji);
-        $isSiapExport = ($totalHariKerja > 0 && $totalTerisi === $totalHariKerja && $hasDaftarGaji);
+        
+        // REVISI: Syarat siap export cukup semua hari terisi (gaji opsional)
+        $isSiapExport = ($totalHariKerja > 0 && $totalTerisi === $totalHariKerja);
 
         return view('dashboard.pjlp.index', compact(
             'targetUser',
@@ -212,7 +215,9 @@ class PjlpLogbookController extends Controller
             $hasGaji = $periode && !empty($periode->file_daftar_gaji);
 
             $persenProgress = $totalHariKerja > 0 ? round(($terisi / $totalHariKerja) * 100) : 0;
-            $isLengkap = ($totalHariKerja > 0 && $terisi === $totalHariKerja && $hasGaji);
+            
+            // REVISI: Syarat siap export cukup semua hari terisi
+            $isLengkap = ($totalHariKerja > 0 && $terisi === $totalHariKerja);
 
             return (object) [
                 'user' => $user,
@@ -285,7 +290,9 @@ class PjlpLogbookController extends Controller
         $totalTerisi = $logbooks->whereNotIn('status', ['belum_diisi'])->count();
         $totalTerverifikasi = $logbooks->where('status', 'terverifikasi')->count();
         $hasDaftarGaji = !empty($periode->file_daftar_gaji);
-        $isSiapExport = ($totalHariKerja > 0 && $totalTerisi === $totalHariKerja && $hasDaftarGaji);
+        
+        // REVISI: Syarat siap export cukup semua hari terisi
+        $isSiapExport = ($totalHariKerja > 0 && $totalTerisi === $totalHariKerja);
 
         return view('dashboard.pjlp.show', compact(
             'targetUser',
@@ -400,7 +407,9 @@ class PjlpLogbookController extends Controller
             $terverifikasi = $logbooks->where('status', 'terverifikasi')->count();
             $ditolak = $logbooks->where('status', 'ditolak')->count();
             $hasGaji = !empty($item->file_daftar_gaji);
-            $isLengkap = ($totalHari > 0 && $terisi === $totalHari && $hasGaji);
+            
+            // REVISI: Syarat siap export cukup semua hari terisi
+            $isLengkap = ($totalHari > 0 && $terisi === $totalHari);
 
             return (object) [
                 'id' => $item->id,
@@ -515,30 +524,29 @@ class PjlpLogbookController extends Controller
             'namaBulanTahun'
         ))->setPaper('letter', 'portrait')->output();
 
-        // 5. Gabungkan dengan Dokumen PDF Daftar Gaji via Merger
+        // 5. Gabungkan Cover, Daftar Gaji, dan Evidence via Merger
         $cleanUserName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $user->name);
         $fileName = 'Laporan_Bulanan_PJLP_' . $cleanUserName . '_' . $periode->bulan_tahun . '.pdf';
 
-        $merger = new Merger();
-
-        $tempCoverPath = tempnam(sys_get_temp_dir(), 'sigap_cov_');
-        file_put_contents($tempCoverPath, $pdfCover);
-        $merger->addFile($tempCoverPath);
-
-        if ($periode->file_daftar_gaji && Storage::disk('public')->exists($periode->file_daftar_gaji)) {
-            $pathDaftarGaji = Storage::disk('public')->path($periode->file_daftar_gaji);
-            try {
-                $merger->addFile($pathDaftarGaji);
-            } catch (\Exception $e) {
-                // Lewati jika file lampiran gaji corrupt
-            }
-        }
-
-        $tempEvidencePath = tempnam(sys_get_temp_dir(), 'sigap_evi_');
-        file_put_contents($tempEvidencePath, $pdfEvidence);
-        $merger->addFile($tempEvidencePath);
-
         try {
+            $merger = new Merger();
+
+            $tempCoverPath = tempnam(sys_get_temp_dir(), 'sigap_cov_');
+            file_put_contents($tempCoverPath, $pdfCover);
+            $merger->addFile($tempCoverPath);
+
+            // Jika file daftar gaji ada, tambahkan ke merger
+            if ($periode->file_daftar_gaji && Storage::disk('public')->exists($periode->file_daftar_gaji)) {
+                $pathDaftarGaji = Storage::disk('public')->path($periode->file_daftar_gaji);
+                if (file_exists($pathDaftarGaji)) {
+                    $merger->addFile($pathDaftarGaji);
+                }
+            }
+
+            $tempEvidencePath = tempnam(sys_get_temp_dir(), 'sigap_evi_');
+            file_put_contents($tempEvidencePath, $pdfEvidence);
+            $merger->addFile($tempEvidencePath);
+
             $mergedPdfContent = $merger->merge();
 
             @unlink($tempCoverPath);
@@ -548,11 +556,31 @@ class PjlpLogbookController extends Controller
                 'Content-Type' => 'application/pdf',
                 'Content-Disposition' => 'inline; filename="' . $fileName . '"',
             ]);
-        } catch (\Exception $e) {
-            @unlink($tempCoverPath);
-            @unlink($tempEvidencePath);
 
-            return response($pdfCover . $pdfEvidence, 200, [
+        } catch (\Exception $e) {
+            @unlink($tempCoverPath ?? '');
+            @unlink($tempEvidencePath ?? '');
+            
+            // Catat log error ke file storage/logs/laravel.log untuk debugging server
+            Log::error('Gagal Merge PDF PJLP: ' . $e->getMessage());
+
+            // Fallback: Jika merger gagal (misal file gaji corrupt / versi PDF gaji tidak didukung),
+            // render gabungan Cover + Evidence secara langsung dalam 1 view DomPDF
+            $pdfFallback = Pdf::loadView('dashboard.pjlp.pdf_combined_fallback', compact(
+                'periode',
+                'user',
+                'profile',
+                'fotoProfilBase64',
+                'qrCodeBase64',
+                'firstDate',
+                'lastDate',
+                'namaBulanTahun',
+                'totalHariKerja',
+                'totalTerverifikasi',
+                'logbookPages'
+            ))->setPaper('letter', 'portrait')->output();
+
+            return response($pdfFallback, 200, [
                 'Content-Type' => 'application/pdf',
                 'Content-Disposition' => 'inline; filename="' . $fileName . '"',
             ]);

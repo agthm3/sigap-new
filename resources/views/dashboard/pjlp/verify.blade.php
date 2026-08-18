@@ -71,8 +71,18 @@
             <div class="min-w-0">
               <div class="text-[10px] font-bold uppercase tracking-wider text-maroon">Penyedia Jasa Lainnya (PJLP)</div>
               <h3 class="text-sm font-extrabold text-gray-900 truncate">{{ $user->name }}</h3>
-            <p class="text-xs text-gray-600 truncate">
-                {{ $profile->jabatan ?? 'Penyedia Jasa Lainnya Perorangan (PJLP)' }}
+              <p class="text-xs text-gray-600 truncate font-semibold">
+                @php
+                  $rawJabatan = strtolower($profile->jabatan ?? '');
+                  if (str_contains($rawJabatan, 'sopir') || str_contains($rawJabatan, 'pengemudi') || str_contains($rawJabatan, 'driver')) {
+                      $tugasPokok = 'Pengemudi / Sopir Kantor';
+                  } elseif (str_contains($rawJabatan, 'kebersihan') || str_contains($rawJabatan, 'cleaner') || empty($rawJabatan)) {
+                      $tugasPokok = 'Tenaga Kebersihan Lingkungan Kantor';
+                  } else {
+                      $tugasPokok = $profile->jabatan;
+                  }
+                @endphp
+                {{ $tugasPokok }}
               </p>
               <p class="text-[11px] text-gray-500 font-medium truncate">{{ $user->unit ?: 'BRIDA Kota Makassar' }}</p>
             </div>
@@ -108,7 +118,7 @@
                   Tervalidasi & Terlampir
                 </span>
               @else
-                <span class="font-semibold text-amber-600">Belum Terlampir</span>
+                <span class="font-medium text-amber-600">Belum Dilampirkan (Opsional)</span>
               @endif
             </div>
             <div class="flex justify-between py-1.5">
@@ -123,7 +133,7 @@
           <div class="p-3 rounded-xl bg-gray-50 border border-gray-200/50 text-[10px] text-gray-500 flex items-start gap-2">
             <span class="text-base shrink-0">🔒</span>
             <p class="leading-relaxed">
-              Dokumen ini diverifikasi secara elektronik melalui modul resmi SIGAP PJLP. Integritas data evidence pekerjaan dan daftar gaji dijamin oleh instansi Badan Riset dan Inovasi Daerah (BRIDA).
+              Dokumen ini diverifikasi secara elektronik melalui modul resmi SIGAP PJLP. Integritas data evidence pekerjaan dijamin oleh instansi Badan Riset dan Inovasi Daerah (BRIDA) Kota Makassar.
             </p>
           </div>
 

@@ -230,8 +230,8 @@
         <td><b>{{ $totalHariKerja }} Hari</b></td>
         <td>{{ $totalHariKerja }} Hari</td>
         <td style="color: #065f46; font-weight: bold;">{{ $totalTerverifikasi }} Hari</td>
-        <td style="color: #065f46; font-weight: bold;">
-          {{ $periode->file_daftar_gaji ? 'Terlampir (Hal. Berikutnya)' : 'Belum Terlampir' }}
+        <td style="{{ $periode->file_daftar_gaji ? 'color: #065f46; font-weight: bold;' : 'color: #d97706; font-weight: bold;' }}">
+          {{ $periode->file_daftar_gaji ? 'Terlampir (Hal. Berikutnya)' : 'Belum Dilampirkan' }}
         </td>
         <td style="color: #7a2222; font-weight: bold;">LENGKAP & FINAL</td>
       </tr>
@@ -239,7 +239,11 @@
   </table>
 
   <p style="font-size: 8.5px; color: #4b5563; margin-top: 15px;">
-    <i>* Dokumen resmi Daftar Gaji disisipkan pada halaman berikutnya setelah identitas diri ini, diikuti dengan lampiran seluruh bukti/evidence foto pekerjaan harian.</i>
+    @if($periode->file_daftar_gaji)
+      <i>* Dokumen resmi Daftar Gaji disisipkan pada halaman berikutnya setelah identitas diri ini, diikuti dengan lampiran seluruh bukti/evidence foto pekerjaan harian.</i>
+    @else
+      <i>* Dokumen Daftar Gaji belum dilampirkan. Laporan langsung memuat lampiran seluruh bukti/evidence foto pekerjaan harian pada halaman berikutnya.</i>
+    @endif
   </p>
 
   <!-- FOOTER COVER -->

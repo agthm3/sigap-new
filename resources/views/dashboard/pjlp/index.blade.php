@@ -47,7 +47,7 @@
         </a>
       @else
         <button type="button" 
-                onclick="Swal.fire('Belum Lengkap', 'Harap lengkapi seluruh hari kerja dan unggah berkas Daftar Gaji untuk mengunduh laporan PDF.', 'info')"
+                onclick="Swal.fire('Logbook Belum Lengkap', 'Harap lengkapi seluruh hari kerja ({{ $totalTerisi }}/{{ $totalHariKerja }} terisi) untuk mengunduh laporan PDF.', 'info')"
                 class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-200 text-gray-400 text-sm font-semibold cursor-not-allowed">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           Export PDF (Terkunci)
@@ -110,7 +110,7 @@
         </div>
         <div>
           <h2 class="text-sm font-bold text-gray-900">Dokumen Daftar Gaji PJLP (Bulan {{ \Carbon\Carbon::createFromFormat('Y-m', $bulanTahun)->translatedFormat('F Y') }})</h2>
-          <p class="text-xs text-gray-500 mt-0.5">Unggah berkas resmi daftar gaji format PDF (maks. 5MB) untuk digabungkan ke laporan akhir.</p>
+          <p class="text-xs text-gray-500 mt-0.5">Unggah berkas resmi daftar gaji format PDF (maks. 5MB) untuk digabungkan ke laporan akhir. <span class="font-semibold text-amber-600">(Opsional)</span></p>
         </div>
       </div>
 
