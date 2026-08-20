@@ -182,6 +182,13 @@ class SkpController extends Controller
     {
         $userName = auth()->user()->name;
 
+        // AMBIL SEMUA PEGAWAI (Kecuali yang sedang login) UNTUK TAG MANUAL
+        $allEmployees = User::role('employee')
+            ->where('id', '!=', auth()->id())
+            ->select('id', 'name')
+            ->orderBy('name', 'asc')
+            ->get();
+
         $myAgendas = [];
         $rawAgendas = SigapAgenda::with('items')
             ->whereHas('items', function ($q) use ($userName) {
@@ -215,7 +222,6 @@ class SkpController extends Controller
                                 }
                             }
                         } catch (\Throwable $e) {
-                            // Fallback jika assignees berformat string biasa
                             $assignedPegawais = [];
                         }
                     }
@@ -227,13 +233,14 @@ class SkpController extends Controller
                         'place'       => $item->place ?? '-',
                         'time_text'   => $item->time_text ?? '-',
                         'description' => $item->description ?? '',
-                        'pegawais'    => $assignedPegawais // Hanya berisi rekan se-tim di agenda ini!
+                        'pegawais'    => $assignedPegawais // Hanya berisi rekan se-tim di agenda ini
                     ];
                 }
             }
         }
 
-        return view('dashboard.skp.upload_mandiri', compact('myAgendas'));
+        // Kirimkan $allEmployees ke View
+        return view('dashboard.skp.upload_mandiri', compact('myAgendas', 'allEmployees'));
     }
 
     public function storeMandiri(Request $request)

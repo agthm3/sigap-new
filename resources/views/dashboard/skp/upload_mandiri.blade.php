@@ -40,7 +40,8 @@
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col justify-between">
 
-  <div x-data="kameraMandiri(@js($myAgendas), {{ auth()->id() }})" class="w-full max-w-lg mx-auto flex-1 flex flex-col justify-between p-4 space-y-4">
+  <!-- PASS $allEmployees ke dalam parameter fungsi kameraMandiri -->
+  <div x-data="kameraMandiri(@js($myAgendas), @js($allEmployees), {{ auth()->id() }})" class="w-full max-w-lg mx-auto flex-1 flex flex-col justify-between p-4 space-y-4">
 
     {{-- TOP BAR --}}
     <div class="flex items-center justify-between py-2 border-b border-gray-800">
@@ -119,7 +120,7 @@
         </div>
       </div>
 
-      <!-- Live Thumbnail Bar Foto Terpilih (Multiple) -->
+      <!-- Live Thumbnail Bar Foto Terpilih -->
       <div x-show="capturedPhotos.length > 0" class="space-y-1.5">
         <div class="flex items-center justify-between text-[11px] px-1 text-gray-400">
           <span>Foto Terpilih (<strong class="text-white" x-text="capturedPhotos.length"></strong> foto):</span>
@@ -141,16 +142,16 @@
         </div>
       </div>
 
-      <!-- TOMBOL SUMBER FOTO EKSTERNAL: KAMERA NATIVE & GALERI -->
+      <!-- TOMBOL SUMBER FOTO EKSTERNAL -->
       <div class="grid grid-cols-2 gap-2 pt-1">
         
-        <!-- Tombol 1: Kamera Bawaan HP (Native Camera) -->
+        <!-- Tombol Kamera Bawaan HP -->
         <label class="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 border border-gray-700 text-xs text-amber-400 cursor-pointer font-bold shadow transition-colors text-center">
           <span>📸 Kamera Bawaan HP</span>
           <input type="file" accept="image/*" capture="environment" @change="handleNativeCameraFile($event)" class="hidden">
         </label>
 
-        <!-- Tombol 2: Galeri HP / File (Multiple Selection) -->
+        <!-- Tombol Galeri -->
         <label class="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 border border-gray-700 text-xs text-emerald-400 cursor-pointer font-bold shadow transition-colors text-center">
           <span>📁 Galeri (Banyak Foto)</span>
           <input type="file" accept="image/*" multiple @change="handleMultipleGalleryFiles($event)" class="hidden">
@@ -197,7 +198,7 @@
                  class="w-full rounded-xl text-xs bg-gray-900 border-gray-700 text-white p-2.5" :class="sourceMode === 'agenda' ? 'opacity-70 cursor-not-allowed' : ''">
         </div>
 
-        {{-- INPUT CENTANG REKAN SE-TIM --}}
+        {{-- INPUT CENTANG REKAN SE-TIM (MODE AGENDA) --}}
         <div x-show="sourceMode === 'agenda' && anggotaLain.length > 0" class="space-y-1.5 p-3 rounded-2xl bg-gray-900/90 border border-amber-500/30">
           <div class="flex items-center justify-between">
             <label class="text-[11px] font-bold text-amber-400">👥 Rekan Se-tim yang Hadir / Ikut Foto:</label>
@@ -211,6 +212,29 @@
                 <input type="checkbox" :value="pegawai.id" x-model="selectedPegawaiIds" class="rounded text-maroon focus:ring-maroon w-4 h-4 bg-gray-900 border-gray-600">
               </label>
             </template>
+          </div>
+        </div>
+
+        {{-- INPUT TAG REKAN LAIN (MODE MANUAL) --}}
+        <div x-show="sourceMode === 'manual'" class="space-y-1.5 p-3 rounded-2xl bg-gray-900/90 border border-blue-500/30" x-cloak>
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-[11px] font-bold text-blue-400">👥 Tag Rekan Pegawai (Opsional):</label>
+            <span class="text-[10px] text-gray-400 font-normal" x-text="selectedPegawaiIds.length + ' Dipilih'"></span>
+          </div>
+          
+          <input type="text" x-model="searchPegawai" placeholder="🔍 Cari nama pegawai yang hadir..." 
+                 class="w-full text-xs rounded-xl bg-gray-800 border-gray-700 text-white p-2 focus:ring-blue-500 focus:border-blue-500 mb-2 outline-none">
+
+          <div class="space-y-1.5 max-h-40 overflow-y-auto pr-1 scrollbar-thin">
+            <template x-for="pegawai in filteredAllEmployees" :key="pegawai.id">
+              <label class="flex items-center justify-between p-2 rounded-xl bg-gray-800 hover:bg-gray-700/80 border border-gray-700 cursor-pointer transition-colors">
+                <span class="text-xs text-gray-200 font-semibold" x-text="pegawai.name"></span>
+                <input type="checkbox" :value="pegawai.id" x-model="selectedPegawaiIds" class="rounded text-blue-500 focus:ring-blue-500 w-4 h-4 bg-gray-900 border-gray-600">
+              </label>
+            </template>
+            <div x-show="filteredAllEmployees.length === 0" class="text-center p-2 text-xs text-gray-500">
+              Pegawai tidak ditemukan.
+            </div>
           </div>
         </div>
 
@@ -237,14 +261,12 @@
       <!-- DUA TOMBOL AKSI SIMPAN -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
         
-        <!-- Tombol 1: Simpan Saja -->
         <button type="button" @click="submitForm(false)" :disabled="isLoading || capturedPhotos.length === 0 || isProcessingPhoto"
                 class="w-full py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold text-xs rounded-xl disabled:opacity-40 transition-all shadow-md flex items-center justify-center gap-1.5 border border-gray-600">
           <span x-show="!isLoading">💾 Simpan Saja</span>
           <span x-show="isLoading && submitMode === 'save_only'" class="animate-pulse">Menyimpan...</span>
         </button>
 
-        <!-- Tombol 2: Simpan & Bagikan ke WhatsApp -->
         <button type="button" @click="submitForm(true)" :disabled="isLoading || capturedPhotos.length === 0 || isProcessingPhoto"
                 class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl disabled:opacity-40 transition-all shadow-md flex items-center justify-center gap-1.5">
           <span x-show="!isLoading">🚀 Simpan & Kirim WA</span>
@@ -257,7 +279,7 @@
   </div>
 
   <script>
-  function kameraMandiri(myAgendasList, currentUserId) {
+  function kameraMandiri(myAgendasList, allEmployeesList, currentUserId) {
     return {
       stream: null,
       isCameraActive: true,
@@ -266,6 +288,11 @@
       activePreviewIndex: null,
       sourceMode: 'agenda',
       myAgendas: myAgendasList || [],
+      
+      // DATA UNTUK PENCARIAN MANUAL
+      allEmployees: allEmployeesList || [],
+      searchPegawai: '',
+
       selectedAgendaId: '',
       judulKegiatan: '',
       tanggalKegiatan: new Date().toISOString().split('T')[0],
@@ -278,6 +305,13 @@
       anggotaLain: [],        
       selectedPegawaiIds: [], 
       currentUserId: currentUserId,
+
+      get filteredAllEmployees() {
+        if (this.searchPegawai.trim() === '') return this.allEmployees;
+        return this.allEmployees.filter(p => 
+          p.name.toLowerCase().includes(this.searchPegawai.toLowerCase())
+        );
+      },
 
       init() {
         this.startCamera();
@@ -484,6 +518,7 @@
         this.deskripsiKegiatan = '';
         this.anggotaLain = [];
         this.selectedPegawaiIds = [];
+        this.searchPegawai = ''; // Reset pencarian
       },
 
       onAgendaChange() {
@@ -553,6 +588,7 @@
 
           if (response.ok && (data.status === 'success' || data.success)) {
             
+            // LOGIKA JIKA "SIMPAN SAJA"
             if (!shareToWa) {
               Swal.fire({
                 icon: 'success',
@@ -566,6 +602,7 @@
               return;
             }
 
+            // LOGIKA JIKA "SIMPAN & SHARE WA"
             const redirectUrl = data.redirect || "{{ route('sigap-skp.pribadi') }}";
             const origWaUrl = data.wa_url || data.wa_message;
             
