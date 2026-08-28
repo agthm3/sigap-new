@@ -159,9 +159,20 @@ Diberikan kepada:
 </h2>
 
 <p class="mt-4 text-gray-700 max-w-2xl mx-auto">
-atas partisipasi dalam kegiatan
-</p>
+    @php
+        $peran = $sertifikat->kegiatan->peran_peserta ?? 'Peserta';
+    @endphp
 
+    @if($peran === 'Tenaga Ahli')
+        telah menjadi tenaga ahli pada kegiatan
+    @elseif($peran === 'Narasumber')
+        telah menjadi narasumber pada kegiatan
+    @elseif($peran === 'Panitia')
+        telah menjadi panitia pada kegiatan
+    @else
+        atas partisipasi dalam kegiatan
+    @endif
+</p>
 <p class="mt-2 text-xl font-semibold text-gray-900 font-sertifikat">
 {{ $sertifikat->kegiatan->nama_kegiatan }}
 </p>

@@ -37,7 +37,8 @@
     <h3 class="text-2xl font-extrabold text-emerald-700">{{ $totalSelesai }}</h3>
   </div>
 </div>
-{{-- ================= FORM FILTERING & PENCARIAN CANTIK ================= --}}
+
+{{-- ================= FORM FILTERING & PENCARIAN ================= --}}
 <div class="mb-4 bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mt-4">
   <div class="px-4 py-3 border-b bg-gray-50 flex items-center justify-between">
     <div class="flex items-center gap-2">
@@ -46,7 +47,7 @@
       </svg>
       <h3 class="text-sm font-semibold text-gray-700">Filter & Pencarian Kegiatan</h3>
     </div>
-    @if(request()->filled('q') || request()->filled('status'))
+    @if(request()->filled('q') || request()->filled('status') || request()->filled('kategori'))
       <a href="{{ route('sigap-daftar-hadir.index') }}" class="text-xs font-semibold text-red-600 hover:text-red-800 transition-colors flex items-center gap-1">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/>
@@ -59,9 +60,9 @@
   <form action="{{ route('sigap-daftar-hadir.index') }}" method="GET" class="p-4">
     <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
       
-      <!-- Input Cari Kata Kunci (Nama Kegiatan) -->
-      <div class="md:col-span-6 relative">
-        <label for="q" class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Nama Kegiatan</label>
+      <!-- Input Pencarian Bebas (Nama Kegiatan / Tanggal / Tempat) -->
+      <div class="md:col-span-5 relative">
+        <label for="q" class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Kata Kunci</label>
         <div class="relative rounded-xl shadow-sm">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -69,14 +70,34 @@
             </svg>
           </div>
           <input type="text" name="q" id="q" value="{{ request('q') }}" 
-                 placeholder="Ketik nama kegiatan yang dicari..." 
+                 placeholder="Cari kegiatan, tanggal (cth: Agustus), tempat..." 
                  class="block w-full pl-9 pr-4 py-2 bg-gray-50/50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-maroon focus:ring-4 focus:ring-maroon/10 focus:bg-white transition-all">
         </div>
       </div>
 
-      <!-- Dropdown Filter Status -->
+      <!-- Dropdown Filter Kategori Peran -->
       <div class="md:col-span-3">
-        <label for="status" class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Status Kegiatan</label>
+        <label for="kategori" class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Kategori / Peran</label>
+        <div class="relative">
+          <select name="kategori" id="kategori" 
+                  class="block w-full px-3 py-2 bg-gray-50/50 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:border-maroon focus:ring-4 focus:ring-maroon/10 focus:bg-white transition-all appearance-none cursor-pointer">
+            <option value="">Semua Kategori</option>
+            <option value="Peserta" {{ request('kategori') === 'Peserta' ? 'selected' : '' }}>Peserta</option>
+            <option value="Tenaga Ahli" {{ request('kategori') === 'Tenaga Ahli' ? 'selected' : '' }}>Tenaga Ahli</option>
+            <option value="Narasumber" {{ request('kategori') === 'Narasumber' ? 'selected' : '' }}>Narasumber</option>
+            <option value="Panitia" {{ request('kategori') === 'Panitia' ? 'selected' : '' }}>Panitia</option>
+          </select>
+          <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dropdown Filter Status -->
+      <div class="md:col-span-2">
+        <label for="status" class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Status</label>
         <div class="relative">
           <select name="status" id="status" 
                   class="block w-full px-3 py-2 bg-gray-50/50 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:border-maroon focus:ring-4 focus:ring-maroon/10 focus:bg-white transition-all appearance-none cursor-pointer">
@@ -94,7 +115,7 @@
       </div>
 
       <!-- Tombol Submit Cari -->
-      <div class="md:col-span-3">
+      <div class="md:col-span-2">
         <button type="submit" 
                 class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-maroon hover:bg-maroon-800 text-white text-sm font-semibold rounded-xl shadow-sm transition-all active:scale-[0.98] cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -107,7 +128,8 @@
     </div>
   </form>
 </div>
-{{-- ===================================================================== --}}
+
+{{-- ================= TABEL KEGIATAN ================= --}}
 <div class="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm mt-4">
   <div class="px-4 py-3 border-b bg-gray-50">
     <h2 class="font-semibold text-gray-900">Daftar Kegiatan</h2>
@@ -121,8 +143,10 @@
           <th class="px-4 py-3 text-left">Hari/Tanggal</th>
           <th class="px-4 py-3 text-left">Tempat</th>
           <th class="px-4 py-3 text-left">Waktu</th>
+          <th class="px-4 py-3 text-left">Peruntukan</th>
           <th class="px-4 py-3 text-left">Peserta</th>
-          <th class="px-4 py-3 text-left">Pembuat</th> <th class="px-4 py-3 text-left">Status</th>
+          <th class="px-4 py-3 text-left">Pembuat</th>
+          <th class="px-4 py-3 text-left">Status</th>
           <th class="px-4 py-3 text-left">Aksi</th>
         </tr>
       </thead>
@@ -133,6 +157,20 @@
             <td class="px-4 py-3">{{ $item->hari_tanggal }}</td>
             <td class="px-4 py-3">{{ $item->tempat }}</td>
             <td class="px-4 py-3">{{ $item->waktu }}</td>
+            <td class="px-4 py-3">
+              @php
+                $peran = $item->kategori_peran ?? 'Peserta';
+                $badgeStyle = match($peran) {
+                  'Tenaga Ahli' => 'bg-purple-50 text-purple-700 border-purple-200',
+                  'Narasumber'  => 'bg-amber-50 text-amber-700 border-amber-200',
+                  'Panitia'     => 'bg-sky-50 text-sky-700 border-sky-200',
+                  default       => 'bg-gray-100 text-gray-700 border-gray-200',
+                };
+              @endphp
+              <span class="inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold border {{ $badgeStyle }}">
+                {{ $peran }}
+              </span>
+            </td>
             <td class="px-4 py-3">{{ $item->peserta_count }}</td>
             <td class="px-4 py-3">
               <span class="font-medium text-gray-700">{{ $item->creator->name ?? 'Sistem' }}</span>
@@ -182,7 +220,6 @@
                 @endhasanyrole
 
                 @role('admin')
-                  {{-- Form hapus — id unik per baris --}}
                   <form id="form-delete-{{ $item->uuid }}"
                         action="{{ route('sigap-daftar-hadir.destroy', $item->uuid) }}"
                         method="POST"
@@ -202,8 +239,8 @@
           </tr>
         @empty
           <tr>
-            <td colspan="7" class="px-4 py-6 text-center text-gray-500">
-              Belum ada kegiatan daftar hadir.
+            <td colspan="9" class="px-4 py-6 text-center text-gray-500">
+              Belum ada data kegiatan daftar hadir yang cocok.
             </td>
           </tr>
         @endforelse

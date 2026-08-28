@@ -28,14 +28,26 @@ class SigapDaftarHadirController extends Controller
             $base->where('created_by', $user->id);
         }
 
+        // Pencarian multi-kolom (Nama Kegiatan, Hari/Tanggal, dan Tempat)
         if ($request->filled('q')) {
             $keyword = trim($request->get('q'));
-            $base->where('nama_kegiatan', 'like', "%{$keyword}%");
+            $base->where(function ($query) use ($keyword) {
+                $query->where('nama_kegiatan', 'like', "%{$keyword}%")
+                      ->orWhere('hari_tanggal', 'like', "%{$keyword}%")
+                      ->orWhere('tempat', 'like', "%{$keyword}%");
+            });
         }
 
+        // Filter Status Kegiatan
         if ($request->filled('status')) {
             $status = $request->get('status');
             $base->where('status', $status);
+        }
+
+        // Filter Kategori Peran
+        if ($request->filled('kategori')) {
+            $kategori = $request->get('kategori');
+            $base->where('kategori_peran', $kategori);
         }
 
         $totalKegiatan = (clone $base)->count();
@@ -70,6 +82,7 @@ class SigapDaftarHadirController extends Controller
             'hari_tanggal'         => ['required', 'string', 'max:255'],
             'tempat'               => ['required', 'string', 'max:255'],
             'waktu'                => ['required', 'string', 'max:255'],
+            'kategori_peran' => ['required', 'in:Peserta,Tenaga Ahli,Narasumber,Panitia'],
             'undangan_pdf'  => [
                 'nullable', 
                 'file', 
@@ -135,6 +148,7 @@ class SigapDaftarHadirController extends Controller
                 'undangan_path'   => $undanganPath,
                 'buat_sertifikat' => $request->has('buat_sertifikat') ? 1 : 0,
                 'nomor_surat'     => $request->input('nomor_surat'),
+                'kategori_peran'  => $request->input('kategori_peran'),
             ]);
 
             $pejabatInput = $request->input('pejabat', []);
@@ -197,6 +211,7 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
             'waktu'                 => ['required', 'string', 'max:255'],
             'buat_sertifikat'       => ['nullable'],
             'hapus_undangan'        => ['nullable', 'in:1'],
+            'kategori_peran' => ['required', 'in:Peserta,Tenaga Ahli,Narasumber,Panitia'],
             
             // VALIDASI FILE: Hanya menerima versi PDF 1.4 ke bawah (Anti-Crash Merger)
             'undangan_pdf'          => [
@@ -298,6 +313,7 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
                     'no_hp'        => $row['no_hp'],
                     'email'        => $row['email'] ?? null,
                     'urutan_absen' => (int) $row['urutan_absen'],
+                    'kategori_peran'  => $request->kategori_peran,  
                 ]);
             }
 
@@ -349,7 +365,8 @@ public function updateStatus(Request $request, SigapDaftarHadirKegiatan $kegiata
                     'tempat'     => $kegiatan->tempat,       // ← MENYIMPAN DATA TEMPAT DAFTAR HADIR KE SERTIFIKAT
                     'jenis'      => 'Kegiatan Internal',
                     'keterangan' => 'Auto-generate dari Daftar Hadir: ' . $kegiatan->nama_kegiatan,
-                    'status'     => 'Aktif'
+                    'status'     => 'Aktif',
+                    'peran_peserta' => $kegiatan->kategori_peran ?? 'Peserta' // ← MENYIMPAN DATA KATEGORI PERAN KE SERTIFIKAT
                 ]
             );
 

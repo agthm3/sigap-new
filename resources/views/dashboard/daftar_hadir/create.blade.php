@@ -23,7 +23,16 @@
                class="w-full rounded-xl border-gray-300 focus:border-maroon focus:ring-maroon" required>
         @error('nama_kegiatan') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
       </div>
-
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Peruntukan / Kategori</label>
+        <select name="kategori_peran" class="w-full rounded-xl border-gray-300 focus:border-maroon focus:ring-maroon" required>
+          <option value="Peserta" {{ old('kategori_peran', $kegiatan->kategori_peran ?? 'Peserta') == 'Peserta' ? 'selected' : '' }}>Peserta (Default)</option>
+          <option value="Tenaga Ahli" {{ old('kategori_peran', $kegiatan->kategori_peran ?? '') == 'Tenaga Ahli' ? 'selected' : '' }}>Tenaga Ahli</option>
+          <option value="Narasumber" {{ old('kategori_peran', $kegiatan->kategori_peran ?? '') == 'Narasumber' ? 'selected' : '' }}>Narasumber</option>
+          <option value="Panitia" {{ old('kategori_peran', $kegiatan->kategori_peran ?? '') == 'Panitia' ? 'selected' : '' }}>Panitia</option>
+        </select>
+        <p class="text-xs text-gray-500 mt-1">Menentukan teks otomatis pada cetakan sertifikat.</p>
+      </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Hari/Tanggal</label>
