@@ -9,7 +9,7 @@
     <p class="text-sm text-gray-600 mt-1">Setelah disimpan, QR code akan muncul di halaman detail kegiatan.</p>
   </div>
 
-  <form action="{{ route('sigap-daftar-hadir.store') }}" method="POST"
+  <form id="form-kegiatan" action="{{ route('sigap-daftar-hadir.store') }}" method="POST"
         class="space-y-6" enctype="multipart/form-data">
     @csrf
 
@@ -64,8 +64,8 @@
         <!-- Input File Undangan PDF -->
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Upload Undangan (PDF)</label>
-            <input type="file" name="undangan_pdf" accept="application/pdf"
-                   class="block w-full text-sm text-gray-500
+            <input type="file" id="undangan_pdf" name="undangan_pdf" accept="application/pdf"
+                   class="block w-full text-sm text-gray-500 transition-all
                           file:mr-4 file:py-2 file:px-4
                           file:rounded-xl file:border-0
                           file:text-sm file:font-semibold
@@ -77,9 +77,9 @@
         <!-- Input Nomor Surat -->
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Nomor Surat/Undangan</label>
-            <input type="text" name="nomor_surat" value="{{ old('nomor_surat', $kegiatan->nomor_surat ?? '') }}"
+            <input type="text" id="nomor_surat" name="nomor_surat" value="{{ old('nomor_surat', $kegiatan->nomor_surat ?? '') }}"
                    placeholder="000.9/464/BRIDA/IV/2026"
-                   class="w-full rounded-xl border-gray-300 focus:border-maroon focus:ring-maroon">
+                   class="w-full rounded-xl border-gray-300 transition-all focus:border-maroon focus:ring-maroon">
             <p class="text-xs text-gray-500 mt-1">Jika dikosongkan, format nomor sertifikat hanya berisi SERTIF-Urutan.</p>
             @error('nomor_surat') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
         </div>
@@ -215,6 +215,52 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
+  // ---- SweetAlert Validasi Undangan ----
+  const formKegiatan = document.getElementById('form-kegiatan');
+  const inputUndangan = document.getElementById('undangan_pdf');
+  const inputNomor = document.getElementById('nomor_surat');
+
+  formKegiatan.addEventListener('submit', function(e) {
+    if (inputUndangan.value === '' && inputNomor.value.trim() === '') {
+      e.preventDefault(); // Hentikan proses simpan sementara
+
+      Swal.fire({
+        title: 'Tidak Ada Undangan/Nomor?',
+        text: 'Anda belum mengunggah file undangan PDF atau mengisi Nomor Surat. Jika memang ada, sebaiknya diisi sekarang.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Tetap Simpan',
+        cancelButtonText: 'Lengkapi Data',
+        confirmButtonColor: '#7a2222', // maroon
+        cancelButtonColor: '#6b7280',  // abu-abu
+        reverseButtons: true
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Lanjut submit jika user menekan 'Tetap Simpan'
+          formKegiatan.submit();
+        } else {
+          // Highlight kotak input agar user notice
+          inputUndangan.classList.add('ring-2', 'ring-red-500', 'border-red-500', 'bg-red-50');
+          inputNomor.classList.add('ring-2', 'ring-red-500', 'border-red-500');
+
+          // Hapus efek highlight saat user mulai mengisi data
+          inputUndangan.addEventListener('change', () => {
+            inputUndangan.classList.remove('ring-2', 'ring-red-500', 'border-red-500', 'bg-red-50');
+          }, { once: true });
+          
+          inputNomor.addEventListener('input', () => {
+            inputNomor.classList.remove('ring-2', 'ring-red-500', 'border-red-500');
+          }, { once: true });
+
+          // Scroll halaman ke posisi input file
+          inputUndangan.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
+    }
+  });
+
+
   // ---- Toggle section pejabat ----
   const toggleBtn     = document.getElementById('toggle-pejabat');
   const pejabatSection = document.getElementById('pejabat-section');
