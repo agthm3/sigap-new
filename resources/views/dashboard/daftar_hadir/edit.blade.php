@@ -20,14 +20,25 @@
           <input type="text" name="nama_kegiatan" value="{{ old('nama_kegiatan', $kegiatan->nama_kegiatan) }}"
                  class="w-full rounded-xl border-gray-300 focus:border-maroon focus:ring-maroon" required>
         </div>
+        
+        {{-- TAMBAHAN: Dropdown Kategori Peran --}}
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Peruntukan / Kategori</label>
+          <select name="kategori_peran" class="w-full rounded-xl border-gray-300 focus:border-maroon focus:ring-maroon" required>
+            <option value="Peserta" {{ old('kategori_peran', $kegiatan->kategori_peran ?? 'Peserta') == 'Peserta' ? 'selected' : '' }}>Peserta (Default)</option>
+            <option value="Tenaga Ahli" {{ old('kategori_peran', $kegiatan->kategori_peran) == 'Tenaga Ahli' ? 'selected' : '' }}>Tenaga Ahli</option>
+            <option value="Narasumber" {{ old('kategori_peran', $kegiatan->kategori_peran) == 'Narasumber' ? 'selected' : '' }}>Narasumber</option>
+            <option value="Panitia" {{ old('kategori_peran', $kegiatan->kategori_peran) == 'Panitia' ? 'selected' : '' }}>Panitia</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-t pt-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Waktu</label>
           <input type="text" name="waktu" value="{{ old('waktu', $kegiatan->waktu) }}"
                  class="w-full rounded-xl border-gray-300 focus:border-maroon focus:ring-maroon" required>
         </div>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Hari/Tanggal</label>
           <input type="text" name="hari_tanggal" value="{{ old('hari_tanggal', $kegiatan->hari_tanggal) }}"
@@ -41,53 +52,55 @@
       </div>
     </div>
 
+    {{-- ===== UPLOAD UNDANGAN & SERTIFIKAT ===== --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4 mt-2">
-<div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Ganti/Hapus Undangan (PDF)</label>
-          <input type="file" name="undangan_pdf" accept="application/pdf"
-                 class="block w-full text-sm text-gray-500
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded-xl file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-maroon-50 file:text-maroon
-                        hover:file:bg-maroon-100 focus:outline-none">
-          
-          @if($kegiatan->undangan_path)
-            <div class="mt-3 flex flex-col gap-2 p-3 bg-gray-50 border border-gray-200 rounded-xl">
-              <div class="flex items-center gap-1.5 text-xs text-emerald-700">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span>Undangan tersimpan: 
-                  <a href="{{ asset('storage/' . $kegiatan->undangan_path) }}" target="_blank" class="underline font-bold hover:text-emerald-900">
-                    Lihat File
-                  </a>
-                </span>
-              </div>
-              
-              <label class="inline-flex items-center gap-2 cursor-pointer mt-1 w-max">
-                <input type="checkbox" name="hapus_undangan" value="1" 
-                       class="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500">
-                <span class="text-xs font-semibold text-red-600 hover:text-red-800">Hapus dokumen undangan ini</span>
-              </label>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Ganti/Hapus Undangan (PDF)</label>
+        <input type="file" name="undangan_pdf" accept="application/pdf"
+               class="block w-full text-sm text-gray-500
+                      file:mr-4 file:py-2 file:px-4
+                      file:rounded-xl file:border-0
+                      file:text-sm file:font-semibold
+                      file:bg-maroon-50 file:text-maroon
+                      hover:file:bg-maroon-100 focus:outline-none">
+        
+        @if($kegiatan->undangan_path)
+          <div class="mt-3 flex flex-col gap-2 p-3 bg-gray-50 border border-gray-200 rounded-xl">
+            <div class="flex items-center gap-1.5 text-xs text-emerald-700">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <span>Undangan tersimpan: 
+                <a href="{{ asset('storage/' . $kegiatan->undangan_path) }}" target="_blank" class="underline font-bold hover:text-emerald-900">
+                  Lihat File
+                </a>
+              </span>
             </div>
-          @else
-            <p class="text-xs text-gray-400 mt-1">Belum ada file undangan yang dilampirkan.</p>
-          @endif
-          
-          @error('undangan_pdf') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-        </div>
-
-        <div class="flex items-center md:mt-6">
-          <input type="checkbox" name="buat_sertifikat" value="1" id="buat_sertifikat"
-                 {{ old('buat_sertifikat', $kegiatan->buat_sertifikat) ? 'checked' : '' }}
-                 class="h-5 w-5 rounded border-gray-300 text-maroon focus:ring-maroon cursor-pointer">
-          <label for="buat_sertifikat" class="ml-2 block text-sm font-medium text-gray-900 cursor-pointer">
-            Buatkan Sertifikat
-          </label>
-        </div>
+            
+            <label class="inline-flex items-center gap-2 cursor-pointer mt-1 w-max">
+              <input type="checkbox" name="hapus_undangan" value="1" 
+                     class="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500">
+              <span class="text-xs font-semibold text-red-600 hover:text-red-800">Hapus dokumen undangan ini</span>
+            </label>
+          </div>
+        @else
+          <p class="text-xs text-gray-400 mt-1">Belum ada file undangan yang dilampirkan.</p>
+        @endif
+        
+        @error('undangan_pdf') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
       </div>
 
+      <div class="flex items-center md:mt-6">
+        <input type="checkbox" name="buat_sertifikat" value="1" id="buat_sertifikat"
+               {{ old('buat_sertifikat', $kegiatan->buat_sertifikat) ? 'checked' : '' }}
+               class="h-5 w-5 rounded border-gray-300 text-maroon focus:ring-maroon cursor-pointer">
+        <label for="buat_sertifikat" class="ml-2 block text-sm font-medium text-gray-900 cursor-pointer">
+          Buatkan Sertifikat
+        </label>
+      </div>
+    </div>
+
+    {{-- ===== TABEL EDIT PESERTA ===== --}}
     <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
       <div class="flex items-center justify-between mb-3">
         <h2 class="font-semibold text-gray-900">Edit Peserta & Urutan Absen</h2>

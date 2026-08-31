@@ -344,7 +344,7 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
             ->with('success', 'Kegiatan dan data peserta berhasil diperbarui.');
     }
 
-public function updateStatus(Request $request, SigapDaftarHadirKegiatan $kegiatan)
+    public function updateStatus(Request $request, SigapDaftarHadirKegiatan $kegiatan)
     {
         $request->validate([
             'status' => ['required', 'in:draft,proses,selesai'],
@@ -352,39 +352,74 @@ public function updateStatus(Request $request, SigapDaftarHadirKegiatan $kegiata
 
         $kegiatan->update(['status' => $request->status]);
 
-        // JIKA STATUS SELESAI DAN MINTA DIBUATKAN SERTIFIKAT -> GENERATE KE TABEL SERTIFIKAT
+        // JIKA STATUS SELESAI DAN MINTA DIBUATKAN SERTIFIKAT -> GENERATE & SINKRONISASI KE TABEL SERTIFIKAT
         if ($request->status === 'selesai' && $kegiatan->buat_sertifikat == 1) {
             
-            // 1. Buat / Perbarui master kegiatan di tabel sertifikat_kegiatans beserta TANGGAL dan TEMPAT
+            // 1. Buat / Perbarui master kegiatan di tabel sertifikat_kegiatans
             $sertifKegiatan = SertifikatKegiatan::updateOrCreate(
                 [
                     'nama_kegiatan' => $kegiatan->nama_kegiatan,
                     'tanggal'       => $kegiatan->hari_tanggal, // Mengambil data Hari/Tanggal daftar hadir
                 ],
                 [
-                    'tempat'     => $kegiatan->tempat,       // ← MENYIMPAN DATA TEMPAT DAFTAR HADIR KE SERTIFIKAT
-                    'jenis'      => 'Kegiatan Internal',
-                    'keterangan' => 'Auto-generate dari Daftar Hadir: ' . $kegiatan->nama_kegiatan,
-                    'status'     => 'Aktif',
-                    'peran_peserta' => $kegiatan->kategori_peran ?? 'Peserta' // ← MENYIMPAN DATA KATEGORI PERAN KE SERTIFIKAT
+                    'tempat'        => $kegiatan->tempat,
+                    'jenis'         => 'Kegiatan Internal',
+                    'keterangan'    => 'Auto-generate dari Daftar Hadir: ' . $kegiatan->nama_kegiatan,
+                    'status'        => 'Aktif',
+                    'peran_peserta' => $kegiatan->kategori_peran ?? 'Peserta'
                 ]
             );
 
-            // 2. Looping seluruh peserta dan buatkan data sertifikatnya
+            // Array untuk menampung nama-nama peserta yang aktif/masih ada
+            $namaPesertaValid = [];
+
+            // 2. Looping seluruh peserta daftar hadir untuk ditambah/diperbarui
             foreach ($kegiatan->peserta as $p) {
-                // Menyertakan $kegiatan->id agar terjamin unik total di database
-                $nomorDinamis = $this->formatNomorSertifikat($kegiatan->nomor_surat, $p->urutan_absen, $kegiatan->id);
-                
-                SertifikatPeserta::updateOrCreate(
-                    [
-                        'kegiatan_id'   => $sertifKegiatan->id,
-                        'nama_penerima' => $p->nama,
-                    ],
-                    [
+                // Masukkan nama peserta ke daftar valid
+                $namaPesertaValid[] = $p->nama;
+
+                // Cek apakah peserta ini sudah punya data sertifikat di kegiatan ini
+                $sertifPeserta = SertifikatPeserta::where('kegiatan_id', $sertifKegiatan->id)
+                    ->where('nama_penerima', $p->nama)
+                    ->first();
+
+                if ($sertifPeserta) {
+                    // PESERTA LAMA: Cukup update instansi tanpa menyentuh nomor sertifikatnya
+                    $sertifPeserta->update([
+                        'instansi' => $p->instansi,
+                    ]);
+                } else {
+                    // PESERTA BARU: Cari nomor sertifikat unik yang belum pernah terpakai
+                    $urutanTarget = $p->urutan_absen;
+                    do {
+                        $nomorDinamis = $this->formatNomorSertifikat($kegiatan->nomor_surat, $urutanTarget, $kegiatan->id);
+                        $exists = SertifikatPeserta::where('nomor_sertifikat', $nomorDinamis)->exists();
+                        if ($exists) {
+                            $urutanTarget++; // Lompat ke nomor urut berikutnya jika sudah terpakai
+                        }
+                    } while ($exists);
+
+                    // Simpan sertifikat baru
+                    SertifikatPeserta::create([
+                        'kegiatan_id'      => $sertifKegiatan->id,
+                        'nama_penerima'    => $p->nama,
                         'nomor_sertifikat' => $nomorDinamis,
                         'instansi'         => $p->instansi,
-                    ]
-                );
+                        'status'           => 'Aktif'
+                    ]);
+                }
+            }
+
+            // 3. SINKRONISASI PENGHAPUSAN (CLEANUP)
+            // Hapus sertifikat yang nama penerimanya sudah tidak ada di $namaPesertaValid
+            if (!empty($namaPesertaValid)) {
+                SertifikatPeserta::where('kegiatan_id', $sertifKegiatan->id)
+                    ->whereNotIn('nama_penerima', $namaPesertaValid)
+                    ->delete();
+            } else {
+                // Jika ternyata di daftar hadir SEMUA peserta dihapus hingga kosong 0, 
+                // maka bersihkan juga semua sertifikat di kegiatan ini.
+                SertifikatPeserta::where('kegiatan_id', $sertifKegiatan->id)->delete();
             }
         }
 
@@ -668,18 +703,29 @@ public function updateStatus(Request $request, SigapDaftarHadirKegiatan $kegiata
                     ->where('tanggal', $kegiatan->hari_tanggal)
                     ->first();
 
-                // Mapping mengambil nomor sertifikat sah asli yang tersimpan di database
+                // Mapping mengambil nomor sertifikat sah asli dan ID yang tersimpan di database
                 $kegiatan->peserta->transform(function ($p) use ($sertifKegiatan, $kegiatan) {
                     $nomorSah = null;
+                    $sertifikatId = null; // Menampung ID untuk link clickable
+
                     if ($sertifKegiatan) {
-                        $nomorSah = SertifikatPeserta::where('kegiatan_id', $sertifKegiatan->id)
+                        // Cari data sertifikat berdasarkan kegiatan & nama
+                        $sertifPeserta = SertifikatPeserta::where('kegiatan_id', $sertifKegiatan->id)
                             ->where('nama_penerima', $p->nama)
-                            ->value('nomor_sertifikat');
+                            ->first();
+
+                        if ($sertifPeserta) {
+                            $nomorSah = $sertifPeserta->nomor_sertifikat;
+                            $sertifikatId = $sertifPeserta->id; // Ambil ID (contoh: 574)
+                        }
                     }
+
                     if (!$nomorSah) {
                         $nomorSah = $this->formatNomorSertifikat($kegiatan->nomor_surat, $p->urutan_absen, $kegiatan->id);
                     }
+                    
                     $p->nomor_sertifikat_dinamis = $nomorSah;
+                    $p->sertifikat_id = $sertifikatId; // Simpan ke object peserta agar bisa dipanggil di view
                     return $p;
                 });
 
@@ -973,17 +1019,29 @@ public function updateStatus(Request $request, SigapDaftarHadirKegiatan $kegiata
                     ->where('tanggal', $kegiatan->hari_tanggal)
                     ->first();
 
+                // Mapping mengambil nomor sertifikat sah asli dan ID yang tersimpan di database
                 $kegiatan->peserta->transform(function ($p) use ($sertifKegiatan, $kegiatan) {
                     $nomorSah = null;
+                    $sertifikatId = null; // Menampung ID untuk link clickable
+
                     if ($sertifKegiatan) {
-                        $nomorSah = SertifikatPeserta::where('kegiatan_id', $sertifKegiatan->id)
+                        // Cari data sertifikat berdasarkan kegiatan & nama
+                        $sertifPeserta = SertifikatPeserta::where('kegiatan_id', $sertifKegiatan->id)
                             ->where('nama_penerima', $p->nama)
-                            ->value('nomor_sertifikat');
+                            ->first();
+
+                        if ($sertifPeserta) {
+                            $nomorSah = $sertifPeserta->nomor_sertifikat;
+                            $sertifikatId = $sertifPeserta->id; // Ambil ID (contoh: 574)
+                        }
                     }
+
                     if (!$nomorSah) {
                         $nomorSah = $this->formatNomorSertifikat($kegiatan->nomor_surat, $p->urutan_absen, $kegiatan->id);
                     }
+                    
                     $p->nomor_sertifikat_dinamis = $nomorSah;
+                    $p->sertifikat_id = $sertifikatId; // Simpan ke object peserta agar bisa dipanggil di view
                     return $p;
                 });
 

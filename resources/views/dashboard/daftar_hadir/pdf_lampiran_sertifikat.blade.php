@@ -61,6 +61,14 @@
             color: #800000;
             font-weight: bold;
         }
+        
+        /* Text URL Styling */
+        .url-text {
+            color: #0056b3;
+            font-size: 9.5px;
+            font-family: sans-serif;
+            word-break: break-all;
+        }
     </style>
 </head>
 <body>
@@ -93,14 +101,20 @@
 
         <div class="instruction-box">
             <strong>Informasi Pengambilan Sertifikat:</strong><br>
-            Bagi seluruh peserta yang namanya tercantum pada tabel di bawah ini, E-Sertifikat resmi sudah dapat diunduh melalui tautan <span class="text-maroon">https://sigap.brida.makassarkota.go.id/sertifikat</span> (atau dengan memindai <strong>QR Code</strong> di pojok kanan bawah dokumen ini). Silakan masukkan <strong>Nomor Sertifikat</strong> Anda yang bersangkutan pada kolom pencarian sistem.
+            Bagi seluruh peserta yang namanya tercantum pada tabel di bawah ini, E-Sertifikat resmi sudah dapat diunduh. 
+            <br><br>
+            Anda memiliki 2 opsi untuk mengunduhnya:
+            <ul style="margin: 3px 0; padding-left: 20px;">
+                <li><strong>Opsi Langsung:</strong> Klik tautan (URL) berwarna biru yang tertera di bawah nomor sertifikat Anda.</li>
+                <li><strong>Opsi Pencarian:</strong> Pindai QR Code di pojok kanan bawah dokumen ini, lalu masukkan Nomor Sertifikat Anda.</li>
+            </ul>
         </div>
 
         <table>
             <thead>
                 <tr>
                     <th style="width: 5%" class="text-center">No</th>
-                    <th style="width: 35%">Nomor Sertifikat</th>
+                    <th style="width: 35%">Nomor & Tautan Sertifikat</th>
                     <th style="width: 30%">Nama Peserta</th>
                     <th style="width: 30%">Asal Dinas / Instansi</th>
                 </tr>
@@ -109,7 +123,18 @@
                 @foreach($kegiatan->peserta as $index => $p)
                 <tr>
                     <td class="text-center">{{ $index + 1 }}</td>
-                    <td style="font-family: monospace; font-size: 11px;">{{ $p->nomor_sertifikat_dinamis }}</td>
+                    <td>
+                        <div style="font-family: monospace; font-size: 11px; font-weight: bold; margin-bottom: 3px;">
+                            {{ $p->nomor_sertifikat_dinamis }}
+                        </div>
+                        
+                        {{-- Menampilkan URL eksplisit agar dideteksi otomatis oleh pembaca PDF (Chrome/Edge/Acrobat) --}}
+                        @if($p->sertifikat_id)
+                            <div class="url-text">
+                                https://sigap.brida.makassarkota.go.id/sertifikat/view/{{ $p->sertifikat_id }}
+                            </div>
+                        @endif
+                    </td>
                     <td>{{ $p->nama }}</td>
                     <td>{{ $p->instansi }}</td>
                 </tr>
