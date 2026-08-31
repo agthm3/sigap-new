@@ -46,18 +46,20 @@
                 <input type="text" x-model="dateText" @input="renderCanvas" class="mt-1 w-full rounded-lg border-gray-300 p-2.5 uppercase font-bold shadow-sm">
             </label>
 
+            <!-- Judul -->
             <label class="block">
                 <div class="flex justify-between items-center">
                     <span class="text-sm font-semibold text-gray-700">Judul Story</span>
-                    <span class="text-xs font-semibold text-gray-400" x-text="selectedTitle.length + '/90'"></span>
+                    <span class="text-xs font-semibold text-gray-400" x-text="(selectedTitle || '').length + '/90'"></span>
                 </div>
                 <textarea x-model="selectedTitle" @input="renderCanvas" rows="2" maxlength="90" class="mt-1 w-full rounded-lg border-gray-300 p-2.5 font-semibold shadow-sm focus:ring-maroon focus:border-maroon"></textarea>
             </label>
 
+            <!-- Deskripsi -->
             <label class="block">
                 <div class="flex justify-between items-center">
                     <span class="text-sm font-semibold text-gray-700">Deskripsi</span>
-                    <span class="text-xs font-semibold text-gray-400" x-text="description.length + '/250'"></span>
+                    <span class="text-xs font-semibold text-gray-400" x-text="(description || '').length + '/250'"></span>
                 </div>
                 <textarea x-model="description" @input="renderCanvas" rows="4" maxlength="250" class="mt-1 w-full rounded-lg border-gray-300 p-2.5 text-sm shadow-sm focus:ring-maroon focus:border-maroon"></textarea>
             </label>
@@ -133,27 +135,27 @@ function storyGenerator() {
             this.logoBrida.crossOrigin = 'anonymous';
             this.logoBrida.src = 'https://i.ibb.co.com/1JwDK8qG/LOGO-BRIDA-KOTA-MAKASSAR.png';
 
-            Promise.all([
-                new Promise(r => this.logoPemkot.onload = r),
-                new Promise(r => this.logoBrida.onload = r)
-            ]).then(() => {
+            const checkLoad = () => {
                 this.renderCanvas();
-            }).catch(() => {
-                this.renderCanvas();
-            });
+            };
+
+            this.logoPemkot.onload = checkLoad;
+            this.logoBrida.onload = checkLoad;
+
+            // Render awal
+            this.renderCanvas();
         },
 
         onSelectKinerja() {
             const selected = this.kinerjaList.find(k => k.id == this.selectedId);
             if (selected) {
-                this.dateText = selected.date.toUpperCase();
-                const rawTitle = selected.title || '';
-                this.selectedTitle = rawTitle.length > 90 ? rawTitle.substring(0, 87) + '...' : rawTitle;
+                this.dateText = (selected.date || '').toUpperCase();
+                
+                // Masukkan teks langsung sesuai batas input tanpa substring paksa
+                this.selectedTitle = selected.title || '';
+                this.description = selected.description || '';
 
-                const rawDesc = selected.description || '';
-                this.description = rawDesc.length > 250 ? rawDesc.substring(0, 247) + '...' : rawDesc;
-
-                this.availableImages = selected.images;
+                this.availableImages = selected.images || [];
                 this.selectedImages = [];
                 
                 if (this.availableImages.length >= this.layoutMode) {
@@ -195,7 +197,7 @@ function storyGenerator() {
             const W = 1080;
             const H = 1920;
 
-            // 1. Background Kertas
+            // 1. Background
             ctx.fillStyle = '#f6f5f0';
             ctx.fillRect(0, 0, W, H);
 
@@ -227,36 +229,32 @@ function storyGenerator() {
             ctx.stroke();
             ctx.restore();
 
-            // 3. Header Logo Box (Center Otomatis dengan Proporsi Asli)
-            const headerBoxH = 100;
-            const targetLogoH = 64; // Tinggi patokan logo
-
-            // Hitung lebar logo BRIDA berdasarkan aspek rasio aslinya
+            // 3. Header Logo Box
+            const targetLogoH = 64;
             let bridaW = 240;
             if (this.logoBrida && this.logoBrida.naturalHeight) {
                 const bridaRatio = this.logoBrida.naturalWidth / this.logoBrida.naturalHeight;
                 bridaW = targetLogoH * bridaRatio;
             }
 
-            // Hitung lebar logo Pemkot berdasarkan rasio aslinya
             let pemkotW = 55;
             if (this.logoPemkot && this.logoPemkot.naturalHeight) {
                 const pemkotRatio = this.logoPemkot.naturalWidth / this.logoPemkot.naturalHeight;
                 pemkotW = targetLogoH * pemkotRatio;
             }
 
-            // Hitung total lebar box agar presisi di tengah
             const textWidth = 190;
             const paddingHorizontal = 40;
             const dividerGap = 25;
             
             const headerBoxW = paddingHorizontal * 2 + pemkotW + dividerGap + textWidth + dividerGap + bridaW;
+            const headerBoxH = 100;
             const headerBoxX = (W - headerBoxW) / 2;
             const headerBoxY = 70;
 
             this.drawRoundedRect(ctx, headerBoxX, headerBoxY, headerBoxW, headerBoxH, 20, '#ffffff');
             
-            // Draw Logo Pemkot (Proporsional)
+            // Draw Logo Pemkot
             if (this.logoPemkot && this.logoPemkot.complete) {
                 ctx.drawImage(this.logoPemkot, headerBoxX + paddingHorizontal, headerBoxY + (headerBoxH - targetLogoH) / 2, pemkotW, targetLogoH);
             }
@@ -283,7 +281,7 @@ function storyGenerator() {
             ctx.lineTo(div2X, headerBoxY + 78);
             ctx.stroke();
 
-            // Logo BRIDA (Terkunci Sesuai Aspek Rasio Asli / Tidak Gepeng)
+            // Logo BRIDA
             if (this.logoBrida && this.logoBrida.complete) {
                 ctx.drawImage(this.logoBrida, div2X + dividerGap / 2, headerBoxY + (headerBoxH - targetLogoH) / 2, bridaW, targetLogoH);
             }
@@ -305,17 +303,17 @@ function storyGenerator() {
             ctx.fillStyle = '#ffffff';
             ctx.fillText(dateStr, infoBoxX + 55, infoBoxY + 58);
 
-            // Judul Kegiatan
+            // Judul Kegiatan (Perbaikan render terjamin muncul)
             ctx.fillStyle = '#002B4C';
-            ctx.font = '900 34px Arial, Helvetica, sans-serif';
-            const titleStr = this.selectedTitle || 'JUDUL / NAMA KEGIATAN AKAN TAMPIL DISINI';
-            this.wrapText(ctx, titleStr, infoBoxX + 40, infoBoxY + 115, infoBoxW - 80, 42, 2);
+            ctx.font = '900 32px Arial, Helvetica, sans-serif';
+            const titleStr = (this.selectedTitle || '').trim() || 'JUDUL / NAMA KEGIATAN AKAN TAMPIL DISINI';
+            this.wrapText(ctx, titleStr.toUpperCase(), infoBoxX + 40, infoBoxY + 115, infoBoxW - 80, 40, 2);
 
-            // Deskripsi Kegiatan
+            // Deskripsi Kegiatan (Perbaikan render terjamin muncul)
             ctx.fillStyle = '#374151';
             ctx.font = '500 22px Arial, Helvetica, sans-serif';
-            const descStr = this.description || 'Deskripsi kegiatan akan ditampilkan di area ini. Pilih kegiatan di sebelah kiri untuk mengisi teks secara otomatis.';
-            this.wrapText(ctx, descStr, infoBoxX + 40, infoBoxY + 215, infoBoxW - 80, 30, 3);
+            const descStr = (this.description || '').trim() || 'Deskripsi kegiatan akan ditampilkan di area ini. Pilih kegiatan di sebelah kiri untuk mengisi teks secara otomatis.';
+            this.wrapText(ctx, descStr, infoBoxX + 40, infoBoxY + 215, infoBoxW - 80, 32, 3);
 
             // 5. Grid Foto Kolase
             const photoY = 570;
@@ -382,29 +380,40 @@ function storyGenerator() {
             ctx.restore();
         },
 
+        // ALGORITMA BARU: Memastikan teks selalu tampil dan tidak hilang
         wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines) {
-            const words = (text || '').split(' ');
+            if (!text) return;
+            const words = text.split(/\s+/);
             let line = '';
-            let lineCount = 0;
+            let currentLine = 1;
 
             for (let n = 0; n < words.length; n++) {
-                const testLine = line + words[n] + ' ';
+                const testLine = line ? (line + ' ' + words[n]) : words[n];
                 const metrics = ctx.measureText(testLine);
                 const testWidth = metrics.width;
+
                 if (testWidth > maxWidth && n > 0) {
-                    ctx.fillText(line.trim(), x, y);
-                    line = words[n] + ' ';
-                    y += lineHeight;
-                    lineCount++;
-                    if (lineCount >= maxLines - 1) {
-                        break;
+                    if (currentLine >= maxLines) {
+                        // Jika baris terakhir, tambahkan elipsis jika kata masih bersisa
+                        let truncated = line;
+                        while (ctx.measureText(truncated + '...').width > maxWidth && truncated.length > 0) {
+                            truncated = truncated.slice(0, -1);
+                        }
+                        ctx.fillText(truncated + '...', x, y);
+                        return;
                     }
+                    ctx.fillText(line, x, y);
+                    line = words[n];
+                    y += lineHeight;
+                    currentLine++;
                 } else {
                     line = testLine;
                 }
             }
-            if (lineCount < maxLines) {
-                ctx.fillText(line.trim(), x, y);
+
+            // Gambar sisa baris terakhir
+            if (line) {
+                ctx.fillText(line, x, y);
             }
         },
 

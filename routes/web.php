@@ -858,5 +858,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/sigap-story/simpan', [SigapStoryController::class, 'store'])->name('sigap-story.store');
     Route::delete('/sigap-story/{id}', [SigapStoryController::class, 'destroy'])->name('sigap-story.destroy');
     Route::post('/sigap-story/bulk-delete', [SigapStoryController::class, 'bulkDestroy'])->name('sigap-story.bulk-destroy');
+    Route::get('/sigap-feed', [App\Http\Controllers\SigapFeedController::class, 'create'])->name('sigap-feed.create');
 });
 
