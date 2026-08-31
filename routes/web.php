@@ -41,6 +41,7 @@ use App\Http\Controllers\SigapPicController;
 use App\Http\Controllers\SigapPpdController;
 use App\Http\Controllers\SigapRisetController;
 use App\Http\Controllers\SigapSertifikatController;
+use App\Http\Controllers\SigapStoryController;
 use App\Http\Controllers\SkpController;
 use App\Http\Controllers\SpjBidangController;
 use App\Http\Controllers\SpjController;
@@ -851,5 +852,11 @@ Route::middleware(['auth'])->group(function () {
             });
         });
     });
+
+    Route::get('/sigap-story', [SigapStoryController::class, 'create'])->name('sigap-story.create');
+    Route::get('/sigap-story/riwayat', [SigapStoryController::class, 'index'])->name('sigap-story.index');
+    Route::post('/sigap-story/simpan', [SigapStoryController::class, 'store'])->name('sigap-story.store');
+    Route::delete('/sigap-story/{id}', [SigapStoryController::class, 'destroy'])->name('sigap-story.destroy');
+    Route::post('/sigap-story/bulk-delete', [SigapStoryController::class, 'bulkDestroy'])->name('sigap-story.bulk-destroy');
 });
 

@@ -121,14 +121,42 @@ textarea::placeholder {
           Profil Pegawai
         </a>
         @hasrole('admin|employee')
-        <a href="{{ route('sigap-kinerja.index') }}"
-          class="flex items-center gap-3 px-3 py-2 rounded-lg
-                {{ request()->routeIs('sigap-kinerja.*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+<div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">
+          SIGAP KINERJA
+        </div>
+
+        {{-- Toggle Dropdown Kinerja --}}
+        <button id="kinerjaToggle"
+                class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-left transition-colors">
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path stroke-width="2" d="M3 7h18M3 12h18M3 17h10"/>
           </svg>
-          Kinerja
-        </a>
+          <span class="font-medium">Kinerja</span>
+          <svg id="kinerjaCaret"
+               class="w-4 h-4 ml-auto transition-transform duration-200"
+               viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" d="M6 9l6 6 6-6"/>
+          </svg>
+        </button>
+
+        {{-- Dropdown Sub-menu --}}
+        <div id="kinerjaMenu" class="ml-3 mt-1 space-y-1 hidden">
+          <a href="{{ route('sigap-kinerja.index') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm {{ request()->routeIs('sigap-kinerja.index') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M3 7h18M3 12h18M3 17h10"/></svg>
+            Bukti Kinerja
+          </a>
+          <a href="{{ route('sigap-story.create') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm {{ request()->routeIs('sigap-story.create') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            SIGAP Story
+          </a>
+          <a href="{{ route('sigap-story.index') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm {{ request()->routeIs('sigap-story.index') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Riwayat Story
+          </a>
+      </div>
         @endhasrole
         @hasanyrole('admin|verif_skp|employee')
       <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">
@@ -1650,6 +1678,33 @@ document.addEventListener("DOMContentLoaded", function () {
     pjlpMenu.classList.toggle('hidden');
     pjlpCaret.classList.toggle('rotate-180', willOpen);
     localStorage.setItem(PJLP_KEY, willOpen ? '1' : '0');
+  });
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const kinerjaToggle = document.getElementById('kinerjaToggle');
+  const kinerjaMenu   = document.getElementById('kinerjaMenu');
+  const kinerjaCaret  = document.getElementById('kinerjaCaret');
+
+  if (!kinerjaToggle) return;
+
+  const KINERJA_KEY  = 'sb_kinerja_open';
+  const isOpenSaved  = localStorage.getItem(KINERJA_KEY) === '1';
+
+  // Auto-buka jika sedang berada di halaman Kinerja atau SIGAP Story
+  const isOnKinerja = window.location.pathname.includes('/sigap-kinerja') || window.location.pathname.includes('/sigap-story');
+
+  if (isOpenSaved || isOnKinerja) {
+    kinerjaMenu?.classList.remove('hidden');
+    kinerjaCaret?.classList.add('rotate-180');
+  }
+
+  kinerjaToggle.addEventListener('click', () => {
+    const willOpen = kinerjaMenu.classList.contains('hidden');
+    kinerjaMenu.classList.toggle('hidden');
+    kinerjaCaret.classList.toggle('rotate-180', willOpen);
+    localStorage.setItem(KINERJA_KEY, willOpen ? '1' : '0');
   });
 });
 </script>
