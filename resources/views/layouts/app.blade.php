@@ -77,8 +77,21 @@ textarea::placeholder {
           <p class="text-[11px] text-gray-500">Admin Panel</p>
         </div>
       </div>
-
+    <!-- Floating Sticky Action Bar -->
+      <div class="px-3 pb-3">
+        <a href="{{ route('home') }}" 
+          class="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-maroon-50 hover:bg-maroon-100 text-maroon border border-maroon/20 font-semibold text-xs transition shadow-2xs group">
+          <span class="flex items-center gap-2">
+            <svg class="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            <span>Halaman Publik</span>
+          </span>
+          <span class="text-[9px] bg-maroon text-white px-1.5 py-0.5 rounded font-bold tracking-wide">Web Utama ↗</span>
+        </a>
+      </div>
       <nav class="p-3 space-y-1 overflow-y-auto h-[calc(100vh-4rem)] scrollbar-thin">
+    
         @hasrole('admin|employee')
         <a href="{{ route('home.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg    {{ request()->routeIs('home.index') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M3 10l9-7 9 7v8a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V12H9v6a2 2 0 0 1-2 2H3z"/></svg>

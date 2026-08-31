@@ -134,6 +134,7 @@
                     <li><a href="{{ route('sigap-format.index') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Format</a></li>
                   </ul>
                   <ul class="space-y-0.5">
+                    <li><a href="{{ route('sigap-sertifikat.index') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition font-medium">SIGAP Sertifikat</a></li>
                     <li><a href="#" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP SKPRD</a></li>
                     <li><a href="#" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Open Data</a></li>
                     <li><a href="{{ route('sigap-daftar-hadir.public.riwayat-peserta') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Riwayat Peserta</a></li>
@@ -271,6 +272,7 @@
               </a>
               <a href="{{ route('sigap-auto.index') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Auto</a>
               <a href="{{ route('sigap-format.index') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Format</a>
+              <a href="{{ route('sigap-sertifikat.index') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded font-medium">SIGAP Sertifikat</a>
               <a href="#" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP SKPRD</a>
               <a href="#" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Open Data</a>
               <a href="{{ route('sigap-daftar-hadir.public.riwayat-peserta') }}" class="block px-3 py-1.5 text-maroon font-semibold hover:bg-gray-50 rounded">SIGAP Riwayat Peserta</a>
