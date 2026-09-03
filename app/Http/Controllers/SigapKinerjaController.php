@@ -6,6 +6,8 @@ use App\Repositories\KinerjaRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\UploadedFile;
 use ZipArchive; 
 
 class SigapKinerjaController extends Controller
@@ -14,10 +16,8 @@ class SigapKinerjaController extends Controller
 
     /**
      * INDEX — menampilkan data tersimpan dgn filter bulanan (mode default)
-     * - Menerima filter: q, category (kode), rhk (kode), month (YYYY-MM)
-     * - Mengirim ke view: items (sudah di-map label), categoryOptions (kode+label), rhksByCategory (untuk dependent dropdown)
      */
-public function index(Request $request)
+    public function index(Request $request)
     {
         $cats = config('kinerja.categories', []);
         $categoryOrder = config('kinerja.category_order', array_keys($cats));
@@ -42,7 +42,7 @@ public function index(Request $request)
         $filters = $request->only(['q','category','rhk','month']);
         $itemsPage = $this->repo->paginateForIndex($filters, 24);
 
-        // mapping ke struktur untuk grid (kode → label panjang)
+        // mapping ke struktur untuk grid
         $items = collect($itemsPage->items())->map(function($m) use ($cats){
             $catCode  = $m->category;
             $rhkCode  = $m->rhk;
@@ -56,11 +56,10 @@ public function index(Request $request)
                 'rhk'         => $rhkLabel,
                 'description' => $m->description,
                 'date'        => optional($m->activity_date)->toDateString(),
-                'thumb_url'   => $this->repo->fileUrl($m->thumb_path), // null → blade fallback dummy
+                'thumb_url'   => $this->repo->fileUrl($m->thumb_path),
             ];
         })->all();
 
-        // Cek apakah user memiliki salah satu role: admin atau verif_kinerja
         $isAdminDemo = auth()->check() && method_exists(auth()->user(), 'hasAnyRole')
             ? auth()->user()->hasAnyRole(['admin', 'verif_kinerja'])
             : false;
@@ -68,37 +67,52 @@ public function index(Request $request)
         return view('kinerja.index', [
             'items'           => $items,
             'isAdminDemo'     => $isAdminDemo,
-            'itemsPage'       => $itemsPage,      // untuk pagination links()
+            'itemsPage'       => $itemsPage,
             'categoryOptions' => $categoryOptions,
             'rhksByCategory'  => $rhksByCategory,
         ]);
     }
 
     /**
-     * STORE — simpan bukti; jika file image → auto jadi thumb; jika bukan → thumb opsional
-     * - Menyimpan "kode" kategori & rhk ke DB
+     * API ENDPOINT: UPLOAD MEDIA (ASYNC)
+     * Menerima 1 file per request, aman dari post_max_size 2MB
+     */
+    public function uploadMedia(Request $request)
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'max:20480', 'mimes:jpg,jpeg,png,webp,pdf'],
+        ]);
+
+        $file = $request->file('file');
+        // Simpan sementara di disk public/kinerja-temp
+        $path = $file->store('kinerja-temp', 'public');
+
+        return response()->json([
+            'status'   => 'success',
+            'path'     => $path,
+            'filename' => $file->getClientOriginalName(),
+            'mime'     => $file->getClientMimeType(),
+        ]);
+    }
+
+    /**
+     * STORE — simpan data teks dan proses file-file temporary
+     * Dipanggil via AJAX JSON setelah semua file beres di-upload
      */
     public function store(Request $request)
     {
         $cats = config('kinerja.categories', []);
         $catCodes = array_keys($cats);
 
-        // Bisa kirim lewat "files[]" (multi) atau "file" (legacy)
         $rules = [
-            'category'    => ['required', 'in:'.implode(',', $catCodes)],
-            'rhk'         => ['nullable', 'string'],
-            'title'       => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'date'        => ['required', 'date'],
-            'thumb'       => ['nullable', 'image', 'max:4096'],
+            'category'        => ['required', 'in:'.implode(',', $catCodes)],
+            'rhk'             => ['nullable', 'string'],
+            'title'           => ['required', 'string', 'max:255'],
+            'description'     => ['nullable', 'string'],
+            'date'            => ['required', 'date'],
+            'uploaded_paths'  => ['required', 'array', 'min:1', 'max:30'],
+            'uploaded_paths.*'=> ['required', 'string'],
         ];
-
-        if ($request->hasFile('files')) {
-            $rules['files']   = ['required','array','min:1'];
-            $rules['files.*'] = ['file','max:10240','mimes:jpg,jpeg,png,webp,pdf'];
-        } else {
-            $rules['file'] = ['required','file','max:10240','mimes:jpg,jpeg,png,webp,pdf'];
-        }
 
         $data = $request->validate($rules);
 
@@ -108,27 +122,43 @@ public function index(Request $request)
             abort_unless(in_array($data['rhk'], $rhkCodes, true), 422, 'RHK tidak valid untuk kategori terpilih.');
         }
 
-        // Kumpulkan files[]
+        // Konversi path temporary kembali menjadi instance UploadedFile
         $files = [];
-        if ($request->hasFile('files')) {
-            foreach ($request->file('files') as $f) {
-                if ($f instanceof \Illuminate\Http\UploadedFile) $files[] = $f;
+        foreach ($data['uploaded_paths'] as $tempPath) {
+            $fullPath = Storage::disk('public')->path($tempPath);
+            
+            if (file_exists($fullPath)) {
+                $files[] = new UploadedFile(
+                    $fullPath,
+                    basename($tempPath),
+                    Storage::disk('public')->mimeType($tempPath),
+                    null,
+                    true // Parameter $test = true agar mem-bypass fungsi is_uploaded_file() bawaan PHP
+                );
             }
-        } else {
-            $files[] = $request->file('file');
         }
 
-        $thumb = $request->file('thumb');
+        // Jalankan logic simpan bawaan repository
+        $this->repo->create($data, $files, null);
 
-        $this->repo->create($data, $files, $thumb);
+        // Hapus file temporary yang sudah dicopy/diproses oleh repo
+        foreach ($data['uploaded_paths'] as $tempPath) {
+            if (Storage::disk('public')->exists($tempPath)) {
+                Storage::disk('public')->delete($tempPath);
+            }
+        }
 
-        return back()->with('success', 'Bukti kinerja berhasil diunggah.');
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Bukti kinerja berhasil diunggah.',
+            'redirect'=> route('sigap-kinerja.index')
+        ]);
     }
 
     /**
-     * SHOW PUBLIK — preview per item (dipakai tombol “Lihat” & untuk share)
+     * SHOW PUBLIK — preview per item
      */
-   public function publicShow(int $id)
+    public function publicShow(int $id)
     {
         $cats = config('kinerja.categories', []);
         $m = $this->repo->findOrFail($id);
@@ -136,7 +166,6 @@ public function index(Request $request)
         $catLabel = $cats[$m->category]['label'] ?? $m->category;
         $rhkLabel = $cats[$m->category]['rhks'][$m->rhk] ?? $m->rhk;
 
-        // ==== ambil semua media (jika ada tabel kinerja_media) ====
         $media = [];
         if (method_exists($m, 'media')) {
             $media = $m->media()
@@ -162,36 +191,28 @@ public function index(Request $request)
             'rhk'         => $rhkLabel,
             'description' => $m->description,
             'date'        => optional($m->activity_date)->toDateString(),
-
-            // legacy single file (tetap dikirim agar kompatibel)
             'file_url'    => $this->repo->fileUrl($m->file_path),
             'file_mime'   => $m->file_mime,
-
             'thumb_url'   => $this->repo->fileUrl($m->thumb_path),
-
-            // media multiple
             'media'       => $media,
-
             'public_url'  => route('sigap-kinerja.public', $m->id),
         ];
 
         return view('kinerja.show', compact('item'));
     }
+
     public function downloadImages(int $id)
     {
         $m = $this->repo->findOrFail($id);
 
-        // Kumpulkan path gambar dari tabel media (kalau ada),
-        // fallback ke file utama jika dia gambar.
         $images = [];
 
         if (method_exists($m, 'media')) {
             foreach ($m->media()->where('is_image', true)->get() as $mm) {
-                $images[] = $mm->path; // path relatif di disk 'public'
+                $images[] = $mm->path;
             }
         }
 
-        // fallback legacy: kalau media kosong tapi file_path adalah gambar
         if (empty($images) && $m->file_mime && str_starts_with(strtolower($m->file_mime), 'image/')) {
             $images[] = $m->file_path;
         }
@@ -200,7 +221,6 @@ public function index(Request $request)
             return back()->with('error', 'Tidak ada gambar untuk diunduh.');
         }
 
-        // Siapkan ZIP sementara
         $safeTitle = Str::slug($m->title ?: 'kinerja');
         $zipName   = $safeTitle.'-images-'.now()->format('Ymd_His').'.zip';
         $tmpDir    = storage_path('app/tmp');
@@ -212,14 +232,11 @@ public function index(Request $request)
             return back()->with('error', 'Gagal membuat arsip ZIP.');
         }
 
-        // Tambahkan file gambar ke ZIP
         foreach ($images as $index => $relPath) {
-            $absPath = \Storage::disk('public')->path($relPath);
+            $absPath = Storage::disk('public')->path($relPath);
             if (!is_file($absPath)) continue;
 
-            // Nama file dalam ZIP
             $basename = basename($relPath);
-            // Hindari duplikat nama
             $entryName = sprintf('%02d-%s', $index+1, $basename);
 
             $zip->addFile($absPath, $entryName);
@@ -230,37 +247,29 @@ public function index(Request $request)
         return response()->download($zipPath, $zipName)->deleteFileAfterSend(true);
     }
 
-    /**
-     * ANNUAL PUBLIC — 1 tautan berisi semua bukti dlm satu tahun (filter opsional: category, rhk, q)
-     * route: /kinerja/y/{year}
-     */
     public function annualPublic(int $year, Request $request)
     {
         abort_unless($year >= 2000 && $year <= 2100, 404);
 
         $cats = config('kinerja.categories', []);
         $filters = [
-            'category' => $request->query('category'), // kode
-            'rhk'      => $request->query('rhk'),      // kode
-            'q'        => $request->query('q'),        // search
+            'category' => $request->query('category'),
+            'rhk'      => $request->query('rhk'),
+            'q'        => $request->query('q'),
         ];
 
-        // Validasi opsional: jika category/rhk ada, pastikan valid
         if (!empty($filters['category']) && !isset($cats[$filters['category']])) {
             abort(422, 'Kategori tidak dikenal.');
         }
         if (!empty($filters['rhk'])) {
             $catCode = $filters['category'];
-            // jika rhk ada tapi category kosong → boleh? Kita izinkan, tapi cari di semua kategori (opsional).
             if ($catCode && !isset($cats[$catCode]['rhks'][$filters['rhk']])) {
                 abort(422, 'RHK tidak sesuai kategori.');
             }
         }
 
-        // Ambil semua item tahun tsb (tanpa pagination) via repository
         $rows = $this->repo->listForAnnual($year, $filters);
 
-        // Map untuk tabel annual_public: tampilkan label panjang
         $items = collect($rows)->map(function($m) use ($cats) {
             $catLabel = $cats[$m->category]['label'] ?? $m->category;
             $rhkLabel = $cats[$m->category]['rhks'][$m->rhk] ?? $m->rhk;
@@ -274,7 +283,6 @@ public function index(Request $request)
             ];
         })->values()->all();
 
-        // Info untuk header/crumbs
         $meta = [
             'year'     => $year,
             'category' => !empty($filters['category']) ? ($cats[$filters['category']]['label'] ?? $filters['category']) : null,
@@ -285,7 +293,6 @@ public function index(Request $request)
             if (!empty($filters['category'])) {
                 $meta['rhk'] = $cats[$filters['category']]['rhks'][$filters['rhk']] ?? $filters['rhk'];
             } else {
-                // jika rhk disuplai tanpa kategori, coba cari label di semua kategori
                 foreach ($cats as $c) {
                     if (isset($c['rhks'][$filters['rhk']])) {
                         $meta['rhk'] = $c['rhks'][$filters['rhk']];
@@ -298,11 +305,11 @@ public function index(Request $request)
 
         return view('kinerja.annual_public', compact('items', 'meta', 'year'));
     }
+
     public function destroy(int $id, Request $request)
     {
         $u = auth()->user();
         
-        // Memastikan user memiliki role admin ATAU verif_kinerja
         $isAuthorized = $u && method_exists($u, 'hasAnyRole') 
             ? $u->hasAnyRole(['admin', 'verif_kinerja']) 
             : false;

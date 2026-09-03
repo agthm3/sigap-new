@@ -286,6 +286,7 @@ Route::get('/sigap-kinerja/p/{id}/download-images', [SigapKinerjaController::cla
 
 // Halaman Utama & Fitur Mutasi (Butuh Proteksi Role)
 Route::get('/sigap-kinerja', [SigapKinerjaController::class, 'index'])->name('sigap-kinerja.index');
+Route::post('/sigap-kinerja/upload-media', [App\Http\Controllers\SigapKinerjaController::class, 'uploadMedia'])->name('sigap-kinerja.upload-media');
 
 Route::middleware(['role:admin|verif_kinerja'])->group(function () {
     Route::post('/sigap-kinerja', [SigapKinerjaController::class, 'store'])->name('sigap-kinerja.store');
@@ -859,5 +860,16 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/sigap-story/{id}', [SigapStoryController::class, 'destroy'])->name('sigap-story.destroy');
     Route::post('/sigap-story/bulk-delete', [SigapStoryController::class, 'bulkDestroy'])->name('sigap-story.bulk-destroy');
     Route::get('/sigap-feed', [App\Http\Controllers\SigapFeedController::class, 'create'])->name('sigap-feed.create');
+
+
+    Route::get('/debug-php', function () {
+    return [
+        'loaded_ini' => php_ini_loaded_file(),
+        'scanned_inis' => php_ini_scanned_files(),
+        'post_max_size' => ini_get('post_max_size'),
+        'upload_max_filesize' => ini_get('upload_max_filesize'),
+        'memory_limit' => ini_get('memory_limit'),
+    ];
+});
 });
 

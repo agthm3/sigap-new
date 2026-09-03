@@ -13,7 +13,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-      $middleware->alias([
+        // 1. Nonaktifkan pengecekan limit POST size Laravel
+        $middleware->remove(\Illuminate\Http\Middleware\ValidatePostSize::class);
+        $middleware->remove(\Illuminate\Foundation\Http\Middleware\ValidatePostSize::class);
+
+        // 2. Alias middleware Spatie Permission
+        $middleware->alias([
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
@@ -21,14 +26,14 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (ThrottleRequestsException $e, Request $request) {
-                if (! $request->expectsJson()) {
-                    // Ambil sisa waktu blokir dari header (default 60 detik jika gagal terbaca)
-                    $seconds = $e->getHeaders()['Retry-After'] ?? 60;
-                    
-                    return back()->with([
-                        'sweet_error' => 'Terlalu banyak percobaan pendaftaran!',
-                        'retry_after' => $seconds // Kirim angka detiknya ke session
-                    ]);
-                }
-            });
+            if (! $request->expectsJson()) {
+                // Ambil sisa waktu blokir dari header (default 60 detik jika gagal terbaca)
+                $seconds = $e->getHeaders()['Retry-After'] ?? 60;
+                
+                return back()->with([
+                    'sweet_error' => 'Terlalu banyak percobaan pendaftaran!',
+                    'retry_after' => $seconds // Kirim angka detiknya ke session
+                ]);
+            }
+        });
     })->create();
