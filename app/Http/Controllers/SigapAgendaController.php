@@ -34,6 +34,30 @@ class SigapAgendaController extends Controller
         return view('dashboard.agenda.index', compact('agendas'));
     }
 
+    public function searchItems(Request $request)
+    {
+        $keyword = $request->query('keyword');
+
+        // Query langsung ke Item, bukan ke Agenda utama
+        $items = \App\Models\SigapAgendaItem::with('agenda')
+            ->when($keyword, function ($query, $keyword) {
+                $query->where(function($q) use ($keyword) {
+                    $q->where('assignees', 'LIKE', '%' . $keyword . '%')
+                      ->orWhere('place', 'LIKE', '%' . $keyword . '%')
+                      ->orWhere('description', 'LIKE', '%' . $keyword . '%');
+                });
+            })
+            // Join untuk mengurutkan berdasarkan tanggal agenda dari yang paling baru
+            ->join('sigap_agendas', 'sigap_agendas.id', '=', 'sigap_agenda_items.sigap_agenda_id')
+            ->orderBy('sigap_agendas.date', 'desc')
+            // Ambil kolom item, dan tanggal agar mudah ditampilkan
+            ->select('sigap_agenda_items.*', 'sigap_agendas.date as agenda_date', 'sigap_agendas.unit_title')
+            ->paginate(30)
+            ->appends(['keyword' => $keyword]);
+
+        return view('dashboard.agenda.search', compact('items', 'keyword'));
+    }
+
 
 
     public function create()

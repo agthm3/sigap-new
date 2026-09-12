@@ -351,7 +351,7 @@ Route::middleware('auth','role:user|admin|verificator')->group(function () {
 Route::middleware('auth')
     ->get('/api/users/search', [UserSearchController::class, 'search'])
     ->name('api.users.search');
-
+Route::get('/sigap-agenda/search', [SigapAgendaController::class, 'searchItems'])->name('sigap-agenda.search-items');
 // (opsional) jika masih butuh JSON show:
 Route::get('/sigap-agenda/show',       [SigapAgendaController::class, 'show'])->name('sigap-agenda.show');     
 
