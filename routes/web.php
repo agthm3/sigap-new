@@ -8,6 +8,7 @@ use App\Http\Controllers\Dashboard\EvidenceConfigController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EvidenceController;
 use App\Http\Controllers\FormatController;
+use App\Http\Controllers\ImaChunkUploadController;
 use App\Http\Controllers\InovasiReviewController;
 use App\Http\Controllers\MagangController;
 use App\Http\Controllers\page\HomeController;
@@ -31,6 +32,8 @@ use App\Http\Controllers\SigapDaftarHadirController;
 use App\Http\Controllers\SigapDokumenController;
 use App\Http\Controllers\SigapFormatController;
 use App\Http\Controllers\SigapIgaController;
+use App\Http\Controllers\SigapImaController;
+use App\Http\Controllers\SigapImaSettingController;
 use App\Http\Controllers\SigapInkubatormaController;
 use App\Http\Controllers\SigapInovasiController;
 use App\Http\Controllers\SigapKinerjaController;
@@ -861,15 +864,39 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/sigap-story/bulk-delete', [SigapStoryController::class, 'bulkDestroy'])->name('sigap-story.bulk-destroy');
     Route::get('/sigap-feed', [App\Http\Controllers\SigapFeedController::class, 'create'])->name('sigap-feed.create');
 
+   Route::prefix('/sigap-ima')->middleware(['auth', 'role:inovator|admin|superadmin|verif_inovasi'])->group(function () {
+        // 1. Indeks & Pendaftaran Profil
+        Route::get('/', [SigapImaController::class, 'index'])->name('sigap-ima.index');
+        Route::get('/create', [SigapImaController::class, 'create'])->name('sigap-ima.create');
+        Route::post('/', [SigapImaController::class, 'store'])->name('sigap-ima.store');
 
-    Route::get('/debug-php', function () {
-    return [
-        'loaded_ini' => php_ini_loaded_file(),
-        'scanned_inis' => php_ini_scanned_files(),
-        'post_max_size' => ini_get('post_max_size'),
-        'upload_max_filesize' => ini_get('upload_max_filesize'),
-        'memory_limit' => ini_get('memory_limit'),
-    ];
-});
+        Route::put('/{id}', [SigapImaController::class, 'update'])->name('sigap-ima.update');
+
+        // 2. Upload Handler (Statis, taruh sebelum wildcard {id})
+        Route::post('/upload-chunk', [ImaChunkUploadController::class, 'uploadChunk'])->name('sigap-ima.upload-chunk');
+        Route::post('/upload-temp', [SigapImaController::class, 'uploadTemp'])->name('sigap-ima.upload-temp');
+        Route::delete('/evidence-file/{fileId}', [SigapImaController::class, 'destroyEvidenceFile'])->name('sigap-ima.evidence.file.destroy');
+
+        // 3. Evidence Handler (JSON)
+        Route::get('/{id}/evidence', [SigapImaController::class, 'evidenceForm'])->name('sigap-ima.evidence');
+        Route::post('/{id}/evidence-json', [SigapImaController::class, 'evidenceStoreJson'])->name('sigap-ima.evidence.store.json');
+
+        // 4. Detail & Review (Profil + Evidence)
+        Route::get('/{id}/detail', [SigapImaController::class, 'show'])->name('sigap-ima.show');
+        Route::post('/{id}/review-profile', [SigapImaController::class, 'reviewProfile'])->name('sigap-ima.review.profile');
+        Route::post('/evidence/{evidence_id}/review', [SigapImaController::class, 'reviewEvidence'])->name('sigap-ima.review.evidence');
+    });
+
+    Route::prefix('/pengaturan-ima')->middleware(['auth', 'role:admin'])->group(function () {
+        Route::get('/', [SigapImaSettingController::class, 'index'])->name('sigap-ima.settings');
+        Route::post('/dropdown', [SigapImaSettingController::class, 'storeDropdown'])->name('sigap-ima.settings.dropdown');
+        Route::delete('/dropdown/{dropdown}', [SigapImaSettingController::class, 'destroyDropdown'])->name('sigap-ima.settings.dropdown.destroy');
+        Route::post('/indikator', [SigapImaSettingController::class, 'storeIndicator'])->name('sigap-ima.settings.indicator');
+
+        // Route Baru: Jadwal & Kunci Pengisian
+        Route::post('/schedule', [SigapImaSettingController::class, 'storeSchedule'])->name('sigap-ima.settings.schedule.store');
+        Route::delete('/schedule/{schedule}', [SigapImaSettingController::class, 'destroySchedule'])->name('sigap-ima.settings.schedule.destroy');
+        Route::post('/toggle-lock', [SigapImaSettingController::class, 'toggleSubmissionLock'])->name('sigap-ima.settings.toggle-lock');
+    });
 });
 

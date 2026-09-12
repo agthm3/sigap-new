@@ -254,7 +254,6 @@ textarea::placeholder {
 
       @hasanyrole('admin|inovator')
         <!-- SIGAP INOVASI -->
-          <!-- SECTION BARU: SIGAP INOVASI -->
         <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">SIGAP INOVASI</div>
 
         <!-- Toggle -->
@@ -278,6 +277,7 @@ textarea::placeholder {
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M3 10l9-7 9 7v8a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V12H9v6a2 2 0 0 1-2 2H3z"/></svg>
             Dashboard 
           </a>
+          
           <a href="{{ route('sigap-inovasi.index') }}"
             class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
             {{ request()->routeIs('sigap-inovasi.index') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
@@ -287,6 +287,24 @@ textarea::placeholder {
             Inovasi Daerah
           </a>
           
+          <!-- SIGAP IMA (Diperbaiki) -->
+          <a href="{{ route('sigap-ima.index') }}" 
+             class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition group {{ request()->routeIs('sigap-ima.*') ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md' : 'text-gray-700 hover:bg-amber-500 hover:text-white' }}">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+              </svg>
+              <span class="font-bold tracking-wide">SIGAP IMA</span>
+          </a>
+          
+          @role('admin')
+          <!-- PENGATURAN IMA (Diperbaiki) -->
+          <a href="{{ route('sigap-ima.settings') }}" 
+             class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition group {{ request()->routeIs('sigap-ima.settings*') ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'text-gray-700 hover:bg-amber-100 hover:text-amber-700' }}">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+              <span class="font-medium">Pengaturan IMA</span>
+          </a>
+          @endrole
+
           <a href="{{ route('sigap-iga.index') }}"
             class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
             {{ request()->routeIs('sigap-iga.*') ? 'bg-[#002B4C] text-white' : 'hover:bg-gray-100' }}">
@@ -307,7 +325,6 @@ textarea::placeholder {
           </a>
         </div>
       @endhasanyrole
-
       @hasanyrole('admin|verifikator_inkubatorma|user')
       <!-- SIGAP INKUBATORMA -->
           <!-- SECTION BARU: SIGAP INKUBATORMA -->
