@@ -51,6 +51,7 @@ use App\Http\Controllers\SpjController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Rap2hpoutre\LaravelLogViewer\LogViewerController;
+use App\Http\Controllers\SigapImaExportController;
 
 
 Route::middleware('auth')->group(function () {
@@ -865,27 +866,31 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/sigap-feed', [App\Http\Controllers\SigapFeedController::class, 'create'])->name('sigap-feed.create');
 
    Route::prefix('/sigap-ima')->middleware(['auth', 'role:inovator|admin|superadmin|verif_inovasi'])->group(function () {
-        // 1. Indeks & Pendaftaran Profil
         Route::get('/', [SigapImaController::class, 'index'])->name('sigap-ima.index');
         Route::get('/create', [SigapImaController::class, 'create'])->name('sigap-ima.create');
         Route::post('/', [SigapImaController::class, 'store'])->name('sigap-ima.store');
-
         Route::put('/{id}', [SigapImaController::class, 'update'])->name('sigap-ima.update');
 
-        // 2. Upload Handler (Statis, taruh sebelum wildcard {id})
+        // ROUTE EXPORT EXCEL & PDF (Bulk & Filtered)
+        Route::get('/export/excel', [SigapImaExportController::class, 'exportExcel'])->name('sigap-ima.export.excel');
+        Route::get('/export/pdf', [SigapImaExportController::class, 'exportPdfDetail'])->name('sigap-ima.export.pdf.all');
+
+        // Upload Handler
         Route::post('/upload-chunk', [ImaChunkUploadController::class, 'uploadChunk'])->name('sigap-ima.upload-chunk');
         Route::post('/upload-temp', [SigapImaController::class, 'uploadTemp'])->name('sigap-ima.upload-temp');
         Route::delete('/evidence-file/{fileId}', [SigapImaController::class, 'destroyEvidenceFile'])->name('sigap-ima.evidence.file.destroy');
 
-        // 3. Evidence Handler (JSON)
+        // Detail, Evidence, & PDF Per ID
+        Route::get('/{id}/detail', [SigapImaController::class, 'show'])->name('sigap-ima.show');
         Route::get('/{id}/evidence', [SigapImaController::class, 'evidenceForm'])->name('sigap-ima.evidence');
         Route::post('/{id}/evidence-json', [SigapImaController::class, 'evidenceStoreJson'])->name('sigap-ima.evidence.store.json');
+        Route::get('/{id}/export/pdf', [SigapImaExportController::class, 'exportPdfDetail'])->name('sigap-ima.export.pdf');
 
-        // 4. Detail & Review (Profil + Evidence)
-        Route::get('/{id}/detail', [SigapImaController::class, 'show'])->name('sigap-ima.show');
+        // Review Actions
         Route::post('/{id}/review-profile', [SigapImaController::class, 'reviewProfile'])->name('sigap-ima.review.profile');
         Route::post('/evidence/{evidence_id}/review', [SigapImaController::class, 'reviewEvidence'])->name('sigap-ima.review.evidence');
     });
+
 
     Route::prefix('/pengaturan-ima')->middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/', [SigapImaSettingController::class, 'index'])->name('sigap-ima.settings');
