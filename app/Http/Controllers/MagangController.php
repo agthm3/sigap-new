@@ -340,7 +340,7 @@ class MagangController extends Controller
         return back()->with('success', 'Laporan berhasil disimpan.');
     }
 
-    // Halaman Monitoring Logbook (Khusus Admin & Verif Magang)
+// Halaman Monitoring Logbook (Khusus Admin & Verif Magang)
     public function monitoringLogbook(Request $request)
     {
         $batches = MagangBatch::orderBy('created_at', 'desc')->get();
@@ -352,12 +352,11 @@ class MagangController extends Controller
         $pesertaList = collect();
         $logbooksMap = collect();
         $pendingApprovals = collect();
-        $weeklyReportsMap = collect();
 
         if ($batch) {
             $pesertaList = $batch->peserta;
 
-            // Ambil semua logbook pada batch ini
+            // Ambil SEMUA logbook pada batch ini (Sudah mencakup semua history)
             $allLogbooks = MagangLogbook::where('magang_batch_id', $batch->id)->get();
             $logbooksMap = $allLogbooks->groupBy('user_id');
 
@@ -401,18 +400,7 @@ class MagangController extends Controller
                     $curr->addDay();
                 }
             }
-
-            // 2. GENERATE LAPORAN MINGGU INI (Senin - Jumat)
-            $startOfWeek = now()->startOfWeek(); // Senin
-            $endOfWeek   = now()->endOfWeek()->subDays(2); // Jumat
-
-            foreach ($pesertaList as $p) {
-                $weeklyLogs = $allLogbooks->where('user_id', $p->id)
-                    ->whereBetween('tanggal', [$startOfWeek->format('Y-m-d'), $endOfWeek->format('Y-m-d')])
-                    ->sortBy('tanggal');
-
-                $weeklyReportsMap->put($p->id, $weeklyLogs);
-            }
+            // BAGIAN GENERATE LAPORAN MINGGUAN TELAH DIHAPUS (Efisiensi memori)
         }
 
         // Statistik
@@ -434,7 +422,6 @@ class MagangController extends Controller
             'pesertaList',
             'logbooksMap',
             'pendingApprovals',
-            'weeklyReportsMap',
             'totalPeserta',
             'terisiHariIni',
             'belumIsiHariIni'
@@ -631,5 +618,24 @@ class MagangController extends Controller
         ]);
 
         return back()->with('success', 'Berhasil memperbarui data peserta magang.');
+    }
+
+    // Selesaikan Paksa Peserta Magang
+    public function forceCompletePeserta($batchId, $userId)
+    {
+        $batch = MagangBatch::findOrFail($batchId);
+
+        // Pastikan peserta terdaftar di batch ini
+        if (!$batch->peserta()->where('user_id', $userId)->exists()) {
+            return back()->with('error', 'Mahasiswa tidak ditemukan pada batch ini.');
+        }
+
+        // Update data pada tabel pivot magang_peserta menjadi selesai
+        $batch->peserta()->updateExistingPivot($userId, [
+            'status'     => 'selesai',
+            'updated_at' => now(),
+        ]);
+
+        return back()->with('success', 'Peserta berhasil diselesaikan secara paksa. Statusnya kini Lulus / Selesai.');
     }
 }

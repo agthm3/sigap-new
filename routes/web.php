@@ -803,6 +803,8 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/batch/{batchId}/peserta/{userId}', [MagangController::class, 'updatePeserta'])->name('batch.update-peserta');
             Route::delete('/batch/{batchId}/peserta/{userId}', [MagangController::class, 'removePeserta'])->name('batch.remove-peserta');
 
+            Route::post('/batch/{batchId}/peserta/{userId}/force-complete', [MagangController::class, 'forceCompletePeserta'])->name('batch.force-complete');
+
             // Monitoring Logbook & Izin Susulan
             Route::get('/monitoring-logbook', [MagangController::class, 'monitoringLogbook'])->name('monitoring-logbook');
             Route::post('/izin-susulan', [MagangController::class, 'storeIzinSusulan'])->name('izin-susulan.store');
