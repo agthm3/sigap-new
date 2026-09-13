@@ -16,7 +16,7 @@ class SpjBidangController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nama_bidang' => 'required|string|max:255|unique:spj_bidangs,nama_bidang'
+            'nama_bidang' => 'required|string|max:500|unique:spj_bidangs,nama_bidang'
         ]);
 
         SpjBidang::create([
@@ -29,7 +29,7 @@ class SpjBidangController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'nama_bidang' => 'required|string|max:255|unique:spj_bidangs,nama_bidang,' . $id
+            'nama_bidang' => 'required|string|max:500|unique:spj_bidangs,nama_bidang,' . $id
         ]);
 
         $bidang = SpjBidang::findOrFail($id);
@@ -61,7 +61,7 @@ class SpjBidangController extends Controller
     public function storeSub(Request $request, $bidang_id)
     {
         $request->validate([
-            'nama_sub_kegiatan' => 'required|string|max:255'
+            'nama_sub_kegiatan' => 'required|string|max:500'
         ]);
 
         $bidang = SpjBidang::findOrFail($bidang_id);
@@ -94,7 +94,7 @@ class SpjBidangController extends Controller
     public function storeKegiatan(Request $request, $sub_id)
     {
         $request->validate([
-            'nama_kegiatan' => 'required|string|max:255'
+            'nama_kegiatan' => 'required|string|max:500'
         ]);
 
         $subKegiatan = \App\Models\SpjSubKegiatan::findOrFail($sub_id);

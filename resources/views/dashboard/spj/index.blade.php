@@ -22,7 +22,7 @@
     <div>
       <label class="block text-xs font-semibold text-gray-600 mb-1">Cari Sub-Kegiatan</label>
       <div class="relative">
-        <input type="text" name="search" value="{{ request('search') }}" placeholder="Ketik nama sub-kegiatan..." 
+        <input type="text" name="search" value="{{ request('search') }}" placeholder="Ketik nama sub-kegiatan..." maxlength="500" 
                class="w-full pl-8 pr-3 py-2 rounded-xl text-sm border-gray-300 focus:ring-maroon focus:border-maroon">
         <svg class="w-4 h-4 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.3-4.3M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"></path></svg>
       </div>
@@ -72,25 +72,27 @@
     <table class="min-w-full text-sm">
       <thead class="bg-gray-50 text-xs uppercase text-gray-600">
         <tr>
-          <th class="px-4 py-3 text-left w-[25%]">Nama Bidang</th>
-          <th class="px-4 py-3 text-left w-[40%]">Nama Sub-Kegiatan</th>
-          <th class="px-4 py-3 text-center">Struktur Data</th>
-          <th class="px-4 py-3 text-center">Status KAK</th>
-          <th class="px-4 py-3 text-center">Aksi</th>
+          <th class="px-4 py-3 text-left w-1/4">Nama Bidang</th>
+          <th class="px-4 py-3 text-left w-2/5">Nama Sub-Kegiatan</th>
+          <th class="px-4 py-3 text-center whitespace-nowrap">Struktur Data</th>
+          <th class="px-4 py-3 text-center whitespace-nowrap">Status KAK</th>
+          <th class="px-4 py-3 text-center whitespace-nowrap">Aksi</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
         @forelse($subKegiatans as $sub)
-        <tr class="hover:bg-gray-50/50 transition-colors">
-          <td class="px-4 py-3 font-medium text-gray-900">{{ $sub->bidang->nama_bidang }}</td>
-          <td class="px-4 py-3 whitespace-pre-line text-gray-700">{{ $sub->nama_sub_kegiatan }}</td>
-          <td class="px-4 py-3 text-center">
+        <tr class="hover:bg-gray-50/50 transition-colors align-top">
+          <td class="px-4 py-3 font-medium text-gray-900 break-words">{{ $sub->bidang->nama_bidang }}</td>
+          <td class="px-4 py-3 text-gray-700 leading-relaxed break-words">
+            {{ $sub->nama_sub_kegiatan }}
+          </td>
+          <td class="px-4 py-3 text-center whitespace-nowrap">
             <div class="inline-flex flex-col gap-1 items-center bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5">
               <span class="text-xs font-bold text-gray-800">{{ $sub->kegiatans->count() }} Kegiatan</span>
               <span class="text-[10px] text-gray-500 font-medium">Total: {{ $sub->kegiatans->sum(fn($k) => $k->gelombangs->count()) }} Gelombang</span>
             </div>
           </td>
-          <td class="px-4 py-3 text-center">
+          <td class="px-4 py-3 text-center whitespace-nowrap">
             @if($sub->file_kak)
               <span class="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold border bg-emerald-50 border-emerald-200 text-emerald-700 shadow-sm">
                 <svg class="w-3 h-3 mr-1 text-emerald-600 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -102,7 +104,7 @@
               </span>
             @endif
           </td>
-          <td class="px-4 py-3">
+          <td class="px-4 py-3 whitespace-nowrap">
             <div class="flex items-center justify-center gap-1.5">
               
               <a href="{{ route('sigap-spj.show', $sub->id) }}" class="px-3 py-1.5 rounded-lg border border-gray-300 text-xs font-bold text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-all flex items-center gap-1">
@@ -116,7 +118,7 @@
                 }
                 foreach($sub->kegiatans as $keg) {
                     if (!$keg->file_sk_panpel && !$keg->file_sk_tenaga_ahli) {
-                        $missing[] = 'SK Panpel / SK Tenaga Ahli pada Kegiatan: <b>' . $keg->nama_kegiatan . '</b> masih kosong';
+                        $missing[] = 'SK Panpel / SK Tenaga Ahli pada Kegiatan: <b>' . htmlspecialchars($keg->nama_kegiatan, ENT_QUOTES) . '</b> masih kosong';
                     }
                 }
                 $missingJson = json_encode($missing);
@@ -159,138 +161,3 @@
   @endif
 </div>
 @endsection
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-
-  // Tangkap semua form dengan class form-generate
-  document.querySelectorAll('.form-generate').forEach(function(form) {
-    form.addEventListener('submit', async function(e) {
-      e.preventDefault(); // Hentikan submit bawaan browser
-
-      const url = this.action;
-      const csrfToken = this.querySelector('input[name="_token"]').value;
-      const missingFields = JSON.parse(this.dataset.missing || '[]');
-
-      // Fungsi eksekusi download menggunakan Fetch API
-      const processDownload = async () => {
-        // Tampilkan animasi loading
-        Swal.fire({
-          title: 'Membangun SPJ...',
-          html: 'Mohon tunggu, sistem sedang menyatukan file PDF. <br>Jangan tutup halaman ini.',
-          allowOutsideClick: false,
-          didOpen: () => {
-            Swal.showLoading();
-          }
-        });
-
-        try {
-          const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-              'X-CSRF-TOKEN': csrfToken
-            }
-          });
-
-          if (!response.ok) {
-            throw new Error('Gagal melakukan generate laporan.');
-          }
-
-          // Dapatkan nama file dari header Content-Disposition (jika dikirim backend)
-          let filename = 'Laporan_SPJ_Gabungan.pdf';
-          const disposition = response.headers.get('Content-Disposition');
-          if (disposition && disposition.indexOf('filename=') !== -1) {
-            const matches = /filename="([^"]*)"/.exec(disposition);
-            if (matches != null && matches[1]) filename = matches[1];
-          }
-
-          // Ubah response menjadi Blob PDF
-          const blob = await response.blob();
-          const downloadUrl = window.URL.createObjectURL(blob);
-          
-          // Buat elemen <a> bayangan untuk memicu download paksa
-          const a = document.createElement('a');
-          a.style.display = 'none';
-          a.href = downloadUrl;
-          a.download = filename;
-          document.body.appendChild(a);
-          a.click(); // Klik paksa
-
-          // Bersihkan elemen & URL untuk menghemat memori
-          window.URL.revokeObjectURL(downloadUrl);
-          document.body.removeChild(a);
-
-          // Tutup loading dan tampilkan animasi sukses
-          Swal.fire({
-            icon: 'success',
-            title: 'Berhasil!',
-            text: 'Dokumen SPJ Anda berhasil diunduh.',
-            timer: 2500,
-            showConfirmButton: false
-          });
-
-        } catch (error) {
-          Swal.fire({
-            icon: 'error',
-            title: 'Terjadi Kesalahan',
-            text: error.message
-          });
-        }
-      };
-
-      // Cek apakah ada field wajib yang belum diisi
-      if (missingFields.length > 0) {
-        
-        // Buat list HTML untuk item yang kosong
-        let htmlList = '<div class="text-left bg-red-50 p-3 rounded-lg border border-red-100 text-sm mb-3">';
-        htmlList += '<p class="font-bold text-red-800 mb-2">Dokumen Wajib Berikut Belum Terisi:</p>';
-        htmlList += '<ul class="list-disc pl-5 text-red-700 space-y-1">';
-        missingFields.forEach(item => {
-          htmlList += `<li>${item}</li>`;
-        });
-        htmlList += '</ul></div>';
-        htmlList += '<p class="text-sm text-gray-700">Apakah Anda yakin tetap ingin meng-generate SPJ dalam keadaan tidak lengkap?</p>';
-
-        // Tampilkan SWAL Konfirmasi
-        Swal.fire({
-          title: 'Berkas Belum Lengkap!',
-          html: htmlList,
-          icon: 'warning',
-          showCancelButton: true,
-          confirmButtonColor: '#7a2222', // maroon
-          cancelButtonColor: '#6b7280', // gray
-          confirmButtonText: 'Ya, Tetap Generate',
-          cancelButtonText: 'Batal',
-          reverseButtons: true
-        }).then((result) => {
-          if (result.isConfirmed) {
-            processDownload();
-          }
-        });
-
-      } else {
-        // Jika lengkap, langsung download tanpa peringatan
-        processDownload();
-      }
-
-    });
-  });
-
-});
-</script>
-<script>
-function copyShareLink(url) {
-    navigator.clipboard.writeText(url).then(function() {
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: 'Link Publik berhasil disalin!',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true
-        });
-    }, function(err) {
-        console.error('Async: Could not copy text: ', err);
-    });
-}
-</script>

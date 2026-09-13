@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Preview Laporan SPJ - {{ $subKegiatan->nama_sub_kegiatan }}</title>
+    <title>Preview Laporan SPJ - {{ \Illuminate\Support\Str::limit($subKegiatan->nama_sub_kegiatan, 70) }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
@@ -25,17 +25,23 @@
 
         <form action="{{ route('spj.public.download', $subKegiatan->uuid) }}" method="POST" id="publicDownloadForm">
             @csrf
-            <button type="submit" class="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl bg-[#7a2222] text-white text-xs sm:text-sm font-semibold hover:bg-[#5c1919] transition-all shadow-md hover:shadow-lg">
+            <button type="submit" class="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl bg-[#7a2222] text-white text-xs sm:text-sm font-semibold hover:bg-[#5c1919] transition-all shadow-md hover:shadow-lg shrink-0">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                 Unduh Dokumen
             </button>
         </form>
     </header>
 
-    <!-- Info Banner -->
-    <div class="bg-[#fdf7f7] border-b border-[#f0d1d1] px-4 sm:px-6 lg:px-12 py-3 flex items-center gap-3">
-        <svg class="w-5 h-5 text-[#7a2222] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        <span class="text-xs sm:text-sm text-gray-700 leading-tight">Sub-Kegiatan: <strong>{{ $subKegiatan->nama_sub_kegiatan }}</strong> ({{ $subKegiatan->bidang->nama_bidang }})</span>
+    <!-- Info Banner (Telah disesuaikan untuk teks panjang hingga 500 karakter) -->
+    <div class="bg-[#fdf7f7] border-b border-[#f0d1d1] px-4 sm:px-6 lg:px-12 py-3.5 flex items-start gap-3">
+        <svg class="w-5 h-5 text-[#7a2222] shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <div class="text-xs sm:text-sm text-gray-700 leading-relaxed break-words flex-1">
+            <span class="text-gray-500 font-medium">Sub-Kegiatan:</span> 
+            <strong class="text-gray-900">{{ $subKegiatan->nama_sub_kegiatan }}</strong> 
+            <span class="inline-block mt-0.5 sm:mt-0 text-xs px-2 py-0.5 rounded bg-red-100 text-maroon font-semibold ml-1">
+                {{ $subKegiatan->bidang->nama_bidang }}
+            </span>
+        </div>
     </div>
 
     <!-- Container Utama Preview (Dibuat max-w-7xl agar jauh lebih lebar) -->

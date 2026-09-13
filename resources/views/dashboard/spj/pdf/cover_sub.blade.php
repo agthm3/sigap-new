@@ -6,7 +6,7 @@
     <style>
         @page {
             size: letter;
-            margin: 1.5cm;
+            margin: 1.2cm 1.5cm;
         }
         
         body { 
@@ -19,10 +19,10 @@
 
         /* Konten Atas & Tengah */
         .container {
-            padding-top: 80px;
+            padding-top: 30px;
         }
         .header { 
-            font-size: 16px; 
+            font-size: 15px; 
             font-weight: bold; 
             letter-spacing: 1px; 
             text-transform: uppercase; 
@@ -30,10 +30,10 @@
         .line { 
             border-bottom: 3px double #000000; 
             width: 70%; 
-            margin: 15px auto 35px auto; 
+            margin: 12px auto 25px auto; 
         }
         .label-sub {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: bold;
             color: #4b5563;
             text-transform: uppercase;
@@ -41,62 +41,64 @@
             letter-spacing: 0.5px;
         }
         .title { 
-            font-size: 20px; 
+            /* Ukuran font disesuaikan agar teks 500 karakter muat rapi dalam 1 lembar */
+            font-size: 15px; 
             font-weight: 800; 
-            line-height: 1.4;
+            line-height: 1.35;
             text-transform: uppercase; 
             color: #7a2222; /* Maroon Khas SIGAP */
-            padding: 0 30px;
+            padding: 0 15px;
+            word-wrap: break-word;
         }
 
-        /* Blok Bawah (Kop Instansi & QR Code) - Sedikit dinaikkan agar tidak tabrakan dengan footer */
+        /* Blok Bawah (Kop Instansi & QR Code) */
         .bottom-block {
             position: absolute;
-            bottom: 140px; 
+            bottom: 115px; 
             width: 100%;
             left: 0;
             text-align: center;
         }
         
         .qr-container {
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
         .qr-img {
-            width: 95px;
-            height: 95px;
+            width: 85px;
+            height: 85px;
         }
         .qr-text {
-            font-size: 8.5px;
+            font-size: 8px;
             color: #4b5563;
-            margin-top: 5px;
+            margin-top: 4px;
             font-style: italic;
-            line-height: 1.3;
+            line-height: 1.25;
         }
 
         .agency { 
-            font-size: 14px; 
+            font-size: 13px; 
             font-weight: bold; 
-            line-height: 1.4;
+            line-height: 1.35;
             color: #000000;
             text-transform: uppercase;
-            margin-top: 15px;
+            margin-top: 10px;
             letter-spacing: 0.5px;
         }
 
-        /* PERBAIKAN: Dipatok langsung ke bottom body (0), terpisah dari bottom-block */
+        /* Footer Watermark */
         .footer-watermark {
             position: absolute;
             bottom: 0px; 
             left: 0;
             width: 100%;
-            border-top: 2px solid #7a2222; /* Garis Pembatas Maroon */
-            padding-top: 8px;
+            border-top: 2px solid #7a2222;
+            padding-top: 6px;
             text-align: left;
         }
         .watermark-content {
-            font-size: 8px;
+            font-size: 7.5px;
             color: #4b5563;
-            line-height: 1.4;
+            line-height: 1.35;
             margin-top: 2px;
         }
         .badge-verified {
@@ -108,7 +110,7 @@
             font-weight: bold;
             padding: 1px 5px;
             border-radius: 4px;
-            margin-bottom: 3px;
+            margin-bottom: 2px;
             text-transform: uppercase;
             letter-spacing: 0.3px;
         }

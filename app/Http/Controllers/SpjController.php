@@ -135,7 +135,8 @@ public function index(Request $request)
             $outputPdf = $this->buildMergedPdf($id);
             
             $subKegiatan = SpjSubKegiatan::findOrFail($id);
-            $fileName = 'Laporan_SPJ_' . str_replace(' ', '_', $subKegiatan->nama_sub_kegiatan) . '.pdf';
+            $safeTitle = Str::slug(Str::limit($subKegiatan->nama_sub_kegiatan, 100, ''), '_');
+            $fileName = 'Laporan_SPJ_' . $safeTitle . '.pdf';
 
             // Kembalikan file PDF langsung terunduh ke browser
             return response($outputPdf, 200, [
@@ -178,7 +179,8 @@ public function index(Request $request)
         try {
             $subKegiatan = SpjSubKegiatan::where('uuid', $uuid)->firstOrFail();
             $outputPdf = $this->buildMergedPdf($subKegiatan->id);
-            $fileName = 'Laporan_SPJ_' . str_replace(' ', '_', $subKegiatan->nama_sub_kegiatan) . '.pdf';
+            $safeTitle = Str::slug(Str::limit($subKegiatan->nama_sub_kegiatan, 100, ''), '_');
+            $fileName = 'Laporan_SPJ_' . $safeTitle . '.pdf';
             
             return response($outputPdf, 200, [
                 'Content-Type' => 'application/pdf',

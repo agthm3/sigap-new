@@ -9,7 +9,7 @@
   </div>
   
   <h1 class="text-2xl font-extrabold text-gray-900">Kelola Sub-Kegiatan</h1>
-  <p class="text-sm text-gray-600 mt-1">Bidang Induk: <span class="font-bold text-maroon">{{ $bidang->nama_bidang }}</span></p>
+  <p class="text-sm text-gray-600 mt-1">Bidang Induk: <span class="font-bold text-maroon break-words">{{ $bidang->nama_bidang }}</span></p>
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -21,14 +21,17 @@
       <form action="{{ route('sigap-spj.bidang.sub.store', $bidang->id) }}" method="POST">
         @csrf
         <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Nama Sub-Kegiatan <span class="text-red-500">*</span></label>
-          <textarea name="nama_sub_kegiatan" required rows="3" placeholder="Contoh: Fasilitasi Riset Kebijakan Utama" 
-                    class="w-full rounded-lg border-gray-300 text-sm focus:border-maroon focus:ring-maroon"></textarea>
+          <div class="flex justify-between items-center mb-1">
+            <label class="block text-sm font-medium text-gray-700">Nama Sub-Kegiatan <span class="text-red-500">*</span></label>
+            <span class="text-[11px] text-gray-400">Maks. 500 karakter</span>
+          </div>
+          <textarea name="nama_sub_kegiatan" required rows="4" maxlength="500" placeholder="Masukkan nama sub-kegiatan..." 
+                    class="w-full rounded-lg border-gray-300 text-sm focus:border-maroon focus:ring-maroon leading-relaxed">{{ old('nama_sub_kegiatan') }}</textarea>
           @error('nama_sub_kegiatan')
-            <span class="text-xs text-red-500 mt-1">{{ $message }}</span>
+            <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
           @enderror
         </div>
-        <button type="submit" class="w-full px-4 py-2 bg-maroon text-white font-semibold rounded-lg text-sm hover:bg-maroon-800 transition-colors">
+        <button type="submit" class="w-full px-4 py-2 bg-maroon text-white font-semibold rounded-lg text-sm hover:bg-maroon-800 transition-colors shadow-sm">
           Simpan Sub-Kegiatan
         </button>
       </form>
@@ -42,32 +45,32 @@
         <table class="min-w-full text-sm">
           <thead class="bg-gray-50 text-xs uppercase text-gray-600">
             <tr>
-              <th class="px-4 py-3 text-left">Nama Sub-Kegiatan</th>
-              <th class="px-4 py-3 text-center">Jml Kegiatan</th>
-              <th class="px-4 py-3 text-center">Aksi</th>
+              <th class="px-4 py-3 text-left w-3/5">Nama Sub-Kegiatan</th>
+              <th class="px-4 py-3 text-center whitespace-nowrap">Jml Kegiatan</th>
+              <th class="px-4 py-3 text-center whitespace-nowrap">Aksi</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
             @forelse($bidang->subKegiatans as $sub)
-              <tr>
-                <td class="px-4 py-3 font-medium text-gray-900 whitespace-pre-line">{{ $sub->nama_sub_kegiatan }}</td>
-                <td class="px-4 py-3 text-center">
-                  <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+              <tr class="hover:bg-gray-50/50 transition-colors align-top">
+                <td class="px-4 py-3 font-medium text-gray-900 leading-relaxed break-words">{{ $sub->nama_sub_kegiatan }}</td>
+                <td class="px-4 py-3 text-center whitespace-nowrap">
+                  <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
                     {{ $sub->kegiatans_count }}
                   </span>
                 </td>
-                <td class="px-4 py-3">
+                <td class="px-4 py-3 whitespace-nowrap">
                   <div class="flex items-center justify-center gap-2">
-                    <!-- Tombol Kelola Kegiatan level di bawahnya -->
                     <a href="{{ route('sigap-spj.bidang.kegiatan.index', $sub->id) }}" 
-                    class="px-3 py-1.5 rounded border border-gray-300 text-xs font-medium hover:bg-gray-50 text-gray-700">
-                    Kelola Kegiatan
+                       class="px-3 py-1.5 rounded-lg border border-gray-300 text-xs font-medium hover:bg-gray-50 text-gray-700 shadow-sm transition-colors">
+                      Kelola Kegiatan
                     </a>
                     
                     <form action="{{ route('sigap-spj.bidang.sub.destroy', $sub->id) }}" method="POST" class="inline">
                       @csrf
                       @method('DELETE')
-                      <button type="button" class="btn-delete px-3 py-1.5 rounded border border-red-500 text-red-600 text-xs font-medium hover:bg-red-600 hover:text-white" data-judul="{{ $sub->nama_sub_kegiatan }}">
+                      <button type="button" class="btn-delete px-3 py-1.5 rounded-lg border border-red-500 text-red-600 text-xs font-medium hover:bg-red-600 hover:text-white shadow-sm transition-colors" 
+                              data-judul="{{ htmlspecialchars($sub->nama_sub_kegiatan, ENT_QUOTES) }}">
                         Hapus
                       </button>
                     </form>
@@ -98,13 +101,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
       Swal.fire({
         title: 'Hapus Sub-Kegiatan?',
-        html: `Sub-kegiatan ini beserta struktur kegiatan/gelombang di bawahnya akan dihapus permanen!`,
+        html: `Apakah Anda yakin ingin menghapus sub-kegiatan:<br><b class="text-red-700 break-words block mt-2 px-2 text-sm text-left bg-red-50 p-2 rounded border border-red-200">${judul}</b><br><span class="text-xs text-gray-500">Seluruh kegiatan dan gelombang di bawahnya akan ikut terhapus!</span>`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#b91c1c',
         cancelButtonColor: '#6b7280',
         confirmButtonText: 'Ya, Hapus',
-        cancelButtonText: 'Batal'
+        cancelButtonText: 'Batal',
+        reverseButtons: true
       }).then((result) => {
         if (result.isConfirmed) {
           form.submit();
