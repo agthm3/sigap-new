@@ -121,19 +121,26 @@ class SigapImaController extends Controller
             'operator_wa'       => 'required|string|max:20',
             'judul'             => 'required|string|max:255',
             'sampul_file'       => 'required|string',
-            'anggaran_file'     => 'required|string',
+            'anggaran_file'     => 'nullable|string', // SEKARANG TIDAK WAJIB (NULLABLE)
             'koordinat'         => 'nullable|string|max:300',
-            'rancang_bangun'    => 'required|string|min:300',
-            'videos'            => 'required|array|min:3|max:5',
-            'videos.*.judul'    => 'required|string|max:255',
-            'videos.*.url'      => 'required|url|max:500',
+            'rancang_bangun'    => 'required|string', 
+            'tujuan'            => 'required|string',
+            'manfaat'           => 'required|string',
+            'hasil_inovasi'     => 'required|string',
+            'sdgs_keterkaitan'  => 'nullable|string',
         ]);
 
-        $data = $request->except(['_token', 'sampul_file', 'anggaran_file', 'profil_bisnis_file', 'haki_file', 'penghargaan_file', 'videos']);
+        // Kecualikan file dan sdgs_pilihan (karena array) dari request masal
+        $data = $request->except(['_token', 'sampul_file', 'anggaran_file', 'profil_bisnis_file', 'haki_file', 'penghargaan_file', 'sdgs_pilihan']);
         $data['user_id'] = Auth::id();
         $data['asistensi_status'] = 'Menunggu Verifikasi';
 
-        // Pindahkan Foto Sampul
+        // Jika SDGs Array ada, simpan ke database dalam bentuk JSON (pastikan nanti Anda menambah kolom sdgs_pilihan di database jika diperlukan)
+        if ($request->has('sdgs_pilihan')) {
+            $data['sdgs_pilihan'] = json_encode($request->sdgs_pilihan);
+        }
+
+        // 1. Pindahkan Foto Sampul
         if ($request->filled('sampul_file')) {
             $tempPath = $request->sampul_file;
             if (Storage::disk('public')->exists($tempPath)) {
@@ -144,7 +151,7 @@ class SigapImaController extends Controller
             }
         }
 
-        // Pindahkan Lampiran
+        // 2. Pindahkan Semua Dokumen Lampiran
         Storage::disk('public')->makeDirectory('ima/lampiran');
         foreach (['anggaran_file', 'profil_bisnis_file', 'haki_file', 'penghargaan_file'] as $fileKey) {
             if ($request->filled($fileKey)) {
@@ -157,21 +164,10 @@ class SigapImaController extends Controller
             }
         }
 
+        // 3. Buat Inovasi IMA
         $inovasi = ImaInovasi::create($data);
 
-        if ($request->has('videos') && method_exists($inovasi, 'referensiVideos')) {
-            foreach ($request->videos as $video) {
-                if (!empty($video['judul']) && !empty($video['url'])) {
-                    $inovasi->referensiVideos()->create([
-                        'judul'      => $video['judul'],
-                        'deskripsi'  => $video['deskripsi'] ?? null,
-                        'video_url'  => $video['url'],
-                    ]);
-                }
-            }
-        }
-
-        return redirect()->route('sigap-ima.index')->with('success', 'Profil Inovasi SIGAP IMA berhasil didaftarkan.');
+        return redirect()->route('sigap-ima.index')->with('success', 'Profil Inovasi SIGAP IMA berhasil didaftarkan secara lengkap.');
     }
 
     public function evidenceForm($id)

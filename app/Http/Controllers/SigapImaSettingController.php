@@ -68,10 +68,43 @@ class SigapImaSettingController extends Controller
         return back()->with('success', 'Opsi dropdown berhasil ditambahkan.');
     }
 
+ public function storeSdg(Request $request)
+    {
+        $request->validate([
+            'label'     => 'required|string|max:255',
+            'kode'      => 'nullable|string|max:50', // Nomor urut pilar, misal: "SDG 1"
+            'warna'     => 'required|string|max:50', // Kode Hex, misal: "#E5243B"
+            'icon'      => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048', // Upload Gambar Ikon
+            'deskripsi' => 'nullable|string',
+        ]);
+
+        $iconPath = null;
+        if ($request->hasFile('icon')) {
+            $iconPath = $request->file('icon')->store('ima/sdgs', 'public');
+        }
+
+        ImaDropdown::create([
+            'kategori'  => 'sdgs',
+            'kode'      => $request->kode ?: 'SDG',
+            'icon_path' => $iconPath,
+            'warna'     => $request->warna ?: '#E5243B',
+            'label'     => $request->label,
+            'deskripsi' => $request->deskripsi,
+            'is_active' => true
+        ]);
+
+        return back()->with('success', 'Pilar SDGs dan Ikon Tema berhasil disimpan.');
+    }
+
     public function destroyDropdown(ImaDropdown $dropdown)
     {
+        // Hapus file gambar ikon dari storage jika ada
+        if (!empty($dropdown->icon_path) && Storage::disk('public')->exists($dropdown->icon_path)) {
+            Storage::disk('public')->delete($dropdown->icon_path);
+        }
+
         $dropdown->delete();
-        return back()->with('success', 'Opsi dropdown berhasil dihapus.');
+        return back()->with('success', 'Data berhasil dihapus.');
     }
 
     public function storeIndicator(Request $request)
@@ -110,9 +143,6 @@ class SigapImaSettingController extends Controller
         return back()->with('success', 'Pengaturan 20 Indikator dan Skema Penilaian berhasil disimpan.');
     }
 
-    // ==========================================
-    // HANDLER JADWAL & KUNCI PENGISIAN
-    // ==========================================
     public function storeSchedule(Request $request)
     {
         $request->validate([

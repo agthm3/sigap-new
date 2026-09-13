@@ -8,7 +8,13 @@ class ImaDropdown extends Model
 {
     protected $table = 'ima_dropdowns';
     
-    protected $fillable = [
-        'kategori', 'kode', 'label', 'is_active'
-    ];
+protected $fillable = [
+    'kategori',
+    'kode',
+    'icon_path',
+    'warna',
+    'label',
+    'deskripsi',
+    'is_active',
+];
 }

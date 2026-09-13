@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
-<section class="max-w-7xl mx-auto px-4 py-6" x-data="{ activeTab: 'jadwal' }">
+<section class="max-w-7xl mx-auto px-4 py-6" x-data="{ activeTab: 'sdgs' }">
     <div class="mb-6">
         <h1 class="text-2xl font-extrabold text-gray-900">Pengaturan SIGAP IMA</h1>
-        <p class="text-gray-500 text-sm mt-1">Kelola jadwal lomba, status kunci pengisian inovator, skema poin 20 indikator, dan opsi dropdown.</p>
+        <p class="text-gray-500 text-sm mt-1">Kelola jadwal lomba, status kunci pengisian inovator, skema poin 20 indikator, pilar SDGs, dan opsi dropdown.</p>
     </div>
 
     @if(session('success'))
@@ -16,7 +16,10 @@
     <!-- Tabs Navigasi -->
     <div class="flex flex-wrap gap-2 border-b border-gray-200 mb-6">
         <button @click="activeTab = 'jadwal'" :class="activeTab === 'jadwal' ? 'border-amber-500 text-amber-600 border-b-2 font-bold' : 'text-gray-500 hover:text-gray-700'" class="px-4 py-2 transition outline-none">
-            🗓️ Jadwal Lomba & Kunci Pengisian
+            🗓️ Jadwal Lomba & Kunci
+        </button>
+        <button @click="activeTab = 'sdgs'" :class="activeTab === 'sdgs' ? 'border-amber-500 text-amber-600 border-b-2 font-bold' : 'text-gray-500 hover:text-gray-700'" class="px-4 py-2 transition outline-none">
+            🌱 Master Data SDGs
         </button>
         <button @click="activeTab = 'indikator'" :class="activeTab === 'indikator' ? 'border-amber-500 text-amber-600 border-b-2 font-bold' : 'text-gray-500 hover:text-gray-700'" class="px-4 py-2 transition outline-none">
             ⭐ Pengaturan 20 Indikator & Poin
@@ -29,13 +32,11 @@
     <!-- ============================================== -->
     <!-- TAB 1: JADWAL LOMBA & KUNCI PENGISIAN -->
     <!-- ============================================== -->
-    <div x-show="activeTab === 'jadwal'" x-transition.opacity>
+    <div x-show="activeTab === 'jadwal'" x-transition.opacity style="display: none;">
         <div class="grid lg:grid-cols-3 gap-6">
-            
-            <!-- PANEL KIRI: SAKELAR KUNCI & FORM TAMBAH JADWAL -->
+            <!-- PANEL KIRI -->
             <div class="lg:col-span-1 space-y-6">
-                
-                <!-- CARD TOGGLE KUNCI PENGISIAN -->
+                <!-- CARD TOGGLE KUNCI -->
                 <div class="bg-white p-6 rounded-2xl border {{ $isLocked ? 'border-rose-300 bg-rose-50/30' : 'border-emerald-300 bg-emerald-50/30' }} shadow-sm">
                     <div class="flex items-center justify-between mb-3">
                         <h3 class="font-extrabold text-gray-900 text-base">Status Pengisian</h3>
@@ -50,28 +51,24 @@
                     <form action="{{ route('sigap-ima.settings.toggle-lock') }}" method="POST">
                         @csrf
                         <input type="hidden" name="is_submission_locked" value="{{ $isLocked ? '0' : '1' }}">
-
                         <label class="block mb-3">
                             <span class="text-xs font-semibold text-gray-700">Pesan Pengumuman untuk Inovator</span>
                             <textarea name="lock_notice_message" rows="3" class="mt-1 w-full rounded-xl border-gray-300 text-xs focus:ring-amber-500 focus:border-amber-500" placeholder="Pesan yang tampil saat inovator membuka halaman pendaftaran...">{{ $lockNotice }}</textarea>
                         </label>
-
                         <button type="submit" onclick="return confirm('Apakah Anda yakin ingin mengubah status kunci pengisian?')" class="w-full py-2.5 rounded-xl font-bold text-xs transition shadow-sm {{ $isLocked ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-rose-600 text-white hover:bg-rose-700' }}">
                             {{ $isLocked ? '🔓 Buka Kembali Pengisian' : '🔒 Kunci Seluruh Pengisian Sekarang' }}
                         </button>
                     </form>
                 </div>
 
-                <!-- CARD TAMBAH FASE / AGENDA -->
+                <!-- FORM TAMBAH JADWAL -->
                 <form action="{{ route('sigap-ima.settings.schedule.store') }}" method="POST" class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
                     @csrf
                     <h3 class="font-bold text-gray-900 mb-4 border-b pb-2 text-sm">Tambah Fase / Jadwal Lomba</h3>
-
                     <label class="block mb-3">
                         <span class="text-xs font-semibold text-gray-700">Nama Fase / Tahapan *</span>
                         <input type="text" name="fase_nama" required placeholder="Contoh: Pendaftaran & Unggah Evidence" class="mt-1 w-full rounded-lg border-gray-300 text-xs focus:ring-amber-500 focus:border-amber-500">
                     </label>
-
                     <div class="grid grid-cols-2 gap-3 mb-3">
                         <label class="block">
                             <span class="text-xs font-semibold text-gray-700">Tanggal Mulai *</span>
@@ -82,24 +79,21 @@
                             <input type="date" name="tanggal_selesai" required class="mt-1 w-full rounded-lg border-gray-300 text-xs focus:ring-amber-500 focus:border-amber-500">
                         </label>
                     </div>
-
                     <label class="block mb-3">
                         <span class="text-xs font-semibold text-gray-700">Urutan Fase *</span>
                         <input type="number" name="urutan" value="{{ $schedules->count() + 1 }}" min="1" required class="mt-1 w-full rounded-lg border-gray-300 text-xs focus:ring-amber-500 focus:border-amber-500">
                     </label>
-
                     <label class="block mb-4">
                         <span class="text-xs font-semibold text-gray-700">Deskripsi Ringkas</span>
                         <textarea name="deskripsi" rows="2" placeholder="Catatan instruksi untuk inovator..." class="mt-1 w-full rounded-lg border-gray-300 text-xs focus:ring-amber-500 focus:border-amber-500"></textarea>
                     </label>
-
                     <button type="submit" class="w-full py-2 bg-gray-900 text-white font-bold rounded-lg hover:bg-black transition text-xs">
                         + Tambah ke Jadwal Lomba
                     </button>
                 </form>
             </div>
 
-            <!-- PANEL KANAN: LIST AGENDA TAHAPAN / JADWAL -->
+            <!-- PANEL KANAN: LIST JADWAL -->
             <div class="lg:col-span-2">
                 <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                     <div class="bg-gray-50/70 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
@@ -109,7 +103,6 @@
                         </div>
                         <span class="text-xs font-bold text-amber-700 bg-amber-100 px-3 py-1 rounded-full">{{ $schedules->count() }} Fase</span>
                     </div>
-
                     <div class="p-6">
                         @if($schedules->isEmpty())
                             <div class="text-center py-12 text-gray-400">
@@ -162,17 +155,181 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- TAB 2: MASTER DATA SDGs (FITUR BARU) -->
+    <!-- ============================================== -->
+    <!-- ============================================== -->
+    <!-- TAB 2: MASTER DATA SDGs (UPLOAD GAMBAR & TEMA WARNA) -->
+    <!-- ============================================== -->
+    <div x-show="activeTab === 'sdgs'" x-transition.opacity>
+        <div class="grid lg:grid-cols-3 gap-6">
+            
+            <!-- FORM TAMBAH PILAR SDGs -->
+            <div class="lg:col-span-1" x-data="{ 
+                selectedColor: '#E5243B',
+                colorPresets: [
+                    { name: '1. Merah (No Poverty)', hex: '#E5243B' },
+                    { name: '2. Kuning Emas (Zero Hunger)', hex: '#DDA63A' },
+                    { name: '3. Hijau (Good Health)', hex: '#4C9F38' },
+                    { name: '4. Merah Gelap (Quality Education)', hex: '#C5192D' },
+                    { name: '5. Oranye Merah (Gender)', hex: '#FF3A21' },
+                    { name: '6. Biru Muda (Clean Water)', hex: '#26BDE2' },
+                    { name: '7. Kuning (Clean Energy)', hex: '#FCC30B' },
+                    { name: '8. Marun (Decent Work)', hex: '#A21942' },
+                    { name: '9. Oranye (Industry/Innovation)', hex: '#FD6925' },
+                    { name: '10. Magenta (Reduced Inequalities)', hex: '#DD1367' },
+                    { name: '11. Oranye Terang (Sustainable Cities)', hex: '#FD9D24' },
+                    { name: '12. Coklat Emas (Consumption)', hex: '#BF8B2E' },
+                    { name: '13. Hijau Lumut (Climate Action)', hex: '#3F7E44' },
+                    { name: '14. Biru Bahari (Life Below Water)', hex: '#0A97D9' },
+                    { name: '15. Hijau Daun (Life on Land)', hex: '#56C02B' },
+                    { name: '16. Biru Royal (Peace & Justice)', hex: '#00689D' },
+                    { name: '17. Biru Navy (Partnerships)', hex: '#19486A' }
+                ]
+            }">
+                <form action="{{ route('sigap-ima.settings.sdg.store') }}" method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm sticky top-6">
+                    @csrf
+                    <h3 class="font-bold text-gray-900 mb-1 text-base">Tambah Pilar SDGs</h3>
+                    <p class="text-xs text-gray-500 mb-4 pb-3 border-b border-gray-100">
+                        Unggah gambar ikon resmi dan tentukan warna identitas SDGs.
+                    </p>
+
+                    <!-- NOMOR / KODE & NAMA PILAR -->
+                    <div class="grid grid-cols-4 gap-3 mb-3">
+                        <label class="block col-span-1">
+                            <span class="text-xs font-semibold text-gray-700">Nomor/No *</span>
+                            <input type="text" name="kode" required placeholder="Contoh: 1" class="mt-1 w-full text-center rounded-xl border-gray-300 text-sm focus:ring-amber-500 focus:border-amber-500 font-bold">
+                        </label>
+                        <label class="block col-span-3">
+                            <span class="text-xs font-semibold text-gray-700">Nama Pilar SDGs *</span>
+                            <input type="text" name="label" required placeholder="Contoh: Tanpa Kemiskinan" class="mt-1 w-full rounded-xl border-gray-300 text-sm focus:ring-amber-500 focus:border-amber-500">
+                        </label>
+                    </div>
+
+                    <!-- UPLOAD GAMBAR IKON -->
+                    <div class="mb-4">
+                        <span class="text-xs font-semibold text-gray-700 block mb-1">Unggah Gambar Ikon SDGs</span>
+                        <input type="file" name="icon" accept=".png,.jpg,.jpeg,.svg,.webp" class="w-full text-xs file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-gray-100 hover:file:bg-gray-200 border border-gray-200 rounded-xl p-1">
+                        <span class="text-[10px] text-gray-400 mt-1 block">Format: PNG transparan, SVG, atau JPG (Maks. 2MB).</span>
+                    </div>
+
+                    <!-- PILIHAN TEMA WARNA -->
+                    <div class="mb-4 p-4 rounded-2xl bg-gray-50 border border-gray-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-gray-800 uppercase tracking-wide">Warna Tema SDGs</span>
+                            <div class="flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full border border-black/10 shadow-xs" :style="`background-color: ${selectedColor}`"></span>
+                                <input type="text" name="warna" x-model="selectedColor" class="w-20 px-2 py-0.5 text-xs text-center font-mono rounded-lg border-gray-300">
+                            </div>
+                        </div>
+
+                        <!-- Palet Preset Warna SDGs -->
+                        <div class="grid grid-cols-6 gap-2 mt-3">
+                            <template x-for="p in colorPresets" :key="p.hex">
+                                <button type="button" 
+                                        @click="selectedColor = p.hex" 
+                                        :style="`background-color: ${p.hex}`"
+                                        :title="p.name"
+                                        :class="selectedColor === p.hex ? 'ring-2 ring-offset-2 ring-black scale-110' : 'hover:opacity-90'"
+                                        class="w-full h-7 rounded-lg shadow-2xs transition transform">
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- DESKRIPSI KETERKAITAN -->
+                    <label class="block mb-4">
+                        <span class="text-xs font-semibold text-gray-700">Uraian Contoh / Panduan Keterkaitan</span>
+                        <textarea name="deskripsi" rows="3" placeholder="Contoh: Fokus pada peningkatan taraf ekonomi masyarakat marjinal atau akses pangan murah..." class="mt-1 w-full rounded-xl border-gray-300 text-xs focus:ring-amber-500 focus:border-amber-500 leading-relaxed"></textarea>
+                    </label>
+
+                    <button type="submit" class="w-full py-2.5 bg-gray-900 hover:bg-black text-white font-bold rounded-xl transition text-xs shadow-sm">
+                        + Simpan Pilar & Tema SDGs
+                    </button>
+                </form>
+            </div>
+
+            <!-- DAFTAR PILAR SDGs TERDAFTAR -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="bg-gray-50/70 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-gray-900 text-sm">Katalog Pilar SDGs Terdaftar</h3>
+                            <p class="text-xs text-gray-500 mt-0.5">Warna tema dan gambar ikon akan tampil langsung pada kartu pilihan inovator.</p>
+                        </div>
+                        <span class="text-xs font-bold text-amber-800 bg-amber-100 px-3 py-1 rounded-full">
+                            {{ count($dropdowns['sdgs'] ?? []) }} Pilar
+                        </span>
+                    </div>
+
+                    <div class="p-6">
+                        @if(empty($dropdowns['sdgs']) || count($dropdowns['sdgs']) === 0)
+                            <div class="text-center py-12 text-gray-400">
+                                <span class="text-4xl block mb-2 opacity-60">🌱</span>
+                                <p class="text-sm font-semibold text-gray-600">Belum ada Pilar SDGs yang ditambahkan.</p>
+                                <p class="text-xs text-gray-400 mt-1">Gunakan formulir di samping untuk menambahkan pilar baru beserta warna temanya.</p>
+                            </div>
+                        @else
+                            <div class="grid sm:grid-cols-2 gap-4">
+                                @foreach($dropdowns['sdgs'] as $sdg)
+                                    @php
+                                        $themeColor = $sdg->warna ?: '#E5243B';
+                                    @endphp
+                                    <div class="rounded-2xl p-4 bg-white border border-gray-200 hover:shadow-md transition relative flex flex-col justify-between overflow-hidden group" style="border-top: 5px solid {{ $themeColor }};">
+                                        <div>
+                                            <div class="flex items-start justify-between gap-2 mb-3">
+                                                <div class="flex items-center gap-2.5">
+                                                    <!-- Gambar Ikon atau Fallback -->
+                                                    @if(!empty($sdg->icon_path))
+                                                        <img src="{{ asset('storage/' . $sdg->icon_path) }}" alt="{{ $sdg->label }}" class="w-12 h-12 object-contain rounded-xl p-1 border border-gray-100 bg-gray-50">
+                                                    @else
+                                                        <div class="w-12 h-12 rounded-xl flex items-center justify-center font-black text-white text-base shadow-xs" style="background-color: {{ $themeColor }};">
+                                                            {{ $sdg->kode ?? 'SDG' }}
+                                                        </div>
+                                                    @endif
+                                                    <div>
+                                                        <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded text-white" style="background-color: {{ $themeColor }};">
+                                                            {{ $sdg->kode ?? 'SDG' }}
+                                                        </span>
+                                                        <h4 class="font-bold text-gray-900 text-sm leading-tight mt-1">{{ $sdg->label }}</h4>
+                                                    </div>
+                                                </div>
+
+                                                <form action="{{ route('sigap-ima.settings.dropdown.destroy', $sdg->id) }}" method="POST" onsubmit="return confirm('Hapus pilar SDGs ini beserta berkas ikonnya?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-gray-400 hover:text-rose-600 p-1 rounded-lg hover:bg-rose-50 text-xs font-bold transition" title="Hapus">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                    </button>
+                                                </form>
+                                            </div>
+
+                                            @if($sdg->deskripsi)
+                                                <p class="text-xs text-gray-600 mt-2 leading-relaxed bg-gray-50/80 p-3 rounded-xl border border-gray-100">
+                                                    {{ $sdg->deskripsi }}
+                                                </p>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
 
         </div>
     </div>
 
     <!-- ============================================== -->
-    <!-- TAB 2: INDIKATOR SETTINGS (DENGAN SKEMA POIN) -->
+    <!-- TAB 3: INDIKATOR SETTINGS (DENGAN SKEMA POIN) -->
     <!-- ============================================== -->
     <div x-show="activeTab === 'indikator'" x-transition.opacity style="display: none;">
         <form action="{{ route('sigap-ima.settings.indicator') }}" method="POST" enctype="multipart/form-data">
             @csrf
-            
             <div class="flex justify-between items-center bg-amber-50 border border-amber-200 p-4 rounded-xl mb-4 sticky top-4 z-10 shadow-sm">
                 <p class="text-sm text-amber-800">Tentukan nama indikator, pengali nilai, dan opsi parameternya (beserta bintang/poin).</p>
                 <button type="submit" class="px-6 py-2.5 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition shadow-md whitespace-nowrap">
@@ -186,25 +343,20 @@
                         $expected = $ind->parameter_options ?? [];
                         $pilihanParams = json_encode($ind->pilihan_parameter ?? []);
                     @endphp
-                    
                     <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm relative" x-data="indicatorItem({{ $ind->id }}, {{ $pilihanParams }})">
                         <div class="absolute -top-3 -left-3 w-8 h-8 bg-gray-900 text-white rounded-lg flex items-center justify-center font-bold text-sm shadow">
                             {{ $ind->no_urut }}
                         </div>
-                        
                         <div class="grid md:grid-cols-4 gap-3 mb-3">
                             <label class="block md:col-span-3">
                                 <span class="text-xs font-semibold text-gray-500 uppercase">Nama Indikator</span>
                                 <input type="text" name="indikator[{{ $ind->id }}][nama]" value="{{ $ind->nama_indikator }}" required class="mt-1 w-full rounded-lg border-gray-300 text-sm font-semibold focus:border-amber-500">
                             </label>
-                            
                             <label class="block md:col-span-1">
                                 <span class="text-xs font-semibold text-amber-600 uppercase">Bobot Pengali</span>
                                 <input type="number" name="indikator[{{ $ind->id }}][pengali]" value="{{ $ind->pengali ?? 1 }}" min="1" required class="mt-1 w-full rounded-lg border-amber-300 text-sm focus:ring-amber-500 focus:border-amber-500 bg-amber-50 font-bold text-center">
                             </label>
                         </div>
-                        
-                        <!-- MANAJEMEN PARAMETER & POIN DINAMIS -->
                         <div class="mb-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
                             <span class="text-sm font-bold text-gray-800 block mb-2">Opsi Parameter & Poin Bintang</span>
                             <div class="space-y-2">
@@ -216,9 +368,7 @@
                                         <div class="w-24">
                                             <input type="number" :name="`indikator[${id}][params][${index}][poin]`" x-model="param.poin" placeholder="Poin" required min="0" class="w-full rounded-lg border-gray-300 text-sm focus:border-amber-500">
                                         </div>
-                                        <button type="button" @click="removeParam(index)" class="px-2.5 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 font-bold">
-                                            &times;
-                                        </button>
+                                        <button type="button" @click="removeParam(index)" class="px-2.5 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 font-bold">&times;</button>
                                     </div>
                                 </template>
                             </div>
@@ -278,7 +428,7 @@
     </div>
 
     <!-- ============================================== -->
-    <!-- TAB 3: DROPDOWN SETTINGS -->
+    <!-- TAB 4: DROPDOWN SETTINGS -->
     <!-- ============================================== -->
     <div x-show="activeTab === 'dropdown'" x-transition.opacity style="display: none;">
         <div class="grid lg:grid-cols-3 gap-6">
@@ -312,7 +462,7 @@
                                     <span class="text-sm text-gray-700">{{ $opt->label }}</span>
                                     <form action="{{ route('sigap-ima.settings.dropdown.destroy', $opt->id) }}" method="POST" onsubmit="return confirm('Hapus opsi ini?');">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="text-red-500 hover:text-red-700 p-1 bg-red-50 rounded">
+                                        <button type="submit" class="text-rose-500 hover:text-rose-700 p-1 bg-rose-50 rounded">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                         </button>
                                     </form>

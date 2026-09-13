@@ -58,6 +58,9 @@ class ImaInovasi extends Model
         'asistensi_note',
         'asistensi_by',
         'asistensi_at',
+
+        'sdgs_pilihan',
+    'sdgs_keterkaitan',
     ];
 
     protected $casts = [

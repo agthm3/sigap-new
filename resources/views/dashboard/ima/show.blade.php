@@ -1,5 +1,21 @@
 @extends('layouts.app')
 
+@push('head')
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+<style>
+    /* Styling Editor Saat Mode Edit */
+    .ql-container { font-family: inherit; font-size: 14px; min-height: 120px; border-bottom-left-radius: 0.75rem; border-bottom-right-radius: 0.75rem; background-color: white; }
+    .ql-toolbar { border-top-left-radius: 0.75rem; border-top-right-radius: 0.75rem; background-color: #f9fafb; }
+    
+    /* Styling Konten HTML Hasil Render Quill */
+    .quill-content h1, .quill-content h2, .quill-content h3 { font-weight: bold; margin-top: 1em; margin-bottom: 0.5em; }
+    .quill-content p { margin-bottom: 0.75em; }
+    .quill-content ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 0.75em; }
+    .quill-content ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 0.75em; }
+</style>
+@endpush
+
 @section('content')
 @php
     $isVerifikator = auth()->user()->hasAnyRole(['admin', 'superadmin', 'verif_inovasi']);
@@ -26,9 +42,13 @@
             $totalSkor += ($ev->parameter_weight ?? 0) * ($ind->pengali ?? 1);
         }
     }
+
+    // Ambil Master Data SDGs untuk dicocokkan dengan pilihan Inovator
+    $sdgsMaster = $dropdowns['sdgs'] ?? collect([]);
+    $selectedSdgs = is_string($inovasi->sdgs_pilihan) ? json_decode($inovasi->sdgs_pilihan, true) : ($inovasi->sdgs_pilihan ?? []);
 @endphp
 
-<section class="max-w-6xl mx-auto px-4 py-6" x-data="{ tab: 'profil', isEditing: false }">
+<section class="max-w-6xl mx-auto px-4 py-6" x-data="showWizard()">
 
     <!-- 1. BANNER SAMPUL INOVASI -->
     @if(!empty($inovasi->sampul_file))
@@ -82,7 +102,7 @@
             </a>
 
             @if(!$isVerifikator)
-                <button type="button" @click="isEditing = !isEditing; if(isEditing) tab = 'profil'" class="inline-flex items-center gap-1.5 px-4 py-2 border border-amber-500 text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-xl text-sm font-bold transition shadow-sm">
+                <button type="button" @click="toggleEdit()" class="inline-flex items-center gap-1.5 px-4 py-2 border border-amber-500 text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-xl text-sm font-bold transition shadow-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                     <span x-text="isEditing ? 'Batal Edit Profil' : 'Edit Profil'"></span>
                 </button>
@@ -115,22 +135,29 @@
     <!-- TAB 1: PROFIL & METADATA -->
     <!-- ============================================== -->
     <div x-show="tab === 'profil'" x-transition.opacity class="grid lg:grid-cols-3 gap-6">
-        <!-- Konten Profil Sama Seperti Sebelumnya (Disembunyikan demi keringkasan jika mau, tapi ini full code) -->
+        
+        <!-- KOLOM KIRI: VIEW / EDIT -->
         <div class="lg:col-span-2 space-y-6">
 
             <!-- MODE EDIT -->
             <div x-show="isEditing" x-transition.opacity style="display: none;">
-                <form action="{{ route('sigap-ima.update', $inovasi->id) }}" method="POST" class="bg-white border border-amber-300 rounded-2xl p-6 shadow-md space-y-6">
+                <form action="{{ route('sigap-ima.update', $inovasi->id) }}" method="POST" id="formImaUpdate" class="bg-white border border-amber-300 rounded-2xl p-6 shadow-md space-y-6" @submit.prevent="submitForm($event)">
                     @csrf
                     @method('PUT')
 
+                    <input type="hidden" name="rancang_bangun" id="edit_rancang_bangun">
+                    <input type="hidden" name="tujuan" id="edit_tujuan">
+                    <input type="hidden" name="manfaat" id="edit_manfaat">
+                    <input type="hidden" name="hasil_inovasi" id="edit_hasil">
+
                     <div class="flex items-center justify-between border-b border-gray-100 pb-3">
                         <h3 class="text-lg font-bold text-gray-900">Perbarui Profil Inovasi</h3>
-                        <button type="button" @click="isEditing = false" class="text-xs text-gray-500 hover:text-gray-800 font-bold">&times; Tutup Edit</button>
+                        <button type="button" @click="toggleEdit()" class="text-xs text-gray-500 hover:text-gray-800 font-bold">&times; Tutup Edit</button>
                     </div>
 
+                    <!-- FOTO SAMPUL -->
                     <div x-data="showInlineUploader('sampul_file')" class="border-2 border-dashed border-amber-300 rounded-xl p-4 bg-amber-50/50">
-                        <span class="block text-xs font-bold text-amber-900 mb-1">Ganti Foto Sampul (Biarkan kosong jika tidak diubah)</span>
+                        <span class="block text-xs font-bold text-amber-900 mb-1">Ganti Foto Sampul (Kosongkan jika tidak diubah)</span>
                         <div class="bg-white p-3 border border-gray-200 rounded-lg text-center cursor-pointer hover:border-amber-500" @click="$refs.fileInput.click()">
                             <span class="text-xs text-gray-500">Klik untuk memilih foto sampul baru</span>
                             <input type="file" x-ref="fileInput" @change="handleFileSelect($event)" accept=".jpg,.jpeg,.png" class="hidden">
@@ -185,66 +212,71 @@
                         </label>
                     </div>
 
-                    <div class="space-y-4 border-t pt-4 border-gray-100">
-                        <label class="block">
-                            <span class="text-xs font-semibold text-gray-700">Rancang Bangun Inovasi</span>
-                            <textarea name="rancang_bangun" rows="5" class="mt-1 w-full rounded-lg border-gray-300 focus:border-amber-500 text-sm">{{ $inovasi->rancang_bangun }}</textarea>
-                        </label>
-                        <label class="block">
-                            <span class="text-xs font-semibold text-gray-700">Tujuan Inovasi</span>
-                            <textarea name="tujuan" rows="3" class="mt-1 w-full rounded-lg border-gray-300 focus:border-amber-500 text-sm">{{ $inovasi->tujuan }}</textarea>
-                        </label>
-                        <label class="block">
-                            <span class="text-xs font-semibold text-gray-700">Manfaat yang Diperoleh</span>
-                            <textarea name="manfaat" rows="3" class="mt-1 w-full rounded-lg border-gray-300 focus:border-amber-500 text-sm">{{ $inovasi->manfaat }}</textarea>
-                        </label>
-                        <label class="block">
-                            <span class="text-xs font-semibold text-gray-700">Hasil Inovasi</span>
-                            <textarea name="hasil_inovasi" rows="3" class="mt-1 w-full rounded-lg border-gray-300 focus:border-amber-500 text-sm">{{ $inovasi->hasil_inovasi }}</textarea>
-                        </label>
-                    </div>
-
-                    <!-- Pembaruan Dokumen -->
-                    <div class="border-t pt-4 border-gray-100">
-                        <span class="block text-sm font-bold text-gray-800 mb-3">Pembaruan Dokumen Lampiran</span>
-                        <div class="grid sm:grid-cols-2 gap-4">
-                            <div x-data="showInlineUploader('anggaran_file')" class="border border-gray-200 p-3 rounded-xl bg-gray-50">
-                                <span class="block text-xs font-semibold text-gray-700 mb-1">Dokumen Anggaran</span>
-                                <input type="file" @change="handleFileSelect($event)" accept=".pdf,.jpg,.png" class="text-xs w-full text-gray-500">
-                                <template x-for="f in files" :key="f.id"><input type="hidden" :name="inputName" :value="f.temp_path"></template>
-                            </div>
-                            <div x-data="showInlineUploader('profil_bisnis_file')" class="border border-gray-200 p-3 rounded-xl bg-gray-50">
-                                <span class="block text-xs font-semibold text-gray-700 mb-1">Profil Bisnis (Opsional)</span>
-                                <input type="file" @change="handleFileSelect($event)" accept=".pdf,.ppt,.pptx" class="text-xs w-full text-gray-500">
-                                <template x-for="f in files" :key="f.id"><input type="hidden" :name="inputName" :value="f.temp_path"></template>
-                            </div>
-                            <div x-data="showInlineUploader('haki_file')" class="border border-gray-200 p-3 rounded-xl bg-gray-50">
-                                <span class="block text-xs font-semibold text-gray-700 mb-1">Dokumen HAKI (Opsional)</span>
-                                <input type="file" @change="handleFileSelect($event)" accept=".pdf,.jpg,.png" class="text-xs w-full text-gray-500">
-                                <template x-for="f in files" :key="f.id"><input type="hidden" :name="inputName" :value="f.temp_path"></template>
-                            </div>
-                            <div x-data="showInlineUploader('penghargaan_file')" class="border border-gray-200 p-3 rounded-xl bg-gray-50">
-                                <span class="block text-xs font-semibold text-gray-700 mb-1">Sertifikat / Penghargaan</span>
-                                <input type="file" @change="handleFileSelect($event)" accept=".pdf,.jpg,.png" class="text-xs w-full text-gray-500">
-                                <template x-for="f in files" :key="f.id"><input type="hidden" :name="inputName" :value="f.temp_path"></template>
-                            </div>
+                    <!-- EDITOR TEKS (QUILL) SAAT MODE EDIT -->
+                    <div class="space-y-5 border-t pt-4 border-gray-100">
+                        <div>
+                            <span class="block text-xs font-semibold text-gray-700 mb-1">Rancang Bangun Inovasi (Min. 300 Kata)</span>
+                            <div id="edit-rancang" class="rounded-xl bg-white">{!! $inovasi->rancang_bangun !!}</div>
+                        </div>
+                        <div>
+                            <span class="block text-xs font-semibold text-gray-700 mb-1">Tujuan Inovasi</span>
+                            <div id="edit-tujuan" class="rounded-xl bg-white">{!! $inovasi->tujuan !!}</div>
+                        </div>
+                        <div>
+                            <span class="block text-xs font-semibold text-gray-700 mb-1">Manfaat yang Diperoleh</span>
+                            <div id="edit-manfaat" class="rounded-xl bg-white">{!! $inovasi->manfaat !!}</div>
+                        </div>
+                        <div>
+                            <span class="block text-xs font-semibold text-gray-700 mb-1">Hasil Inovasi</span>
+                            <div id="edit-hasil" class="rounded-xl bg-white">{!! $inovasi->hasil_inovasi !!}</div>
                         </div>
                     </div>
 
+                    <!-- EDIT DATA OPERATOR -->
+                    <div class="border-t pt-4 border-gray-100 bg-gray-50 p-4 rounded-xl">
+                        <span class="block text-xs font-bold text-gray-800 mb-2">Informasi Kontak Operator (PIC)</span>
+                        <div class="grid sm:grid-cols-2 gap-3 text-sm">
+                            <label class="block">
+                                <span class="text-xs text-gray-600">Nama Operator *</span>
+                                <input type="text" name="operator_nama" value="{{ $inovasi->operator_nama }}" required class="mt-1 w-full rounded-lg border-gray-300 text-sm">
+                            </label>
+                            <label class="block">
+                                <span class="text-xs text-gray-600">Jabatan</span>
+                                <input type="text" name="operator_jabatan" value="{{ $inovasi->operator_jabatan }}" class="mt-1 w-full rounded-lg border-gray-300 text-sm">
+                            </label>
+                            <label class="block">
+                                <span class="text-xs text-gray-600">No. WhatsApp *</span>
+                                <input type="text" name="operator_wa" value="{{ $inovasi->operator_wa }}" required class="mt-1 w-full rounded-lg border-gray-300 text-sm">
+                            </label>
+                            <label class="block">
+                                <span class="text-xs text-gray-600">Email Aktif</span>
+                                <input type="email" name="operator_email" value="{{ $inovasi->operator_email }}" class="mt-1 w-full rounded-lg border-gray-300 text-sm">
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- TOMBOL SUBMIT -->
                     <div class="flex items-center justify-end gap-3 border-t pt-5">
-                        <button type="button" @click="isEditing = false" class="px-4 py-2 border border-gray-300 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50">Batal</button>
+                        <button type="button" @click="toggleEdit()" class="px-4 py-2 border border-gray-300 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50">Batal</button>
                         <button type="submit" class="px-6 py-2 bg-amber-500 text-gray-900 font-bold rounded-xl hover:bg-amber-400 transition shadow">Simpan Perubahan</button>
                     </div>
                 </form>
             </div>
 
-            <!-- MODE LIHAT -->
+            <!-- MODE LIHAT (READ-ONLY) -->
             <div x-show="!isEditing" x-transition.opacity class="space-y-6">
+                
                 <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
                     <div class="flex items-center justify-between border-b pb-2 mb-4">
                         <h3 class="text-lg font-bold text-gray-800">Metadata Inovasi</h3>
+                        @if(!$isVerifikator)
+                            <button type="button" @click="toggleEdit()" class="text-xs text-amber-600 hover:underline font-semibold flex items-center gap-1">
+                                ✏️ Edit Data
+                            </button>
+                        @endif
                     </div>
                     <div class="grid sm:grid-cols-2 gap-y-4 gap-x-6 text-sm">
+                        <!-- Data Klasifikasi -->
                         <div><span class="block text-gray-500 text-xs">Urusan Pemerintah</span><span class="font-medium text-gray-900">{{ $inovasi->urusan_pemerintah ?? '—' }}</span></div>
                         <div><span class="block text-gray-500 text-xs">Klasifikasi</span><span class="font-medium text-gray-900">{{ $inovasi->klasifikasi ?? '—' }}</span></div>
                         <div><span class="block text-gray-500 text-xs">Jenis Inovasi</span><span class="font-medium text-gray-900">{{ $inovasi->jenis_inovasi ?? '—' }}</span></div>
@@ -252,21 +284,82 @@
                         <div><span class="block text-gray-500 text-xs">Asta Cita</span><span class="font-medium text-gray-900">{{ $inovasi->asta_cipta ?? '—' }}</span></div>
                         <div><span class="block text-gray-500 text-xs">Program Prioritas</span><span class="font-medium text-gray-900">{{ $inovasi->program_prioritas ?? '—' }}</span></div>
                         <div class="sm:col-span-2"><span class="block text-gray-500 text-xs">Misi Walikota</span><span class="font-medium text-gray-900">{{ $inovasi->misi_walikota ?? '—' }}</span></div>
+
+                        <div class="col-span-full border-t border-gray-100 my-1"></div>
+
+                        <!-- Data Inisiator & Tahapan -->
+                        <div><span class="block text-gray-500 text-xs">Inisiator Daerah</span><span class="font-medium text-gray-900">{{ $inovasi->inisiator_daerah ?? '—' }}</span></div>
+                        <div><span class="block text-gray-500 text-xs">Nama Inisiator</span><span class="font-medium text-gray-900">{{ $inovasi->inisiator_nama ?? '—' }}</span></div>
+                        <div><span class="block text-gray-500 text-xs">Tahapan Inovasi</span><span class="font-medium text-gray-900">{{ $inovasi->tahap_inovasi ?? '—' }}</span></div>
+                        <div><span class="block text-gray-500 text-xs">Ada Perkembangan?</span><span class="font-medium text-gray-900">{{ $inovasi->perkembangan_inovasi ?? '—' }}</span></div>
+                        <div><span class="block text-gray-500 text-xs">Waktu Uji Coba</span><span class="font-medium text-gray-900">{{ $inovasi->waktu_uji_coba ? $inovasi->waktu_uji_coba->format('d M Y') : '—' }}</span></div>
+                        <div><span class="block text-gray-500 text-xs">Waktu Penerapan</span><span class="font-medium text-gray-900">{{ $inovasi->waktu_penerapan ? $inovasi->waktu_penerapan->format('d M Y') : '—' }}</span></div>
+                        <div class="sm:col-span-2"><span class="block text-gray-500 text-xs">Koordinat Lokasi</span><span class="font-medium text-blue-600">{{ $inovasi->koordinat ?? '—' }}</span></div>
                     </div>
                 </div>
 
+                <!-- DESKRIPSI (Dirender sebagai HTML murni) -->
                 <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-5">
                     <h3 class="text-lg font-bold text-gray-800 border-b pb-2">Deskripsi Inovasi</h3>
-                    <div><span class="block text-gray-500 text-xs mb-1 font-semibold uppercase">Rancang Bangun</span><div class="text-gray-900 bg-gray-50 p-4 rounded-xl border border-gray-100 text-sm leading-relaxed whitespace-pre-line">{{ $inovasi->rancang_bangun ?? 'Belum ada penjelasan.' }}</div></div>
-                    <div><span class="block text-gray-500 text-xs mb-1 font-semibold uppercase">Tujuan Inovasi</span><div class="text-gray-900 bg-gray-50 p-4 rounded-xl border border-gray-100 text-sm leading-relaxed whitespace-pre-line">{{ $inovasi->tujuan ?? '—' }}</div></div>
-                    <div><span class="block text-gray-500 text-xs mb-1 font-semibold uppercase">Manfaat yang Diperoleh</span><div class="text-gray-900 bg-gray-50 p-4 rounded-xl border border-gray-100 text-sm leading-relaxed whitespace-pre-line">{{ $inovasi->manfaat ?? '—' }}</div></div>
-                    <div><span class="block text-gray-500 text-xs mb-1 font-semibold uppercase">Hasil Inovasi</span><div class="text-gray-900 bg-gray-50 p-4 rounded-xl border border-gray-100 text-sm leading-relaxed whitespace-pre-line">{{ $inovasi->hasil_inovasi ?? '—' }}</div></div>
+                    
+                    <div>
+                        <span class="block text-gray-500 text-xs mb-1 font-semibold uppercase">Rancang Bangun</span>
+                        <div class="quill-content text-gray-900 bg-gray-50 p-4 rounded-xl border border-gray-100 text-sm leading-relaxed">{!! $inovasi->rancang_bangun ?? 'Belum ada penjelasan.' !!}</div>
+                    </div>
+                    <div>
+                        <span class="block text-gray-500 text-xs mb-1 font-semibold uppercase">Tujuan Inovasi</span>
+                        <div class="quill-content text-gray-900 bg-gray-50 p-4 rounded-xl border border-gray-100 text-sm leading-relaxed">{!! $inovasi->tujuan ?? '—' !!}</div>
+                    </div>
+                    <div>
+                        <span class="block text-gray-500 text-xs mb-1 font-semibold uppercase">Manfaat yang Diperoleh</span>
+                        <div class="quill-content text-gray-900 bg-gray-50 p-4 rounded-xl border border-gray-100 text-sm leading-relaxed">{!! $inovasi->manfaat ?? '—' !!}</div>
+                    </div>
+                    <div>
+                        <span class="block text-gray-500 text-xs mb-1 font-semibold uppercase">Hasil Inovasi</span>
+                        <div class="quill-content text-gray-900 bg-gray-50 p-4 rounded-xl border border-gray-100 text-sm leading-relaxed">{!! $inovasi->hasil_inovasi ?? '—' !!}</div>
+                    </div>
                 </div>
 
+                <!-- SDGs TERPILIH (Hanya Muncul jika Ada) -->
+                @if(count($selectedSdgs) > 0)
+                <div class="bg-blue-50/50 border border-blue-100 rounded-2xl p-6 shadow-sm">
+                    <h3 class="text-lg font-bold text-blue-900 mb-4 border-b border-blue-200 pb-2">Keterkaitan SDGs</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-5">
+                        @foreach($selectedSdgs as $sdgLabel)
+                            @php
+                                $matchedSdg = $sdgsMaster->firstWhere('label', $sdgLabel);
+                                $color = $matchedSdg->warna ?? '#E5243B';
+                                $icon = $matchedSdg->kode ?? 'SDG';
+                            @endphp
+                            <div class="bg-white border rounded-xl p-3 shadow-xs flex flex-col items-center justify-center text-center" style="border-top: 3px solid {{ $color }}">
+                                @if(!empty($matchedSdg->icon_path))
+                                    <img src="{{ asset('storage/' . $matchedSdg->icon_path) }}" alt="{{ $sdgLabel }}" class="w-8 h-8 mb-2">
+                                @else
+                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white text-xs mb-2" style="background-color: {{ $color }};">{{ $icon }}</div>
+                                @endif
+                                <span class="text-[10px] font-bold text-gray-800 leading-tight">{{ $sdgLabel }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                    @if(!empty($inovasi->sdgs_keterkaitan))
+                        <div>
+                            <span class="block text-blue-800 text-xs mb-1 font-semibold uppercase">Uraian Keterkaitan:</span>
+                            <div class="quill-content text-gray-900 bg-white p-4 rounded-xl border border-blue-100 text-sm leading-relaxed">{!! $inovasi->sdgs_keterkaitan !!}</div>
+                        </div>
+                    @endif
+                </div>
+                @endif
+
+                <!-- Lampiran Berkas Pendukung -->
                 <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
                     <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Lampiran Berkas Utama</h3>
                     <div class="grid sm:grid-cols-2 gap-4 text-sm">
-                        @foreach(['Dokumen Anggaran' => $inovasi->anggaran_file, 'Profil Bisnis' => $inovasi->profil_bisnis_file, 'Dokumen HAKI' => $inovasi->haki_file, 'Sertifikat / Penghargaan' => $inovasi->penghargaan_file] as $label => $file)
+                        @foreach([
+                            'Dokumen Anggaran' => $inovasi->anggaran_file, 
+                            'Profil Bisnis' => $inovasi->profil_bisnis_file,
+                            'Dokumen HAKI' => $inovasi->haki_file,
+                            'Sertifikat / Penghargaan' => $inovasi->penghargaan_file
+                        ] as $label => $file)
                             <div class="border border-gray-200 rounded-xl p-3 flex items-center justify-between">
                                 <span class="font-medium text-gray-700">{{ $label }}</span>
                                 @if(!empty($file))
@@ -281,7 +374,7 @@
             </div>
         </div>
 
-        <!-- KOLOM KANAN: PANEL ASISTENSI -->
+        <!-- KOLOM KANAN: PANEL ASISTENSI & KONTAK PIC -->
         <div class="lg:col-span-1">
             <div class="bg-gray-50 border border-amber-200 rounded-2xl p-5 shadow-sm sticky top-6">
                 <h3 class="text-lg font-bold text-amber-800 mb-4">Review Profil Inovasi</h3>
@@ -320,15 +413,33 @@
                                 {{ $inovasi->asistensi_note ?? 'Tidak ada catatan revisi.' }}
                             </div>
                         </div>
+                        <div class="text-xs text-gray-500">
+                            Terakhir dievaluasi: {{ $inovasi->asistensi_at ? $inovasi->asistensi_at->format('d M Y H:i') : '—' }}
+                        </div>
                     </div>
                 @endif
+                
+                <!-- Kontak Operator -->
+                <div class="mt-6 pt-4 border-t border-gray-200">
+                    <p class="text-xs font-semibold text-gray-500 mb-2">Kontak Operator (PIC):</p>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-lg">👤</div>
+                        <div class="text-sm">
+                            <p class="font-bold text-gray-900">{{ $inovasi->operator_nama }}</p>
+                            @if($inovasi->operator_jabatan)
+                                <p class="text-xs text-gray-500">{{ $inovasi->operator_jabatan }}</p>
+                            @endif
+                            <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $inovasi->operator_wa) }}" target="_blank" class="text-emerald-600 font-medium hover:underline text-xs block mt-0.5">
+                                💬 WA: {{ $inovasi->operator_wa }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- ============================================== -->
-    <!-- TAB 2: EVIDENCE & PENILAIAN (SKOR DINAMIS) -->
-    <!-- ============================================== -->
+    <!-- TAB 2: EVIDENCE & PENILAIAN -->
     <div x-show="tab === 'evidence'" x-transition.opacity style="display: none;" class="space-y-6">
         <div class="bg-amber-50 border border-amber-200 text-amber-900 p-4 rounded-xl text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <p><strong>Review Evidence:</strong> Verifikasi pemenuhan berkas pendukung pada 20 indikator penilaian IMA.</p>
@@ -347,7 +458,6 @@
                 $skorAkhir = $poin * $pengali;
             @endphp
             <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row mb-6">
-                
                 <!-- Kiri: Bukti dari Inovator -->
                 <div class="flex-1 p-6 border-b md:border-b-0 md:border-r border-gray-100 relative">
                     <div class="flex items-start justify-between gap-4 mb-5">
@@ -464,79 +574,109 @@
 
 @push('scripts')
 <script>
-// Komponen AlpineJS untuk upload berkas baru di mode edit inline
-document.addEventListener('alpine:init', () => {
-    Alpine.data('showInlineUploader', (inputName) => ({
-        files: [],
-        inputName: inputName,
-        uploadUrl: "{{ route('sigap-ima.upload-chunk') }}",
-        csrfToken: document.querySelector('meta[name="csrf-token"]')?.content || '',
+    // Konfigurasi Toolbar Quill Editor
+    var toolbarOptions = [
+        ['bold', 'italic', 'underline'],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        [{ 'indent': '-1'}, { 'indent': '+1' }],
+        ['clean']
+    ];
 
-        async handleFileSelect(e) {
-            const raw = e.target.files[0];
-            if (!raw) return;
+    let qRancang, qTujuan, qManfaat, qHasil;
 
-            this.files = [];
-            const fileId = 'up_' + Date.now();
-            this.files.push({
-                id: fileId,
-                name: raw.name,
-                progress: 0,
-                status: 'uploading',
-                temp_path: ''
-            });
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('showWizard', () => ({
+            tab: 'profil',
+            isEditing: false,
 
-            e.target.value = '';
-
-            try {
-                let ready = raw;
-                if (raw.type.startsWith('image/')) {
-                    const bitmap = await createImageBitmap(raw);
-                    const canvas = document.createElement('canvas');
-                    const MAX = 1600;
-                    let w = bitmap.width, h = bitmap.height;
-                    if (w > h && w > MAX) { h = Math.round((h * MAX) / w); w = MAX; }
-                    else if (h > MAX) { w = Math.round((w * MAX) / h); h = MAX; }
-                    canvas.width = w; canvas.height = h;
-                    canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
-                    ready = await new Promise(res => {
-                        canvas.toBlob(b => res(new File([b], raw.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: 'image/jpeg' })), 'image/jpeg', 0.75);
-                    });
+            toggleEdit() {
+                this.isEditing = !this.isEditing;
+                this.tab = 'profil';
+                
+                // Inisialisasi editor hanya sekali saat mode edit dibuka
+                if (this.isEditing && !qRancang) {
+                    setTimeout(() => {
+                        qRancang = new Quill('#edit-rancang', { theme: 'snow', modules: { toolbar: toolbarOptions }});
+                        qTujuan = new Quill('#edit-tujuan', { theme: 'snow', modules: { toolbar: toolbarOptions }});
+                        qManfaat = new Quill('#edit-manfaat', { theme: 'snow', modules: { toolbar: toolbarOptions }});
+                        qHasil = new Quill('#edit-hasil', { theme: 'snow', modules: { toolbar: toolbarOptions }});
+                    }, 50);
                 }
+            },
 
-                const CHUNK = 512 * 1024;
-                const total = Math.ceil(ready.size / CHUNK);
-                const fId = 'inline_' + Date.now();
-
-                for (let i = 0; i < total; i++) {
-                    const blob = ready.slice(i * CHUNK, Math.min((i + 1) * CHUNK, ready.size));
-                    const fd = new FormData();
-                    fd.append('file', blob);
-                    fd.append('file_id', fId);
-                    fd.append('chunk_index', i);
-                    fd.append('total_chunks', total);
-                    fd.append('original_name', ready.name);
-
-                    const res = await fetch(this.uploadUrl, {
-                        method: 'POST',
-                        headers: { 'X-CSRF-TOKEN': this.csrfToken, 'Accept': 'application/json' },
-                        body: fd
-                    });
-
-                    const data = await res.json();
-                    if (data.completed) {
-                        this.files[0].status = 'success';
-                        this.files[0].temp_path = data.temp_path;
-                        this.files = [...this.files];
-                    }
-                }
-            } catch (err) {
-                console.error(err);
-                this.files[0].status = 'error';
-                this.files = [...this.files];
+            submitForm(e) {
+                // Sinkronisasi data HTML ke hidden input sebelum submit update
+                if(qRancang) document.getElementById('edit_rancang_bangun').value = qRancang.root.innerHTML;
+                if(qTujuan) document.getElementById('edit_tujuan').value = qTujuan.root.innerHTML;
+                if(qManfaat) document.getElementById('edit_manfaat').value = qManfaat.root.innerHTML;
+                if(qHasil) document.getElementById('edit_hasil').value = qHasil.root.innerHTML;
+                
+                e.target.submit();
             }
-        }
-    }));
-});
+        }));
+
+        // Komponen Uploader Inline untuk Mode Edit (Sama dengan sebelumnya)
+        Alpine.data('showInlineUploader', (inputName) => ({
+            files: [],
+            inputName: inputName,
+            uploadUrl: "{{ route('sigap-ima.upload-chunk') }}",
+            csrfToken: document.querySelector('meta[name="csrf-token"]')?.content || '',
+
+            async handleFileSelect(e) {
+                const raw = e.target.files[0];
+                if (!raw) return;
+
+                const fileId = 'up_' + Date.now();
+                this.files = [{ id: fileId, name: raw.name, progress: 0, status: 'uploading', temp_path: '' }];
+                e.target.value = '';
+
+                try {
+                    let ready = raw;
+                    if (raw.type.startsWith('image/')) {
+                        const bitmap = await createImageBitmap(raw);
+                        const canvas = document.createElement('canvas');
+                        const MAX = 1600;
+                        let w = bitmap.width, h = bitmap.height;
+                        if (w > h && w > MAX) { h = Math.round((h * MAX) / w); w = MAX; }
+                        else if (h > MAX) { w = Math.round((w * MAX) / h); h = MAX; }
+                        canvas.width = w; canvas.height = h;
+                        canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
+                        ready = await new Promise(res => {
+                            canvas.toBlob(b => res(new File([b], raw.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: 'image/jpeg' })), 'image/jpeg', 0.75);
+                        });
+                    }
+
+                    const CHUNK = 512 * 1024;
+                    const total = Math.ceil(ready.size / CHUNK);
+                    
+                    for (let i = 0; i < total; i++) {
+                        const blob = ready.slice(i * CHUNK, Math.min((i + 1) * CHUNK, ready.size));
+                        const fd = new FormData();
+                        fd.append('file', blob);
+                        fd.append('file_id', fileId);
+                        fd.append('chunk_index', i);
+                        fd.append('total_chunks', total);
+                        fd.append('original_name', ready.name);
+
+                        const res = await fetch(this.uploadUrl, {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': this.csrfToken, 'Accept': 'application/json' },
+                            body: fd
+                        });
+
+                        const data = await res.json();
+                        if (data.completed) {
+                            this.files[0].status = 'success';
+                            this.files[0].temp_path = data.temp_path;
+                        }
+                    }
+                    this.files = [...this.files];
+                } catch (err) {
+                    this.files[0].status = 'error';
+                    this.files = [...this.files];
+                }
+            }
+        }));
+    });
 </script>
 @endpush
