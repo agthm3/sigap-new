@@ -14,18 +14,21 @@
         } catch(e) {
             this.targetsList = [];
         }
-        if (this.targetsList.length === 0) {
+        if (!Array.isArray(this.targetsList) || this.targetsList.length === 0) {
+            this.targetsList = [];
             this.addTarget();
         }
         this.modalTargetOpen = true;
     },
 
     addTarget() {
+        const pilarKode = this.selectedSdg?.kode || '1';
+        const nextNum = this.targetsList.length + 1;
         this.targetsList.push({
-            kode_target: (this.selectedSdg?.kode || '1') + '.' + (this.targetsList.length + 1),
+            kode_target: pilarKode + '.' + nextNum,
             deskripsi_target: '',
             indikators: [
-                { kode_indikator: (this.selectedSdg?.kode || '1') + '.' + (this.targetsList.length + 1) + '.1', nama_indikator: '' }
+                { kode_indikator: pilarKode + '.' + nextNum + '.1', nama_indikator: '' }
             ]
         });
     },
@@ -36,10 +39,10 @@
 
     addIndikator(tIdx) {
         const t = this.targetsList[tIdx];
-        const nextNum = (t.indikators?.length || 0) + 1;
         if (!t.indikators) t.indikators = [];
+        const nextNum = t.indikators.length + 1;
         t.indikators.push({
-            kode_indikator: t.kode_target + '.' + nextNum,
+            kode_indikator: (t.kode_target || '1.1') + '.' + nextNum,
             nama_indikator: ''
         });
     },
@@ -212,9 +215,6 @@
     <!-- ============================================== -->
     <!-- TAB 2: MASTER DATA SDGs (DENGAN TARGET & INDIKATOR) -->
     <!-- ============================================== -->
-    <!-- ============================================== -->
-    <!-- TAB 2: MASTER DATA SDGs (DENGAN TARGET & INDIKATOR 500 KARAKTER) -->
-    <!-- ============================================== -->
     <div x-show="activeTab === 'sdgs'" x-transition.opacity>
         <div class="grid lg:grid-cols-3 gap-6">
             
@@ -382,9 +382,9 @@
                                             </div>
                                         </div>
 
-                                        <!-- TOMBOL BUKA MODAL TARGET -->
+                                        <!-- TOMBOL BUKA MODAL TARGET (Diberi stop propagation agar aman) -->
                                         <button type="button" 
-                                                @click='openTargetModal(@json($sdg))'
+                                                @click.stop='openTargetModal(@json($sdg))'
                                                 class="mt-4 w-full py-2 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm">
                                             <span>🎯</span> Kelola Target & Indikator
                                         </button>
@@ -400,15 +400,25 @@
     </div>
 
     <!-- ============================================== -->
-    <!-- MODAL POPUP: KELOLA TARGET & INDIKATOR SDGs (500 KARAKTER) -->
+    <!-- MODAL POPUP: KELOLA TARGET & INDIKATOR SDGs (DIPERBAIKI SECARA KOKOH) -->
     <!-- ============================================== -->
     <div x-show="modalTargetOpen" 
-         x-transition.opacity 
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
          style="display: none;" 
+         @keydown.escape.window="modalTargetOpen = false"
          class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
         
-        <div @click.away="modalTargetOpen = false" 
-             class="bg-white rounded-3xl max-w-4xl w-full p-6 sm:p-8 shadow-2xl max-h-[90vh] flex flex-col relative"
+        <!-- Backdrop Click Area -->
+        <div class="fixed inset-0" @click="modalTargetOpen = false"></div>
+
+        <!-- Dialog Box Modal (Stop Click Propagation agar tidak auto-close) -->
+        <div @click.stop 
+             class="bg-white rounded-3xl max-w-4xl w-full p-6 sm:p-8 shadow-2xl max-h-[90vh] flex flex-col relative z-10"
              :style="`border-top: 6px solid ${selectedSdg?.warna || '#E5243B'}`">
             
             <!-- Header Modal -->
@@ -420,7 +430,7 @@
                         <p class="text-xs text-gray-500 mt-0.5">Kelola target-target SDGs dan rincian indikator penilaian (mendukung hingga 500 karakter).</p>
                     </div>
                 </div>
-                <button type="button" @click="modalTargetOpen = false" class="text-gray-400 hover:text-gray-700 text-2xl font-bold p-1">&times;</button>
+                <button type="button" @click="modalTargetOpen = false" class="text-gray-400 hover:text-gray-700 text-2xl font-bold p-1 leading-none">&times;</button>
             </div>
 
             <!-- Konten Form Target & Indikator (Scrollable) -->
@@ -477,108 +487,6 @@
                                         <textarea x-model="ind.nama_indikator" maxlength="500" rows="1" placeholder="Tuliskan nama indikator / definisi capaian (maks. 500 karakter)..." required class="w-full text-xs rounded-lg border-gray-300 focus:ring-amber-500 leading-relaxed resize-y"></textarea>
                                     </div>
                                     <button type="button" @click="removeIndikator(tIdx, iIdx)" class="p-1.5 text-rose-500 hover:text-rose-700 font-bold text-sm" title="Hapus Indikator">
-                                        &times;
-                                    </button>
-                                </div>
-                            </template>
-                        </div>
-
-                    </div>
-                </template>
-
-                <!-- Tombol Tambah Target Baru -->
-                <button type="button" @click="addTarget()" class="w-full py-3 rounded-2xl border-2 border-dashed border-gray-300 hover:border-amber-500 text-gray-600 hover:text-amber-800 font-bold text-xs transition flex items-center justify-center gap-2">
-                    <span>➕</span> Tambah Target Baru untuk Pilar Ini
-                </button>
-
-                <!-- Footer Modal -->
-                <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
-                    <button type="button" @click="modalTargetOpen = false" class="px-5 py-2.5 border border-gray-300 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50">
-                        Batal
-                    </button>
-                    <button type="submit" class="px-7 py-2.5 bg-gray-900 hover:bg-black text-white font-bold text-xs rounded-xl shadow-md transition">
-                        Simpan Seluruh Target & Indikator
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- ============================================== -->
-    <!-- MODAL POPUP: KELOLA TARGET & INDIKATOR SDGs -->
-    <!-- ============================================== -->
-    <div x-show="modalTargetOpen" 
-         x-transition.opacity 
-         style="display: none;" 
-         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-        
-        <div @click.away="modalTargetOpen = false" 
-             class="bg-white rounded-3xl max-w-4xl w-full p-6 sm:p-8 shadow-2xl max-h-[90vh] flex flex-col relative"
-             :style="`border-top: 6px solid ${selectedSdg?.warna || '#E5243B'}`">
-            
-            <!-- Header Modal -->
-            <div class="flex items-center justify-between border-b pb-4 mb-4">
-                <div class="flex items-center gap-3">
-                    <span class="px-2.5 py-1 rounded-lg text-white font-extrabold text-xs" :style="`background-color: ${selectedSdg?.warna || '#E5243B'}`" x-text="`Pilar ${selectedSdg?.kode || ''}`"></span>
-                    <div>
-                        <h3 class="text-lg font-extrabold text-gray-900 leading-tight" x-text="selectedSdg?.label"></h3>
-                        <p class="text-xs text-gray-500 mt-0.5">Kelola target-target SDGs dan rincian indikator penilaian di bawahnya.</p>
-                    </div>
-                </div>
-                <button type="button" @click="modalTargetOpen = false" class="text-gray-400 hover:text-gray-700 text-2xl font-bold p-1">&times;</button>
-            </div>
-
-            <!-- Konten Form Target & Indikator (Scrollable) -->
-            <form :action="`{{ url('/pengaturan-ima/sdg') }}/${selectedSdg?.id}/targets`" method="POST" class="flex-1 overflow-y-auto pr-2 space-y-5">
-                @csrf
-                
-                <!-- Hidden Input penampung JSON array -->
-                <input type="hidden" name="targets_json" :value="JSON.stringify(targetsList)">
-
-                <template x-for="(target, tIdx) in targetsList" :key="tIdx">
-                    <div class="p-5 rounded-2xl border border-gray-200 bg-gray-50/70 space-y-4 relative">
-                        
-                        <!-- Header Target -->
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-black uppercase text-gray-700 tracking-wider flex items-center gap-1.5">
-                                <span class="w-5 h-5 rounded-full bg-black text-white text-[10px] flex items-center justify-center" x-text="tIdx + 1"></span>
-                                Target SDGs
-                            </span>
-                            <button type="button" @click="removeTarget(tIdx)" class="text-rose-600 hover:text-rose-800 text-xs font-bold hover:underline">
-                                &times; Hapus Target
-                            </button>
-                        </div>
-
-                        <!-- Kode & Deskripsi Target -->
-                        <div class="grid sm:grid-cols-4 gap-3">
-                            <div class="sm:col-span-1">
-                                <label class="block text-[11px] font-bold text-gray-700 mb-1">Kode Target</label>
-                                <input type="text" x-model="target.kode_target" placeholder="Contoh: 1.1" required class="w-full text-xs font-bold rounded-xl border-gray-300 focus:ring-amber-500">
-                            </div>
-                            <div class="sm:col-span-3">
-                                <label class="block text-[11px] font-bold text-gray-700 mb-1">Deskripsi Target SDGs *</label>
-                                <textarea x-model="target.deskripsi_target" rows="2" placeholder="Contoh: Pada tahun 2030, mengentaskan kemiskinan ekstrem bagi semua orang..." required class="w-full text-xs rounded-xl border-gray-300 focus:ring-amber-500"></textarea>
-                            </div>
-                        </div>
-
-                        <!-- Daftar Indikator di Bawah Target -->
-                        <div class="pl-4 sm:pl-6 border-l-2 border-amber-300 space-y-3 pt-2">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[11px] font-bold text-amber-900 uppercase">📌 Indikator di Bawah Target Ini:</span>
-                                <button type="button" @click="addIndikator(tIdx)" class="text-xs text-amber-700 hover:text-amber-900 font-bold">
-                                    + Tambah Indikator
-                                </button>
-                            </div>
-
-                            <template x-for="(ind, iIdx) in target.indikators" :key="iIdx">
-                                <div class="flex items-start gap-2 bg-white p-2.5 rounded-xl border border-gray-200">
-                                    <div class="w-24 flex-shrink-0">
-                                        <input type="text" x-model="ind.kode_indikator" placeholder="1.1.1" class="w-full text-xs font-bold rounded-lg border-gray-300 text-center">
-                                    </div>
-                                    <div class="flex-1">
-                                        <input type="text" x-model="ind.nama_indikator" placeholder="Nama / definisi indikator..." required class="w-full text-xs rounded-lg border-gray-300">
-                                    </div>
-                                    <button type="button" @click="removeIndikator(tIdx, iIdx)" class="p-1.5 text-rose-500 hover:text-rose-700 font-bold text-sm">
                                         &times;
                                     </button>
                                 </div>
