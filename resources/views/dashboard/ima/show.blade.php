@@ -3,6 +3,8 @@
 @push('head')
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+<!-- Tambahkan SweetAlert CSS jika belum ada di layout utama -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <style>
     /* Styling Editor Saat Mode Edit */
     .ql-container { font-family: inherit; font-size: 14px; min-height: 120px; border-bottom-left-radius: 0.75rem; border-bottom-right-radius: 0.75rem; background-color: white; }
@@ -62,9 +64,16 @@
             <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent"></div>
             <div class="absolute bottom-6 left-6 right-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4 text-white">
                 <div>
-                    <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider backdrop-blur-md {{ $inovasi->kategori_ima == 'PRO IMA' ? 'bg-amber-500/80 text-white' : 'bg-blue-600/80 text-white' }}">
-                        {{ $inovasi->kategori_ima }}
-                    </span>
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider backdrop-blur-md {{ $inovasi->kategori_ima == 'PRO IMA' ? 'bg-amber-500/80 text-white' : 'bg-blue-600/80 text-white' }}">
+                            {{ $inovasi->kategori_ima }}
+                        </span>
+                        @if($isVerifikator)
+                            <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-rose-600 shadow-md animate-pulse" title="Anda dapat mengedit data inovator ini">
+                                🛡️ MODE ADMIN
+                            </span>
+                        @endif
+                    </div>
                     <h2 class="text-2xl md:text-3xl font-extrabold mt-2 leading-tight drop-shadow">{{ $inovasi->judul }}</h2>
                     <p class="text-xs md:text-sm text-gray-200 mt-1 drop-shadow">{{ $inovasi->opd_unit ?? 'Perangkat Daerah belum disetel' }}</p>
                 </div>
@@ -92,6 +101,11 @@
                     <span class="px-3 py-1 rounded-full text-xs font-bold border {{ $statusColor($inovasi->asistensi_status) }}">
                         Status: {{ $inovasi->asistensi_status }}
                     </span>
+                    @if($isVerifikator)
+                        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-rose-600 text-white shadow-md animate-pulse">
+                            🛡️ MODE ADMIN
+                        </span>
+                    @endif
                 </div>
                 <h1 class="text-2xl font-extrabold text-gray-900">{{ $inovasi->judul }}</h1>
                 <p class="text-gray-500 text-sm mt-1">OPD: {{ $inovasi->opd_unit ?? 'Belum disetel' }}</p>
@@ -101,23 +115,23 @@
             @endif
         </div>
         
-        <!-- TOMBOL AKSI -->
+        <!-- TOMBOL AKSI (TERBUKA UNTUK ADMIN DAN INOVATOR) -->
         <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
             <a href="{{ route('sigap-ima.index') }}" class="px-4 py-2 border border-gray-300 rounded-xl hover:bg-gray-50 text-sm font-semibold transition text-gray-700">
                 &larr; Kembali
             </a>
 
-            @if(!$isVerifikator)
-                <button type="button" @click="toggleEdit()" class="inline-flex items-center gap-1.5 px-4 py-2 border border-amber-500 text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-xl text-sm font-bold transition shadow-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                    <span x-text="isEditing ? 'Batal Edit Profil' : 'Edit Profil'"></span>
-                </button>
+            <!-- Tombol Edit Profil kini terbuka untuk semua (termasuk Admin) -->
+            <button type="button" @click="toggleEdit()" class="inline-flex items-center gap-1.5 px-4 py-2 border border-amber-500 text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-xl text-sm font-bold transition shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                <span x-text="isEditing ? 'Batal Edit Profil' : 'Edit Profil'"></span>
+            </button>
 
-                <a href="{{ route('sigap-ima.evidence', $inovasi->id) }}" class="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-black text-sm font-bold transition shadow-md">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    Edit Evidence
-                </a>
-            @endif
+            <!-- Tombol Edit Evidence kini terbuka untuk semua (termasuk Admin) -->
+            <a href="{{ route('sigap-ima.evidence', $inovasi->id) }}" class="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-black text-sm font-bold transition shadow-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Edit Evidence
+            </a>
         </div>
     </div>
 
@@ -157,7 +171,14 @@
                     <input type="hidden" name="hasil_inovasi" id="edit_hasil">
 
                     <div class="flex items-center justify-between border-b border-gray-100 pb-3">
-                        <h3 class="text-lg font-bold text-gray-900">Perbarui Profil Inovasi</h3>
+                        <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            Perbarui Profil Inovasi
+                            @if($isVerifikator)
+                                <span class="px-2 py-0.5 rounded text-[10px] bg-rose-100 text-rose-700 font-bold border border-rose-200">
+                                    Intervensi Admin
+                                </span>
+                            @endif
+                        </h3>
                         <button type="button" @click="toggleEdit()" class="text-xs text-gray-500 hover:text-gray-800 font-bold">&times; Tutup Edit</button>
                     </div>
 
@@ -231,7 +252,7 @@
                         <div>
                             <div class="flex items-center justify-between mb-1">
                                 <span class="text-xs font-semibold text-gray-700">Rancang Bangun Inovasi (300 – 500 Kata) *</span>
-                                <span class="text-[10px] text-gray-500 font-mono" x-text="`${editWordCount} Kata`"></span>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded" :class="editWordCount < 300 ? 'bg-rose-100 text-rose-700' : (editWordCount > 500 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700')" x-text="`${editWordCount} Kata`"></span>
                             </div>
                             <div id="edit-rancang" class="rounded-xl bg-white">{!! $inovasi->rancang_bangun !!}</div>
                         </div>
@@ -314,11 +335,9 @@
                 <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
                     <div class="flex items-center justify-between border-b pb-2 mb-4">
                         <h3 class="text-lg font-bold text-gray-800">Metadata Inovasi</h3>
-                        @if(!$isVerifikator)
-                            <button type="button" @click="toggleEdit()" class="text-xs text-amber-600 hover:underline font-semibold flex items-center gap-1">
-                                ✏️ Edit Data
-                            </button>
-                        @endif
+                        <button type="button" @click="toggleEdit()" class="text-xs text-amber-600 hover:underline font-semibold flex items-center gap-1">
+                            ✏️ Edit Data
+                        </button>
                     </div>
                     <div class="grid sm:grid-cols-2 gap-y-4 gap-x-6 text-sm">
                         <!-- Data Klasifikasi -->
@@ -588,17 +607,14 @@
         </div>
     </div>
 
-    <!-- ============================================== -->
     <!-- TAB 2: PENILAIAN 20 INDIKATOR EVIDENCE -->
-    <!-- ============================================== -->
     <div x-show="tab === 'evidence'" x-transition.opacity style="display: none;" class="space-y-6">
         <div class="bg-amber-50 border border-amber-200 text-amber-900 p-4 rounded-xl text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <p><strong>Review Evidence:</strong> Verifikasi pemenuhan berkas pendukung pada 20 indikator penilaian IMA.</p>
-            @if(!$isVerifikator)
-                <a href="{{ route('sigap-ima.evidence', $inovasi->id) }}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-600 text-white font-bold rounded-lg text-xs hover:bg-amber-700 transition w-fit">
-                    Edit / Lengkapi Evidence &rarr;
-                </a>
-            @endif
+            <!-- Tombol Edit Evidence kini terbuka untuk semua (termasuk Admin) -->
+            <a href="{{ route('sigap-ima.evidence', $inovasi->id) }}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-600 text-white font-bold rounded-lg text-xs hover:bg-amber-700 transition w-fit">
+                Edit / Lengkapi Evidence &rarr;
+            </a>
         </div>
 
         @foreach($indicators as $ind)
@@ -623,11 +639,10 @@
                                 </div>
                             </div>
                         </div>
-                        @if(!$isVerifikator)
-                            <a href="{{ route('sigap-ima.evidence', $inovasi->id) }}" class="text-xs text-amber-600 hover:underline font-semibold whitespace-nowrap">
-                                Edit Bukti
-                            </a>
-                        @endif
+                        <!-- Tombol Edit Bukti Spesifik kini terbuka untuk semua (termasuk Admin) -->
+                        <a href="{{ route('sigap-ima.evidence', $inovasi->id) }}" class="text-xs text-amber-600 hover:underline font-semibold whitespace-nowrap">
+                            Edit Bukti
+                        </a>
                     </div>
                     
                     @if($ev)
@@ -724,6 +739,7 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     const toolbarOptions = [
         ['bold', 'italic', 'underline'],
@@ -739,6 +755,28 @@
             tab: 'profil',
             isEditing: false,
             editWordCount: 0,
+            isAdminOrVerif: @json($isVerifikator),
+
+            init() {
+                // Munculkan notifikasi SweetAlert jika yang login adalah admin/verifikator
+                if(this.isAdminOrVerif) {
+                    setTimeout(() => {
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'info',
+                            title: 'Login sebagai Verifikator',
+                            text: 'Anda memiliki akses penuh untuk mereview kelayakan, memberikan catatan penilaian, serta mengedit profil dan bukti (evidence) milik inovator jika diperlukan.',
+                            showConfirmButton: false,
+                            timer: 7000,
+                            timerProgressBar: true,
+                            customClass: {
+                                popup: 'border border-blue-200 shadow-xl rounded-2xl'
+                            }
+                        });
+                    }, 500);
+                }
+            },
 
             toggleEdit() {
                 this.isEditing = !this.isEditing;
@@ -768,11 +806,11 @@
                     const text = qRancang.getText().trim();
                     const words = text.length > 0 ? text.split(/\s+/).filter(Boolean).length : 0;
                     if (words < 300) {
-                        alert(`Rancang bangun minimal 300 kata. Saat ini: ${words} kata.`);
+                        Swal.fire({ icon: 'warning', title: 'Jumlah Kata Kurang', text: `Rancang bangun minimal 300 kata. Saat ini: ${words} kata.` });
                         return;
                     }
                     if (words > 500) {
-                        alert(`Rancang bangun maksimal 500 kata. Saat ini: ${words} kata.`);
+                        Swal.fire({ icon: 'warning', title: 'Jumlah Kata Melebih Batas', text: `Rancang bangun maksimal 500 kata. Saat ini: ${words} kata.` });
                         return;
                     }
                     document.getElementById('edit_rancang_bangun').value = qRancang.root.innerHTML;
@@ -781,6 +819,7 @@
                 if (qManfaat) document.getElementById('edit_manfaat').value = qManfaat.root.innerHTML;
                 if (qHasil)   document.getElementById('edit_hasil').value   = qHasil.root.innerHTML;
                 
+                Swal.fire({ title: 'Menyimpan Perubahan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
                 e.target.submit();
             }
         }));
