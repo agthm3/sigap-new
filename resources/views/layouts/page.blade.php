@@ -113,6 +113,7 @@
                 <p class="px-3 text-[11px] font-bold uppercase tracking-wider text-maroon mb-1">Riset & Inovasi</p>
                 <ul class="space-y-0.5 text-xs text-gray-700">
                   <li><a href="{{ route('sigap-inovasi.home') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Inovasi</a></li>
+                  <li><a href="{{ route('sigap-ima.index') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP IMA</a></li>
                   <li><a href="{{ route('sigap-riset.index') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Riset</a></li>
                   <li><a href="{{ route('sigap-inkubatorma.index') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Inkubatorma</a></li>
                   <li><a href="{{ route('sigap-ppd.public') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP PPD</a></li>
@@ -256,6 +257,7 @@
             <p class="text-[11px] font-bold uppercase tracking-wider text-maroon px-1 mb-1">Riset & Inovasi</p>
             <div class="space-y-1 text-sm bg-white rounded-md p-1 border border-gray-100">
               <a href="{{ route('sigap-inovasi.home') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Inovasi</a>
+              <a href="{{ route('sigap-ima.index') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP IMA</a>
               <a href="{{ route('sigap-riset.index') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Riset</a>
               <a href="{{ route('sigap-inkubatorma.index') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Inkubatorma</a>
               <a href="{{ route('sigap-ppd.public') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP PPD</a>
