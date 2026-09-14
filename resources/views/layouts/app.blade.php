@@ -172,6 +172,44 @@ textarea::placeholder {
           </svg>
           Profil Pegawai
         </a>
+        @hasanyrole('admin|verif_surat')
+          <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">
+            SIGAP SURAT
+          </div>
+
+          <!-- Toggle -->
+          <button id="suratToggle"
+                  class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-left transition-colors">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            <span class="font-medium">SIGAP Surat</span>
+            <svg id="suratCaret"
+                class="w-4 h-4 ml-auto transition-transform duration-200"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-width="2" d="M6 9l6 6 6-6"/>
+            </svg>
+          </button>
+
+          <!-- Dropdown Menu -->
+          <div id="suratMenu" class="ml-3 mt-1 space-y-1 hidden">
+            <a href="{{ route('sigap-surat.keluar.index') }}"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm {{ request()->routeIs('sigap-surat.keluar.*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+              </svg>
+              Surat Keluar
+            </a>
+
+            <a href="{{ route('sigap-surat.masuk.index') }}"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm {{ request()->routeIs('sigap-surat.masuk.*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M7 16l-4-4m0 0l4-4m-4 4h14m-6 4v1a3 3 0 003 3h4a3 3 0 003-3V7a3 3 0 00-3-3h-4a3 3 0 00-3 3v1"/>
+              </svg>
+              Surat Masuk
+            </a>
+          </div>
+          @endhasanyrole
         @hasrole('admin|employee')
 <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">
           SIGAP KINERJA
@@ -1395,6 +1433,19 @@ function globalSearch() {
           ]
         },
         @endif
+        @if($isAdmin || $u->hasRole('verif_surat'))
+        {
+          id: 'surat-group',
+          title: 'SIGAP Surat',
+          description: 'Pencatatan & Penomoran Buku Agenda Surat Keluar/Masuk',
+          icon: '✉️',
+          isParent: true,
+          subMenus: [
+            { title: 'Surat Keluar', description: 'Agenda penomoran surat keluar & slot tanggal mundur', url: "{{ route('sigap-surat.keluar.index') }}", icon: '📤' },
+            { title: 'Surat Masuk', description: 'Pencatatan surat masuk kedinasan', url: "{{ route('sigap-surat.masuk.index') }}", icon: '📥' },
+          ]
+        },
+        @endif
         // SIGAP PJLP
         @if($isAdmin || $u->hasAnyRole(['superadmin', 'verif_pjlp', 'pjlp']))
         {
@@ -1801,6 +1852,31 @@ document.addEventListener("DOMContentLoaded", function () {
     dokumenMenu.classList.toggle('hidden');
     dokumenCaret.classList.toggle('rotate-180', willOpen);
     localStorage.setItem(DOKUMEN_KEY, willOpen ? '1' : '0');
+  });
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const suratToggle = document.getElementById('suratToggle');
+  const suratMenu   = document.getElementById('suratMenu');
+  const suratCaret  = document.getElementById('suratCaret');
+
+  if (!suratToggle) return;
+
+  const SURAT_KEY   = 'sb_surat_open';
+  const isOpenSaved = localStorage.getItem(SURAT_KEY) === '1';
+  const isOnSurat   = window.location.pathname.includes('/sigap-surat');
+
+  if (isOpenSaved || isOnSurat) {
+    suratMenu?.classList.remove('hidden');
+    suratCaret?.classList.add('rotate-180');
+  }
+
+  suratToggle.addEventListener('click', () => {
+    const willOpen = suratMenu.classList.contains('hidden');
+    suratMenu.classList.toggle('hidden');
+    suratCaret.classList.toggle('rotate-180', willOpen);
+    localStorage.setItem(SURAT_KEY, willOpen ? '1' : '0');
   });
 });
 </script>

@@ -50,6 +50,8 @@ use App\Http\Controllers\SigapStoryController;
 use App\Http\Controllers\SkpController;
 use App\Http\Controllers\SpjBidangController;
 use App\Http\Controllers\SpjController;
+use App\Http\Controllers\Surat\SuratKeluarController;
+use App\Http\Controllers\Surat\SuratMasukController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Rap2hpoutre\LaravelLogViewer\LogViewerController;
@@ -944,5 +946,24 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/schedule/{schedule}', [SigapImaSettingController::class, 'destroySchedule'])->name('sigap-ima.settings.schedule.destroy');
         Route::post('/toggle-lock', [SigapImaSettingController::class, 'toggleSubmissionLock'])->name('sigap-ima.settings.toggle-lock');
     });
+
+    // ROUTE PUBLIK (Buku Agenda Tanpa Login)
+    Route::get('sigap-surat/buku-agenda', [SuratKeluarController::class, 'bukuAgenda'])
+        ->name('sigap-surat.keluar.buku-agenda');
+    Route::get('sigap-surat/buku-agenda-masuk', [SuratMasukController::class, 'bukuAgenda'])
+    ->name('sigap-surat.masuk.buku-agenda');
+    // ROUTE DASHBOARD (Wajib Login & Role)
+    Route::middleware(['auth'])->prefix('sigap-surat')->name('sigap-surat.')->group(function () {
+        Route::group(['middleware' => ['role:admin|verif_surat']], function () {
+            Route::get('keluar/check-slots', [SuratKeluarController::class, 'checkSlots'])->name('keluar.check-slots');
+            Route::post('keluar/{id}/batal', [SuratKeluarController::class, 'voidNomor'])->name('keluar.batal');
+            Route::resource('keluar', SuratKeluarController::class);
+
+            // Surat Masuk
+            Route::get('masuk/{id}/disposisi', [SuratMasukController::class, 'cetakDisposisi'])->name('masuk.disposisi');
+            Route::resource('masuk', SuratMasukController::class);
+        });
+    });
+
 });
 
