@@ -3,13 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class Document extends Model
 {
     use SoftDeletes;
+
     protected $fillable = [
+        'folder_id',
         'number',
         'title',
         'alias',
@@ -17,6 +20,8 @@ class Document extends Model
         'category',
         'stakeholder',
         'description',
+        'physical_rack',
+        'physical_row',
         'tags',
         'sensitivity',
         'related_user_id',
@@ -28,10 +33,20 @@ class Document extends Model
         'updated_by'
     ];
 
-    public function user()
+    protected $casts = [
+        'tags' => 'array',
+    ];
+
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    public function folder(): BelongsTo
+    {
+        return $this->belongsTo(Folder::class, 'folder_id');
+    }
+
     protected static function booted()
     {
         static::creating(function ($doc) {

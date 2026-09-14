@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Dashboard\EvidenceConfigController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EvidenceController;
+use App\Http\Controllers\FolderController;
 use App\Http\Controllers\FormatController;
 use App\Http\Controllers\ImaChunkUploadController;
 use App\Http\Controllers\InovasiReviewController;
@@ -33,6 +34,7 @@ use App\Http\Controllers\SigapDokumenController;
 use App\Http\Controllers\SigapFormatController;
 use App\Http\Controllers\SigapIgaController;
 use App\Http\Controllers\SigapImaController;
+use App\Http\Controllers\SigapImaExportController;
 use App\Http\Controllers\SigapImaSettingController;
 use App\Http\Controllers\SigapInkubatormaController;
 use App\Http\Controllers\SigapInovasiController;
@@ -51,7 +53,6 @@ use App\Http\Controllers\SpjController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Rap2hpoutre\LaravelLogViewer\LogViewerController;
-use App\Http\Controllers\SigapImaExportController;
 
 
 Route::middleware('auth')->group(function () {
@@ -156,20 +157,57 @@ Route::delete('/sigap-pegawai/{user}/avatar', [SigapPegawaiController::class,'de
     ->middleware(['auth','permission:pegawai.manage'])
     ->name('sigap-pegawai.avatar.destroy');
     Route::post('/sigap-pegawai/{user}/docs', [SigapPegawaiController::class, 'uploadDokumenPegawai'])->name('sigap-pegawai.docs.store');
-// --- SIGAP Dokumen (tanpa resource)
+
+Route::prefix('shared-folder')->name('sigap-dokumen.shared.')->group(function () {
+    Route::get('/{token}', [App\Http\Controllers\FolderController::class, 'accessShared'])->name('view');
+    Route::post('/{token}/unlock', [App\Http\Controllers\FolderController::class, 'unlockShared'])->name('unlock');
+});
+// --- SIGAP Dokumen
 Route::prefix('sigap-dokumen')->middleware(['auth', 'role:employee|admin'])->name('sigap-dokumen.')->group(function () {
+    // 1. Dokumen Umum (Publik)
     Route::get('/', [SigapDokumenController::class, 'index'])->name('index');
-    Route::post('/', [SigapDokumenController::class, 'store'])->name('store');
+    
+    // 2. Dokumen Saya & Folder Management
+    Route::get('/saya', [SigapDokumenController::class, 'saya'])->name('saya');
+    Route::get('/folder/create', [FolderController::class, 'create'])->name('folder.create');
+    Route::post('/folder', [FolderController::class, 'store'])->name('folder.store');
+    Route::get('/folder/{folder}', [FolderController::class, 'show'])->name('folder.show');
+
+    Route::get('/shared-links', [App\Http\Controllers\FolderController::class, 'sharedLinksIndex'])->name('shared-links.index');
+    
+    // Khusus Admin untuk mencabut/menghapus tautan berbagi
+    Route::middleware('role:admin')->group(function () {
+        Route::delete('/shared-links/{folder}', [App\Http\Controllers\FolderController::class, 'sharedLinksRevoke'])->name('shared-links.revoke');
+    });
+
+    // 3. Upload File Halaman Baru (Ganti Pop up)
+    Route::get('/upload', [SigapDokumenController::class, 'create'])->name('upload');
+    Route::post('/temp-upload', [SigapDokumenController::class, 'tempUpload'])->name('temp-upload'); // Endpoint async per file
+    Route::post('/', [SigapDokumenController::class, 'store'])->name('store'); // Submit final metadata
+    
+    // 4. View & Download Action
     Route::get('/{document}', [SigapDokumenController::class, 'show'])->name('show');
     Route::get('/{document}/download', [SigapDokumenController::class, 'download'])->name('download');
 
-
-
+    // 5. Admin Actions
     Route::middleware('role:admin')->group(function () {
         Route::get('/{document}/edit', [SigapDokumenController::class, 'edit'])->name('edit');
         Route::put('/{document}', [SigapDokumenController::class, 'update'])->name('update');
         Route::delete('/{document}', [SigapDokumenController::class, 'destroy'])->name('destroy');
     });
+
+    Route::get('/{document}/preview', [SigapDokumenController::class, 'preview'])->name('preview');
+    Route::get('/{document}', [SigapDokumenController::class, 'show'])->name('show');
+    Route::get('/{document}/download', [SigapDokumenController::class, 'download'])->name('download');
+
+    Route::get('/folder/{folder}/edit', [App\Http\Controllers\FolderController::class, 'edit'])->name('folder.edit');
+    Route::put('/folder/{folder}', [App\Http\Controllers\FolderController::class, 'update'])->name('folder.update');
+    Route::get('/folder/{folder}/share', [App\Http\Controllers\FolderController::class, 'share'])->name('folder.share');
+    Route::post('/folder/{folder}/share', [App\Http\Controllers\FolderController::class, 'updateShare'])->name('folder.share.update');
+    Route::delete('/folder/{folder}/share', [App\Http\Controllers\FolderController::class, 'revokeShare'])->name('folder.share.revoke');
+    Route::get('/folder/{folder}/download-zip', [App\Http\Controllers\FolderController::class, 'downloadZip'])->name('folder.download-zip');
+
+
 });
 
 

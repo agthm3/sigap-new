@@ -57,7 +57,10 @@ textarea::placeholder {
 @stack('head')
 
 <!-- PWA Meta Tags -->
+{{-- PWA Manifest Dinamis --}}
+@if(!app()->environment('local'))
 <link rel="manifest" href="https://sigap.brida.makassarkota.go.id/manifest.json?v=3">
+@endif
 <meta name="theme-color" content="#7a2222">
 
 <!-- Apple Touch Icon -->
@@ -98,11 +101,47 @@ textarea::placeholder {
           Dashboard
         </a>
         @endhasrole
-        @hasrole('employee|admin')
-        <a href="{{ route('sigap-dokumen.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg  {{ request()->routeIs('sigap-dokumen.*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M21 21l-4.3-4.3M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></svg>
-          SIGAP Dokumen
-        </a>
+      @hasrole('employee|admin')
+        <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">SIGAP DOKUMEN</div>
+
+        <!-- Toggle -->
+        <button id="dokumenToggle"
+                class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-left">
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.3-4.3M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/>
+          </svg>
+          <span class="font-medium">SIGAP Dokumen</span>
+          <svg id="dokumenCaret" class="w-4 h-4 ml-auto transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" d="M6 9l6 6 6-6"/>
+          </svg>
+        </button>
+
+        <!-- Dropdown Items -->
+        <div id="dokumenMenu" class="ml-3 mt-1 space-y-1 hidden">
+          <a href="{{ route('sigap-dokumen.index') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+            {{ request()->routeIs('sigap-dokumen.index') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+            Dokumen Umum
+          </a>
+          
+          <a href="{{ route('sigap-dokumen.saya') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+            {{ request()->routeIs('sigap-dokumen.saya') || request()->routeIs('sigap-dokumen.folder.*') || request()->routeIs('sigap-dokumen.upload') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            Dokumen Saya
+          </a>
+
+          <!-- MENU BARU: Manajemen Tautan -->
+          <a href="{{ route('sigap-dokumen.shared-links.index') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+            {{ request()->routeIs('sigap-dokumen.shared-links.*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+            </svg>
+            Manajemen Tautan
+          </a>
+        </div>
         @endhasrole
         @hasrole('admin|verif_pegawai')
             <a href="{{ route('sigap-pegawai.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg {{ request()->routeIs('sigap-pegawai.*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
@@ -932,56 +971,52 @@ textarea::placeholder {
   </script>
 
 <script>
-  // Sidebar toggle (mobile)
+  // Sidebar toggle (mobile) - Full Safe Checks
   const sidebar  = document.getElementById('sidebar');
   const toggle   = document.getElementById('sidebarToggle');
   const backdrop = document.getElementById('sidebarBackdrop');
   const body     = document.body;
 
   function openSidebar() {
-    // hapus posisi offscreen, tampilkan
-    sidebar.classList.remove('translate-x-[-100%]');
-    sidebar.classList.add('translate-x-0');
-    backdrop.classList.remove('hidden');
-    body.classList.add('overflow-hidden');
-    // aksesibilitas
-    toggle?.setAttribute('aria-expanded', 'true');
+    if (sidebar) {
+      sidebar.classList.remove('translate-x-[-100%]');
+      sidebar.classList.add('translate-x-0');
+    }
+    if (backdrop) backdrop.classList.remove('hidden');
+    if (body) body.classList.add('overflow-hidden');
+    if (toggle) toggle.setAttribute('aria-expanded', 'true');
   }
 
   function closeSidebar() {
-    sidebar.classList.add('translate-x-[-100%]');
-    sidebar.classList.remove('translate-x-0');
-    backdrop.classList.add('hidden');
-    body.classList.remove('overflow-hidden');
-    toggle?.setAttribute('aria-expanded', 'false');
+    if (sidebar) {
+      sidebar.classList.add('translate-x-[-100%]');
+      sidebar.classList.remove('translate-x-0');
+    }
+    if (backdrop) backdrop.classList.add('hidden');
+    if (body) body.classList.remove('overflow-hidden');
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
   }
 
   function isSidebarOpen() {
-    return sidebar.classList.contains('translate-x-0');
+    return sidebar ? sidebar.classList.contains('translate-x-0') : false;
   }
 
-  // tombol hamburger
   toggle?.addEventListener('click', () => {
     isSidebarOpen() ? closeSidebar() : openSidebar();
   });
 
-  // klik backdrop menutup
   backdrop?.addEventListener('click', closeSidebar);
 
-  // tekan ESC menutup
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && isSidebarOpen()) closeSidebar();
   });
 
-  // kalau di desktop (lg:) pastikan backdrop selalu hidden & body bebas scroll
   const mql = window.matchMedia('(min-width: 1024px)');
   mql.addEventListener('change', (ev) => {
-    if (ev.matches) { // masuk desktop
-      backdrop.classList.add('hidden');
-      body.classList.remove('overflow-hidden');
-      // biarkan Tailwind lg:translate-x-0 yang tampilkan sidebar
+    if (ev.matches) {
+      if (backdrop) backdrop.classList.add('hidden');
+      if (body) body.classList.remove('overflow-hidden');
     } else {
-      // kembali ke mobile, sembunyikan default
       closeSidebar();
     }
   });
@@ -1739,6 +1774,33 @@ document.addEventListener("DOMContentLoaded", function () {
     kinerjaMenu.classList.toggle('hidden');
     kinerjaCaret.classList.toggle('rotate-180', willOpen);
     localStorage.setItem(KINERJA_KEY, willOpen ? '1' : '0');
+  });
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const dokumenToggle = document.getElementById('dokumenToggle');
+  const dokumenMenu   = document.getElementById('dokumenMenu');
+  const dokumenCaret  = document.getElementById('dokumenCaret');
+
+  if (!dokumenToggle) return;
+
+  const DOKUMEN_KEY  = 'sb_dokumen_open';
+  const isOpenSaved = localStorage.getItem(DOKUMEN_KEY) === '1';
+
+  // Auto-buka jika sedang berada di route SIGAP Dokumen
+  const isOnDokumen = window.location.pathname.includes('/sigap-dokumen');
+
+  if (isOpenSaved || isOnDokumen) {
+    dokumenMenu?.classList.remove('hidden');
+    dokumenCaret?.classList.add('rotate-180');
+  }
+
+  dokumenToggle.addEventListener('click', () => {
+    const willOpen = dokumenMenu.classList.contains('hidden');
+    dokumenMenu.classList.toggle('hidden');
+    dokumenCaret.classList.toggle('rotate-180', willOpen);
+    localStorage.setItem(DOKUMEN_KEY, willOpen ? '1' : '0');
   });
 });
 </script>
