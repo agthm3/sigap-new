@@ -898,7 +898,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [SigapImaSettingController::class, 'index'])->name('sigap-ima.settings');
         Route::post('/dropdown', [SigapImaSettingController::class, 'storeDropdown'])->name('sigap-ima.settings.dropdown');
         Route::delete('/dropdown/{dropdown}', [SigapImaSettingController::class, 'destroyDropdown'])->name('sigap-ima.settings.dropdown.destroy');
-        Route::post('/sdg', [SigapImaSettingController::class, 'storeSdg'])->name('sigap-ima.settings.sdg.store'); // <-- RUTE BARU SDGs
+        Route::post('/sdg', [SigapImaSettingController::class, 'storeSdg'])->name('sigap-ima.settings.sdg.store');
+        Route::post('/sdg/{dropdown}/targets', [SigapImaSettingController::class, 'storeSdgTargets'])->name('sigap-ima.settings.sdg.targets'); // <-- Route baru untuk kelola Target & Indikator
         Route::post('/indikator', [SigapImaSettingController::class, 'storeIndicator'])->name('sigap-ima.settings.indicator');
         Route::post('/schedule', [SigapImaSettingController::class, 'storeSchedule'])->name('sigap-ima.settings.schedule.store');
         Route::delete('/schedule/{schedule}', [SigapImaSettingController::class, 'destroySchedule'])->name('sigap-ima.settings.schedule.destroy');

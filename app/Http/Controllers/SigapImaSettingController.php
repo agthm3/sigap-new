@@ -13,7 +13,7 @@ class SigapImaSettingController extends Controller
 {
     public function index()
     {
-        $dropdowns = ImaDropdown::orderBy('kategori')->orderBy('label')->get()->groupBy('kategori');
+        $dropdowns = ImaDropdown::orderBy('kategori')->orderBy('id')->get()->groupBy('kategori');
         
         if (ImaIndicator::count() === 0) {
             for ($i = 1; $i <= 20; $i++) {
@@ -68,13 +68,16 @@ class SigapImaSettingController extends Controller
         return back()->with('success', 'Opsi dropdown berhasil ditambahkan.');
     }
 
- public function storeSdg(Request $request)
+    // ==========================================
+    // HANDLER MASTER PILAR SDGs
+    // ==========================================
+    public function storeSdg(Request $request)
     {
         $request->validate([
-            'label'     => 'required|string|max:255',
-            'kode'      => 'nullable|string|max:50', // Nomor urut pilar, misal: "SDG 1"
-            'warna'     => 'required|string|max:50', // Kode Hex, misal: "#E5243B"
-            'icon'      => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048', // Upload Gambar Ikon
+            'label'     => 'required|string|max:500', // DUKUNG HINGGA 500 KARAKTER
+            'kode'      => 'nullable|string|max:50',
+            'warna'     => 'required|string|max:50',
+            'icon'      => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
             'deskripsi' => 'nullable|string',
         ]);
 
@@ -88,17 +91,66 @@ class SigapImaSettingController extends Controller
             'kode'      => $request->kode ?: 'SDG',
             'icon_path' => $iconPath,
             'warna'     => $request->warna ?: '#E5243B',
-            'label'     => $request->label,
+            'label'     => mb_substr(trim($request->label), 0, 500),
             'deskripsi' => $request->deskripsi,
+            'targets'   => '[]',
             'is_active' => true
         ]);
 
-        return back()->with('success', 'Pilar SDGs dan Ikon Tema berhasil disimpan.');
+        return back()->with('success', 'Pilar SDGs berhasil ditambahkan.');
+    }
+
+    // ==========================================
+    // HANDLER SIMPAN TARGET & INDIKATOR BERTINGKAT
+    // ==========================================
+    public function storeSdgTargets(Request $request, ImaDropdown $dropdown)
+    {
+        $targetsInput = $request->input('targets_json');
+        
+        $decoded = json_decode($targetsInput, true);
+        if (!is_array($decoded)) {
+            return back()->with('error', 'Format data Target dan Indikator tidak valid.');
+        }
+
+        // Bersihkan dan batasi tiap elemen hingga 500 karakter
+        $cleanTargets = [];
+        foreach ($decoded as $t) {
+            $kodeTarget = trim($t['kode_target'] ?? '');
+            $deskripsiTarget = trim($t['deskripsi_target'] ?? '');
+
+            if (empty($kodeTarget) && empty($deskripsiTarget)) {
+                continue;
+            }
+
+            $cleanIndikators = [];
+            if (!empty($t['indikators']) && is_array($t['indikators'])) {
+                foreach ($t['indikators'] as $ind) {
+                    $namaIndikator = trim($ind['nama_indikator'] ?? '');
+                    if (!empty($namaIndikator)) {
+                        $cleanIndikators[] = [
+                            'kode_indikator' => mb_substr(trim($ind['kode_indikator'] ?? ''), 0, 50),
+                            'nama_indikator' => mb_substr($namaIndikator, 0, 500) // DUKUNG HINGGA 500 KARAKTER
+                        ];
+                    }
+                }
+            }
+
+            $cleanTargets[] = [
+                'kode_target'      => mb_substr($kodeTarget, 0, 50),
+                'deskripsi_target' => mb_substr($deskripsiTarget, 0, 500), // DUKUNG HINGGA 500 KARAKTER
+                'indikators'       => $cleanIndikators
+            ];
+        }
+
+        $dropdown->update([
+            'targets' => json_encode($cleanTargets)
+        ]);
+
+        return back()->with('success', 'Target dan Indikator untuk pilar ' . $dropdown->label . ' berhasil diperbarui.');
     }
 
     public function destroyDropdown(ImaDropdown $dropdown)
     {
-        // Hapus file gambar ikon dari storage jika ada
         if (!empty($dropdown->icon_path) && Storage::disk('public')->exists($dropdown->icon_path)) {
             Storage::disk('public')->delete($dropdown->icon_path);
         }

@@ -8,6 +8,10 @@
     .ql-container { font-family: inherit; font-size: 14px; min-height: 150px; border-bottom-left-radius: 0.75rem; border-bottom-right-radius: 0.75rem; background-color: white; }
     .ql-toolbar { border-top-left-radius: 0.75rem; border-top-right-radius: 0.75rem; background-color: #f9fafb; }
     .ql-editor { min-height: 150px; }
+
+    /* Custom Checkbox SDGs */
+    .sdg-checkbox:checked + div { background-color: currentColor; border-color: currentColor; }
+    .sdg-checkbox:checked + div svg { display: block; }
 </style>
 @endpush
 
@@ -63,8 +67,10 @@
                     <h2 class="text-xl font-bold text-gray-900">1. Kategori & Kontak Operator</h2>
                     <p class="text-xs text-gray-500 mt-0.5">Tentukan kategori pendaftaran IMA dan identitas operator (PIC) aktif.</p>
                 </div>
+                <span class="text-xs font-bold bg-amber-50 text-amber-700 px-3 py-1 rounded-full border border-amber-200">Langkah 1 dari 5</span>
             </div>
             
+            <!-- Pilihan Kategori IMA -->
             <label class="block text-sm font-semibold text-gray-800 mb-2">Kategori Pendaftaran IMA <span class="text-red-500">*</span></label>
             <div class="grid sm:grid-cols-2 gap-4 mb-6">
                 <label class="cursor-pointer">
@@ -89,26 +95,28 @@
                 </label>
             </div>
 
+            <!-- Identitas Operator PIC -->
             <div class="bg-gray-50/70 p-6 rounded-2xl border border-gray-200">
                 <div class="mb-4">
                     <h4 class="text-sm font-bold text-gray-800">Kontak Person / Operator Inovasi (PIC) <span class="text-red-500">*</span></h4>
+                    <p class="text-xs text-gray-500 mt-0.5">Kontak utama untuk konfirmasi verifikasi, revisi berkas, dan tindak lanjut selama proses evaluasi.</p>
                 </div>
                 <div class="grid sm:grid-cols-2 gap-4">
                     <label class="block">
                         <span class="text-sm font-semibold text-gray-700">Nama Operator <span class="text-red-500">*</span></span>
-                        <input type="text" name="operator_nama" x-model="formData.operator_nama" placeholder="Nama lengkap operator" class="mt-1 w-full rounded-xl border-gray-300 focus:border-amber-500 focus:ring-amber-500 text-sm">
+                        <input type="text" name="operator_nama" x-model="formData.operator_nama" placeholder="Nama lengkap operator" class="mt-1.5 w-full rounded-xl border-gray-300 focus:border-amber-500 focus:ring-amber-500 text-sm">
                     </label>
                     <label class="block">
                         <span class="text-sm font-semibold text-gray-700">Jabatan Operator</span>
-                        <input type="text" name="operator_jabatan" placeholder="Contoh: Pranata Komputer / Staf Perencanaan" class="mt-1 w-full rounded-xl border-gray-300 focus:border-amber-500 focus:ring-amber-500 text-sm">
+                        <input type="text" name="operator_jabatan" placeholder="Contoh: Pranata Komputer / Staf Perencanaan" class="mt-1.5 w-full rounded-xl border-gray-300 focus:border-amber-500 focus:ring-amber-500 text-sm">
                     </label>
                     <label class="block">
                         <span class="text-sm font-semibold text-gray-700">Nomor WhatsApp Aktif <span class="text-red-500">*</span></span>
-                        <input type="text" name="operator_wa" x-model="formData.operator_wa" placeholder="Contoh: 081234567890" class="mt-1 w-full rounded-xl border-gray-300 focus:border-amber-500 focus:ring-amber-500 text-sm">
+                        <input type="text" name="operator_wa" x-model="formData.operator_wa" placeholder="Contoh: 081234567890" class="mt-1.5 w-full rounded-xl border-gray-300 focus:border-amber-500 focus:ring-amber-500 text-sm">
                     </label>
                     <label class="block">
                         <span class="text-sm font-semibold text-gray-700">Email Operator</span>
-                        <input type="email" name="operator_email" placeholder="operator@makassarkota.go.id" class="mt-1 w-full rounded-xl border-gray-300 focus:border-amber-500 focus:ring-amber-500 text-sm">
+                        <input type="email" name="operator_email" placeholder="operator@makassarkota.go.id" class="mt-1.5 w-full rounded-xl border-gray-300 focus:border-amber-500 focus:ring-amber-500 text-sm">
                     </label>
                 </div>
             </div>
@@ -121,6 +129,7 @@
                     <h2 class="text-xl font-bold text-gray-900">2. Metadata & Klasifikasi Inovasi</h2>
                     <p class="text-xs text-gray-500 mt-0.5">Lengkapi identitas umum, perangkat daerah pengusul, dan relevansi kebijakan.</p>
                 </div>
+                <span class="text-xs font-bold bg-amber-50 text-amber-700 px-3 py-1 rounded-full border border-amber-200">Langkah 2 dari 5</span>
             </div>
             
             <div class="grid sm:grid-cols-2 gap-4">
@@ -164,6 +173,10 @@
                 <label class="block sm:col-span-2">
                     <span class="text-sm font-semibold text-gray-700">Koordinat Lokasi Penerapan <span class="text-red-500">*</span></span>
                     <input type="text" name="koordinat" maxlength="300" x-model="formData.koordinat" placeholder="Format: -5.147665, 119.432732" class="mt-1.5 w-full rounded-xl border-gray-300 focus:border-amber-500 focus:ring-amber-500 text-sm">
+                    <div class="flex justify-between text-[11px] text-gray-500 mt-1">
+                        <span>Koordinat latitude dan longitude lokasi inovasi.</span>
+                        <span :class="formData.koordinat.length > 300 ? 'text-red-600 font-bold' : ''" x-text="`${formData.koordinat.length}/300`"></span>
+                    </div>
                 </label>
 
                 <label class="block">
@@ -281,20 +294,23 @@
             <div class="flex items-center justify-between border-b pb-3 mb-6">
                 <div>
                     <h2 class="text-xl font-bold text-gray-900">3. Uraian Deskripsi Inovasi</h2>
-                    <p class="text-xs text-gray-500 mt-0.5">Uraikan rancang bangun (min. 300 kata), tujuan, manfaat, dan hasil secara rapi.</p>
+                    <p class="text-xs text-gray-500 mt-0.5">Uraikan rancang bangun (300 – 500 kata), tujuan, manfaat, dan hasil secara rapi.</p>
                 </div>
+                <span class="text-xs font-bold bg-amber-50 text-amber-700 px-3 py-1 rounded-full border border-amber-200">Langkah 3 dari 5</span>
             </div>
 
             <div class="space-y-6">
-                <!-- Rancang Bangun -->
+                <!-- Rancang Bangun (300 - 500 Kata) -->
                 <div>
                     <label class="block text-sm font-bold text-gray-800 mb-1">
-                        Rancang Bangun Inovasi (Minimal 300 KATA) <span class="text-red-500">*</span>
+                        Rancang Bangun Inovasi (300 – 500 KATA) <span class="text-red-500">*</span>
                     </label>
-                    <div id="editor-rancang" class="rounded-xl"></div>
+                    <div id="editor-rancang" class="rounded-xl border border-gray-300"></div>
                     <div class="flex justify-between items-center text-[11px] mt-1.5 px-1">
-                        <span class="text-gray-500">Jelaskan latar belakang, desain, arsitektur, dan cara kerja.</span>
-                        <span class="font-extrabold px-2 py-0.5 rounded" :class="rancangWordCount < 300 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'" x-text="`${rancangWordCount} / 300 Kata`"></span>
+                        <span class="text-gray-500">Jelaskan latar belakang, desain, arsitektur, dan cara kerja inovasi.</span>
+                        <span class="font-extrabold px-2 py-0.5 rounded transition" 
+                              :class="rancangWordCount < 300 ? 'bg-rose-100 text-rose-700' : (rancangWordCount > 500 ? 'bg-rose-100 text-rose-700 font-black' : 'bg-emerald-100 text-emerald-700')" 
+                              x-text="`${rancangWordCount} / 500 Kata (Min. 300)`"></span>
                     </div>
                 </div>
 
@@ -303,7 +319,7 @@
                     <label class="block text-sm font-bold text-gray-800 mb-1">
                         Tujuan Inovasi Daerah <span class="text-red-500">*</span>
                     </label>
-                    <div id="editor-tujuan" class="rounded-xl"></div>
+                    <div id="editor-tujuan" class="rounded-xl border border-gray-300"></div>
                 </div>
 
                 <!-- Manfaat -->
@@ -311,7 +327,7 @@
                     <label class="block text-sm font-bold text-gray-800 mb-1">
                         Manfaat yang Diperoleh <span class="text-red-500">*</span>
                     </label>
-                    <div id="editor-manfaat" class="rounded-xl"></div>
+                    <div id="editor-manfaat" class="rounded-xl border border-gray-300"></div>
                 </div>
 
                 <!-- Hasil -->
@@ -319,17 +335,17 @@
                     <label class="block text-sm font-bold text-gray-800 mb-1">
                         Hasil Inovasi <span class="text-red-500">*</span>
                     </label>
-                    <div id="editor-hasil" class="rounded-xl"></div>
+                    <div id="editor-hasil" class="rounded-xl border border-gray-300"></div>
                 </div>
             </div>
         </div>
 
-        <!-- ================= LANGKAH 4: KETERKAITAN SDGs (OPSIONAL DENGAN IKON & TEMA WARNA) ================= -->
+        <!-- ================= LANGKAH 4: KETERKAITAN SDGs (PILIH TARGET & INDIKATOR SPESIFIK + URAIAN PER INDIKATOR) ================= -->
         <div x-show="step === 4" x-transition.opacity.duration.300ms style="display: none;">
             <div class="flex items-center justify-between border-b pb-3 mb-6">
                 <div>
                     <h2 class="text-xl font-bold text-gray-900">4. Keterkaitan SDGs (Opsional)</h2>
-                    <p class="text-xs text-gray-500 mt-0.5">Pilih pilar Sustainable Development Goals yang sesuai dengan dampak inovasi Anda.</p>
+                    <p class="text-xs text-gray-500 mt-0.5">Pilih Pilar, Target, dan Indikator SDGs yang sesuai dengan dampak inovasi Anda.</p>
                 </div>
                 <span class="text-xs font-bold bg-amber-50 text-amber-700 px-3 py-1 rounded-full border border-amber-200">Langkah 4 dari 5</span>
             </div>
@@ -337,17 +353,18 @@
             <div class="bg-gray-50/60 border border-gray-200 rounded-3xl p-6 sm:p-8">
                 <div class="mb-4">
                     <h3 class="text-sm font-bold text-gray-900">A. Pilih Pilar SDGs yang Relevan</h3>
-                    <p class="text-xs text-gray-500 mt-0.5">Klik satu atau beberapa kartu pilar SDGs di bawah ini untuk menghubungkannya.</p>
+                    <p class="text-xs text-gray-500 mt-0.5">Klik satu atau beberapa kartu pilar SDGs di bawah ini untuk melihat rincian target dan indikatornya.</p>
                 </div>
                 
+                <!-- Katalog Kartu Pilar SDGs -->
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
                     @if(isset($dropdowns['sdgs']) && count($dropdowns['sdgs']) > 0)
                         @foreach($dropdowns['sdgs'] as $sdg)
                             @php
                                 $color = $sdg->warna ?: '#E5243B';
                             @endphp
-                            <div @click="toggleSdg('{{ $sdg->label }}')"
-                                 :style="selectedSdgs.includes('{{ $sdg->label }}') 
+                            <div @click='toggleSdg(@json($sdg))'
+                                 :style="isSdgSelected('{{ $sdg->label }}') 
                                     ? 'border-color: {{ $color }}; background-color: {{ $color }}15; box-shadow: 0 4px 14px {{ $color }}25;' 
                                     : 'border-top: 4px solid {{ $color }};'"
                                  class="border rounded-2xl p-4 cursor-pointer transition-all duration-200 bg-white hover:-translate-y-0.5 relative group flex flex-col justify-between">
@@ -364,7 +381,7 @@
                                         @endif
 
                                         <!-- Centang Aktif -->
-                                        <div x-show="selectedSdgs.includes('{{ $sdg->label }}')" 
+                                        <div x-show="isSdgSelected('{{ $sdg->label }}')" 
                                              class="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-black shadow-xs"
                                              style="background-color: {{ $color }};">
                                             ✓
@@ -393,35 +410,98 @@
                     @endif
                 </div>
 
-                <!-- Input Hidden Array untuk dikirim ke Backend -->
-                <template x-for="s in selectedSdgs">
-                    <input type="hidden" name="sdgs_pilihan[]" :value="s">
-                </template>
+                <!-- Input Hidden JSON Penampung Utama untuk DB (Mencakup Target, Indikator, dan Uraian Per Indikator) -->
+                <input type="hidden" name="sdgs_pilihan" :value="JSON.stringify(selectedSdgsData)">
 
-                <!-- Box Quill Editor yang Terbuka Otomatis Jika Ada SDGs Dipilih -->
-                <div x-show="selectedSdgs.length > 0" x-transition.duration.300ms class="mt-6 pt-6 border-t border-gray-200">
-                    <div class="mb-3">
+                <!-- B. PANEL PEMILIHAN INDIKATOR & PENGISIAN URAIAN PER INDIKATOR -->
+                <div x-show="selectedSdgsData.length > 0" x-transition.duration.300ms class="mt-6 pt-6 border-t border-gray-200">
+                    <div class="mb-4">
                         <label class="block text-sm font-bold text-gray-900">
-                            B. Uraian Keterkaitan Inovasi dengan SDGs Terpilih
+                            B. Pilih Indikator SDGs Spesifik & Uraikan Keterkaitannya
                         </label>
-                        <p class="text-xs text-gray-500">Jelaskan bagaimana inovasi ini secara konkret berkontribusi pada pencapaian target SDGs yang telah dipilih.</p>
+                        <p class="text-xs text-gray-500">Centang indikator spesifik yang selaras. Kotak isian uraian akan otomatis muncul di bawah masing-masing indikator yang Anda centang.</p>
                     </div>
-                    <div id="editor-sdgs" class="rounded-xl bg-white border border-gray-300 shadow-2xs"></div>
+
+                    <div class="space-y-4">
+                        <template x-for="(sdgItem, sdgIdx) in selectedSdgsData" :key="sdgItem.label">
+                            <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm" :style="`border-left: 5px solid ${sdgItem.warna}`">
+                                
+                                <!-- Header Pilar Terpilih -->
+                                <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+                                    <h4 class="font-bold text-gray-900 text-sm flex items-center gap-2">
+                                        <span class="px-2 py-0.5 rounded text-white text-[10px]" :style="`background-color: ${sdgItem.warna}`" x-text="sdgItem.kode"></span>
+                                        <span x-text="sdgItem.label"></span>
+                                    </h4>
+                                </div>
+
+                                <div class="p-4 space-y-4">
+                                    <!-- Jika Belum Ada Target dari Pengaturan -->
+                                    <template x-if="!sdgItem.targets || sdgItem.targets.length === 0">
+                                        <p class="text-xs text-gray-400 italic">Admin belum menambahkan rincian target & indikator pada pilar ini.</p>
+                                    </template>
+
+                                    <!-- Looping Target SDGs -->
+                                    <template x-for="(target, tIdx) in sdgItem.targets" :key="tIdx">
+                                        <div class="border border-gray-100 rounded-xl p-3 bg-gray-50/50">
+                                            <p class="text-xs font-bold text-gray-800 mb-2">
+                                                <span class="text-amber-600">Target <span x-text="target.kode_target"></span>:</span>
+                                                <span x-text="target.deskripsi_target" class="font-normal text-gray-600 leading-relaxed"></span>
+                                            </p>
+                                            
+                                            <!-- Looping Indikator di Bawah Target -->
+                                            <div class="pl-2 mt-2 border-l-2 border-gray-200 space-y-3">
+                                                <template x-for="(ind, iIdx) in target.indikators" :key="iIdx">
+                                                    <div class="bg-white p-3 rounded-xl border border-gray-200 shadow-2xs">
+                                                        <label class="flex items-start gap-2 cursor-pointer group">
+                                                            <div class="relative flex items-start pt-0.5">
+                                                                <input type="checkbox" 
+                                                                       @change="toggleIndikator(sdgIdx, tIdx, iIdx, $event.target.checked)"
+                                                                       :checked="ind.selected"
+                                                                       class="sdg-checkbox opacity-0 absolute h-0 w-0">
+                                                                <div class="w-4 h-4 rounded border border-gray-300 bg-white flex items-center justify-center transition-colors text-white" :style="ind.selected ? `background-color: ${sdgItem.warna}; border-color: ${sdgItem.warna};` : ''">
+                                                                    <svg class="w-3 h-3 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                                                </div>
+                                                            </div>
+                                                            <span class="text-xs text-gray-800 group-hover:text-gray-900 transition leading-tight">
+                                                                <strong class="text-gray-900" x-text="ind.kode_indikator"></strong>: <span x-text="ind.nama_indikator"></span>
+                                                            </span>
+                                                        </label>
+                                                        
+                                                        <!-- TEXTAREA URAIAN KHUSUS UNTUK INDIKATOR INI (MUNCUL OTOMATIS JIKA DICENTANG) -->
+                                                        <div x-show="ind.selected" x-transition class="ml-6 mt-2.5 pt-2 border-t border-gray-100">
+                                                            <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                                                                Uraian Keterkaitan Inovasi terhadap Indikator <span x-text="ind.kode_indikator"></span>:
+                                                            </label>
+                                                            <textarea x-model="ind.uraian" 
+                                                                      rows="3" 
+                                                                      class="w-full text-xs rounded-xl border-gray-300 focus:border-amber-500 focus:ring-amber-500 shadow-inner bg-gray-50/50 leading-relaxed" 
+                                                                      placeholder="Tuliskan secara jelas bagaimana inovasi Anda berdampak pada indikator ini..."></textarea>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- ================= LANGKAH 5: SAMPUL & LAMPIRAN BERKAS ================= -->
+        <!-- ================= LANGKAH 5: SAMPUL & LAMPIRAN BERKAS (SEMUA INPUT LENGKAP) ================= -->
         <div x-show="step === 5" x-transition.opacity.duration.300ms style="display: none;">
             <div class="flex items-center justify-between border-b pb-3 mb-6">
                 <div>
                     <h2 class="text-xl font-bold text-gray-900">5. Foto Sampul & Berkas Pendukung</h2>
                     <p class="text-xs text-gray-500 mt-0.5">Unggah berkas sampul dan dokumen pendukung inovasi daerah.</p>
                 </div>
+                <span class="text-xs font-bold bg-amber-50 text-amber-700 px-3 py-1 rounded-full border border-amber-200">Langkah 5 dari 5</span>
             </div>
 
             <div class="bg-amber-50 border border-amber-200 text-amber-900 p-3.5 rounded-xl text-xs mb-6 leading-relaxed">
-                <strong>Catatan Unggahan:</strong> Berkas akan diproses dan diunggah per potongan 512 KB ke server penyimpanan sementara agar aman dari batas memori server.
+                <strong>Catatan Unggahan:</strong> Gambar foto sampul otomatis dikompresi di peramban dan diunggah per potongan 512 KB agar proses pengunggahan kebal terhadap batas server.
             </div>
 
             <div class="grid sm:grid-cols-2 gap-6">
@@ -434,7 +514,7 @@
                     
                     <div class="border-2 border-dashed border-amber-300 rounded-xl p-5 text-center cursor-pointer hover:border-amber-600 transition bg-white" @click="$refs.fileInput.click()">
                         <p class="text-xs text-gray-600 font-medium">Klik untuk memilih foto sampul</p>
-                        <p class="text-[11px] text-gray-400 mt-0.5">Otomatis disesuaikan maksimal 1600px & kompresi 80%</p>
+                        <p class="text-[11px] text-gray-400 mt-0.5">Otomatis dikompresi maksimal 1600px & kualitas 80%</p>
                         <input type="file" x-ref="fileInput" @change="handleFileSelect($event)" class="hidden" accept="image/jpeg,image/png,image/webp,image/jpg">
                     </div>
 
@@ -463,10 +543,10 @@
                     </div>
                 </div>
 
-                <!-- DOKUMEN ANGGARAN (TIDAK WAJIB LAGI) -->
+                <!-- DOKUMEN ANGGARAN (TIDAK WAJIB) -->
                 <div x-data="asyncSingleUploader('anggaran_file', false)" class="border border-gray-200 rounded-2xl p-4 bg-gray-50">
                     <span class="block text-sm font-semibold text-gray-700 mb-1">Dokumen Anggaran</span>
-                    <span class="text-[11px] text-gray-500 block mb-2">Opsional (PDF, JPG, PNG - Maks. 15MB)</span>
+                    <span class="text-[11px] text-gray-500 block mb-2">Opsional (Format: PDF, JPG, PNG - Maks. 15MB)</span>
                     <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center cursor-pointer hover:border-amber-500 transition bg-white" @click="$refs.fileInput.click()">
                         <span class="text-xs text-gray-500">Pilih berkas anggaran</span>
                         <input type="file" x-ref="fileInput" @change="handleFileSelect($event)" class="hidden" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
@@ -522,7 +602,7 @@
                 <!-- DOKUMEN HAKI -->
                 <div x-data="asyncSingleUploader('haki_file', false)" class="border border-gray-200 rounded-2xl p-4 bg-gray-50">
                     <span class="block text-sm font-semibold text-gray-700 mb-1">Dokumen HAKI</span>
-                    <span class="text-[11px] text-gray-500 block mb-2">Surat pencatatan ciptaan / sertifikat (PDF/JPG)</span>
+                    <span class="text-[11px] text-gray-500 block mb-2">Opsional (Surat pencatatan ciptaan / sertifikat PDF/JPG)</span>
                     <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center cursor-pointer hover:border-amber-500 transition bg-white" @click="$refs.fileInput.click()">
                         <span class="text-xs text-gray-500">Pilih berkas HAKI</span>
                         <input type="file" x-ref="fileInput" @change="handleFileSelect($event)" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
@@ -548,7 +628,7 @@
                 <!-- PENGHARGAAN -->
                 <div x-data="asyncSingleUploader('penghargaan_file', false)" class="border border-gray-200 rounded-2xl p-4 bg-gray-50">
                     <span class="block text-sm font-semibold text-gray-700 mb-1">Piagam / Dokumen Penghargaan</span>
-                    <span class="text-[11px] text-gray-500 block mb-2">Penghargaan yang pernah diterima inovasi</span>
+                    <span class="text-[11px] text-gray-500 block mb-2">Opsional (Penghargaan yang pernah diterima inovasi)</span>
                     <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center cursor-pointer hover:border-amber-500 transition bg-white" @click="$refs.fileInput.click()">
                         <span class="text-xs text-gray-500">Pilih piagam penghargaan</span>
                         <input type="file" x-ref="fileInput" @change="handleFileSelect($event)" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
@@ -609,25 +689,21 @@
     const quillTujuan = new Quill('#editor-tujuan', { theme: 'snow', modules: { toolbar: toolbarOptions }});
     const quillManfaat = new Quill('#editor-manfaat', { theme: 'snow', modules: { toolbar: toolbarOptions }});
     const quillHasil = new Quill('#editor-hasil', { theme: 'snow', modules: { toolbar: toolbarOptions }});
-    const quillSdgs = new Quill('#editor-sdgs', { theme: 'snow', modules: { toolbar: toolbarOptions }});
 
     // ENGINE KOMPRESI & CHUNK ROBUST (ANTI-CRASH)
     window.ImaCreateUploader = {
-        CHUNK_SIZE: 512 * 1024, // 512 KB per potongan
+        CHUNK_SIZE: 512 * 1024, // 512 KB
 
-        // Kompresi Gambar menggunakan HTMLImageElement (Stabil di Safari, Chrome, Firefox)
         async compressImage(file) {
             if (!file || !file.type.startsWith('image/')) return file;
-            
-            // Format SVG atau GIF dilewati langsung
             if (file.type === 'image/svg+xml' || file.type === 'image/gif') return file;
 
             return new Promise((resolve) => {
                 const reader = new FileReader();
-                reader.onerror = () => resolve(file); // Fallback jika gagal baca
+                reader.onerror = () => resolve(file);
                 reader.onload = (e) => {
                     const img = new Image();
-                    img.onerror = () => resolve(file); // Fallback ke file asli
+                    img.onerror = () => resolve(file);
                     img.onload = () => {
                         try {
                             const MAX_WIDTH = 1600;
@@ -652,7 +728,6 @@
                             canvas.height = height;
 
                             const ctx = canvas.getContext('2d');
-                            // Beri latar belakang putih agar transparan tidak menjadi hitam pekat
                             ctx.fillStyle = '#FFFFFF';
                             ctx.fillRect(0, 0, width, height);
                             ctx.drawImage(img, 0, 0, width, height);
@@ -670,7 +745,6 @@
                                 resolve(compressedFile);
                             }, 'image/jpeg', 0.80);
                         } catch (err) {
-                            console.warn('Kompresi canvas gagal, menggunakan file asli:', err);
                             resolve(file);
                         }
                     };
@@ -680,7 +754,6 @@
             });
         },
 
-        // Upload Chunk dengan pengecekan token CSRF & response JSON yang ketat
         async uploadInChunks(file, onProgress, uploadUrl, csrfToken) {
             const fileId = 'create_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
             const totalChunks = Math.ceil(file.size / this.CHUNK_SIZE);
@@ -707,8 +780,6 @@
                 });
 
                 if (!res.ok) {
-                    const textErr = await res.text();
-                    console.error('Server error upload:', textErr);
                     throw new Error(`Gagal pada bagian ${idx + 1}/${totalChunks}`);
                 }
 
@@ -727,7 +798,7 @@
         Alpine.data('imaWizard', () => ({
             step: 1,
             rancangWordCount: 0,
-            selectedSdgs: [],
+            selectedSdgsData: [], // Array penampung objek Pilar -> Target -> Indikator -> Uraian
             formData: {
                 kategori: '', 
                 operator_nama: '', 
@@ -739,19 +810,50 @@
             },
 
             init() {
-                // Perhitungan kata secara akurat di Quill
+                // Perhitungan kata di Quill
                 quillRancang.on('text-change', () => {
                     const text = quillRancang.getText().trim();
                     this.rancangWordCount = text.length > 0 ? text.split(/\s+/).filter(Boolean).length : 0;
                 });
             },
 
-            toggleSdg(label) {
-                if (this.selectedSdgs.includes(label)) {
-                    this.selectedSdgs = this.selectedSdgs.filter(item => item !== label);
+            isSdgSelected(label) {
+                return this.selectedSdgsData.some(item => item.label === label);
+            },
+
+            toggleSdg(sdgObject) {
+                const idx = this.selectedSdgsData.findIndex(item => item.label === sdgObject.label);
+                if (idx !== -1) {
+                    this.selectedSdgsData.splice(idx, 1);
                 } else {
-                    this.selectedSdgs.push(label);
+                    let parsedTargets = [];
+                    try { 
+                        parsedTargets = typeof sdgObject.targets === 'string' ? JSON.parse(sdgObject.targets || '[]') : (sdgObject.targets || []);
+                    } catch(e) {
+                        parsedTargets = [];
+                    }
+                    
+                    // Inisialisasi properti selected dan uraian pada tiap indikator
+                    parsedTargets.forEach(t => {
+                        if (t.indikators) {
+                            t.indikators.forEach(ind => {
+                                ind.selected = false;
+                                ind.uraian = ''; // Kolom uraian spesifik per indikator
+                            });
+                        }
+                    });
+
+                    this.selectedSdgsData.push({
+                        label: sdgObject.label,
+                        kode: sdgObject.kode || 'SDG',
+                        warna: sdgObject.warna || '#E5243B',
+                        targets: parsedTargets
+                    });
                 }
+            },
+
+            toggleIndikator(sdgIdx, targetIdx, indIdx, isChecked) {
+                this.selectedSdgsData[sdgIdx].targets[targetIdx].indikators[indIdx].selected = isChecked;
             },
 
             nextStep() {
@@ -771,10 +873,12 @@
                     else if (!this.formData.tahap_inovasi) { valid = false; msg = 'Tahapan Inovasi wajib dipilih.'; }
                     else if (!this.formData.koordinat.trim()) { valid = false; msg = 'Koordinat Lokasi penerapan wajib diisi.'; }
                 } 
-                // VALIDASI LANGKAH 3 (Minimal 300 Kata)
+                // VALIDASI LANGKAH 3 (300 - 500 KATA)
                 else if (this.step === 3) {
                     if (this.rancangWordCount < 300) {
                         valid = false; msg = `Rancang Bangun Inovasi wajib minimal 300 KATA. Saat ini baru ${this.rancangWordCount} kata.`;
+                    } else if (this.rancangWordCount > 500) {
+                        valid = false; msg = `Rancang Bangun Inovasi maksimal 500 KATA. Saat ini melebihi batas: ${this.rancangWordCount} kata.`;
                     } else if (quillTujuan.getText().trim().length === 0) {
                         valid = false; msg = 'Tujuan Inovasi Daerah wajib diisi.';
                     } else if (quillManfaat.getText().trim().length === 0) {
@@ -783,7 +887,7 @@
                         valid = false; msg = 'Hasil Inovasi wajib diisi.';
                     }
                 }
-                // LANGKAH 4 (SDGs) bersifat Opsional, jadi bebas lanjut ke Langkah 5
+                // LANGKAH 4 (SDGs) bersifat Opsional
 
                 if (!valid) {
                     Swal.fire({ 
@@ -798,14 +902,13 @@
             },
 
             submitForm(e) {
-                // 1. SINKRONISASI ISI EDITOR KE HIDDEN INPUT
+                // 1. Sinkronisasi Editor ke Hidden Input
                 document.getElementById('input_rancang_bangun').value = quillRancang.root.innerHTML;
                 document.getElementById('input_tujuan').value = quillTujuan.root.innerHTML;
                 document.getElementById('input_manfaat').value = quillManfaat.root.innerHTML;
                 document.getElementById('input_hasil').value = quillHasil.root.innerHTML;
-                document.getElementById('input_sdgs').value = quillSdgs.root.innerHTML;
 
-                // 2. VALIDASI FOTO SAMPUL (WAJIB)
+                // 2. Validasi Foto Sampul (Wajib)
                 const sampulVal = document.querySelector('input[name="sampul_file"]')?.value;
                 if (!sampulVal) {
                     Swal.fire({ 
@@ -828,7 +931,7 @@
             }
         }));
 
-        // KOMPONEN UPLOADER FILE SINGLE ASINKRON
+        // Komponen Single Uploader
         Alpine.data('asyncSingleUploader', (inputName, isImageOnly = false) => ({
             files: [], 
             inputName: inputName,
@@ -850,7 +953,7 @@
                     temp_path: ''
                 }];
 
-                e.target.value = ''; // Reset input agar bisa re-select file yang sama
+                e.target.value = '';
 
                 try {
                     let ready = raw;
@@ -880,7 +983,6 @@
                         this.updateItem(fileId, { status: 'error' });
                     }
                 } catch (err) {
-                    console.error('Upload gagal:', err);
                     this.updateItem(fileId, { status: 'error' });
                 }
             },

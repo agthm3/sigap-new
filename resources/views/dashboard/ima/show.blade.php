@@ -43,9 +43,15 @@
         }
     }
 
-    // Ambil Master Data SDGs untuk dicocokkan dengan pilihan Inovator
+    // Olah Data Master SDGs & Data yang Dipilih Inovator
     $sdgsMaster = $dropdowns['sdgs'] ?? collect([]);
-    $selectedSdgs = is_string($inovasi->sdgs_pilihan) ? json_decode($inovasi->sdgs_pilihan, true) : ($inovasi->sdgs_pilihan ?? []);
+    $sdgsPilihan = is_string($inovasi->sdgs_pilihan) ? json_decode($inovasi->sdgs_pilihan, true) : ($inovasi->sdgs_pilihan ?? []);
+    if (!is_array($sdgsPilihan)) {
+        $sdgsPilihan = [];
+    }
+
+    // Deteksi apakah data berbentuk Array Object Terstruktur Baru (Pilar -> Target -> Indikator -> Uraian)
+    $isStructuredSdgs = !empty($sdgsPilihan) && isset($sdgsPilihan[0]) && is_array($sdgsPilihan[0]) && isset($sdgsPilihan[0]['label']);
 @endphp
 
 <section class="max-w-6xl mx-auto px-4 py-6" x-data="showWizard()">
@@ -91,7 +97,7 @@
                 <p class="text-gray-500 text-sm mt-1">OPD: {{ $inovasi->opd_unit ?? 'Belum disetel' }}</p>
             @else
                 <h1 class="text-xl font-bold text-gray-900">Detail & Asistensi Inovasi</h1>
-                <p class="text-gray-500 text-xs mt-0.5">Kelola data profil, kelengkapan berkas evidence, dan catatan evaluasi.</p>
+                <p class="text-gray-500 text-xs mt-0.5">Kelola data profil, keterkaitan SDGs, kelengkapan berkas evidence, dan catatan evaluasi.</p>
             @endif
         </div>
         
@@ -127,7 +133,7 @@
             Profil & Metadata
         </button>
         <button @click="tab = 'evidence'; isEditing = false" :class="tab === 'evidence' ? 'border-amber-500 text-amber-600 border-b-2 font-bold' : 'text-gray-500 hover:text-gray-700'" class="px-4 py-2 transition outline-none">
-            Penilaian Evidence
+            Penilaian Evidence (20 Indikator)
         </button>
     </div>
 
@@ -160,7 +166,7 @@
                         <span class="block text-xs font-bold text-amber-900 mb-1">Ganti Foto Sampul (Kosongkan jika tidak diubah)</span>
                         <div class="bg-white p-3 border border-gray-200 rounded-lg text-center cursor-pointer hover:border-amber-500" @click="$refs.fileInput.click()">
                             <span class="text-xs text-gray-500">Klik untuk memilih foto sampul baru</span>
-                            <input type="file" x-ref="fileInput" @change="handleFileSelect($event)" accept=".jpg,.jpeg,.png" class="hidden">
+                            <input type="file" x-ref="fileInput" @change="handleFileSelect($event)" accept=".jpg,.jpeg,.png,.webp" class="hidden">
                         </div>
                         <template x-for="(f, i) in files" :key="f.id">
                             <div class="mt-2 text-xs p-2 bg-white border rounded flex justify-between items-center">
@@ -187,8 +193,16 @@
                     </div>
 
                     <div class="grid sm:grid-cols-2 gap-4 text-sm border-t pt-4 border-gray-100">
-                        @foreach(['urusan_pemerintah' => 'Urusan Pemerintah', 'klasifikasi' => 'Klasifikasi', 'jenis_inovasi' => 'Jenis Inovasi', 'bentuk_inovasi_daerah' => 'Bentuk Inovasi', 'asta_cipta' => 'Asta Cita', 'program_prioritas' => 'Program Prioritas', 'misi_walikota' => 'Misi Walikota'] as $key => $label)
-                            <label class="block">
+                        @foreach([
+                            'urusan_pemerintah' => 'Urusan Pemerintah', 
+                            'klasifikasi' => 'Klasifikasi', 
+                            'jenis_inovasi' => 'Jenis Inovasi', 
+                            'bentuk_inovasi_daerah' => 'Bentuk Inovasi', 
+                            'asta_cipta' => 'Asta Cita', 
+                            'program_prioritas' => 'Program Prioritas', 
+                            'misi_walikota' => 'Misi Walikota'
+                        ] as $key => $label)
+                            <label class="block {{ in_array($key, ['asta_cipta', 'program_prioritas', 'misi_walikota']) ? 'sm:col-span-2' : '' }}">
                                 <span class="text-xs font-semibold text-gray-700">{{ $label }}</span>
                                 <select name="{{ $key }}" class="mt-1 w-full rounded-lg border-gray-300 focus:border-amber-500 text-sm">
                                     <option value="">— Pilih {{ $label }} —</option>
@@ -215,19 +229,22 @@
                     <!-- EDITOR TEKS (QUILL) SAAT MODE EDIT -->
                     <div class="space-y-5 border-t pt-4 border-gray-100">
                         <div>
-                            <span class="block text-xs font-semibold text-gray-700 mb-1">Rancang Bangun Inovasi (Min. 300 Kata)</span>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-xs font-semibold text-gray-700">Rancang Bangun Inovasi (300 – 500 Kata) *</span>
+                                <span class="text-[10px] text-gray-500 font-mono" x-text="`${editWordCount} Kata`"></span>
+                            </div>
                             <div id="edit-rancang" class="rounded-xl bg-white">{!! $inovasi->rancang_bangun !!}</div>
                         </div>
                         <div>
-                            <span class="block text-xs font-semibold text-gray-700 mb-1">Tujuan Inovasi</span>
+                            <span class="block text-xs font-semibold text-gray-700 mb-1">Tujuan Inovasi *</span>
                             <div id="edit-tujuan" class="rounded-xl bg-white">{!! $inovasi->tujuan !!}</div>
                         </div>
                         <div>
-                            <span class="block text-xs font-semibold text-gray-700 mb-1">Manfaat yang Diperoleh</span>
+                            <span class="block text-xs font-semibold text-gray-700 mb-1">Manfaat yang Diperoleh *</span>
                             <div id="edit-manfaat" class="rounded-xl bg-white">{!! $inovasi->manfaat !!}</div>
                         </div>
                         <div>
-                            <span class="block text-xs font-semibold text-gray-700 mb-1">Hasil Inovasi</span>
+                            <span class="block text-xs font-semibold text-gray-700 mb-1">Hasil Inovasi *</span>
                             <div id="edit-hasil" class="rounded-xl bg-white">{!! $inovasi->hasil_inovasi !!}</div>
                         </div>
                     </div>
@@ -255,6 +272,33 @@
                         </div>
                     </div>
 
+                    <!-- PEMBARUAN DOKUMEN LAMPIRAN -->
+                    <div class="border-t pt-4 border-gray-100">
+                        <span class="block text-sm font-bold text-gray-800 mb-3">Pembaruan Dokumen Lampiran</span>
+                        <div class="grid sm:grid-cols-2 gap-4">
+                            <div x-data="showInlineUploader('anggaran_file')" class="border border-gray-200 p-3 rounded-xl bg-gray-50">
+                                <span class="block text-xs font-semibold text-gray-700 mb-1">Dokumen Anggaran</span>
+                                <input type="file" @change="handleFileSelect($event)" accept=".pdf,.jpg,.png" class="text-xs w-full text-gray-500">
+                                <template x-for="f in files" :key="f.id"><input type="hidden" :name="inputName" :value="f.temp_path"></template>
+                            </div>
+                            <div x-data="showInlineUploader('profil_bisnis_file')" class="border border-gray-200 p-3 rounded-xl bg-gray-50">
+                                <span class="block text-xs font-semibold text-gray-700 mb-1">Profil Bisnis (Opsional)</span>
+                                <input type="file" @change="handleFileSelect($event)" accept=".pdf,.ppt,.pptx" class="text-xs w-full text-gray-500">
+                                <template x-for="f in files" :key="f.id"><input type="hidden" :name="inputName" :value="f.temp_path"></template>
+                            </div>
+                            <div x-data="showInlineUploader('haki_file')" class="border border-gray-200 p-3 rounded-xl bg-gray-50">
+                                <span class="block text-xs font-semibold text-gray-700 mb-1">Dokumen HAKI (Opsional)</span>
+                                <input type="file" @change="handleFileSelect($event)" accept=".pdf,.jpg,.png" class="text-xs w-full text-gray-500">
+                                <template x-for="f in files" :key="f.id"><input type="hidden" :name="inputName" :value="f.temp_path"></template>
+                            </div>
+                            <div x-data="showInlineUploader('penghargaan_file')" class="border border-gray-200 p-3 rounded-xl bg-gray-50">
+                                <span class="block text-xs font-semibold text-gray-700 mb-1">Sertifikat / Penghargaan</span>
+                                <input type="file" @change="handleFileSelect($event)" accept=".pdf,.jpg,.png" class="text-xs w-full text-gray-500">
+                                <template x-for="f in files" :key="f.id"><input type="hidden" :name="inputName" :value="f.temp_path"></template>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- TOMBOL SUBMIT -->
                     <div class="flex items-center justify-end gap-3 border-t pt-5">
                         <button type="button" @click="toggleEdit()" class="px-4 py-2 border border-gray-300 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50">Batal</button>
@@ -266,6 +310,7 @@
             <!-- MODE LIHAT (READ-ONLY) -->
             <div x-show="!isEditing" x-transition.opacity class="space-y-6">
                 
+                <!-- 1. Metadata Inovasi -->
                 <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
                     <div class="flex items-center justify-between border-b pb-2 mb-4">
                         <h3 class="text-lg font-bold text-gray-800">Metadata Inovasi</h3>
@@ -298,12 +343,12 @@
                     </div>
                 </div>
 
-                <!-- DESKRIPSI (Dirender sebagai HTML murni) -->
+                <!-- 2. Deskripsi Inovasi (HTML murni dari Quill) -->
                 <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-5">
                     <h3 class="text-lg font-bold text-gray-800 border-b pb-2">Deskripsi Inovasi</h3>
                     
                     <div>
-                        <span class="block text-gray-500 text-xs mb-1 font-semibold uppercase">Rancang Bangun</span>
+                        <span class="block text-gray-500 text-xs mb-1 font-semibold uppercase">Rancang Bangun Inovasi</span>
                         <div class="quill-content text-gray-900 bg-gray-50 p-4 rounded-xl border border-gray-100 text-sm leading-relaxed">{!! $inovasi->rancang_bangun ?? 'Belum ada penjelasan.' !!}</div>
                     </div>
                     <div>
@@ -320,44 +365,148 @@
                     </div>
                 </div>
 
-                <!-- SDGs TERPILIH (Hanya Muncul jika Ada) -->
-                @if(count($selectedSdgs) > 0)
-                <div class="bg-blue-50/50 border border-blue-100 rounded-2xl p-6 shadow-sm">
-                    <h3 class="text-lg font-bold text-blue-900 mb-4 border-b border-blue-200 pb-2">Keterkaitan SDGs</h3>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-5">
-                        @foreach($selectedSdgs as $sdgLabel)
-                            @php
-                                $matchedSdg = $sdgsMaster->firstWhere('label', $sdgLabel);
-                                $color = $matchedSdg->warna ?? '#E5243B';
-                                $icon = $matchedSdg->kode ?? 'SDG';
-                            @endphp
-                            <div class="bg-white border rounded-xl p-3 shadow-xs flex flex-col items-center justify-center text-center" style="border-top: 3px solid {{ $color }}">
-                                @if(!empty($matchedSdg->icon_path))
-                                    <img src="{{ asset('storage/' . $matchedSdg->icon_path) }}" alt="{{ $sdgLabel }}" class="w-8 h-8 mb-2">
-                                @else
-                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white text-xs mb-2" style="background-color: {{ $color }};">{{ $icon }}</div>
-                                @endif
-                                <span class="text-[10px] font-bold text-gray-800 leading-tight">{{ $sdgLabel }}</span>
-                            </div>
-                        @endforeach
-                    </div>
-                    @if(!empty($inovasi->sdgs_keterkaitan))
-                        <div>
-                            <span class="block text-blue-800 text-xs mb-1 font-semibold uppercase">Uraian Keterkaitan:</span>
-                            <div class="quill-content text-gray-900 bg-white p-4 rounded-xl border border-blue-100 text-sm leading-relaxed">{!! $inovasi->sdgs_keterkaitan !!}</div>
+                <!-- 3. KETERKAITAN SDGs SPESIFIK PER INDIKATOR -->
+                @if(!empty($sdgsPilihan) && count($sdgsPilihan) > 0)
+                <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                    <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-5">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">🌱</span>
+                            <h3 class="text-lg font-bold text-gray-900">Keterkaitan SDGs Inovasi</h3>
                         </div>
+                        <span class="text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1 rounded-full">
+                            Terhubung
+                        </span>
+                    </div>
+
+                    @if($isStructuredSdgs)
+                        <!-- Format Baru: Hirarki Pilar -> Target -> Indikator -> Uraian -->
+                        <div class="space-y-6">
+                            @foreach($sdgsPilihan as $sdgItem)
+                                @php
+                                    $pilarColor = $sdgItem['warna'] ?? '#E5243B';
+                                    $pilarLabel = $sdgItem['label'] ?? '';
+                                    $pilarKode = $sdgItem['kode'] ?? 'SDG';
+                                    
+                                    // Cari icon asli jika ada di master dropdowns
+                                    $masterRecord = $sdgsMaster->firstWhere('label', $pilarLabel);
+                                    $iconPath = $masterRecord->icon_path ?? null;
+
+                                    // Kumpulkan indikator yang dipilih di bawah pilar ini
+                                    $chosenIndicators = [];
+                                    foreach ($sdgItem['targets'] ?? [] as $t) {
+                                        foreach ($t['indikators'] ?? [] as $ind) {
+                                            if (!empty($ind['selected']) && $ind['selected']) {
+                                                $chosenIndicators[] = [
+                                                    'target_kode' => $t['kode_target'] ?? '',
+                                                    'target_desc' => $t['deskripsi_target'] ?? '',
+                                                    'ind_kode'    => $ind['kode_indikator'] ?? '',
+                                                    'ind_nama'    => $ind['nama_indikator'] ?? '',
+                                                    'uraian'      => $ind['uraian'] ?? ''
+                                                ];
+                                            }
+                                        }
+                                    }
+                                @endphp
+
+                                <div class="rounded-2xl border border-gray-200 overflow-hidden shadow-2xs" style="border-left: 6px solid {{ $pilarColor }}">
+                                    <!-- Header Pilar SDGs -->
+                                    <div class="bg-gray-50 px-5 py-3.5 border-b border-gray-200 flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            @if(!empty($iconPath))
+                                                <img src="{{ asset('storage/' . $iconPath) }}" alt="{{ $pilarLabel }}" class="w-10 h-10 object-contain rounded-xl p-0.5 bg-white border border-gray-200">
+                                            @else
+                                                <div class="w-9 h-9 rounded-xl flex items-center justify-center font-extrabold text-white text-xs shadow-xs" style="background-color: {{ $pilarColor }}">
+                                                    {{ $pilarKode }}
+                                                </div>
+                                            @endif
+                                            <div>
+                                                <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded text-white" style="background-color: {{ $pilarColor }}">
+                                                    Pilar {{ $pilarKode }}
+                                                </span>
+                                                <h4 class="font-bold text-gray-900 text-sm mt-0.5">{{ $pilarLabel }}</h4>
+                                            </div>
+                                        </div>
+                                        <span class="text-xs font-semibold text-gray-500">
+                                            {{ count($chosenIndicators) }} Indikator Dipilih
+                                        </span>
+                                    </div>
+
+                                    <!-- Daftar Indikator dan Uraiannya -->
+                                    <div class="p-5 space-y-4 bg-white">
+                                        @forelse($chosenIndicators as $item)
+                                            <div class="p-4 rounded-xl border border-gray-200 bg-gray-50/70 space-y-2.5">
+                                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-gray-200 pb-2">
+                                                    <span class="text-xs font-bold text-gray-900 flex items-center gap-1.5">
+                                                        <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[11px] font-mono font-bold">
+                                                            Indikator {{ $item['ind_kode'] }}
+                                                        </span>
+                                                        {{ $item['ind_nama'] }}
+                                                    </span>
+                                                    <span class="text-[11px] font-semibold text-gray-500">
+                                                        Target {{ $item['target_kode'] }}
+                                                    </span>
+                                                </div>
+
+                                                @if(!empty($item['target_desc']))
+                                                    <p class="text-[11px] text-gray-500 italic leading-relaxed">
+                                                        🎯 <strong>Sasaran Target:</strong> {{ $item['target_desc'] }}
+                                                    </p>
+                                                @endif
+
+                                                <div class="mt-2">
+                                                    <span class="block text-[11px] font-bold text-gray-700 uppercase tracking-wide mb-1">
+                                                        Uraian Keterkaitan Inovasi:
+                                                    </span>
+                                                    <div class="text-xs text-gray-800 bg-white p-3.5 rounded-xl border border-gray-200 whitespace-pre-line leading-relaxed shadow-inner">
+                                                        {{ !empty($item['uraian']) ? $item['uraian'] : 'Inovator belum mengisi uraian penjelasan khusus untuk indikator ini.' }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @empty
+                                            <p class="text-xs text-gray-400 italic py-2">Inovator memilih pilar ini namun belum mencentang indikator spesifik.</p>
+                                        @endforelse
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <!-- Format Fallback (Data String Tunggal / Versi Lama) -->
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
+                            @foreach($sdgsPilihan as $sdgLabel)
+                                @php
+                                    $matchedSdg = $sdgsMaster->firstWhere('label', $sdgLabel);
+                                    $color = $matchedSdg->warna ?? '#E5243B';
+                                    $icon = $matchedSdg->kode ?? 'SDG';
+                                @endphp
+                                <div class="bg-white border rounded-xl p-3 shadow-xs flex flex-col items-center justify-center text-center" style="border-top: 3px solid {{ $color }}">
+                                    @if(!empty($matchedSdg->icon_path))
+                                        <img src="{{ asset('storage/' . $matchedSdg->icon_path) }}" alt="{{ $sdgLabel }}" class="w-8 h-8 mb-2">
+                                    @else
+                                        <div class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white text-xs mb-2" style="background-color: {{ $color }};">{{ $icon }}</div>
+                                    @endif
+                                    <span class="text-[10px] font-bold text-gray-800 leading-tight">{{ $sdgLabel }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        @if(!empty($inovasi->sdgs_keterkaitan))
+                            <div>
+                                <span class="block text-gray-700 text-xs mb-1 font-semibold uppercase">Uraian Keterkaitan Umum:</span>
+                                <div class="quill-content text-gray-900 bg-white p-4 rounded-xl border border-gray-200 text-sm leading-relaxed">{!! $inovasi->sdgs_keterkaitan !!}</div>
+                            </div>
+                        @endif
                     @endif
                 </div>
                 @endif
 
-                <!-- Lampiran Berkas Pendukung -->
+                <!-- 4. Lampiran Berkas Utama -->
                 <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
                     <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Lampiran Berkas Utama</h3>
                     <div class="grid sm:grid-cols-2 gap-4 text-sm">
                         @foreach([
-                            'Dokumen Anggaran' => $inovasi->anggaran_file, 
-                            'Profil Bisnis' => $inovasi->profil_bisnis_file,
-                            'Dokumen HAKI' => $inovasi->haki_file,
+                            'Dokumen Anggaran'         => $inovasi->anggaran_file, 
+                            'Profil Bisnis'            => $inovasi->profil_bisnis_file,
+                            'Dokumen HAKI'             => $inovasi->haki_file,
                             'Sertifikat / Penghargaan' => $inovasi->penghargaan_file
                         ] as $label => $file)
                             <div class="border border-gray-200 rounded-xl p-3 flex items-center justify-between">
@@ -419,7 +568,7 @@
                     </div>
                 @endif
                 
-                <!-- Kontak Operator -->
+                <!-- Kontak Operator PIC -->
                 <div class="mt-6 pt-4 border-t border-gray-200">
                     <p class="text-xs font-semibold text-gray-500 mb-2">Kontak Operator (PIC):</p>
                     <div class="flex items-center gap-3">
@@ -439,7 +588,9 @@
         </div>
     </div>
 
-    <!-- TAB 2: EVIDENCE & PENILAIAN -->
+    <!-- ============================================== -->
+    <!-- TAB 2: PENILAIAN 20 INDIKATOR EVIDENCE -->
+    <!-- ============================================== -->
     <div x-show="tab === 'evidence'" x-transition.opacity style="display: none;" class="space-y-6">
         <div class="bg-amber-50 border border-amber-200 text-amber-900 p-4 rounded-xl text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <p><strong>Review Evidence:</strong> Verifikasi pemenuhan berkas pendukung pada 20 indikator penilaian IMA.</p>
@@ -574,8 +725,7 @@
 
 @push('scripts')
 <script>
-    // Konfigurasi Toolbar Quill Editor
-    var toolbarOptions = [
+    const toolbarOptions = [
         ['bold', 'italic', 'underline'],
         [{ 'list': 'ordered'}, { 'list': 'bullet' }],
         [{ 'indent': '-1'}, { 'indent': '+1' }],
@@ -588,34 +738,54 @@
         Alpine.data('showWizard', () => ({
             tab: 'profil',
             isEditing: false,
+            editWordCount: 0,
 
             toggleEdit() {
                 this.isEditing = !this.isEditing;
                 this.tab = 'profil';
                 
-                // Inisialisasi editor hanya sekali saat mode edit dibuka
                 if (this.isEditing && !qRancang) {
                     setTimeout(() => {
                         qRancang = new Quill('#edit-rancang', { theme: 'snow', modules: { toolbar: toolbarOptions }});
-                        qTujuan = new Quill('#edit-tujuan', { theme: 'snow', modules: { toolbar: toolbarOptions }});
+                        qTujuan  = new Quill('#edit-tujuan',  { theme: 'snow', modules: { toolbar: toolbarOptions }});
                         qManfaat = new Quill('#edit-manfaat', { theme: 'snow', modules: { toolbar: toolbarOptions }});
-                        qHasil = new Quill('#edit-hasil', { theme: 'snow', modules: { toolbar: toolbarOptions }});
+                        qHasil   = new Quill('#edit-hasil',   { theme: 'snow', modules: { toolbar: toolbarOptions }});
+
+                        // Hitung jumlah kata awal
+                        const initText = qRancang.getText().trim();
+                        this.editWordCount = initText.length > 0 ? initText.split(/\s+/).filter(Boolean).length : 0;
+
+                        qRancang.on('text-change', () => {
+                            const text = qRancang.getText().trim();
+                            this.editWordCount = text.length > 0 ? text.split(/\s+/).filter(Boolean).length : 0;
+                        });
                     }, 50);
                 }
             },
 
             submitForm(e) {
-                // Sinkronisasi data HTML ke hidden input sebelum submit update
-                if(qRancang) document.getElementById('edit_rancang_bangun').value = qRancang.root.innerHTML;
-                if(qTujuan) document.getElementById('edit_tujuan').value = qTujuan.root.innerHTML;
-                if(qManfaat) document.getElementById('edit_manfaat').value = qManfaat.root.innerHTML;
-                if(qHasil) document.getElementById('edit_hasil').value = qHasil.root.innerHTML;
+                if (qRancang) {
+                    const text = qRancang.getText().trim();
+                    const words = text.length > 0 ? text.split(/\s+/).filter(Boolean).length : 0;
+                    if (words < 300) {
+                        alert(`Rancang bangun minimal 300 kata. Saat ini: ${words} kata.`);
+                        return;
+                    }
+                    if (words > 500) {
+                        alert(`Rancang bangun maksimal 500 kata. Saat ini: ${words} kata.`);
+                        return;
+                    }
+                    document.getElementById('edit_rancang_bangun').value = qRancang.root.innerHTML;
+                }
+                if (qTujuan)  document.getElementById('edit_tujuan').value  = qTujuan.root.innerHTML;
+                if (qManfaat) document.getElementById('edit_manfaat').value = qManfaat.root.innerHTML;
+                if (qHasil)   document.getElementById('edit_hasil').value   = qHasil.root.innerHTML;
                 
                 e.target.submit();
             }
         }));
 
-        // Komponen Uploader Inline untuk Mode Edit (Sama dengan sebelumnya)
+        // Komponen Single Uploader Inline Mode Edit
         Alpine.data('showInlineUploader', (inputName) => ({
             files: [],
             inputName: inputName,
@@ -633,27 +803,41 @@
                 try {
                     let ready = raw;
                     if (raw.type.startsWith('image/')) {
-                        const bitmap = await createImageBitmap(raw);
-                        const canvas = document.createElement('canvas');
-                        const MAX = 1600;
-                        let w = bitmap.width, h = bitmap.height;
-                        if (w > h && w > MAX) { h = Math.round((h * MAX) / w); w = MAX; }
-                        else if (h > MAX) { w = Math.round((w * MAX) / h); h = MAX; }
-                        canvas.width = w; canvas.height = h;
-                        canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
-                        ready = await new Promise(res => {
-                            canvas.toBlob(b => res(new File([b], raw.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: 'image/jpeg' })), 'image/jpeg', 0.75);
+                        const reader = new FileReader();
+                        ready = await new Promise((resolve) => {
+                            reader.onload = (ev) => {
+                                const img = new Image();
+                                img.onload = () => {
+                                    const canvas = document.createElement('canvas');
+                                    let w = img.width, h = img.height;
+                                    const MAX = 1600;
+                                    if (w > h && w > MAX) { h = Math.round((h * MAX) / w); w = MAX; }
+                                    else if (h > MAX) { width = Math.round((w * MAX) / h); h = MAX; }
+                                    canvas.width = w; canvas.height = h;
+                                    const ctx = canvas.getContext('2d');
+                                    ctx.fillStyle = '#FFFFFF';
+                                    ctx.fillRect(0, 0, w, h);
+                                    ctx.drawImage(img, 0, 0, w, h);
+                                    canvas.toBlob((b) => {
+                                        if (!b) return resolve(raw);
+                                        resolve(new File([b], raw.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: 'image/jpeg' }));
+                                    }, 'image/jpeg', 0.80);
+                                };
+                                img.src = ev.target.result;
+                            };
+                            reader.readAsDataURL(raw);
                         });
                     }
 
                     const CHUNK = 512 * 1024;
                     const total = Math.ceil(ready.size / CHUNK);
-                    
+                    const fId = 'inline_' + Date.now();
+
                     for (let i = 0; i < total; i++) {
                         const blob = ready.slice(i * CHUNK, Math.min((i + 1) * CHUNK, ready.size));
                         const fd = new FormData();
                         fd.append('file', blob);
-                        fd.append('file_id', fileId);
+                        fd.append('file_id', fId);
                         fd.append('chunk_index', i);
                         fd.append('total_chunks', total);
                         fd.append('original_name', ready.name);
@@ -672,6 +856,7 @@
                     }
                     this.files = [...this.files];
                 } catch (err) {
+                    console.error(err);
                     this.files[0].status = 'error';
                     this.files = [...this.files];
                 }

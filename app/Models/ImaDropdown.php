@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class ImaDropdown extends Model
 {
     protected $table = 'ima_dropdowns';
-    
 protected $fillable = [
     'kategori',
     'kode',
@@ -15,6 +14,7 @@ protected $fillable = [
     'warna',
     'label',
     'deskripsi',
+    'targets',
     'is_active',
 ];
 }

@@ -1,15 +1,67 @@
 @extends('layouts.app')
 
 @section('content')
-<section class="max-w-7xl mx-auto px-4 py-6" x-data="{ activeTab: 'sdgs' }">
+<section class="max-w-7xl mx-auto px-4 py-6" x-data="{ 
+    activeTab: 'sdgs',
+    modalTargetOpen: false,
+    selectedSdg: null,
+    targetsList: [],
+
+    openTargetModal(sdg) {
+        this.selectedSdg = sdg;
+        try {
+            this.targetsList = typeof sdg.targets === 'string' ? JSON.parse(sdg.targets || '[]') : (sdg.targets || []);
+        } catch(e) {
+            this.targetsList = [];
+        }
+        if (this.targetsList.length === 0) {
+            this.addTarget();
+        }
+        this.modalTargetOpen = true;
+    },
+
+    addTarget() {
+        this.targetsList.push({
+            kode_target: (this.selectedSdg?.kode || '1') + '.' + (this.targetsList.length + 1),
+            deskripsi_target: '',
+            indikators: [
+                { kode_indikator: (this.selectedSdg?.kode || '1') + '.' + (this.targetsList.length + 1) + '.1', nama_indikator: '' }
+            ]
+        });
+    },
+
+    removeTarget(tIdx) {
+        this.targetsList.splice(tIdx, 1);
+    },
+
+    addIndikator(tIdx) {
+        const t = this.targetsList[tIdx];
+        const nextNum = (t.indikators?.length || 0) + 1;
+        if (!t.indikators) t.indikators = [];
+        t.indikators.push({
+            kode_indikator: t.kode_target + '.' + nextNum,
+            nama_indikator: ''
+        });
+    },
+
+    removeIndikator(tIdx, iIdx) {
+        this.targetsList[tIdx].indikators.splice(iIdx, 1);
+    }
+}">
     <div class="mb-6">
         <h1 class="text-2xl font-extrabold text-gray-900">Pengaturan SIGAP IMA</h1>
-        <p class="text-gray-500 text-sm mt-1">Kelola jadwal lomba, status kunci pengisian inovator, skema poin 20 indikator, pilar SDGs, dan opsi dropdown.</p>
+        <p class="text-gray-500 text-sm mt-1">Kelola jadwal lomba, status kunci pengisian inovator, skema poin 20 indikator, pilar SDGs (beserta Target & Indikator), dan opsi dropdown.</p>
     </div>
 
     @if(session('success'))
         <div class="mb-4 p-4 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-200 text-sm font-medium">
             ✅ {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="mb-4 p-4 bg-rose-50 text-rose-700 rounded-xl border border-rose-200 text-sm font-medium">
+            ❌ {{ session('error') }}
         </div>
     @endif
 
@@ -34,7 +86,6 @@
     <!-- ============================================== -->
     <div x-show="activeTab === 'jadwal'" x-transition.opacity style="display: none;">
         <div class="grid lg:grid-cols-3 gap-6">
-            <!-- PANEL KIRI -->
             <div class="lg:col-span-1 space-y-6">
                 <!-- CARD TOGGLE KUNCI -->
                 <div class="bg-white p-6 rounded-2xl border {{ $isLocked ? 'border-rose-300 bg-rose-50/30' : 'border-emerald-300 bg-emerald-50/30' }} shadow-sm">
@@ -159,10 +210,10 @@
     </div>
 
     <!-- ============================================== -->
-    <!-- TAB 2: MASTER DATA SDGs (FITUR BARU) -->
+    <!-- TAB 2: MASTER DATA SDGs (DENGAN TARGET & INDIKATOR) -->
     <!-- ============================================== -->
     <!-- ============================================== -->
-    <!-- TAB 2: MASTER DATA SDGs (UPLOAD GAMBAR & TEMA WARNA) -->
+    <!-- TAB 2: MASTER DATA SDGs (DENGAN TARGET & INDIKATOR 500 KARAKTER) -->
     <!-- ============================================== -->
     <div x-show="activeTab === 'sdgs'" x-transition.opacity>
         <div class="grid lg:grid-cols-3 gap-6">
@@ -171,41 +222,41 @@
             <div class="lg:col-span-1" x-data="{ 
                 selectedColor: '#E5243B',
                 colorPresets: [
-                    { name: '1. Merah (No Poverty)', hex: '#E5243B' },
-                    { name: '2. Kuning Emas (Zero Hunger)', hex: '#DDA63A' },
-                    { name: '3. Hijau (Good Health)', hex: '#4C9F38' },
-                    { name: '4. Merah Gelap (Quality Education)', hex: '#C5192D' },
-                    { name: '5. Oranye Merah (Gender)', hex: '#FF3A21' },
-                    { name: '6. Biru Muda (Clean Water)', hex: '#26BDE2' },
-                    { name: '7. Kuning (Clean Energy)', hex: '#FCC30B' },
-                    { name: '8. Marun (Decent Work)', hex: '#A21942' },
-                    { name: '9. Oranye (Industry/Innovation)', hex: '#FD6925' },
-                    { name: '10. Magenta (Reduced Inequalities)', hex: '#DD1367' },
-                    { name: '11. Oranye Terang (Sustainable Cities)', hex: '#FD9D24' },
-                    { name: '12. Coklat Emas (Consumption)', hex: '#BF8B2E' },
-                    { name: '13. Hijau Lumut (Climate Action)', hex: '#3F7E44' },
-                    { name: '14. Biru Bahari (Life Below Water)', hex: '#0A97D9' },
-                    { name: '15. Hijau Daun (Life on Land)', hex: '#56C02B' },
-                    { name: '16. Biru Royal (Peace & Justice)', hex: '#00689D' },
-                    { name: '17. Biru Navy (Partnerships)', hex: '#19486A' }
+                    { name: '1. No Poverty', hex: '#E5243B' },
+                    { name: '2. Zero Hunger', hex: '#DDA63A' },
+                    { name: '3. Good Health', hex: '#4C9F38' },
+                    { name: '4. Quality Education', hex: '#C5192D' },
+                    { name: '5. Gender Equality', hex: '#FF3A21' },
+                    { name: '6. Clean Water', hex: '#26BDE2' },
+                    { name: '7. Clean Energy', hex: '#FCC30B' },
+                    { name: '8. Decent Work', hex: '#A21942' },
+                    { name: '9. Industry & Innovation', hex: '#FD6925' },
+                    { name: '10. Reduced Inequalities', hex: '#DD1367' },
+                    { name: '11. Sustainable Cities', hex: '#FD9D24' },
+                    { name: '12. Responsible Consumption', hex: '#BF8B2E' },
+                    { name: '13. Climate Action', hex: '#3F7E44' },
+                    { name: '14. Life Below Water', hex: '#0A97D9' },
+                    { name: '15. Life on Land', hex: '#56C02B' },
+                    { name: '16. Peace & Justice', hex: '#00689D' },
+                    { name: '17. Partnerships', hex: '#19486A' }
                 ]
             }">
                 <form action="{{ route('sigap-ima.settings.sdg.store') }}" method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm sticky top-6">
                     @csrf
                     <h3 class="font-bold text-gray-900 mb-1 text-base">Tambah Pilar SDGs</h3>
                     <p class="text-xs text-gray-500 mb-4 pb-3 border-b border-gray-100">
-                        Unggah gambar ikon resmi dan tentukan warna identitas SDGs.
+                        Unggah ikon resmi dan tentukan warna tema pilar SDGs.
                     </p>
 
-                    <!-- NOMOR / KODE & NAMA PILAR -->
+                    <!-- NOMOR / KODE & NAMA PILAR (MAX 500 KARAKTER) -->
                     <div class="grid grid-cols-4 gap-3 mb-3">
                         <label class="block col-span-1">
-                            <span class="text-xs font-semibold text-gray-700">Nomor/No *</span>
-                            <input type="text" name="kode" required placeholder="Contoh: 1" class="mt-1 w-full text-center rounded-xl border-gray-300 text-sm focus:ring-amber-500 focus:border-amber-500 font-bold">
+                            <span class="text-xs font-semibold text-gray-700">No Urut *</span>
+                            <input type="text" name="kode" required placeholder="1" class="mt-1 w-full text-center rounded-xl border-gray-300 text-sm focus:ring-amber-500 focus:border-amber-500 font-bold">
                         </label>
                         <label class="block col-span-3">
-                            <span class="text-xs font-semibold text-gray-700">Nama Pilar SDGs *</span>
-                            <input type="text" name="label" required placeholder="Contoh: Tanpa Kemiskinan" class="mt-1 w-full rounded-xl border-gray-300 text-sm focus:ring-amber-500 focus:border-amber-500">
+                            <span class="text-xs font-semibold text-gray-700">Nama Pilar SDGs (Maks. 500 Karakter) *</span>
+                            <input type="text" name="label" required maxlength="500" placeholder="Contoh: Tanpa Kemiskinan" class="mt-1 w-full rounded-xl border-gray-300 text-sm focus:ring-amber-500 focus:border-amber-500">
                         </label>
                     </div>
 
@@ -213,7 +264,7 @@
                     <div class="mb-4">
                         <span class="text-xs font-semibold text-gray-700 block mb-1">Unggah Gambar Ikon SDGs</span>
                         <input type="file" name="icon" accept=".png,.jpg,.jpeg,.svg,.webp" class="w-full text-xs file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-gray-100 hover:file:bg-gray-200 border border-gray-200 rounded-xl p-1">
-                        <span class="text-[10px] text-gray-400 mt-1 block">Format: PNG transparan, SVG, atau JPG (Maks. 2MB).</span>
+                        <span class="text-[10px] text-gray-400 mt-1 block">Format: PNG, SVG, JPG (Maks. 2MB).</span>
                     </div>
 
                     <!-- PILIHAN TEMA WARNA -->
@@ -240,14 +291,14 @@
                         </div>
                     </div>
 
-                    <!-- DESKRIPSI KETERKAITAN -->
+                    <!-- DESKRIPSI RINGKAS -->
                     <label class="block mb-4">
-                        <span class="text-xs font-semibold text-gray-700">Uraian Contoh / Panduan Keterkaitan</span>
-                        <textarea name="deskripsi" rows="3" placeholder="Contoh: Fokus pada peningkatan taraf ekonomi masyarakat marjinal atau akses pangan murah..." class="mt-1 w-full rounded-xl border-gray-300 text-xs focus:ring-amber-500 focus:border-amber-500 leading-relaxed"></textarea>
+                        <span class="text-xs font-semibold text-gray-700">Deskripsi / Sasaran Utama Pilar</span>
+                        <textarea name="deskripsi" rows="3" placeholder="Deskripsi umum tujuan pilar ini..." class="mt-1 w-full rounded-xl border-gray-300 text-xs focus:ring-amber-500 focus:border-amber-500 leading-relaxed"></textarea>
                     </label>
 
                     <button type="submit" class="w-full py-2.5 bg-gray-900 hover:bg-black text-white font-bold rounded-xl transition text-xs shadow-sm">
-                        + Simpan Pilar & Tema SDGs
+                        + Simpan Pilar SDGs
                     </button>
                 </form>
             </div>
@@ -257,8 +308,8 @@
                 <div class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
                     <div class="bg-gray-50/70 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                         <div>
-                            <h3 class="font-bold text-gray-900 text-sm">Katalog Pilar SDGs Terdaftar</h3>
-                            <p class="text-xs text-gray-500 mt-0.5">Warna tema dan gambar ikon akan tampil langsung pada kartu pilihan inovator.</p>
+                            <h3 class="font-bold text-gray-900 text-sm">Katalog Pilar SDGs</h3>
+                            <p class="text-xs text-gray-500 mt-0.5">Klik tombol "🎯 Kelola Target & Indikator" pada pilar untuk mengisi rincian targetnya.</p>
                         </div>
                         <span class="text-xs font-bold text-amber-800 bg-amber-100 px-3 py-1 rounded-full">
                             {{ count($dropdowns['sdgs'] ?? []) }} Pilar
@@ -270,19 +321,26 @@
                             <div class="text-center py-12 text-gray-400">
                                 <span class="text-4xl block mb-2 opacity-60">🌱</span>
                                 <p class="text-sm font-semibold text-gray-600">Belum ada Pilar SDGs yang ditambahkan.</p>
-                                <p class="text-xs text-gray-400 mt-1">Gunakan formulir di samping untuk menambahkan pilar baru beserta warna temanya.</p>
+                                <p class="text-xs text-gray-400 mt-1">Gunakan formulir di samping untuk menambahkan pilar baru.</p>
                             </div>
                         @else
                             <div class="grid sm:grid-cols-2 gap-4">
                                 @foreach($dropdowns['sdgs'] as $sdg)
                                     @php
                                         $themeColor = $sdg->warna ?: '#E5243B';
+                                        $targets = json_decode($sdg->targets ?? '[]', true);
+                                        $targetCount = is_array($targets) ? count($targets) : 0;
+                                        $totalIndikator = 0;
+                                        if (is_array($targets)) {
+                                            foreach($targets as $t) {
+                                                $totalIndikator += count($t['indikators'] ?? []);
+                                            }
+                                        }
                                     @endphp
                                     <div class="rounded-2xl p-4 bg-white border border-gray-200 hover:shadow-md transition relative flex flex-col justify-between overflow-hidden group" style="border-top: 5px solid {{ $themeColor }};">
                                         <div>
                                             <div class="flex items-start justify-between gap-2 mb-3">
                                                 <div class="flex items-center gap-2.5">
-                                                    <!-- Gambar Ikon atau Fallback -->
                                                     @if(!empty($sdg->icon_path))
                                                         <img src="{{ asset('storage/' . $sdg->icon_path) }}" alt="{{ $sdg->label }}" class="w-12 h-12 object-contain rounded-xl p-1 border border-gray-100 bg-gray-50">
                                                     @else
@@ -292,13 +350,13 @@
                                                     @endif
                                                     <div>
                                                         <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded text-white" style="background-color: {{ $themeColor }};">
-                                                            {{ $sdg->kode ?? 'SDG' }}
+                                                            Pilar {{ $sdg->kode ?? 'SDG' }}
                                                         </span>
                                                         <h4 class="font-bold text-gray-900 text-sm leading-tight mt-1">{{ $sdg->label }}</h4>
                                                     </div>
                                                 </div>
 
-                                                <form action="{{ route('sigap-ima.settings.dropdown.destroy', $sdg->id) }}" method="POST" onsubmit="return confirm('Hapus pilar SDGs ini beserta berkas ikonnya?');">
+                                                <form action="{{ route('sigap-ima.settings.dropdown.destroy', $sdg->id) }}" method="POST" onsubmit="return confirm('Hapus pilar SDGs ini? Seluruh target di dalamnya juga akan terhapus.');">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="text-gray-400 hover:text-rose-600 p-1 rounded-lg hover:bg-rose-50 text-xs font-bold transition" title="Hapus">
@@ -308,11 +366,28 @@
                                             </div>
 
                                             @if($sdg->deskripsi)
-                                                <p class="text-xs text-gray-600 mt-2 leading-relaxed bg-gray-50/80 p-3 rounded-xl border border-gray-100">
+                                                <p class="text-xs text-gray-600 mt-2 leading-relaxed bg-gray-50/80 p-2.5 rounded-xl border border-gray-100 line-clamp-2">
                                                     {{ $sdg->deskripsi }}
                                                 </p>
                                             @endif
+
+                                            <!-- Indikator Rincian Target -->
+                                            <div class="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 text-[11px]">
+                                                <span class="px-2 py-0.5 bg-blue-50 text-blue-700 font-bold rounded-md">
+                                                    🎯 {{ $targetCount }} Target
+                                                </span>
+                                                <span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 font-bold rounded-md">
+                                                    📌 {{ $totalIndikator }} Indikator
+                                                </span>
+                                            </div>
                                         </div>
+
+                                        <!-- TOMBOL BUKA MODAL TARGET -->
+                                        <button type="button" 
+                                                @click='openTargetModal(@json($sdg))'
+                                                class="mt-4 w-full py-2 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm">
+                                            <span>🎯</span> Kelola Target & Indikator
+                                        </button>
                                     </div>
                                 @endforeach
                             </div>
@@ -321,6 +396,213 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL POPUP: KELOLA TARGET & INDIKATOR SDGs (500 KARAKTER) -->
+    <!-- ============================================== -->
+    <div x-show="modalTargetOpen" 
+         x-transition.opacity 
+         style="display: none;" 
+         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        
+        <div @click.away="modalTargetOpen = false" 
+             class="bg-white rounded-3xl max-w-4xl w-full p-6 sm:p-8 shadow-2xl max-h-[90vh] flex flex-col relative"
+             :style="`border-top: 6px solid ${selectedSdg?.warna || '#E5243B'}`">
+            
+            <!-- Header Modal -->
+            <div class="flex items-center justify-between border-b pb-4 mb-4">
+                <div class="flex items-center gap-3">
+                    <span class="px-2.5 py-1 rounded-lg text-white font-extrabold text-xs" :style="`background-color: ${selectedSdg?.warna || '#E5243B'}`" x-text="`Pilar ${selectedSdg?.kode || ''}`"></span>
+                    <div>
+                        <h3 class="text-lg font-extrabold text-gray-900 leading-tight" x-text="selectedSdg?.label"></h3>
+                        <p class="text-xs text-gray-500 mt-0.5">Kelola target-target SDGs dan rincian indikator penilaian (mendukung hingga 500 karakter).</p>
+                    </div>
+                </div>
+                <button type="button" @click="modalTargetOpen = false" class="text-gray-400 hover:text-gray-700 text-2xl font-bold p-1">&times;</button>
+            </div>
+
+            <!-- Konten Form Target & Indikator (Scrollable) -->
+            <form :action="`{{ url('/pengaturan-ima/sdg') }}/${selectedSdg?.id}/targets`" method="POST" class="flex-1 overflow-y-auto pr-2 space-y-5">
+                @csrf
+                
+                <!-- Hidden Input penampung JSON array -->
+                <input type="hidden" name="targets_json" :value="JSON.stringify(targetsList)">
+
+                <template x-for="(target, tIdx) in targetsList" :key="tIdx">
+                    <div class="p-5 rounded-2xl border border-gray-200 bg-gray-50/70 space-y-4 relative">
+                        
+                        <!-- Header Target -->
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-black uppercase text-gray-700 tracking-wider flex items-center gap-1.5">
+                                <span class="w-5 h-5 rounded-full bg-black text-white text-[10px] flex items-center justify-center" x-text="tIdx + 1"></span>
+                                Target SDGs
+                            </span>
+                            <button type="button" @click="removeTarget(tIdx)" class="text-rose-600 hover:text-rose-800 text-xs font-bold hover:underline">
+                                &times; Hapus Target
+                            </button>
+                        </div>
+
+                        <!-- Kode & Deskripsi Target (Hingga 500 Karakter) -->
+                        <div class="grid sm:grid-cols-4 gap-3">
+                            <div class="sm:col-span-1">
+                                <label class="block text-[11px] font-bold text-gray-700 mb-1">Kode Target</label>
+                                <input type="text" x-model="target.kode_target" placeholder="Contoh: 1.1" required class="w-full text-xs font-bold rounded-xl border-gray-300 focus:ring-amber-500">
+                            </div>
+                            <div class="sm:col-span-3">
+                                <div class="flex items-center justify-between mb-1">
+                                    <label class="block text-[11px] font-bold text-gray-700">Deskripsi Target SDGs *</label>
+                                    <span class="text-[10px] text-gray-400" x-text="`${(target.deskripsi_target || '').length}/500 karakter`"></span>
+                                </div>
+                                <textarea x-model="target.deskripsi_target" maxlength="500" rows="2" placeholder="Contoh: Pada tahun 2030, mengentaskan kemiskinan ekstrem bagi semua orang di mana pun..." required class="w-full text-xs rounded-xl border-gray-300 focus:ring-amber-500 leading-relaxed"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Daftar Indikator di Bawah Target (Hingga 500 Karakter) -->
+                        <div class="pl-4 sm:pl-6 border-l-2 border-amber-300 space-y-3 pt-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-bold text-amber-900 uppercase">📌 Indikator di Bawah Target Ini (Maks. 500 Karakter):</span>
+                                <button type="button" @click="addIndikator(tIdx)" class="text-xs text-amber-700 hover:text-amber-900 font-bold">
+                                    + Tambah Indikator
+                                </button>
+                            </div>
+
+                            <template x-for="(ind, iIdx) in target.indikators" :key="iIdx">
+                                <div class="flex items-start gap-2 bg-white p-2.5 rounded-xl border border-gray-200">
+                                    <div class="w-24 flex-shrink-0">
+                                        <input type="text" x-model="ind.kode_indikator" placeholder="1.1.1" class="w-full text-xs font-bold rounded-lg border-gray-300 text-center">
+                                    </div>
+                                    <div class="flex-1">
+                                        <textarea x-model="ind.nama_indikator" maxlength="500" rows="1" placeholder="Tuliskan nama indikator / definisi capaian (maks. 500 karakter)..." required class="w-full text-xs rounded-lg border-gray-300 focus:ring-amber-500 leading-relaxed resize-y"></textarea>
+                                    </div>
+                                    <button type="button" @click="removeIndikator(tIdx, iIdx)" class="p-1.5 text-rose-500 hover:text-rose-700 font-bold text-sm" title="Hapus Indikator">
+                                        &times;
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+
+                    </div>
+                </template>
+
+                <!-- Tombol Tambah Target Baru -->
+                <button type="button" @click="addTarget()" class="w-full py-3 rounded-2xl border-2 border-dashed border-gray-300 hover:border-amber-500 text-gray-600 hover:text-amber-800 font-bold text-xs transition flex items-center justify-center gap-2">
+                    <span>➕</span> Tambah Target Baru untuk Pilar Ini
+                </button>
+
+                <!-- Footer Modal -->
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+                    <button type="button" @click="modalTargetOpen = false" class="px-5 py-2.5 border border-gray-300 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-7 py-2.5 bg-gray-900 hover:bg-black text-white font-bold text-xs rounded-xl shadow-md transition">
+                        Simpan Seluruh Target & Indikator
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL POPUP: KELOLA TARGET & INDIKATOR SDGs -->
+    <!-- ============================================== -->
+    <div x-show="modalTargetOpen" 
+         x-transition.opacity 
+         style="display: none;" 
+         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        
+        <div @click.away="modalTargetOpen = false" 
+             class="bg-white rounded-3xl max-w-4xl w-full p-6 sm:p-8 shadow-2xl max-h-[90vh] flex flex-col relative"
+             :style="`border-top: 6px solid ${selectedSdg?.warna || '#E5243B'}`">
+            
+            <!-- Header Modal -->
+            <div class="flex items-center justify-between border-b pb-4 mb-4">
+                <div class="flex items-center gap-3">
+                    <span class="px-2.5 py-1 rounded-lg text-white font-extrabold text-xs" :style="`background-color: ${selectedSdg?.warna || '#E5243B'}`" x-text="`Pilar ${selectedSdg?.kode || ''}`"></span>
+                    <div>
+                        <h3 class="text-lg font-extrabold text-gray-900 leading-tight" x-text="selectedSdg?.label"></h3>
+                        <p class="text-xs text-gray-500 mt-0.5">Kelola target-target SDGs dan rincian indikator penilaian di bawahnya.</p>
+                    </div>
+                </div>
+                <button type="button" @click="modalTargetOpen = false" class="text-gray-400 hover:text-gray-700 text-2xl font-bold p-1">&times;</button>
+            </div>
+
+            <!-- Konten Form Target & Indikator (Scrollable) -->
+            <form :action="`{{ url('/pengaturan-ima/sdg') }}/${selectedSdg?.id}/targets`" method="POST" class="flex-1 overflow-y-auto pr-2 space-y-5">
+                @csrf
+                
+                <!-- Hidden Input penampung JSON array -->
+                <input type="hidden" name="targets_json" :value="JSON.stringify(targetsList)">
+
+                <template x-for="(target, tIdx) in targetsList" :key="tIdx">
+                    <div class="p-5 rounded-2xl border border-gray-200 bg-gray-50/70 space-y-4 relative">
+                        
+                        <!-- Header Target -->
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-black uppercase text-gray-700 tracking-wider flex items-center gap-1.5">
+                                <span class="w-5 h-5 rounded-full bg-black text-white text-[10px] flex items-center justify-center" x-text="tIdx + 1"></span>
+                                Target SDGs
+                            </span>
+                            <button type="button" @click="removeTarget(tIdx)" class="text-rose-600 hover:text-rose-800 text-xs font-bold hover:underline">
+                                &times; Hapus Target
+                            </button>
+                        </div>
+
+                        <!-- Kode & Deskripsi Target -->
+                        <div class="grid sm:grid-cols-4 gap-3">
+                            <div class="sm:col-span-1">
+                                <label class="block text-[11px] font-bold text-gray-700 mb-1">Kode Target</label>
+                                <input type="text" x-model="target.kode_target" placeholder="Contoh: 1.1" required class="w-full text-xs font-bold rounded-xl border-gray-300 focus:ring-amber-500">
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label class="block text-[11px] font-bold text-gray-700 mb-1">Deskripsi Target SDGs *</label>
+                                <textarea x-model="target.deskripsi_target" rows="2" placeholder="Contoh: Pada tahun 2030, mengentaskan kemiskinan ekstrem bagi semua orang..." required class="w-full text-xs rounded-xl border-gray-300 focus:ring-amber-500"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Daftar Indikator di Bawah Target -->
+                        <div class="pl-4 sm:pl-6 border-l-2 border-amber-300 space-y-3 pt-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-bold text-amber-900 uppercase">📌 Indikator di Bawah Target Ini:</span>
+                                <button type="button" @click="addIndikator(tIdx)" class="text-xs text-amber-700 hover:text-amber-900 font-bold">
+                                    + Tambah Indikator
+                                </button>
+                            </div>
+
+                            <template x-for="(ind, iIdx) in target.indikators" :key="iIdx">
+                                <div class="flex items-start gap-2 bg-white p-2.5 rounded-xl border border-gray-200">
+                                    <div class="w-24 flex-shrink-0">
+                                        <input type="text" x-model="ind.kode_indikator" placeholder="1.1.1" class="w-full text-xs font-bold rounded-lg border-gray-300 text-center">
+                                    </div>
+                                    <div class="flex-1">
+                                        <input type="text" x-model="ind.nama_indikator" placeholder="Nama / definisi indikator..." required class="w-full text-xs rounded-lg border-gray-300">
+                                    </div>
+                                    <button type="button" @click="removeIndikator(tIdx, iIdx)" class="p-1.5 text-rose-500 hover:text-rose-700 font-bold text-sm">
+                                        &times;
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+
+                    </div>
+                </template>
+
+                <!-- Tombol Tambah Target Baru -->
+                <button type="button" @click="addTarget()" class="w-full py-3 rounded-2xl border-2 border-dashed border-gray-300 hover:border-amber-500 text-gray-600 hover:text-amber-800 font-bold text-xs transition flex items-center justify-center gap-2">
+                    <span>➕</span> Tambah Target Baru untuk Pilar Ini
+                </button>
+
+                <!-- Footer Modal -->
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+                    <button type="button" @click="modalTargetOpen = false" class="px-5 py-2.5 border border-gray-300 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-7 py-2.5 bg-gray-900 hover:bg-black text-white font-bold text-xs rounded-xl shadow-md transition">
+                        Simpan Seluruh Target & Indikator
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
