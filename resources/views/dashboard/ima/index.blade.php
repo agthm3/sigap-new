@@ -25,6 +25,7 @@
         <div class="relative z-40 flex flex-wrap items-center gap-3">
             @php
                 $isVerifikator = auth()->user()->hasAnyRole(['admin', 'superadmin', 'verif_inovasi']);
+                $isAdmin = auth()->user()->hasAnyRole(['admin', 'superadmin']);
             @endphp
 
             @if($isVerifikator)
@@ -385,6 +386,21 @@
                                             </span>
                                         @endif
                                     @endif
+
+                                    <!-- HAPUS INOVASI (KHUSUS ROLE ADMIN/SUPERADMIN) -->
+                                    @if($isAdmin)
+                                        <form id="delete-form-{{ $item->id }}" action="{{ route('sigap-ima.destroy', $item->id) }}" method="POST" class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="button" 
+                                                    @click="confirmDelete('delete-form-{{ $item->id }}', '{{ addslashes($item->judul) }}')"
+                                                    title="Hapus Inovasi Beserta Seluruh Berkas"
+                                                    class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-rose-200 text-rose-600 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 transition text-xs font-bold shadow-xs">
+                                                <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                Hapus
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -471,6 +487,26 @@ document.addEventListener('alpine:init', () => {
             this.showLoading('Menyiapkan Excel Terpilih...', 'Mengunduh rekapitulasi data terpilih.', 2000);
             const url = "{{ route('sigap-ima.export.excel') }}?type=full&selected_ids=" + this.selectedIds.join(',');
             window.location.href = url;
+        },
+
+        // Konfirmasi Hapus Inovasi (SweetAlert2)
+        confirmDelete(formId, judul) {
+            Swal.fire({
+                title: 'Hapus Inovasi Ini?',
+                html: `Apakah Anda yakin ingin menghapus inovasi <strong>"${judul}"</strong>?<br><br><span class="text-rose-600 text-xs font-semibold">Tindakan ini permanen. Semua dokumen lampiran, foto sampul, dan berkas evidence pendukung akan dihapus dari server.</span>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e11d48',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Ya, Hapus Sekarang',
+                cancelButtonText: 'Batal',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    this.showLoading('Menghapus Inovasi...', 'Menghapus data dan membersihkan berkas lampiran.');
+                    document.getElementById(formId).submit();
+                }
+            });
         }
     }));
 });

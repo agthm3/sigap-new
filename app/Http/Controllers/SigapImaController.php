@@ -445,4 +445,45 @@ class SigapImaController extends Controller
 
         return back()->with('success', 'Review Indikator Evidence berhasil disimpan.');
     }
+    public function destroy($id)
+    {
+        $user = Auth::user();
+
+        // Hanya role admin atau superadmin yang berhak menghapus
+        if (!$user->hasAnyRole(['admin', 'superadmin'])) {
+            abort(403, 'Hanya Administrator yang memiliki hak akses untuk menghapus inovasi ini.');
+        }
+
+        $inovasi = ImaInovasi::with(['evidences.files'])->findOrFail($id);
+
+        // 1. Hapus Foto Sampul
+        if (!empty($inovasi->sampul_file) && Storage::disk('public')->exists($inovasi->sampul_file)) {
+            Storage::disk('public')->delete($inovasi->sampul_file);
+        }
+
+        // 2. Hapus Lampiran Utama
+        $lampiranFields = ['anggaran_file', 'profil_bisnis_file', 'haki_file', 'penghargaan_file'];
+        foreach ($lampiranFields as $field) {
+            if (!empty($inovasi->$field) && Storage::disk('public')->exists($inovasi->$field)) {
+                Storage::disk('public')->delete($inovasi->$field);
+            }
+        }
+
+        // 3. Hapus Berkas Evidence Fisik
+        foreach ($inovasi->evidences as $ev) {
+            foreach ($ev->files as $file) {
+                if (!empty($file->file_path) && Storage::disk('public')->exists($file->file_path)) {
+                    Storage::disk('public')->delete($file->file_path);
+                }
+            }
+        }
+
+        // 4. Hapus Direktori Folder Evidence Inovasi jika ada
+        Storage::disk('public')->deleteDirectory("ima/evidence/{$inovasi->id}");
+
+        // 5. Hapus Record Inovasi (Cascade akan menghapus data di ima_evidences & ima_evidence_files)
+        $inovasi->delete();
+
+        return redirect()->route('sigap-ima.index')->with('success', 'Inovasi "' . $inovasi->judul . '" beserta seluruh berkasnya berhasil dihapus.');
+    }
 }

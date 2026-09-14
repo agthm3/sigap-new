@@ -910,6 +910,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/create', [SigapImaController::class, 'create'])->name('sigap-ima.create');
         Route::post('/', [SigapImaController::class, 'store'])->name('sigap-ima.store');
         Route::put('/{id}', [SigapImaController::class, 'update'])->name('sigap-ima.update');
+        Route::delete('/sigap-ima/{id}', [SigapImaController::class, 'destroy'])->name('sigap-ima.destroy');
 
         // ROUTE EXPORT EXCEL & PDF (Bulk & Filtered)
         Route::get('/export/excel', [SigapImaExportController::class, 'exportExcel'])->name('sigap-ima.export.excel');
