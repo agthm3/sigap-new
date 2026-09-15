@@ -27,7 +27,7 @@
 <div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6 items-start" x-data="storyGenerator()" x-init="initCanvas()">
     
     <!-- Form Control (Kiri) -->
-    <div class="w-full lg:w-1/3 bg-white p-5 rounded-2xl border border-gray-200 shadow-sm sticky top-24 max-h-[85vh] overflow-y-auto">
+    <div class="w-full lg:w-1/3 bg-white p-5 rounded-2xl border border-gray-200 shadow-sm sticky top-24 max-h-[88vh] overflow-y-auto">
         <h2 class="text-xl font-bold text-gray-900 mb-4 border-b pb-2">Pengaturan SIGAP Story</h2>
         
         <label class="block mb-4">
@@ -61,7 +61,7 @@
                     <span class="text-sm font-semibold text-gray-700">Deskripsi</span>
                     <span class="text-xs font-semibold text-gray-400" x-text="(description || '').length + '/250'"></span>
                 </div>
-                <textarea x-model="description" @input="renderCanvas" rows="4" maxlength="250" class="mt-1 w-full rounded-lg border-gray-300 p-2.5 text-sm shadow-sm focus:ring-maroon focus:border-maroon"></textarea>
+                <textarea x-model="description" @input="renderCanvas" rows="3" maxlength="250" class="mt-1 w-full rounded-lg border-gray-300 p-2.5 text-sm shadow-sm focus:ring-maroon focus:border-maroon"></textarea>
             </label>
 
             <div class="border-t pt-4">
@@ -72,19 +72,72 @@
                 </div>
             </div>
 
+            <!-- Pilih Foto -->
             <div x-show="availableImages.length > 0" class="pt-2">
                 <span class="text-sm font-semibold text-gray-700 block mb-2">
                     3. Pilih <span x-text="layoutMode"></span> Foto (<span x-text="selectedImages.length"></span>/<span x-text="layoutMode"></span>)
                 </span>
-                <div class="grid grid-cols-3 gap-2">
+                <div class="grid grid-cols-4 gap-2">
                     <template x-for="(img, idx) in availableImages" :key="idx">
-                        <div @click="toggleImage(img)" class="relative h-20 bg-gray-200 rounded-lg cursor-pointer overflow-hidden border-2 transition-all" :class="selectedImages.includes(img) ? 'border-maroon shadow-md' : 'border-transparent opacity-60 hover:opacity-100'">
+                        <div @click="toggleImage(img)" class="relative h-16 bg-gray-200 rounded-lg cursor-pointer overflow-hidden border-2 transition-all" :class="selectedImages.includes(img) ? 'border-maroon shadow-md' : 'border-transparent opacity-60 hover:opacity-100'">
                             <img :src="img" class="w-full h-full object-cover">
                             <template x-if="selectedImages.includes(img)">
                                 <div class="absolute inset-0 bg-maroon/30 flex items-center justify-center">
-                                    <span class="bg-maroon text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center" x-text="selectedImages.indexOf(img) + 1"></span>
+                                    <span class="bg-maroon text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center" x-text="selectedImages.indexOf(img) + 1"></span>
                                 </div>
                             </template>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- FITUR BARU: KONTROL ATUR POSISI FOTO PER FRAME -->
+            <div x-show="selectedImages.length > 0" class="border-t pt-4">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-bold text-gray-800">4. Sesuaikan Posisi Foto di Frame</span>
+                    <button type="button" @click="resetAllOffsets()" class="text-xs text-maroon hover:underline font-semibold">Reset Semua</button>
+                </div>
+                <p class="text-[11px] text-gray-500 mb-3">Klik tombol panah untuk menggeser foto yang terpotong/tidak pas pada masing-masing frame.</p>
+
+                <div class="space-y-3">
+                    <template x-for="(img, fIdx) in selectedImages" :key="'ctrl'+fIdx">
+                        <div class="p-2.5 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-between gap-2">
+                            <!-- Thumbnail & Nama Frame -->
+                            <div class="flex items-center gap-2 min-w-0">
+                                <div class="relative w-10 h-10 rounded-lg overflow-hidden bg-gray-200 shrink-0 border border-gray-300">
+                                    <img :src="img" class="w-full h-full object-cover">
+                                    <span class="absolute bottom-0 right-0 bg-maroon text-white text-[9px] px-1 font-bold rounded-tl" x-text="'#' + (fIdx + 1)"></span>
+                                </div>
+                                <div class="truncate">
+                                    <span class="text-xs font-bold text-gray-800 block" x-text="'Foto ' + (fIdx + 1)"></span>
+                                    <span class="text-[10px] text-gray-500" x-text="'X: ' + (imageOffsets[fIdx].x > 0 ? '+' : '') + imageOffsets[fIdx].x + '% | Y: ' + (imageOffsets[fIdx].y > 0 ? '+' : '') + imageOffsets[fIdx].y + '%'"></span>
+                                </div>
+                            </div>
+
+                            <!-- Tombol Kontrol D-Pad Geser -->
+                            <div class="flex items-center gap-1 shrink-0">
+                                <!-- Kiri -->
+                                <button type="button" @click="shiftImage(fIdx, -5, 0)" title="Geser Kiri" class="w-7 h-7 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg flex items-center justify-center text-gray-700 text-xs font-bold active:scale-95 transition">
+                                    ◀
+                                </button>
+                                <!-- Kolom Atas & Bawah -->
+                                <div class="flex flex-col gap-1">
+                                    <button type="button" @click="shiftImage(fIdx, 0, -5)" title="Geser Atas" class="w-7 h-3.5 bg-white hover:bg-gray-100 border border-gray-300 rounded flex items-center justify-center text-gray-700 text-[8px] active:scale-95 transition">
+                                        ▲
+                                    </button>
+                                    <button type="button" @click="shiftImage(fIdx, 0, 5)" title="Geser Bawah" class="w-7 h-3.5 bg-white hover:bg-gray-100 border border-gray-300 rounded flex items-center justify-center text-gray-700 text-[8px] active:scale-95 transition">
+                                        ▼
+                                    </button>
+                                </div>
+                                <!-- Kanan -->
+                                <button type="button" @click="shiftImage(fIdx, 5, 0)" title="Geser Kanan" class="w-7 h-7 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg flex items-center justify-center text-gray-700 text-xs font-bold active:scale-95 transition">
+                                    ▶
+                                </button>
+                                <!-- Reset Slot Ini -->
+                                <button type="button" @click="resetOffset(fIdx)" title="Reset Posisi Foto Ini" class="w-7 h-7 bg-gray-200 hover:bg-gray-300 text-gray-600 rounded-lg flex items-center justify-center text-xs ml-1 active:scale-95 transition">
+                                    ↺
+                                </button>
+                            </div>
                         </div>
                     </template>
                 </div>
@@ -99,7 +152,7 @@
     </div>
 
     <!-- Preview Canvas Area (Kanan) -->
-    <div class="w-full lg:w-2/3 flex justify-center bg-gray-200 p-6 rounded-2xl overflow-hidden border border-gray-300 shadow-inner">
+    <div class="w-full lg:w-2/3 flex flex-col items-center justify-center bg-gray-200 p-6 rounded-2xl overflow-hidden border border-gray-300 shadow-inner">
         <canvas id="storyCanvas" width="1080" height="1920" class="w-[360px] md:w-[450px] lg:w-[480px] h-auto rounded-2xl shadow-2xl bg-white"></canvas>
     </div>
 </div>
@@ -117,9 +170,17 @@ function storyGenerator() {
         layoutMode: 2, 
         availableImages: [],
         selectedImages: [], 
+        
+        // State Offset Posisi per Slot (Index 0, 1, 2, 3) dalam satuan persen (-50 sampai +50)
+        imageOffsets: [
+            { x: 0, y: -15 }, // Slot 1 default fokus sedikit ke atas (-15% kepala)
+            { x: 0, y: 0 },
+            { x: 0, y: 0 },
+            { x: 0, y: 0 }
+        ],
+
         canvas: null,
         ctx: null,
-
         logoPemkot: null,
         logoBrida: null,
 
@@ -142,7 +203,35 @@ function storyGenerator() {
             this.logoPemkot.onload = checkLoad;
             this.logoBrida.onload = checkLoad;
 
-            // Render awal
+            this.renderCanvas();
+        },
+
+        // Menggeser posisi foto di frame tertentu
+        shiftImage(frameIndex, deltaX, deltaY) {
+            if (!this.imageOffsets[frameIndex]) {
+                this.imageOffsets[frameIndex] = { x: 0, y: 0 };
+            }
+            // Batasi geseran antara -50% sampai 50%
+            this.imageOffsets[frameIndex].x = Math.max(-50, Math.min(50, this.imageOffsets[frameIndex].x + deltaX));
+            this.imageOffsets[frameIndex].y = Math.max(-50, Math.min(50, this.imageOffsets[frameIndex].y + deltaY));
+            this.renderCanvas();
+        },
+
+        resetOffset(frameIndex) {
+            if (this.imageOffsets[frameIndex]) {
+                this.imageOffsets[frameIndex].x = 0;
+                this.imageOffsets[frameIndex].y = (frameIndex === 0) ? -15 : 0;
+            }
+            this.renderCanvas();
+        },
+
+        resetAllOffsets() {
+            this.imageOffsets = [
+                { x: 0, y: -15 },
+                { x: 0, y: 0 },
+                { x: 0, y: 0 },
+                { x: 0, y: 0 }
+            ];
             this.renderCanvas();
         },
 
@@ -150,8 +239,6 @@ function storyGenerator() {
             const selected = this.kinerjaList.find(k => k.id == this.selectedId);
             if (selected) {
                 this.dateText = (selected.date || '').toUpperCase();
-                
-                // Masukkan teks langsung sesuai batas input tanpa substring paksa
                 this.selectedTitle = selected.title || '';
                 this.description = selected.description || '';
 
@@ -254,7 +341,6 @@ function storyGenerator() {
 
             this.drawRoundedRect(ctx, headerBoxX, headerBoxY, headerBoxW, headerBoxH, 20, '#ffffff');
             
-            // Draw Logo Pemkot
             if (this.logoPemkot && this.logoPemkot.complete) {
                 ctx.drawImage(this.logoPemkot, headerBoxX + paddingHorizontal, headerBoxY + (headerBoxH - targetLogoH) / 2, pemkotW, targetLogoH);
             }
@@ -281,7 +367,6 @@ function storyGenerator() {
             ctx.lineTo(div2X, headerBoxY + 78);
             ctx.stroke();
 
-            // Logo BRIDA
             if (this.logoBrida && this.logoBrida.complete) {
                 ctx.drawImage(this.logoBrida, div2X + dividerGap / 2, headerBoxY + (headerBoxH - targetLogoH) / 2, bridaW, targetLogoH);
             }
@@ -303,37 +388,37 @@ function storyGenerator() {
             ctx.fillStyle = '#ffffff';
             ctx.fillText(dateStr, infoBoxX + 55, infoBoxY + 58);
 
-            // Judul Kegiatan (Perbaikan render terjamin muncul)
+            // Judul Kegiatan
             ctx.fillStyle = '#002B4C';
             ctx.font = '900 32px Arial, Helvetica, sans-serif';
             const titleStr = (this.selectedTitle || '').trim() || 'JUDUL / NAMA KEGIATAN AKAN TAMPIL DISINI';
             this.wrapText(ctx, titleStr.toUpperCase(), infoBoxX + 40, infoBoxY + 115, infoBoxW - 80, 40, 2);
 
-            // Deskripsi Kegiatan (Perbaikan render terjamin muncul)
+            // Deskripsi Kegiatan
             ctx.fillStyle = '#374151';
             ctx.font = '500 22px Arial, Helvetica, sans-serif';
             const descStr = (this.description || '').trim() || 'Deskripsi kegiatan akan ditampilkan di area ini. Pilih kegiatan di sebelah kiri untuk mengisi teks secara otomatis.';
             this.wrapText(ctx, descStr, infoBoxX + 40, infoBoxY + 215, infoBoxW - 80, 32, 3);
 
-            // 5. Grid Foto Kolase
+            // 5. Grid Foto Kolase (Menggunakan Posisi Custom Offset)
             const photoY = 570;
             const photoW = 940;
             const photoH = 1140;
 
             if (this.layoutMode === 2) {
                 const singleH = (photoH - 30) / 2;
-                await this.drawPhoto(ctx, this.selectedImages[0], 70, photoY, photoW, singleH);
-                await this.drawPhoto(ctx, this.selectedImages[1], 70, photoY + singleH + 30, photoW, singleH);
+                await this.drawPhoto(ctx, this.selectedImages[0], 70, photoY, photoW, singleH, this.imageOffsets[0]);
+                await this.drawPhoto(ctx, this.selectedImages[1], 70, photoY + singleH + 30, photoW, singleH, this.imageOffsets[1]);
             } else {
                 const bigH = 430;
                 const midH = 220;
-                await this.drawPhoto(ctx, this.selectedImages[0], 70, photoY, photoW, bigH);
+                await this.drawPhoto(ctx, this.selectedImages[0], 70, photoY, photoW, bigH, this.imageOffsets[0]);
                 
                 const halfW = (photoW - 20) / 2;
-                await this.drawPhoto(ctx, this.selectedImages[1], 70, photoY + bigH + 20, halfW, midH);
-                await this.drawPhoto(ctx, this.selectedImages[2], 70 + halfW + 20, photoY + bigH + 20, halfW, midH);
+                await this.drawPhoto(ctx, this.selectedImages[1], 70, photoY + bigH + 20, halfW, midH, this.imageOffsets[1]);
+                await this.drawPhoto(ctx, this.selectedImages[2], 70 + halfW + 20, photoY + bigH + 20, halfW, midH, this.imageOffsets[2]);
                 
-                await this.drawPhoto(ctx, this.selectedImages[3], 70, photoY + bigH + midH + 40, photoW, bigH);
+                await this.drawPhoto(ctx, this.selectedImages[3], 70, photoY + bigH + midH + 40, photoW, bigH, this.imageOffsets[3]);
             }
 
             // 6. Footer Social Media
@@ -380,7 +465,6 @@ function storyGenerator() {
             ctx.restore();
         },
 
-        // ALGORITMA BARU: Memastikan teks selalu tampil dan tidak hilang
         wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines) {
             if (!text) return;
             const words = text.split(/\s+/);
@@ -394,7 +478,6 @@ function storyGenerator() {
 
                 if (testWidth > maxWidth && n > 0) {
                     if (currentLine >= maxLines) {
-                        // Jika baris terakhir, tambahkan elipsis jika kata masih bersisa
                         let truncated = line;
                         while (ctx.measureText(truncated + '...').width > maxWidth && truncated.length > 0) {
                             truncated = truncated.slice(0, -1);
@@ -411,13 +494,13 @@ function storyGenerator() {
                 }
             }
 
-            // Gambar sisa baris terakhir
             if (line) {
                 ctx.fillText(line, x, y);
             }
         },
 
-        async drawPhoto(ctx, imgUrl, x, y, w, h) {
+        // MENGGAMBAR FOTO DENGAN KALKULASI OFFSET X DAN Y
+        async drawPhoto(ctx, imgUrl, x, y, w, h, offset = { x: 0, y: 0 }) {
             ctx.save();
             this.drawRoundedRect(ctx, x, y, w, h, 28, '#e5e7eb');
             ctx.clip();
@@ -427,21 +510,28 @@ function storyGenerator() {
                     const img = await this.loadImage(imgUrl);
                     const imgRatio = img.width / img.height;
                     const containerRatio = w / h;
-                    let renderW, renderH, offsetX, offsetY;
+                    let renderW, renderH, baseOffsetX, baseOffsetY;
 
                     if (imgRatio > containerRatio) {
                         renderH = h;
                         renderW = h * imgRatio;
-                        offsetX = x - (renderW - w) / 2;
-                        offsetY = y;
+                        baseOffsetX = x - (renderW - w) / 2;
+                        baseOffsetY = y;
                     } else {
                         renderW = w;
                         renderH = w / imgRatio;
-                        offsetX = x;
-                        offsetY = y - (renderH - h) * 0.15;
+                        baseOffsetX = x;
+                        baseOffsetY = y - (renderH - h) / 2;
                     }
 
-                    ctx.drawImage(img, offsetX, offsetY, renderW, renderH);
+                    // Terapkan Offset Geser (x & y dalam persen dari selisih ukuran render)
+                    const extraShiftX = (offset && offset.x) ? (w * (offset.x / 100)) : 0;
+                    const extraShiftY = (offset && offset.y) ? (h * (offset.y / 100)) : 0;
+
+                    const finalX = baseOffsetX + extraShiftX;
+                    const finalY = baseOffsetY + extraShiftY;
+
+                    ctx.drawImage(img, finalX, finalY, renderW, renderH);
                 } catch(e) {
                     ctx.fillStyle = '#cbd5e1';
                     ctx.fillRect(x, y, w, h);

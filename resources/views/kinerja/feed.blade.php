@@ -38,7 +38,7 @@
 <div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6 items-start" x-data="feedGenerator()" x-init="initCanvas()">
     
     <!-- Bagian Form Control (Kiri) -->
-    <div class="w-full lg:w-1/3 bg-white p-5 rounded-2xl border border-gray-200 shadow-sm sticky top-24 max-h-[85vh] overflow-y-auto thumb-scroll">
+    <div class="w-full lg:w-1/3 bg-white p-5 rounded-2xl border border-gray-200 shadow-sm sticky top-24 max-h-[88vh] overflow-y-auto thumb-scroll">
         <div class="flex items-center justify-between border-b pb-2 mb-4">
             <h2 class="text-xl font-bold text-gray-900">SIGAP Feed</h2>
             <span class="text-xs font-bold px-2 py-1 bg-maroon/10 text-maroon rounded-md">Rasio 4:5 Portrait</span>
@@ -112,7 +112,7 @@
             <!-- Pilih Foto Extra Unlimited -->
             <div class="border-t pt-4">
                 <span class="text-sm font-semibold text-gray-700 block mb-1">3. Tambah Slide Dokumentasi (<span x-text="extraImages.length"></span> Foto)</span>
-                <p class="text-[10px] text-gray-500 mb-2 leading-tight">Tidak terbatas. Setiap 2 foto akan otomatis dibuatkan 1 slide tambahan portrait 4:5.</p>
+                <p class="text-[10px] text-gray-500 mb-2 leading-tight">Setiap 2 foto akan otomatis membuat 1 slide tambahan 4:5.</p>
                 <div class="grid grid-cols-4 gap-2">
                     <template x-for="(img, idx) in availableImages" :key="'ex'+idx">
                         <div x-show="img !== coverImage" @click="toggleExtra(img)" class="relative h-16 bg-gray-200 rounded-lg cursor-pointer overflow-hidden border-2 transition-all" :class="extraImages.includes(img) ? 'border-[#002B4C] shadow-md' : 'border-transparent opacity-60 hover:opacity-100'">
@@ -123,6 +123,67 @@
                                     <span class="text-white/80 text-[8px] mt-0.5" x-text="'Foto ' + ((extraImages.indexOf(img) % 2) + 1)"></span>
                                 </div>
                             </template>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- 4. ATUR POSISI FOTO (GESER KIRI, KANAN, ATAS, BAWAH) -->
+            <div x-show="coverImage" class="border-t pt-4">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-bold text-gray-800">4. Sesuaikan Posisi Foto Frame</span>
+                    <button type="button" @click="resetAllOffsets()" class="text-xs text-maroon hover:underline font-semibold">Reset Semua</button>
+                </div>
+                <p class="text-[11px] text-gray-500 mb-3">Gunakan tombol panah untuk memposisikan subjek foto agar tidak terpotong.</p>
+
+                <div class="space-y-3">
+                    <!-- Frame 1: Cover Photo -->
+                    <div class="p-2.5 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <div class="relative w-10 h-10 rounded-lg overflow-hidden bg-gray-200 shrink-0 border border-gray-300">
+                                <img :src="coverImage" class="w-full h-full object-cover">
+                                <span class="absolute bottom-0 right-0 bg-maroon text-white text-[8px] px-1 font-bold rounded-tl">S1</span>
+                            </div>
+                            <div class="truncate">
+                                <span class="text-xs font-bold text-gray-800 block">Cover (Slide 1)</span>
+                                <span class="text-[10px] text-gray-500" x-text="'X: ' + (coverOffset.x > 0 ? '+' : '') + coverOffset.x + '% | Y: ' + (coverOffset.y > 0 ? '+' : '') + coverOffset.y + '%'"></span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button type="button" @click="shiftCover(-5, 0)" title="Geser Kiri" class="w-7 h-7 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg flex items-center justify-center text-gray-700 text-xs font-bold active:scale-95 transition">◀</button>
+                            <div class="flex flex-col gap-1">
+                                <button type="button" @click="shiftCover(0, -5)" title="Geser Atas" class="w-7 h-3.5 bg-white hover:bg-gray-100 border border-gray-300 rounded flex items-center justify-center text-gray-700 text-[8px] active:scale-95 transition">▲</button>
+                                <button type="button" @click="shiftCover(0, 5)" title="Geser Bawah" class="w-7 h-3.5 bg-white hover:bg-gray-100 border border-gray-300 rounded flex items-center justify-center text-gray-700 text-[8px] active:scale-95 transition">▼</button>
+                            </div>
+                            <button type="button" @click="shiftCover(5, 0)" title="Geser Kanan" class="w-7 h-7 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg flex items-center justify-center text-gray-700 text-xs font-bold active:scale-95 transition">▶</button>
+                            <button type="button" @click="resetCoverOffset()" title="Reset Cover" class="w-7 h-7 bg-gray-200 hover:bg-gray-300 text-gray-600 rounded-lg flex items-center justify-center text-xs ml-1 active:scale-95 transition">↺</button>
+                        </div>
+                    </div>
+
+                    <!-- Frames: Extra Slides Documentation -->
+                    <template x-for="(img, idx) in extraImages" :key="'ctrl'+idx">
+                        <div class="p-2.5 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <div class="relative w-10 h-10 rounded-lg overflow-hidden bg-gray-200 shrink-0 border border-gray-300">
+                                    <img :src="img" class="w-full h-full object-cover">
+                                    <span class="absolute bottom-0 right-0 bg-[#002B4C] text-white text-[8px] px-1 font-bold rounded-tl" x-text="'S' + (Math.floor(idx / 2) + 2)"></span>
+                                </div>
+                                <div class="truncate">
+                                    <span class="text-xs font-bold text-gray-800 block" x-text="'Slide ' + (Math.floor(idx / 2) + 2) + ' (Foto ' + ((idx % 2) + 1) + ')'"></span>
+                                    <span class="text-[10px] text-gray-500" x-text="'X: ' + ((extraOffsets[idx]?.x || 0) > 0 ? '+' : '') + (extraOffsets[idx]?.x || 0) + '% | Y: ' + ((extraOffsets[idx]?.y || 0) > 0 ? '+' : '') + (extraOffsets[idx]?.y || 0) + '%'"></span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button type="button" @click="shiftExtra(idx, -5, 0)" title="Geser Kiri" class="w-7 h-7 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg flex items-center justify-center text-gray-700 text-xs font-bold active:scale-95 transition">◀</button>
+                                <div class="flex flex-col gap-1">
+                                    <button type="button" @click="shiftExtra(idx, 0, -5)" title="Geser Atas" class="w-7 h-3.5 bg-white hover:bg-gray-100 border border-gray-300 rounded flex items-center justify-center text-gray-700 text-[8px] active:scale-95 transition">▲</button>
+                                    <button type="button" @click="shiftExtra(idx, 0, 5)" title="Geser Bawah" class="w-7 h-3.5 bg-white hover:bg-gray-100 border border-gray-300 rounded flex items-center justify-center text-gray-700 text-[8px] active:scale-95 transition">▼</button>
+                                </div>
+                                <button type="button" @click="shiftExtra(idx, 5, 0)" title="Geser Kanan" class="w-7 h-7 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg flex items-center justify-center text-gray-700 text-xs font-bold active:scale-95 transition">▶</button>
+                                <button type="button" @click="resetExtraOffset(idx)" title="Reset Foto Ini" class="w-7 h-7 bg-gray-200 hover:bg-gray-300 text-gray-600 rounded-lg flex items-center justify-center text-xs ml-1 active:scale-95 transition">↺</button>
+                            </div>
                         </div>
                     </template>
                 </div>
@@ -184,6 +245,10 @@ function feedGenerator() {
         coverImage: null,
         extraImages: [], 
         
+        // State Offset Posisi Foto
+        coverOffset: { x: 0, y: -15 }, // Default fokus atas sedikit (-15%)
+        extraOffsets: [], // Array of { x: 0, y: 0 } untuk masing-masing extra image
+
         logoPemkot: null,
         logoBrida: null,
         renderTimer: null,
@@ -209,7 +274,44 @@ function feedGenerator() {
             return 1 + Math.ceil(this.extraImages.length / 2);
         },
 
-        // Fitur Salin Caption Instagram Lengkap dengan Hashtags
+        // Pergeseran Offset Cover
+        shiftCover(deltaX, deltaY) {
+            this.coverOffset.x = Math.max(-50, Math.min(50, this.coverOffset.x + deltaX));
+            this.coverOffset.y = Math.max(-50, Math.min(50, this.coverOffset.y + deltaY));
+            this.renderSlide1();
+        },
+
+        resetCoverOffset() {
+            this.coverOffset = { x: 0, y: -15 };
+            this.renderSlide1();
+        },
+
+        // Pergeseran Offset Extra Documentation Images
+        shiftExtra(idx, deltaX, deltaY) {
+            if (!this.extraOffsets[idx]) {
+                this.extraOffsets[idx] = { x: 0, y: 0 };
+            }
+            this.extraOffsets[idx].x = Math.max(-50, Math.min(50, this.extraOffsets[idx].x + deltaX));
+            this.extraOffsets[idx].y = Math.max(-50, Math.min(50, this.extraOffsets[idx].y + deltaY));
+            
+            const slideIdx = Math.floor(idx / 2) + 1; // Slide ke-N
+            this.renderExtraSlide(slideIdx);
+        },
+
+        resetExtraOffset(idx) {
+            if (this.extraOffsets[idx]) {
+                this.extraOffsets[idx] = { x: 0, y: 0 };
+            }
+            const slideIdx = Math.floor(idx / 2) + 1;
+            this.renderExtraSlide(slideIdx);
+        },
+
+        resetAllOffsets() {
+            this.coverOffset = { x: 0, y: -15 };
+            this.extraOffsets = this.extraImages.map(() => ({ x: 0, y: 0 }));
+            this.renderAll();
+        },
+
         copyCaption() {
             const hashtags = '#BRIDAMakassar #MakassarMULIA #MunafriArifuddin #Riset #KelompokRiset #EvaluasiRiset #InovasiDaerah #PembangunanBerbasisRiset';
             const title = (this.selectedTitle || '').trim();
@@ -244,14 +346,17 @@ function feedGenerator() {
 
                 this.availableImages = selected.images || [];
                 this.extraImages = [];
+                this.coverOffset = { x: 0, y: -15 };
                 
                 if (this.availableImages.length > 0) {
                     this.coverImage = this.availableImages[0];
                     for (let i = 1; i < this.availableImages.length; i++) {
                         this.extraImages.push(this.availableImages[i]);
                     }
+                    this.extraOffsets = this.extraImages.map(() => ({ x: 0, y: 0 }));
                 } else {
                     this.coverImage = null;
+                    this.extraOffsets = [];
                     Swal.fire({ toast:true, position:'top-end', icon:'warning', title:'Tidak ada foto di kinerja ini', showConfirmButton:false, timer:3000 });
                 }
             } else {
@@ -261,6 +366,7 @@ function feedGenerator() {
                 this.availableImages = [];
                 this.coverImage = null;
                 this.extraImages = [];
+                this.extraOffsets = [];
             }
             
             this.$nextTick(() => { this.renderAll(); });
@@ -268,9 +374,11 @@ function feedGenerator() {
 
         setCover(imgUrl) {
             this.coverImage = imgUrl;
+            this.coverOffset = { x: 0, y: -15 };
             const idx = this.extraImages.indexOf(imgUrl);
             if (idx > -1) {
                 this.extraImages.splice(idx, 1);
+                this.extraOffsets.splice(idx, 1);
             }
             this.$nextTick(() => { this.renderAll(); });
         },
@@ -279,8 +387,10 @@ function feedGenerator() {
             const index = this.extraImages.indexOf(imgUrl);
             if (index > -1) {
                 this.extraImages.splice(index, 1);
+                this.extraOffsets.splice(index, 1);
             } else {
                 this.extraImages.push(imgUrl);
+                this.extraOffsets.push({ x: 0, y: 0 });
             }
             this.$nextTick(() => { this.renderAll(); });
         },
@@ -542,7 +652,8 @@ function feedGenerator() {
             this.drawPattern(ctx, 1);
             this.drawHeaderLogo(ctx, 45);
 
-            await this.drawPhoto(ctx, this.coverImage, 60, 150, 960, 680);
+            // Foto Cover dengan Offset
+            await this.drawPhoto(ctx, this.coverImage, 60, 150, 960, 680, this.coverOffset);
 
             const infoBoxW = 960;
             const infoBoxH = 290;
@@ -589,11 +700,14 @@ function feedGenerator() {
             const img1 = this.extraImages[imgIndex1];
             const img2 = this.extraImages[imgIndex2];
 
+            const offset1 = this.extraOffsets[imgIndex1] || { x: 0, y: 0 };
+            const offset2 = this.extraOffsets[imgIndex2] || { x: 0, y: 0 };
+
             if (img1 && !img2) {
-                await this.drawPhoto(ctx, img1, 60, 150, 960, 990);
+                await this.drawPhoto(ctx, img1, 60, 150, 960, 990, offset1);
             } else if (img1 && img2) {
-                await this.drawPhoto(ctx, img1, 60, 150, 960, 480);
-                await this.drawPhoto(ctx, img2, 60, 655, 960, 480);
+                await this.drawPhoto(ctx, img1, 60, 150, 960, 480, offset1);
+                await this.drawPhoto(ctx, img2, 60, 655, 960, 480, offset2);
             }
 
             const totalSlides = this.getTotalSlides();
@@ -656,7 +770,8 @@ function feedGenerator() {
             if (line) ctx.fillText(line, x, y);
         },
 
-        async drawPhoto(ctx, imgUrl, x, y, w, h) {
+        // MENGGAMBAR FOTO DENGAN KALKULASI OFFSET X DAN Y
+        async drawPhoto(ctx, imgUrl, x, y, w, h, offset = { x: 0, y: 0 }) {
             ctx.save();
             this.drawRoundedRect(ctx, x, y, w, h, 24, '#e5e7eb');
             ctx.clip();
@@ -666,21 +781,28 @@ function feedGenerator() {
                     const img = await this.loadImage(imgUrl);
                     const imgRatio = img.width / img.height;
                     const containerRatio = w / h;
-                    let renderW, renderH, offsetX, offsetY;
+                    let renderW, renderH, baseOffsetX, baseOffsetY;
 
                     if (imgRatio > containerRatio) {
                         renderH = h;
                         renderW = h * imgRatio;
-                        offsetX = x - (renderW - w) / 2;
-                        offsetY = y;
+                        baseOffsetX = x - (renderW - w) / 2;
+                        baseOffsetY = y;
                     } else {
                         renderW = w;
                         renderH = w / imgRatio;
-                        offsetX = x;
-                        offsetY = y - (renderH - h) * 0.15;
+                        baseOffsetX = x;
+                        baseOffsetY = y - (renderH - h) / 2;
                     }
 
-                    ctx.drawImage(img, offsetX, offsetY, renderW, renderH);
+                    // Terapkan Offset Geser (x & y dalam persen)
+                    const extraShiftX = (offset && offset.x) ? (w * (offset.x / 100)) : 0;
+                    const extraShiftY = (offset && offset.y) ? (h * (offset.y / 100)) : 0;
+
+                    const finalX = baseOffsetX + extraShiftX;
+                    const finalY = baseOffsetY + extraShiftY;
+
+                    ctx.drawImage(img, finalX, finalY, renderW, renderH);
                 } catch(e) {
                     ctx.fillStyle = '#cbd5e1';
                     ctx.fillRect(x, y, w, h);
