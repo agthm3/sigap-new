@@ -136,7 +136,9 @@ Route::get('/pegawai/dokumen/{doc}/preview', [PersonalDocumentController::class,
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'role:admin|employee']) 
     ->name('home.index');
-
+//Export user
+Route::get('/sigap-pegawai/export', [SigapPegawaiController::class, 'export'])
+    ->name('sigap-pegawai.export');
 // --- SIGAP Pegawai (tanpa resource, middleware milikmu tetap)
 Route::get   ('/sigap-pegawai',          [SigapPegawaiController::class, 'index'])->middleware('auth', 'role:admin|verif_pegawai')->name('sigap-pegawai.index');
 Route::get   ('/sigap-pegawai/create',   [SigapPegawaiController::class, 'create'])->name('sigap-pegawai.create');
@@ -150,9 +152,7 @@ Route::get   ('/sigap-pegawai/{user}',      [SigapPegawaiController::class, 'sho
 Route::get   ('/sigap-pegawai/{user}/edit', [SigapPegawaiController::class, 'edit'])->name('sigap-pegawai.edit');
 Route::put   ('/sigap-pegawai/{user}',      [SigapPegawaiController::class, 'update'])->name('sigap-pegawai.update');
 Route::delete('/sigap-pegawai/{user}',      [SigapPegawaiController::class, 'destroy'])->name('sigap-pegawai.destroy');
-//Export user
-Route::get('/sigap-pegawai/export', [SigapPegawaiController::class, 'export'])
-    ->name('sigap-pegawai.export');
+
 
 // hapus avatar (middleware milikmu tetap)
 Route::delete('/sigap-pegawai/{user}/avatar', [SigapPegawaiController::class,'destroyAvatar'])
@@ -650,6 +650,9 @@ Route::get('/sigap-daftar-hadir/scan/{kegiatan:uuid}', [SigapDaftarHadirControll
  
 Route::post('/sigap-daftar-hadir/scan/{kegiatan:uuid}', [SigapDaftarHadirController::class, 'storePublic'])
     ->name('sigap-daftar-hadir.store-public');
+
+Route::get('/sigap-daftar-hadir/scan/{kegiatan:uuid}/status', [SigapDaftarHadirController::class, 'publicStatus'])
+    ->name('sigap-daftar-hadir.public-status');
  
 Route::get('/sigap-daftar-hadir/peserta/search', [SigapDaftarHadirController::class, 'searchPeserta'])
     ->name('sigap-daftar-hadir.search-peserta');

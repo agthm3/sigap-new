@@ -373,24 +373,6 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   }
-
-  @if(session('success_name') && session('success_kegiatan'))
-    Swal.fire({
-      icon: 'success',
-      title: 'Halo, {{ session('success_name') }}',
-      text: 'Selamat datang di acara {{ session('success_kegiatan') }}',
-      confirmButtonText: 'OK'
-    });
-  @endif
-
-  @if(session('error'))
-    Swal.fire({
-      icon: 'error',
-      title: 'Gagal',
-      text: @json(session('error')),
-      confirmButtonText: 'OK'
-    });
-  @endif
 });
 </script>
 @endpush

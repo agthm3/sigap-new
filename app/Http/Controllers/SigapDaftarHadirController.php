@@ -492,6 +492,15 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
         $kegiatan->loadCount('peserta');
         return view('dashboard.daftar_hadir.public-form', compact('kegiatan'));
     }
+    public function publicStatus(SigapDaftarHadirKegiatan $kegiatan)
+    {
+        // Cegah akses langsung tanpa sesi status
+        if (!session()->has('status_type')) {
+            return redirect()->route('sigap-daftar-hadir.public', $kegiatan->uuid);
+        }
+
+        return view('dashboard.daftar_hadir.public-status', compact('kegiatan'));
+    }
 
     public function searchPeserta(Request $request)
     {
@@ -541,8 +550,12 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
             ->whereRaw('LOWER(nama) = ?', [Str::lower($nama)])
             ->exists();
 
+        // JIKA NAMA SUDAH TERDAFTAR: Jangan pakai kata Gagal, pindahkan ke halaman status info
         if ($duplicate) {
-            return back()->withInput()->with('error', 'Nama tersebut sudah terdaftar pada kegiatan ini.');
+            return redirect()
+                ->route('sigap-daftar-hadir.public-status', $kegiatan->uuid)
+                ->with('status_type', 'already_registered')
+                ->with('peserta_nama', $nama);
         }
 
         $ttdPath = null;
@@ -566,10 +579,11 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
             'created_by'   => null,
         ]);
 
+        // JIKA BERHASIL: Redirect ke blade konfirmasi status berhasil
         return redirect()
-            ->route('sigap-daftar-hadir.public', $kegiatan->uuid)
-            ->with('success_name', $nama)
-            ->with('success_kegiatan', $kegiatan->nama_kegiatan);
+            ->route('sigap-daftar-hadir.public-status', $kegiatan->uuid)
+            ->with('status_type', 'success')
+            ->with('peserta_nama', $nama);
     }
 
     public function publicFormPejabat(SigapDaftarHadirPenandatangan $penandatangan)
