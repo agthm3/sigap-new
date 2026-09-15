@@ -82,49 +82,83 @@ class SuratKeluarController extends Controller
             'nomor_berkas'    => 'required|string|max:50',
             'alamat_penerima' => 'required|string',
             'perihal'         => 'required|string',
+            'mode_penomoran'  => 'required|in:otomatis,manual',
+            'nomor_urut_manual' => 'nullable|required_if:mode_penomoran,manual|integer|min:1',
             'slot_id'         => 'nullable|exists:surat_keluars,id',
             'file_surat'      => 'nullable|mimes:pdf|max:10240',
         ]);
 
         return DB::transaction(function () use ($request) {
-            $user = auth()->user();
+            $user  = auth()->user();
+            $tahun = Carbon::parse($request->tanggal)->year;
 
-            if ($request->filled('slot_id')) {
-                $target = SuratKeluar::lockForUpdate()->find($request->slot_id);
-            } else {
-                $this->suratService->alokasikanBlokJikaBaru($request->tanggal);
+            // KONDISI A: MODE MANUAL (MIGRASI BUKU FISIK)
+            if ($request->mode_penomoran === 'manual') {
+                $nomorUrut = (int) $request->nomor_urut_manual;
 
-                $target = SuratKeluar::whereDate('tanggal', $request->tanggal)
-                    ->where('status', 'slot_kosong')
-                    ->orderBy('nomor_urut', 'asc')
+                // Cek apakah nomor urut di tahun tersebut sudah ada
+                $target = SuratKeluar::where('tahun', $tahun)
+                    ->where('nomor_urut', $nomorUrut)
                     ->lockForUpdate()
                     ->first();
 
-                // Jika 10 slot awal sudah habis dipakai semua di tanggal ini, buka 5 slot tambahan
-                if (!$target) {
-                    $tahun = Carbon::parse($request->tanggal)->year;
-                    $last = SuratKeluar::where('tahun', $tahun)->max('nomor_urut');
+                if ($target) {
+                    // Jika ada tapi statusnya 'slot_kosong', kita boleh timpa/pakai
+                    if ($target->status !== 'slot_kosong') {
+                        return back()->withInput()->withErrors([
+                            'nomor_urut_manual' => "Nomor urut {$nomorUrut} pada tahun {$tahun} sudah terbit dan digunakan!"
+                        ]);
+                    }
+                } else {
+                    // Buat baris baru persis dengan nomor urut yang diketik dari buku
                     $target = SuratKeluar::create([
-                        'tahun' => $tahun,
-                        'tanggal' => $request->tanggal,
-                        'nomor_urut' => $last + 1,
-                        'status' => 'slot_kosong',
+                        'tahun'      => $tahun,
+                        'tanggal'    => $request->tanggal,
+                        'nomor_urut' => $nomorUrut,
+                        'status'     => 'slot_kosong',
                     ]);
+                }
+            } 
+            // KONDISI B: MODE OTOMATIS (OPERASIONAL RUTIN)
+            else {
+                if ($request->filled('slot_id')) {
+                    $target = SuratKeluar::lockForUpdate()->find($request->slot_id);
+                } else {
+                    // Cari slot kosong yang ada di tanggal tersebut
+                    $target = SuratKeluar::whereDate('tanggal', $request->tanggal)
+                        ->where('status', 'slot_kosong')
+                        ->orderBy('nomor_urut', 'asc')
+                        ->lockForUpdate()
+                        ->first();
+
+                    // Jika tidak ada slot, ambil nomor urut tertinggi tahun itu + 1
+                    if (!$target) {
+                        $lastNomor = SuratKeluar::where('tahun', $tahun)->lockForUpdate()->max('nomor_urut') ?? 0;
+                        $target = SuratKeluar::create([
+                            'tahun'      => $tahun,
+                            'tanggal'    => $request->tanggal,
+                            'nomor_urut' => $lastNomor + 1,
+                            'status'     => 'slot_kosong',
+                        ]);
+                    }
                 }
             }
 
+            // Generate format lengkap nomor surat
             $nomorLengkap = $this->suratService->generateFormatLengkap(
                 $request->nomor_berkas,
                 $target->nomor_urut,
                 $request->tanggal
             );
 
+            // Upload PDF jika ada
             $filePath = null;
             if ($request->hasFile('file_surat')) {
                 $filePath = $request->file('file_surat')->store('surat_keluar', 'public');
             }
 
             $target->update([
+                'tanggal'             => $request->tanggal,
                 'nomor_berkas'        => $request->nomor_berkas,
                 'nomor_surat_lengkap' => $nomorLengkap,
                 'alamat_penerima'     => $request->alamat_penerima,
@@ -134,8 +168,8 @@ class SuratKeluarController extends Controller
                 'file_surat'          => $filePath ?? $target->file_surat,
             ]);
 
-            return redirect()->route('sigap-surat.keluar.index')
-                ->with('success', "Nomor surat berhasil diterbitkan: {$nomorLengkap}");
+            return redirect()->route('sigap-surat.keluar.index', ['tahun' => $tahun])
+                ->with('success', "Surat keluar berhasil disimpan: {$nomorLengkap}");
         });
     }
 
@@ -159,47 +193,35 @@ class SuratKeluarController extends Controller
     }
 
     public function update(Request $request, $id)
-    {
-        $surat = SuratKeluar::findOrFail($id);
+{
+    abort_if(!auth()->user()->hasAnyRole(['admin', 'verif_surat']), 403, 'Akses ditolak.');
 
-        $request->validate([
-            'nomor_berkas'    => 'required|string|max:50',
-            'alamat_penerima' => 'required|string',
-            'perihal'         => 'required|string',
-            'file_surat'      => 'nullable|mimes:pdf|max:10240',
-        ]);
+    $surat = SuratKeluar::findOrFail($id);
 
-        $nomorLengkap = $this->suratService->generateFormatLengkap(
-            $request->nomor_berkas,
-            $surat->nomor_urut,
-            $surat->tanggal->toDateString()
-        );
+    $request->validate([
+        'tanggal'         => 'required|date',
+        'nomor_berkas'    => 'required|string|max:50',
+        'perihal'         => 'required|string',
+        'alamat_penerima' => 'required|string|max:255',
+    ]);
 
-        $data = [
-            'nomor_berkas'        => $request->nomor_berkas,
-            'nomor_surat_lengkap' => $nomorLengkap,
-            'alamat_penerima'     => $request->alamat_penerima,
-            'perihal'             => $request->perihal,
-            'status'              => 'terbit',
-        ];
+    // Format ulang nomor surat lengkap
+    $bulanRomawi = SuratKeluarService::getRomawi((int) date('n', strtotime($request->tanggal)));
+    $nomorLengkap = "{$request->nomor_berkas}/{$surat->nomor_urut}/BRIDA/{$bulanRomawi}/{$surat->tahun}";
 
-        // Jika slot kosong diisi pertama kali
-        if (!$surat->created_by) {
-            $data['created_by'] = auth()->id();
-        }
+    // HANYA ambil kolom yang benar-benar ada di tabel surat_keluars
+    $surat->update([
+        'tanggal'             => $request->tanggal,
+        'nomor_berkas'        => $request->nomor_berkas,
+        'nomor_surat_lengkap' => $nomorLengkap,
+        'perihal'             => $request->perihal,
+        'alamat_penerima'     => $request->alamat_penerima,
+        'status'              => 'terbit',
+    ]);
 
-        if ($request->hasFile('file_surat')) {
-            if ($surat->file_surat) {
-                Storage::disk('public')->delete($surat->file_surat);
-            }
-            $data['file_surat'] = $request->file('file_surat')->store('surat_keluar', 'public');
-        }
-
-        $surat->update($data);
-
-        return redirect()->route('sigap-surat.keluar.index')
-            ->with('success', "Data surat no. urut {$surat->nomor_urut} berhasil diperbarui.");
-    }
+    return redirect()->route('sigap-surat.keluar.index')
+        ->with('success', "Data Surat Keluar nomor urut {$surat->nomor_urut} berhasil diperbarui.");
+}
 
     public function voidNomor(Request $request, $id)
     {
