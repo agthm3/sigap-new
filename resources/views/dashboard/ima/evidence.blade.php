@@ -11,8 +11,8 @@
             <h1 class="text-2xl font-extrabold text-gray-900">Pengisian Evidence IMA</h1>
             <p class="text-gray-500 text-sm mt-1">Inovasi: <strong class="text-gray-800">{{ $inovasi->judul }}</strong></p>
         </div>
-        <a href="{{ route('sigap-ima.index') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-semibold transition text-gray-700">
-            &larr; Kembali
+        <a href="{{ route('sigap-ima.show', $inovasi->id) }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-semibold transition text-gray-700">
+            &larr; Kembali ke Profil
         </a>
     </div>
 
@@ -162,35 +162,35 @@
                             @if(in_array('pdf', $expected) || in_array('image', $expected) || empty($expected))
                                 <span class="text-sm font-bold text-gray-800 block mb-2">Unggah Berkas Fisik (PDF / Foto)</span>
                                 
-                                <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center bg-gray-50 hover:bg-amber-50 hover:border-amber-400 transition cursor-pointer" @click="$refs.fileInput.click()">
+                                <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center bg-gray-50 hover:bg-amber-50 hover:border-amber-400 transition cursor-pointer relative" @click="$refs.fileInput.click()">
                                     <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm border border-gray-200">
                                         <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                                     </div>
                                     <p class="text-sm font-semibold text-gray-700">Pilih Berkas atau Letakkan di Sini</p>
-                                    <p class="text-[10px] text-gray-500 mt-1">Sistem akan otomatis mengecilkan resolusi gambar jika terlalu besar.</p>
+                                    <p class="text-[10px] text-gray-500 mt-1">Dapat memilih banyak gambar/PDF sekaligus.</p>
                                     
                                     <input type="file" x-ref="fileInput" @change="handleFileInput($event)" multiple accept="{{ $acceptStr }}" class="hidden">
-                                    
-                                    <!-- Daftar Berkas Baru yang Diunggah -->
-                                    <div class="mt-5 space-y-2 text-left" @click.stop>
-                                        <template x-for="(f, i) in files" :key="f.id">
-                                            <div class="text-xs p-3 border border-gray-200 rounded-lg bg-white flex flex-col gap-1.5 shadow-sm">
-                                                <div class="flex justify-between items-center">
-                                                    <span class="truncate w-3/4 font-bold text-gray-800" x-text="f.name"></span>
-                                                    <button type="button" @click="removeFile(i)" class="text-red-500 hover:text-red-700 font-bold px-2 py-0.5 rounded bg-red-50">&times;</button>
-                                                </div>
-
-                                                <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden mt-1">
-                                                    <div class="bg-amber-500 h-2 rounded-full transition-all duration-300" :style="`width: ${f.progress}%`"></div>
-                                                </div>
-
-                                                <div class="flex justify-between items-center text-[10px] text-gray-500 mt-1">
-                                                    <span class="font-semibold" x-text="f.status === 'compressing' ? '🔄 Mengompres...' : (f.status === 'uploading' ? `Mengunggah (${f.progress}%)` : (f.status === 'success' ? '✅ Siap disimpan' : '❌ Gagal'))" :class="f.status === 'success' ? 'text-emerald-600' : ''"></span>
-                                                    <span x-text="f.size"></span>
-                                                </div>
+                                </div>
+                                
+                                <!-- Daftar Berkas Baru yang Diunggah (Dipindah ke luar area klik agar tidak tumpang tindih) -->
+                                <div class="mt-4 space-y-2 text-left">
+                                    <template x-for="(f, i) in files" :key="f.id">
+                                        <div class="text-xs p-3 border border-gray-200 rounded-lg bg-white flex flex-col gap-1.5 shadow-sm">
+                                            <div class="flex justify-between items-center">
+                                                <span class="truncate w-3/4 font-bold text-gray-800" x-text="f.name"></span>
+                                                <button type="button" @click.stop="removeFile(i)" class="text-red-500 hover:text-red-700 font-bold px-2 py-0.5 rounded bg-red-50">&times;</button>
                                             </div>
-                                        </template>
-                                    </div>
+
+                                            <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden mt-1">
+                                                <div class="bg-amber-500 h-2 rounded-full transition-all duration-300" :style="`width: ${f.progress}%`"></div>
+                                            </div>
+
+                                            <div class="flex justify-between items-center text-[10px] text-gray-500 mt-1">
+                                                <span class="font-semibold" x-text="f.status === 'compressing' ? '🔄 Memproses...' : (f.status === 'uploading' ? `Mengunggah (${f.progress}%)` : (f.status === 'success' ? '✅ Siap disimpan' : '❌ Gagal'))" :class="f.status === 'success' ? 'text-emerald-600' : ''"></span>
+                                                <span x-text="f.size"></span>
+                                            </div>
+                                        </div>
+                                    </template>
                                 </div>
                             @endif
 
@@ -249,6 +249,7 @@ window.SigapImaUploader = {
     CHUNK_SIZE: 512 * 1024,
 
     async compressImage(file) {
+        // Jangan kompres dokumen PDF, Word, dsb.
         if (!file.type.startsWith('image/')) return file;
         try {
             const bitmap = await createImageBitmap(file);
@@ -272,7 +273,8 @@ window.SigapImaUploader = {
     },
 
     async uploadFileInChunks(file, onProgress, uploadUrl, csrfToken) {
-        const fileId = 'file_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+        // Gunakan Math.random panjang untuk menghindari tabrakan ID unik saat loop cepat
+        const fileId = 'file_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10);
         const totalChunks = Math.ceil(file.size / this.CHUNK_SIZE);
 
         for (let idx = 0; idx < totalChunks; idx++) {
@@ -315,12 +317,29 @@ document.addEventListener('alpine:init', () => {
             const rawFiles = Array.from(e.target.files);
             if (!rawFiles.length) return;
 
-            for (const file of rawFiles) {
-                const fileId = 'doc_' + Date.now();
-                this.files.push({ id: fileId, name: file.name, size: (file.size / 1024).toFixed(1) + ' KB', progress: 0, status: 'compressing', temp_path: '', original_name: file.name });
-                this.processSingleFile(fileId, file);
-            }
+            // Generate ID unik untuk antarmuka dahulu agar list tergambar dengan benar
+            const newFileEntries = rawFiles.map(file => {
+                // Hasilkan ID acak yang benar-benar unik per iterasi file
+                const uniqueId = 'doc_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+                return { 
+                    id: uniqueId, 
+                    name: file.name, 
+                    size: (file.size / 1024).toFixed(1) + ' KB', 
+                    progress: 0, 
+                    status: file.type.startsWith('image/') ? 'compressing' : 'uploading', 
+                    temp_path: '', 
+                    original_name: file.name,
+                    rawFile: file // Menyimpan referensi file asli sementara
+                };
+            });
+
+            this.files.push(...newFileEntries);
             e.target.value = '';
+
+            // Proses upload secara asinkron tanpa memblokir perulangan
+            for (const entry of newFileEntries) {
+                this.processSingleFile(entry.id, entry.rawFile);
+            }
         },
 
         async processSingleFile(fileId, rawFile) {
@@ -347,7 +366,12 @@ document.addEventListener('alpine:init', () => {
 
         updateFile(id, props) {
             const i = this.files.findIndex(f => f.id === id);
-            if (i !== -1) { this.files[i] = { ...this.files[i], ...props }; this.files = [...this.files]; }
+            if (i !== -1) { 
+                this.files[i] = { ...this.files[i], ...props }; 
+                // Hapus rawFile reference jika sukses/gagal untuk membebaskan memory
+                if(props.status === 'success' || props.status === 'error') delete this.files[i].rawFile;
+                this.files = [...this.files]; 
+            }
         },
 
         removeFile(i) {
@@ -399,7 +423,7 @@ document.addEventListener('alpine:init', () => {
             });
 
             if (isStillUploading) {
-                Swal.fire({ icon: 'warning', title: 'Tunggu Sebentar', text: 'Masih ada berkas yang sedang diunggah.' });
+                Swal.fire({ icon: 'warning', title: 'Tunggu Sebentar', text: 'Masih ada berkas yang sedang diunggah. Mohon tunggu hingga tanda centang hijau.' });
                 return;
             }
 
@@ -439,7 +463,7 @@ document.addEventListener('alpine:init', () => {
             });
 
             if (payloadItems.length === 0) {
-                Swal.fire({ icon: 'info', title: 'Tidak Ada Perubahan', text: 'Silakan isi parameter atau unggah berkas terlebih dahulu.' });
+                Swal.fire({ icon: 'info', title: 'Tidak Ada Perubahan', text: 'Silakan isi parameter keterangan atau unggah berkas fisik terlebih dahulu sebelum menyimpan.' });
                 return;
             }
 
