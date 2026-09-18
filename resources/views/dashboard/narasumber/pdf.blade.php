@@ -5,15 +5,15 @@
     <title>Kesediaan Narasumber - {{ $kegiatan->nama_kegiatan }}</title>
     <style>
         @page { size: A4 portrait; margin: 2.5cm 2cm; }
-        body { font-family: Arial, sans-serif; font-size: 12pt; line-height: 1.5; color: #000; position: relative; }
+        body { font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.45; color: #000; position: relative; }
         h3 { text-align: center; text-transform: uppercase; margin: 0; padding: 0; }
-        .header-text { text-align: center; margin: 3px 0; font-size: 11pt; }
+        .header-text { text-align: center; margin: 3px 0; font-size: 10.5pt; }
         .line { border-bottom: 2px solid #000; margin-top: 15px; margin-bottom: 20px; }
-        table.biodata td { vertical-align: top; padding: 4px 0; }
-        .td-label { width: 220px; }
-        .td-colon { width: 20px; text-align: center; }
-        .ttd-box { width: 250px; float: right; margin-top: 40px; text-align: center; }
-        .ttd-img { height: 70px; margin: 5px 0; }
+        table.biodata td { vertical-align: top; padding: 3.5px 0; font-size: 10.5pt; }
+        .td-label { width: 230px; }
+        .td-colon { width: 15px; text-align: center; }
+        .ttd-box { width: 260px; float: right; margin-top: 30px; text-align: center; font-size: 10.5pt; }
+        .ttd-img { height: 70px; margin: 5px 0; display: block; margin-left: auto; margin-right: auto; }
         .page-break { page-break-after: always; }
         
         /* Watermark SIGAP */
@@ -33,7 +33,8 @@
         <img src="{{ $logoBrida }}" class="watermark" alt="Watermark SIGAP">
     @endif
 
-    <h3 style="font-size: 14pt; margin-bottom: 10px;">{{ strtoupper($kegiatan->nama_kegiatan) }}</h3>
+    {{-- ================= HALAMAN 1: SURAT KESEDIAAN ================= --}}
+    <h3 style="font-size: 13pt; margin-bottom: 10px;">{{ strtoupper($kegiatan->nama_kegiatan) }}</h3>
     <p class="header-text">Hari/Tanggal : {{ $kegiatan->hari_tanggal }}</p>
     <p class="header-text">Waktu : {{ $kegiatan->waktu }}</p>
     <p class="header-text">Tempat : {{ $kegiatan->tempat }}</p>
@@ -46,7 +47,12 @@
         <tr>
             <td class="td-label">Nama Lengkap</td>
             <td class="td-colon">:</td>
-            <td>{{ $data->nama_lengkap }}</td>
+            <td><b>{{ $data->nama_lengkap }}</b></td>
+        </tr>
+        <tr>
+            <td class="td-label">NIK</td>
+            <td class="td-colon">:</td>
+            <td>{{ $data->nik ?? '-' }}</td>
         </tr>
         <tr>
             <td class="td-label">Alamat Kantor</td>
@@ -59,7 +65,7 @@
             <td>{{ $data->alamat_rumah ?? '-' }}</td>
         </tr>
         <tr>
-            <td class="td-label">HP</td>
+            <td class="td-label">No. HP / WhatsApp</td>
             <td class="td-colon">:</td>
             <td>{{ $data->no_hp ?? '-' }}</td>
         </tr>
@@ -75,48 +81,56 @@
     </p>
 
     <div class="ttd-box">
-        <p style="margin: 0;">{{ $data->tempat_ttd }}, {{ $data->signed_at ? $data->signed_at->translatedFormat('d F Y') : '-' }}</p>
+        <p style="margin: 0;">{{ $data->tempat_ttd ?? ($kegiatan->tempat ?? 'Makassar') }}, {{ $data->signed_at ? \Carbon\Carbon::parse($data->signed_at)->translatedFormat('d F Y') : now()->translatedFormat('d F Y') }}</p>
         <p style="margin: 0;">Hormat saya,</p>
-        @if($data->ttd_path)
+        @if($data->ttd_path && file_exists(public_path('storage/' . $data->ttd_path)))
             <img src="{{ public_path('storage/' . $data->ttd_path) }}" class="ttd-img" alt="TTD">
         @else
             <div style="height: 70px;"></div>
         @endif
         <p style="margin: 0; text-decoration: underline; font-weight: bold;">{{ $data->nama_lengkap }}</p>
+        @if($data->nip)
+            <p style="margin: 0; font-size: 9.5pt;">NIP. {{ $data->nip }}</p>
+        @endif
     </div>
 
+    {{-- ================= HALAMAN 2: BIODATA ================= --}}
     <div class="page-break" style="clear: both;"></div>
 
-    <h3>BIODATA</h3>
+    <h3 style="font-size: 13pt;">BIODATA NARASUMBER</h3>
     <br>
 
     <table class="biodata" style="width: 100%;">
-        <tr><td class="td-label">NAMA LENGKAP</td><td class="td-colon">:</td><td>{{ $data->nama_lengkap }}</td></tr>
+        <tr><td class="td-label">NAMA LENGKAP</td><td class="td-colon">:</td><td><b>{{ $data->nama_lengkap }}</b></td></tr>
+        <tr><td class="td-label">NIK (NO. INDUK KEPENDUDUKAN)</td><td class="td-colon">:</td><td>{{ $data->nik ?? '-' }}</td></tr>
+        <tr><td class="td-label">NO. POKOK WAJIB PAJAK (NPWP)</td><td class="td-colon">:</td><td>{{ $data->npwp ?? '-' }}</td></tr>
         <tr><td class="td-label">NOMOR INDUK PEGAWAI (NIP)</td><td class="td-colon">:</td><td>{{ $data->nip ?? '-' }}</td></tr>
         <tr><td class="td-label">TEMPAT/TANGGAL LAHIR</td><td class="td-colon">:</td><td>{{ $data->tempat_tanggal_lahir ?? '-' }}</td></tr>
-        <tr><td class="td-label">PANGKAT/GOL.RUANG</td><td class="td-colon">:</td><td>{{ $data->pangkat_golongan ?? '-' }}</td></tr>
+        <tr><td class="td-label">PANGKAT/GOL. RUANG</td><td class="td-colon">:</td><td>{{ $data->pangkat_golongan ?? '-' }}</td></tr>
         <tr><td class="td-label">JABATAN</td><td class="td-colon">:</td><td>{{ $data->jabatan ?? '-' }}</td></tr>
         <tr><td class="td-label">INSTANSI/UNIT KERJA</td><td class="td-colon">:</td><td>{{ $data->instansi_unit_kerja ?? '-' }}</td></tr>
         <tr><td class="td-label">AGAMA</td><td class="td-colon">:</td><td>{{ $data->agama ?? '-' }}</td></tr>
-        <tr><td class="td-label">ALAMAT KANTOR/NO. TELP</td><td class="td-colon">:</td><td>{{ $data->alamat_kantor ?? '-' }}</td></tr>
-        <tr><td class="td-label">ALAMAT RUMAH/NO. TELP</td><td class="td-colon">:</td><td>{{ $data->alamat_rumah ?? '-' }} {{ $data->no_hp ? '/ '.$data->no_hp : '' }}</td></tr>
+        <tr><td class="td-label">ALAMAT KANTOR</td><td class="td-colon">:</td><td>{{ $data->alamat_kantor ?? '-' }}</td></tr>
+        <tr><td class="td-label">ALAMAT RUMAH</td><td class="td-colon">:</td><td>{{ $data->alamat_rumah ?? '-' }}</td></tr>
         <tr><td class="td-label">STATUS KELUARGA</td><td class="td-colon">:</td><td>{{ $data->status_keluarga ?? '-' }}</td></tr>
         <tr><td class="td-label">H O B B Y</td><td class="td-colon">:</td><td>{{ $data->hobby ?? '-' }}</td></tr>
-        <tr><td class="td-label">MATERI</td><td class="td-colon">:</td><td>{{ $data->materi ?? '-' }}</td></tr>
-        <tr><td class="td-label">NO. TELEPON</td><td class="td-colon">:</td><td>{{ $data->no_hp ?? '-' }}</td></tr>
-        <tr><td class="td-label">NO. NPWP</td><td class="td-colon">:</td><td>{{ $data->npwp ?? '-' }}</td></tr>
-        <tr><td class="td-label">NO. REKENING</td><td class="td-colon">:</td><td>{{ $data->no_rekening ?? '-' }}</td></tr>
+        <tr><td class="td-label">MATERI YANG DIBAWAKAN</td><td class="td-colon">:</td><td>{{ $data->materi ?? '-' }}</td></tr>
+        <tr><td class="td-label">NO. TELEPON / WHATSAPP</td><td class="td-colon">:</td><td>{{ $data->no_hp ?? '-' }}</td></tr>
+        <tr><td class="td-label">NO. REKENING & NAMA BANK</td><td class="td-colon">:</td><td>{{ $data->no_rekening ?? '-' }}</td></tr>
     </table>
 
     <div class="ttd-box">
-        <p style="margin: 0;">{{ $data->tempat_ttd }}, {{ $data->signed_at ? $data->signed_at->translatedFormat('d F Y') : '-' }}</p>
+        <p style="margin: 0;">{{ $data->tempat_ttd ?? ($kegiatan->tempat ?? 'Makassar') }}, {{ $data->signed_at ? \Carbon\Carbon::parse($data->signed_at)->translatedFormat('d F Y') : now()->translatedFormat('d F Y') }}</p>
         <p style="margin: 0;">Hormat saya,</p>
-        @if($data->ttd_path)
+        @if($data->ttd_path && file_exists(public_path('storage/' . $data->ttd_path)))
             <img src="{{ public_path('storage/' . $data->ttd_path) }}" class="ttd-img" alt="TTD">
         @else
             <div style="height: 70px;"></div>
         @endif
         <p style="margin: 0; text-decoration: underline; font-weight: bold;">{{ $data->nama_lengkap }}</p>
+        @if($data->nip)
+            <p style="margin: 0; font-size: 9.5pt;">NIP. {{ $data->nip }}</p>
+        @endif
     </div>
 
 </body>

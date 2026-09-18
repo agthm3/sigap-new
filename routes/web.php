@@ -673,6 +673,8 @@ Route::prefix('dashboard/narasumber')->name('sigap-narasumber.')->middleware(['a
     Route::get('/kegiatan', [SigapNarasumberController::class, 'pilihKegiatan'])->name('pilih-kegiatan');
     Route::get('/kegiatan/{kegiatan:uuid}/qr', [SigapNarasumberController::class, 'showQr'])->name('qr');
     Route::get('/{kesediaan:uuid}/pdf', [SigapNarasumberController::class, 'exportPdf'])->name('export-pdf');
+    // Tambahkan route ini:
+    Route::get('/{kesediaan:uuid}/ktp', [SigapNarasumberController::class, 'viewKtp'])->name('ktp');
     Route::delete('/{kesediaan:uuid}', [SigapNarasumberController::class, 'destroy'])->name('destroy');
 });
 

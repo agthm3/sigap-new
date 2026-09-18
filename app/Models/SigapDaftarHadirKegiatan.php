@@ -47,4 +47,8 @@ class SigapDaftarHadirKegiatan extends Model
     {
         return $this->hasOne(SigapDaftarHadirPenandatangan::class, 'kegiatan_id');
     }
+    public function narasumbers()
+    {
+        return $this->hasMany(\App\Models\SigapNarasumberKesediaan::class, 'kegiatan_id');
+    }
 }
