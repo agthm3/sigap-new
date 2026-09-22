@@ -19,24 +19,35 @@ class SigapDokumenController extends Controller
     }
 
     /**
-     * Tampilan 1: DOKUMEN UMUM (Publik)
+     * Tampilan 1: DOKUMEN UMUM (Katalog Terbuka & Internal Pegawai)
      */
     public function index(Request $request)
     {
         $filters = $request->only(['q', 'category', 'year']);
 
-        // Ambil folder publik root
-        $folders = Folder::where('visibility', 'public')
+        // Ambil folder root dengan status public dan internal
+        $foldersQuery = Folder::whereIn('visibility', ['public', 'internal'])
             ->whereNull('parent_id')
-            ->withCount(['documents' => function ($q) {
-                $q->where('sensitivity', 'public');
-            }, 'subfolders' => function ($q) {
-                $q->where('visibility', 'public');
-            }])
-            ->latest()
-            ->get();
+            ->withCount([
+                'documents' => function ($q) {
+                    $q->whereIn('sensitivity', ['public', 'internal']);
+                },
+                'subfolders' => function ($q) {
+                    $q->whereIn('visibility', ['public', 'internal']);
+                }
+            ]);
 
-        // Dokumen umum lepas (root) yang belum masuk ke folder mana pun
+        if (!empty($filters['q'])) {
+            $kw = trim($filters['q']);
+            $foldersQuery->where(function ($q) use ($kw) {
+                $q->where('name', 'like', "%{$kw}%")
+                  ->orWhere('classification_code', 'like', "%{$kw}%");
+            });
+        }
+
+        $folders = $foldersQuery->latest()->get();
+
+        // Dokumen lepas (root) berstatus public & internal
         $docs = $this->repo->paginate(
             filters: array_merge($filters, ['root_only' => true]),
             perPage: 10,
@@ -47,20 +58,20 @@ class SigapDokumenController extends Controller
     }
 
     /**
-     * Tampilan 2: DOKUMEN SAYA (Folder, Subfolder, Dokumen Pribadi)
+     * Tampilan 2: DOKUMEN SAYA (Folder, Subfolder, Dokumen Pribadi & Terkunci)
      */
     public function saya(Request $request)
     {
         $user = Auth::user();
 
-        // Ambil folder tingkat atas (root/tanpa parent_id)
+        // Ambil folder tingkat atas milik user yang sedang login
         $folders = Folder::where('user_id', $user->id)
             ->whereNull('parent_id')
             ->withCount('documents', 'subfolders')
             ->latest()
             ->get();
 
-        // Dokumen milik user yang belum masuk ke folder mana pun (root files)
+        // Dokumen milik user yang belum masuk ke folder mana pun
         $docs = $this->repo->paginate(
             filters: array_merge($request->only(['q', 'category', 'year']), ['root_only' => true]),
             perPage: 12,
@@ -72,31 +83,44 @@ class SigapDokumenController extends Controller
     }
 
     /**
-     * Form Baru: Upload Dokumen (Blade tersendiri, bukan modal pop-up)
+     * Form Unggah Dokumen Baru
      */
     public function create(Request $request)
     {
         $folderId = $request->query('folder_id');
-        $folder = $folderId ? Folder::where('id', $folderId)->where('user_id', Auth::id())->first() : null;
+        $folder = null;
+
+        if ($folderId) {
+            $folderQuery = Folder::where('id', $folderId);
+            // Jika bukan admin, pastikan user hanya bisa memilih folder miliknya atau folder non-private
+            if (!Auth::user()->hasRole('admin')) {
+                $folderQuery->where(function ($q) {
+                    $q->where('user_id', Auth::id())
+                      ->orWhereIn('visibility', ['public', 'internal']);
+                });
+            }
+            $folder = $folderQuery->first();
+        }
+
         $existingTags = $this->repo->getExistingTags();
 
         return view('dashboard.dokumen.upload', compact('folder', 'folderId', 'existingTags'));
     }
 
     /**
-     * Endpoint Async Temporary Upload (Per-file kebal limit 2MB via Client-side compression)
+     * Endpoint Asinkron Temporary Upload
      */
     public function tempUpload(Request $request)
     {
         $request->validate([
-            'file' => ['required', 'file', 'max:20480'], // Validasi per-request file
+            'file' => ['required', 'file', 'max:20480'], // Maksimal 20MB
         ]);
 
         $file = $request->file('file');
         $extension = $file->getClientOriginalExtension() ?: 'bin';
         $filename = 'tmp_' . Str::random(25) . '.' . $extension;
 
-        // Simpan ke direktori sementara di public disk
+        // Simpan sementara di storage
         $path = $file->storeAs('temp_uploads', $filename, 'public');
 
         return response()->json([
@@ -108,7 +132,7 @@ class SigapDokumenController extends Controller
     }
 
     /**
-     * Simpan Dokumen Permanen via Payload Metadata Form (bisa menerima multi-file dari async upload)
+     * Simpan Dokumen Permanen via Form Payload
      */
     public function store(Request $request)
     {
@@ -125,7 +149,7 @@ class SigapDokumenController extends Controller
             'physical_rack'   => ['nullable', 'string', 'max:100'],
             'physical_row'    => ['nullable', 'string', 'max:100'],
             'tags'            => ['nullable', 'string'],
-            'sensitivity'     => ['required', 'in:public,private'],
+            'sensitivity'     => ['required', 'in:public,internal,private'],
             'files'           => ['nullable', 'array'],
             'files.*'         => ['string'],
             'file'            => ['nullable', 'file', 'max:20480'],
@@ -133,11 +157,17 @@ class SigapDokumenController extends Controller
 
         $userId = Auth::id() ?? 1;
         $validated['created_by'] = $validated['updated_by'] = $userId;
-        
-        // Pastikan key folder_id selalu ada meski null
         $validated['folder_id'] = $validated['folder_id'] ?? null;
 
-        // Jika upload melalui antarmuka asinkron (mengirim path temp)
+        // ATURAN REVISI 1: Jika di dalam folder, sensitivity MUTLAK mengikuti visibility folder
+        if (!empty($validated['folder_id'])) {
+            $parentFolder = Folder::find($validated['folder_id']);
+            if ($parentFolder) {
+                $validated['sensitivity'] = $parentFolder->visibility;
+            }
+        }
+
+        // Simpan dokumen jika melalui antarmuka multi-upload asinkron
         if (!empty($validated['files']) && is_array($validated['files'])) {
             $createdCount = 0;
             foreach ($validated['files'] as $index => $tempFilePath) {
@@ -153,34 +183,34 @@ class SigapDokumenController extends Controller
                 $createdCount++;
             }
 
-            // Redirect aman: jika tidak ada folder_id, arahkan ke dokumen umum atau dokumen saya
+            // Arahkan kembali ke halaman folder terkait jika ada, atau ke katalog sesuai statusnya
             $redirectRoute = !empty($validated['folder_id'])
                 ? route('sigap-dokumen.folder.show', $validated['folder_id'])
-                : (($validated['sensitivity'] ?? 'public') === 'private' ? route('sigap-dokumen.saya') : route('sigap-dokumen.index'));
+                : ($validated['sensitivity'] === 'private' ? route('sigap-dokumen.saya') : route('sigap-dokumen.index'));
 
-            return redirect($redirectRoute)->with('success', "{$createdCount} Dokumen berhasil diunggah!");
+            return redirect($redirectRoute)->with('success', "{$createdCount} Dokumen berhasil diunggah dan diindeks!");
         }
 
-        // Fallback upload reguler
+        // Fallback untuk single upload reguler
         $doc = $this->repo->create(
             $validated,
             $request->file('file'),
             $request->file('thumb')
         );
 
-        $target = $doc->sensitivity === 'private' ? route('sigap-dokumen.saya') : route('sigap-dokumen.index');
+        $target = !empty($validated['folder_id'])
+            ? route('sigap-dokumen.folder.show', $validated['folder_id'])
+            : ($doc->sensitivity === 'private' ? route('sigap-dokumen.saya') : route('sigap-dokumen.index'));
+
         return redirect($target)->with('success', "Dokumen '{$doc->title}' berhasil disimpan!");
     }
+
     /**
-     * Show Detail Dokumen (Dengan proteksi otorisasi jika berstatus private)
+     * Pratinjau & Detail Dokumen
      */
     public function show(ModelsDocument $document)
     {
-        if ($document->sensitivity === 'private') {
-            if (!Auth::check() || ($document->created_by !== Auth::id() && !Auth::user()->hasRole('admin'))) {
-                abort(403, 'Dokumen ini berstatus PRIVAT dan terkunci. Hanya pemilik yang dapat mengakses.');
-            }
-        }
+        $this->authorizeDocumentAccess($document);
 
         ActivityLogger::log(
             module: 'dokumen',
@@ -188,7 +218,6 @@ class SigapDokumenController extends Controller
             object: $document
         );
 
-        // Menggunakan streaming preview controller agar berkas di folder private tetap bisa tampil
         $fileUrl = route('sigap-dokumen.preview', $document);
         $thumbUrl = $document->thumb_path ? asset('storage/' . $document->thumb_path) : null;
 
@@ -206,26 +235,20 @@ class SigapDokumenController extends Controller
     }
 
     /**
-     * Streaming in-line preview (PDF / Gambar) dengan cek otorisasi aman
+     * Streaming inline preview (PDF / Foto)
      */
     public function preview(ModelsDocument $document)
     {
-        if ($document->sensitivity === 'private') {
-            if (!Auth::check() || ($document->created_by !== Auth::id() && !Auth::user()->hasRole('admin'))) {
-                abort(403, 'Akses Ditolak: Dokumen berstatus privat.');
-            }
-        }
+        $this->authorizeDocumentAccess($document);
 
-        // Deteksi disk penyimpanan (private atau public)
+        // Cari letak disk penyimpanan berkas (private storage vault vs public storage)
         $disk = 'public';
-        if ($document->sensitivity === 'private' && Storage::disk('private')->exists($document->file_path)) {
-            $disk = 'private';
-        } elseif (!Storage::disk('public')->exists($document->file_path) && Storage::disk('private')->exists($document->file_path)) {
+        if (Storage::disk('private')->exists($document->file_path)) {
             $disk = 'private';
         }
 
         if (!Storage::disk($disk)->exists($document->file_path)) {
-            abort(404, 'Berkas fisik tidak ditemukan.');
+            abort(404, 'Berkas fisik tidak ditemukan di penyimpanan server.');
         }
 
         $content = Storage::disk($disk)->get($document->file_path);
@@ -237,25 +260,14 @@ class SigapDokumenController extends Controller
     }
 
     /**
-     * Download Dokumen (Membaca dinamis dari disk private maupun public)
+     * Unduh Berkas
      */
     public function download(ModelsDocument $document)
     {
-        if ($document->sensitivity === 'private') {
-            if (!Auth::check() || ($document->created_by !== Auth::id() && !Auth::user()->hasRole('admin'))) {
-                ActivityLogger::log('dokumen', 'access_denied', $document, [
-                    'success' => false,
-                    'reason' => 'unauthorized_private_download',
-                ]);
-                abort(403, 'Akses unduh ditolak. Dokumen terkunci.');
-            }
-        }
+        $this->authorizeDocumentAccess($document);
 
-        // Deteksi disk penyimpanan
         $disk = 'public';
-        if ($document->sensitivity === 'private' && Storage::disk('private')->exists($document->file_path)) {
-            $disk = 'private';
-        } elseif (!Storage::disk('public')->exists($document->file_path) && Storage::disk('private')->exists($document->file_path)) {
+        if (Storage::disk('private')->exists($document->file_path)) {
             $disk = 'private';
         }
 
@@ -264,7 +276,7 @@ class SigapDokumenController extends Controller
                 'success' => false,
                 'reason' => 'file_missing',
             ]);
-            abort(404, 'File tidak ditemukan di penyimpanan server.');
+            abort(404, 'Berkas fisik tidak ditemukan.');
         }
 
         ActivityLogger::log('dokumen', 'download', $document);
@@ -290,6 +302,11 @@ class SigapDokumenController extends Controller
     public function edit(int $id)
     {
         $doc = $this->repo->find($id);
+
+        if ($doc->created_by !== Auth::id() && !Auth::user()->hasRole('admin')) {
+            abort(403, 'Akses ditolak.');
+        }
+
         $fileUrl = route('sigap-dokumen.preview', $doc);
         $thumbUrl = $doc->thumb_path ? asset('storage/' . $doc->thumb_path) : null;
         return view('dashboard.dokumen.edit', compact('doc', 'fileUrl', 'thumbUrl'));
@@ -298,6 +315,10 @@ class SigapDokumenController extends Controller
     public function update(Request $request, int $id)
     {
         $doc = $this->repo->find($id);
+
+        if ($doc->created_by !== Auth::id() && !Auth::user()->hasRole('admin')) {
+            abort(403, 'Akses ditolak.');
+        }
 
         $validated = $request->validate([
             'number'        => ['nullable', 'string', 'max:255'],
@@ -309,7 +330,7 @@ class SigapDokumenController extends Controller
             'physical_rack' => ['nullable', 'string', 'max:100'],
             'physical_row'  => ['nullable', 'string', 'max:100'],
             'tags'          => ['nullable', 'string'],
-            'sensitivity'   => ['required', 'in:public,private'],
+            'sensitivity'   => ['required', 'in:public,internal,private'],
             'file'          => ['nullable', 'file', 'max:20480'],
             'thumb'         => ['nullable', 'image', 'max:4096'],
             'stakeholder'   => ['nullable', 'string', 'max:255'],
@@ -327,5 +348,27 @@ class SigapDokumenController extends Controller
         return redirect()
             ->route('sigap-dokumen.edit', $updated->id)
             ->with('success', "Dokumen '{$updated->title}' berhasil diperbarui!");
+    }
+
+    /**
+     * Helper proteksi akses dokumen berdasarkan 3 Level Sensitivitas
+     */
+    private function authorizeDocumentAccess(ModelsDocument $document): void
+    {
+        $user = Auth::user();
+
+        // 1. Dokumen PRIVATE: Hanya pemilik dan admin
+        if ($document->sensitivity === 'private') {
+            if (!$user || ($document->created_by !== $user->id && !$user->hasRole('admin'))) {
+                abort(403, 'Akses Ditolak: Dokumen ini berstatus PRIVAT.');
+            }
+        }
+
+        // 2. Dokumen INTERNAL: Wajib memiliki role employee atau admin
+        if ($document->sensitivity === 'internal') {
+            if (!$user || !$user->hasAnyRole(['employee', 'admin'])) {
+                abort(403, 'Akses Terbatas: Dokumen ini hanya diperuntukkan bagi internal pegawai BRIDA.');
+            }
+        }
     }
 }

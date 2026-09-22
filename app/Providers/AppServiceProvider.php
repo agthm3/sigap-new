@@ -16,10 +16,10 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(DocumentRepositoryInterface::class, EloquentDocumentRepository::class);
         $this->app->alias(
-        \SimpleSoftwareIO\QrCode\Facades\QrCode::class,
-        'QrCode'
+            \SimpleSoftwareIO\QrCode\Facades\QrCode::class,
+            'QrCode'
         );  
-        $this->app->bind('path.public', function() {
+        $this->app->bind('path.public', function () {
             return base_path('../public_html');
         });
     }

@@ -29,12 +29,13 @@ class FolderController extends Controller
             'icon'                => ['nullable', 'string', 'max:50'],
             'color'               => ['nullable', 'string', 'max:20'],
             'classification_code' => ['nullable', 'string', 'max:50'],
-            'visibility'          => ['required', 'in:public,private'],
+            'visibility'          => ['required', 'in:public,internal,private'],
             'parent_id'           => ['nullable', 'exists:folders,id'],
         ]);
 
         $validated['user_id'] = Auth::id();
 
+        // Jika dibuat sebagai subfolder di dalam folder private, paksa visibilitasnya tetap private
         if (!empty($validated['parent_id'])) {
             $parent = Folder::find($validated['parent_id']);
             if ($parent && $parent->visibility === 'private') {
@@ -49,7 +50,8 @@ class FolderController extends Controller
                 ->with('success', 'Subfolder berhasil dibuat!');
         }
 
-        $redirectRoute = $folder->visibility === 'public' 
+        // Folder public dan internal masuk ke katalog Dokumen Umum; private masuk ke Dokumen Saya
+        $redirectRoute = in_array($folder->visibility, ['public', 'internal'])
             ? route('sigap-dokumen.index') 
             : route('sigap-dokumen.saya');
 
@@ -58,26 +60,30 @@ class FolderController extends Controller
 
     public function show(Folder $folder)
     {
+        $user = Auth::user();
+
+        // 1. Otorisasi Folder Private: Hanya pemilik dan admin
         if ($folder->visibility === 'private') {
-            if ($folder->user_id !== Auth::id() && !Auth::user()->hasRole('admin')) {
+            if ($folder->user_id !== $user->id && !$user->hasRole('admin')) {
                 abort(403, 'Akses ditolak. Folder ini bersifat privat.');
             }
         }
 
-        $subfoldersQuery = $folder->subfolders()->latest();
-        if ($folder->visibility === 'public') {
-            $subfoldersQuery->where('visibility', 'public');
+        // 2. Otorisasi Folder Internal: Wajib pegawai atau admin
+        if ($folder->visibility === 'internal') {
+            if (!$user->hasAnyRole(['employee', 'admin'])) {
+                abort(403, 'Akses terbatas. Folder ini khusus internal pegawai BRIDA.');
+            }
         }
-        $subfolders = $subfoldersQuery->get();
 
-        $docQuery = $folder->documents()->latest();
-        if ($folder->visibility === 'public') {
-            $docQuery->where('sensitivity', 'public');
-        }
-        $documents = $docQuery->paginate(12);
+        // Ambil subfolder & dokumen di dalam folder ini
+        $subfolders = $folder->subfolders()->latest()->get();
+        $documents  = $folder->documents()->latest()->paginate(12);
 
         return view('dashboard.dokumen.folder.show', compact('folder', 'subfolders', 'documents'));
     }
+
+    
 
     public function edit(Folder $folder)
     {
@@ -100,12 +106,68 @@ class FolderController extends Controller
             'icon'                => ['nullable', 'string', 'max:50'],
             'color'               => ['nullable', 'string', 'max:20'],
             'classification_code' => ['nullable', 'string', 'max:50'],
-            'visibility'          => ['required', 'in:public,private'],
+            'visibility'          => ['required', 'in:public,internal,private'],
         ]);
+
+        $oldVisibility = $folder->visibility;
+        $newVisibility = $validated['visibility'];
 
         $folder->update($validated);
 
-        return redirect()->route('sigap-dokumen.saya')->with('success', 'Folder berhasil diperbarui!');
+        // Jika visibilitas folder berubah, jalankan kaskade ke isi folder
+        if ($oldVisibility !== $newVisibility) {
+            $this->cascadeFolderVisibility($folder, $newVisibility);
+        }
+
+        $redirectRoute = in_array($newVisibility, ['public', 'internal'])
+            ? route('sigap-dokumen.index')
+            : route('sigap-dokumen.saya');
+
+        return redirect($redirectRoute)->with('success', 'Folder dan seluruh berkas di dalamnya berhasil diperbarui!');
+    }
+
+    /**
+     * Kaskade perubahan visibilitas ke seluruh subfolder, dokumen, dan berkas fisik
+     */
+    private function cascadeFolderVisibility(Folder $folder, string $newVisibility): void
+    {
+        // 1. Sinkronisasi dokumen langsung di dalam folder ini
+        $documents = $folder->documents()->get();
+        foreach ($documents as $doc) {
+            $this->migrateDocumentStorage($doc, $newVisibility);
+        }
+
+        // 2. Sinkronisasi rekursif untuk subfolder dan dokumen di dalamnya
+        $subfolders = $folder->subfolders()->get();
+        foreach ($subfolders as $sub) {
+            $sub->update(['visibility' => $newVisibility]);
+            $this->cascadeFolderVisibility($sub, $newVisibility);
+        }
+    }
+
+    /**
+     * Pindahkan file fisik antar disk (public <-> private) dan update field sensitivity
+     */
+    private function migrateDocumentStorage($doc, string $newSensitivity): void
+    {
+        $targetDisk = $newSensitivity === 'private' ? 'private' : 'public';
+        $currentDisk = $targetDisk === 'private' ? 'public' : 'private';
+
+        // Pindahkan file utama
+        if ($doc->file_path && Storage::disk($currentDisk)->exists($doc->file_path)) {
+            $fileContent = Storage::disk($currentDisk)->get($doc->file_path);
+            Storage::disk($targetDisk)->put($doc->file_path, $fileContent);
+            Storage::disk($currentDisk)->delete($doc->file_path);
+        }
+
+        // Pindahkan thumbnail jika ada
+        if ($doc->thumb_path && Storage::disk($currentDisk)->exists($doc->thumb_path)) {
+            $thumbContent = Storage::disk($currentDisk)->get($doc->thumb_path);
+            Storage::disk($targetDisk)->put($doc->thumb_path, $thumbContent);
+            Storage::disk($currentDisk)->delete($doc->thumb_path);
+        }
+
+        $doc->update(['sensitivity' => $newSensitivity]);
     }
 
     public function share(Folder $folder)
@@ -269,5 +331,76 @@ class FolderController extends Controller
         ]);
 
         return back()->with('success', 'Tautan berbagi folder berhasil dinonaktifkan secara permanen.');
+    }
+
+    /**
+     * Hapus folder beserta seluruh dokumen dan subfolder di dalamnya secara rekursif
+     */
+    public function destroy(Folder $folder)
+    {
+        // Validasi hak akses: hanya pemilik folder atau admin
+        if ($folder->user_id !== Auth::id() && !Auth::user()->hasRole('admin')) {
+            abort(403, 'Anda tidak memiliki hak akses untuk menghapus folder ini.');
+        }
+
+        $parentId = $folder->parent_id;
+        $folderVisibility = $folder->visibility;
+
+        // Hapus seluruh isi folder (file fisik, data dokumen, dan subfolder)
+        $this->deleteFolderContentsRecursively($folder);
+
+        // Hapus record folder itu sendiri
+        $folder->delete();
+
+        // Redirect: jika subfolder, kembali ke induknya; jika root, kembali ke Dokumen Saya / Umum
+        if ($parentId) {
+            return redirect()->route('sigap-dokumen.folder.show', $parentId)
+                ->with('success', 'Folder beserta seluruh isinya berhasil dihapus.');
+        }
+
+        $redirectRoute = in_array($folderVisibility, ['public', 'internal'])
+            ? route('sigap-dokumen.index')
+            : route('sigap-dokumen.saya');
+
+        return redirect($redirectRoute)->with('success', 'Folder beserta seluruh isinya berhasil dihapus.');
+    }
+
+    /**
+     * Helper rekursif pembersihan berkas fisik & record database
+     */
+    private function deleteFolderContentsRecursively(Folder $folder): void
+    {
+        // 1. Hapus berkas fisik dan record dokumen langsung di folder ini
+        $documents = $folder->documents()->get();
+        foreach ($documents as $doc) {
+            // Hapus file utama dari storage (cek disk public dan private)
+            if ($doc->file_path) {
+                if (Storage::disk('private')->exists($doc->file_path)) {
+                    Storage::disk('private')->delete($doc->file_path);
+                }
+                if (Storage::disk('public')->exists($doc->file_path)) {
+                    Storage::disk('public')->delete($doc->file_path);
+                }
+            }
+
+            // Hapus thumbnail jika ada
+            if ($doc->thumb_path) {
+                if (Storage::disk('private')->exists($doc->thumb_path)) {
+                    Storage::disk('private')->delete($doc->thumb_path);
+                }
+                if (Storage::disk('public')->exists($doc->thumb_path)) {
+                    Storage::disk('public')->delete($doc->thumb_path);
+                }
+            }
+
+            $doc->delete();
+        }
+
+        // 2. Telusuri subfolder secara rekursif
+        $subfolders = $folder->subfolders()->get();
+        foreach ($subfolders as $sub) {
+            $this->deleteFolderContentsRecursively($sub);
+            $sub->delete();
+        }
     }
 }

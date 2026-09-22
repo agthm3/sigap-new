@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title') - SIGAP SPJ</title>
+    <title>@yield('title') - SIGAP BRIDA</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
@@ -24,6 +24,10 @@
         .border-maroon {
             border-color: #7a2222;
         }
+        /* Menghilangkan panah segitiga default browser pada summary */
+        summary::-webkit-details-marker {
+            display: none;
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-6">
@@ -42,9 +46,12 @@
         
         <h2 class="text-2xl font-bold text-gray-800 mb-4 uppercase tracking-wide">@yield('heading')</h2>
         
-        <p class="text-gray-500 text-base leading-relaxed mb-8">
+        <p class="text-gray-500 text-base leading-relaxed mb-6">
             @yield('message')
         </p>
+
+        {{-- Slot detail eror/accordion --}}
+        @yield('details')
 
         <div class="w-1/4 h-1 maroon-gradient mx-auto rounded-full mb-8"></div>
 

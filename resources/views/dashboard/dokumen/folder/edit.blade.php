@@ -74,21 +74,43 @@
       </div>
 
       <!-- Visibilitas -->
+      <!-- Status Akses Folder (3-Level) -->
       <div>
-        <label class="block text-sm font-semibold text-gray-700">Status Akses Folder</label>
-        <div class="grid grid-cols-2 gap-3 mt-1.5">
-          <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer hover:bg-gray-50 has-[:checked]:border-maroon has-[:checked]:bg-maroon/5">
-            <input type="radio" name="visibility" value="public" @checked($folder->visibility === 'public') class="text-maroon focus:ring-maroon">
+        <label class="block text-sm font-semibold text-gray-700">Tingkat Kerahasiaan &amp; Akses Folder</label>
+        <div class="grid sm:grid-cols-3 gap-3 mt-1.5">
+          <!-- 1. Internal BRIDA -->
+          <label class="flex flex-col justify-between p-3.5 rounded-xl border cursor-pointer hover:bg-gray-50 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50/50">
             <div>
-              <p class="text-sm font-semibold text-gray-800">Folder Publik</p>
-              <p class="text-[11px] text-gray-500">Tampil di Dokumen Umum &amp; Dokumen Saya.</p>
+              <div class="flex items-center justify-between">
+                <span class="text-base">🏢</span>
+                <input type="radio" name="visibility" value="internal" @checked($folder->visibility === 'internal') class="text-blue-600 focus:ring-blue-600">
+              </div>
+              <p class="text-xs font-bold text-gray-900 mt-2">Internal BRIDA</p>
+              <p class="text-[11px] text-gray-500 mt-1">Hanya pegawai login. Aman dari portal luar warga.</p>
             </div>
           </label>
-          <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer hover:bg-gray-50 has-[:checked]:border-maroon has-[:checked]:bg-maroon/5">
-            <input type="radio" name="visibility" value="private" @checked($folder->visibility === 'private') class="text-maroon focus:ring-maroon">
+
+          <!-- 2. Publik Terbuka -->
+          <label class="flex flex-col justify-between p-3.5 rounded-xl border cursor-pointer hover:bg-gray-50 has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50/50">
             <div>
-              <p class="text-sm font-semibold text-gray-800">Folder Privat</p>
-              <p class="text-[11px] text-gray-500">Hanya tampil di Dokumen Saya (Terkunci).</p>
+              <div class="flex items-center justify-between">
+                <span class="text-base">🌐</span>
+                <input type="radio" name="visibility" value="public" @checked($folder->visibility === 'public') class="text-emerald-600 focus:ring-emerald-600">
+              </div>
+              <p class="text-xs font-bold text-gray-900 mt-2">Publik Terbuka</p>
+              <p class="text-[11px] text-gray-500 mt-1">Terbuka bebas untuk umum &amp; portal luar.</p>
+            </div>
+          </label>
+
+          <!-- 3. Privat -->
+          <label class="flex flex-col justify-between p-3.5 rounded-xl border cursor-pointer hover:bg-gray-50 has-[:checked]:border-red-600 has-[:checked]:bg-red-50/50">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="text-base">🔒</span>
+                <input type="radio" name="visibility" value="private" @checked($folder->visibility === 'private') class="text-red-600 focus:ring-red-600">
+              </div>
+              <p class="text-xs font-bold text-gray-900 mt-2">Privat / Rahasia</p>
+              <p class="text-[11px] text-gray-500 mt-1">Hanya Anda (bisa di-share via link + sandi).</p>
             </div>
           </label>
         </div>

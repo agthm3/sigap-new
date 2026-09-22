@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @push('head')
-  <!-- Engine Client-Side PDF Processing & Downloader (Privacy First) -->
+  <!-- PDF & Image Client Processing Libraries (Stabil & Terverifikasi) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -24,7 +24,7 @@
       </div>
       <h1 class="text-2xl font-extrabold text-gray-900">Upload &amp; Indeks Dokumen</h1>
       <p class="text-sm text-gray-600 mt-1">
-        Lengkapi metadata naskah dinas dan manfaatkan kompresi client-side hemat ukuran sebelum berkas diarsipkan.
+        Pilih berkas terlebih dahulu untuk ekstraksi otomatis judul &amp; tag, lalu sesuaikan metadata arsip dinas.
       </p>
     </div>
     <a href="{{ $folder ? route('sigap-dokumen.folder.show', $folder) : route('sigap-dokumen.saya') }}"
@@ -34,7 +34,7 @@
   </div>
 
   <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 sm:p-8" x-data="uploadManager(@js($existingTags))">
-    <form @submit.prevent="submitForm()" class="space-y-6">
+    <form @submit.prevent="submitForm()" class="space-y-7">
       @csrf
 
       @if($folder)
@@ -44,143 +44,18 @@
             <span>Folder Penempatan: <strong>{{ $folder->name }}</strong></span>
           </div>
           <span class="px-2 py-0.5 rounded bg-maroon/10 text-[10px] uppercase font-bold">
-            {{ $folder->visibility === 'public' ? 'Publik' : 'Privat' }}
+            {{ $folder->visibility === 'public' ? 'Publik' : ($folder->visibility === 'internal' ? 'Internal' : 'Privat') }}
           </span>
         </div>
       @endif
 
-      <!-- BAGIAN 1: Identitas & Legalitas Dokumen -->
+      <!-- ======================================================== -->
+      <!-- BAGIAN 1: LAMPIRAN BERKAS DIGITAL & KOMPRESI (PALING ATAS) -->
+      <!-- ======================================================== -->
       <div class="space-y-4">
-        <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 border-b pb-2 flex items-center gap-2">
-          <span>1. Identitas &amp; Legalitas Dokumen</span>
-        </h2>
-
-        <div class="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-semibold text-gray-700">Nomor Surat / Naskah Dinas</label>
-            <input type="text" x-model="form.number" class="mt-1.5 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-maroon focus:ring-maroon font-mono" placeholder="Contoh: 000.1.2/15/BRIDA/I/2026">
-          </div>
-
-          <div>
-            <label class="block text-sm font-semibold text-gray-700">Tanggal Penetapan / Surat</label>
-            <input type="date" x-model="form.doc_date" class="mt-1.5 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-maroon focus:ring-maroon">
-          </div>
-
-          <div class="sm:col-span-2">
-            <label class="block text-sm font-semibold text-gray-700">Judul / Perihal Dokumen <span class="text-red-500">*</span></label>
-            <input type="text" x-model="form.title" required class="mt-1.5 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-maroon focus:ring-maroon font-medium" placeholder="Contoh: Penetapan Tim Pelaksana Kajian Kelayakan Inovasi Daerah Tahun 2026">
-          </div>
-
-          <div>
-            <label class="block text-sm font-semibold text-gray-700">Kategori Dokumen <span class="text-red-500">*</span></label>
-            <select x-model="form.category" required class="mt-1.5 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-maroon focus:ring-maroon">
-              <option value="">-- Pilih Kategori --</option>
-              <option value="Surat Keputusan">Surat Keputusan (SK)</option>
-              <option value="Laporan">Laporan Kegiatan / Kinerja</option>
-              <option value="Formulir">Formulir / Template</option>
-              <option value="Surat Masuk/Keluar">Surat Masuk / Surat Keluar</option>
-              <option value="Dokumen Teknis">Dokumen Teknis / KAK / Kerangka Acuan</option>
-              <option value="Privasi">Dokumen Rahasia / Personel</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-sm font-semibold text-gray-700">Tahun Anggaran / Terbit <span class="text-red-500">*</span></label>
-            <input type="number" x-model="form.year" required class="mt-1.5 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-maroon focus:ring-maroon">
-          </div>
-
-          <div class="sm:col-span-2">
-            <label class="block text-sm font-semibold text-gray-700">Pihak Terkait / Instansi Pengirim / Mitra</label>
-            <input type="text" x-model="form.stakeholder" class="mt-1.5 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-maroon focus:ring-maroon" placeholder="Contoh: Bappeda Kota Makassar, Universitas Hasanuddin">
-          </div>
-        </div>
-      </div>
-
-      <!-- BAGIAN 2: Ringkasan Isi & Kata Kunci -->
-      <div class="space-y-4 pt-2">
-        <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 border-b pb-2 flex items-center gap-2">
-          <span>2. Konteks Pencarian &amp; Metadata Tag</span>
-        </h2>
-
-        <div>
-          <label class="block text-sm font-semibold text-gray-700">Ringkasan Isi / Catatan Pokok Dokumen</label>
-          <textarea x-model="form.description" rows="3" class="mt-1.5 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-maroon focus:ring-maroon" placeholder="Tuliskan 1–3 kalimat inti isi surat atau kata kunci pokok bahasan..."></textarea>
-        </div>
-
-        <div>
-          <label class="block text-sm font-semibold text-gray-700">Label / Tag Pencarian (Tekan Enter atau Koma)</label>
-          <div class="relative mt-1.5">
-            <input type="text" x-model="tagInput" @keydown.enter.prevent="addTag(tagInput)" @keydown.comma.prevent="addTag(tagInput)" placeholder="Ketik kata kunci lalu tekan Enter..." class="w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-maroon focus:ring-maroon">
-            
-            <div x-show="tagSuggestions.length > 0" class="absolute z-20 w-full bg-white border border-gray-200 rounded-lg shadow-xl mt-1 p-2 max-h-36 overflow-y-auto">
-              <div class="text-[10px] uppercase font-bold text-gray-400 px-2 py-1">Pilih dari tag yang sudah ada:</div>
-              <template x-for="s in tagSuggestions" :key="s">
-                <button type="button" @click="addTag(s)" class="block w-full text-left px-2.5 py-1.5 text-xs text-gray-700 hover:bg-maroon/10 hover:text-maroon rounded-md transition" x-text="'# ' + s"></button>
-              </template>
-            </div>
-          </div>
-
-          <div class="flex flex-wrap gap-1.5 mt-2.5">
-            <template x-for="(t, idx) in form.tags" :key="idx">
-              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-maroon/10 text-maroon border border-maroon/20">
-                <span x-text="'#' + t"></span>
-                <button type="button" @click="removeTag(idx)" class="hover:text-red-700 font-bold ml-1">&times;</button>
-              </span>
-            </template>
-          </div>
-        </div>
-      </div>
-
-      <!-- BAGIAN 3: Keamanan Akses & Lokasi Fisik -->
-      <div class="space-y-4 pt-2">
-        <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 border-b pb-2 flex items-center gap-2">
-          <span>3. Keamanan Akses &amp; Lokasi Fisik Arsip</span>
-        </h2>
-
-        <div>
-          <label class="block text-sm font-semibold text-gray-700">Tingkat Kerahasiaan (Sensitivitas)</label>
-          <div class="grid grid-cols-2 gap-3 mt-1.5">
-            <label class="flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition hover:bg-gray-50 has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50/40">
-              <input type="radio" name="sensitivity" value="public" x-model="form.sensitivity" class="mt-0.5 text-emerald-600 focus:ring-emerald-600">
-              <div>
-                <p class="text-xs font-bold text-gray-900">Publik (Terbuka)</p>
-                <p class="text-[11px] text-gray-500 mt-0.5">Dapat dilihat dan dicari pada katalog Dokumen Umum oleh seluruh staf.</p>
-              </div>
-            </label>
-
-            <label class="flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition hover:bg-gray-50 has-[:checked]:border-red-600 has-[:checked]:bg-red-50/40">
-              <input type="radio" name="sensitivity" value="private" x-model="form.sensitivity" class="mt-0.5 text-red-600 focus:ring-red-600">
-              <div>
-                <p class="text-xs font-bold text-gray-900">Privat (Terkunci)</p>
-                <p class="text-[11px] text-gray-500 mt-0.5">Tersimpan di vault tertutup server, hanya akun Anda yang dapat membuka.</p>
-              </div>
-            </label>
-          </div>
-        </div>
-
-        <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
-          <div class="flex items-center gap-2 mb-2.5">
-            <span class="text-sm">🗄️</span>
-            <span class="text-xs font-bold uppercase text-gray-700 tracking-wider">Lokasi Fisik Berkas Hardcopy (Opsional)</span>
-          </div>
-          <div class="grid sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-semibold text-gray-600">Nomor / Nama Rak / Lemari</label>
-              <input type="text" x-model="form.physical_rack" placeholder="Contoh: RAK-02 KEUANGAN" class="mt-1 w-full rounded-lg border border-gray-300 p-2 text-xs focus:border-maroon focus:ring-maroon">
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-gray-600">Nomor Ordner / Baris / Boks</label>
-              <input type="text" x-model="form.physical_row" placeholder="Contoh: BOKS-05 / NO. 14" class="mt-1 w-full rounded-lg border border-gray-300 p-2 text-xs focus:border-maroon focus:ring-maroon">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- BAGIAN 4: Lampiran Berkas & Kompresi -->
-      <div class="space-y-4 pt-2">
         <div class="border-b pb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
           <div class="flex items-center gap-2">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-gray-700">4. Lampiran Berkas Digital</h2>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-gray-700">1. Lampiran Berkas Digital</h2>
             <span class="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-bold">
               ✓ Client-Side Compression Aktif
             </span>
@@ -194,7 +69,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
           <div>
-            <strong>Privacy First:</strong> Seluruh proses membaca dan mengecilkan file diproses di RAM browser Anda. File tidak diunggah ke server pihak ketiga.
+            <strong>Smart Intake &amp; Privacy First:</strong> Nama file pertama akan otomatis disetel menjadi judul dan diekstrak menjadi tag pencarian. Kompresi diproses aman di RAM browser.
           </div>
         </div>
 
@@ -230,7 +105,7 @@
         </div>
 
         <!-- Dropzone Box -->
-        <div class="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center hover:border-maroon transition cursor-pointer bg-gray-50/50"
+        <div class="border-2 border-dashed border-gray-300 rounded-2xl p-7 text-center hover:border-maroon transition cursor-pointer bg-gray-50/50"
              @click="$refs.fileInput.click()"
              @dragover.prevent=""
              @drop.prevent="handleDrop($event)">
@@ -240,11 +115,11 @@
                  multiple 
                  class="hidden" 
                  accept=".pdf,.png,.jpg,.jpeg">
-          <div class="w-12 h-12 mx-auto rounded-full bg-maroon/10 text-maroon flex items-center justify-center text-2xl mb-2">
-            📄
+          <div class="w-14 h-14 mx-auto rounded-full bg-maroon/10 text-maroon flex items-center justify-center text-3xl mb-3">
+            📁
           </div>
-          <p class="text-sm font-semibold text-gray-800">Tarik berkas ke sini atau klik untuk memilih</p>
-          <p class="text-xs text-gray-500 mt-1">Mendukung multi-file. Berkas PDF dan Foto akan langsung dikompresi adaptif di browser.</p>
+          <p class="text-sm font-bold text-gray-800">Tarik berkas ke sini atau klik untuk memilih</p>
+          <p class="text-xs text-gray-500 mt-1">Pilih berkas PDF atau Foto naskah dinas. Sistem akan langsung memprosesnya.</p>
         </div>
 
         <!-- Antrean Berkas & Status Bar -->
@@ -308,7 +183,7 @@
                 </div>
               </div>
 
-              <!-- Progress Bar -->
+              <!-- Progress Bar Track -->
               <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
                 <div class="h-2 rounded-full transition-all duration-300"
                      :class="{
@@ -321,6 +196,218 @@
               </div>
             </div>
           </template>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- BAGIAN 2: IDENTITAS & LEGALITAS DOKUMEN                    -->
+      <!-- ======================================================== -->
+      <div class="space-y-4 pt-3 border-t">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 border-b pb-2 flex items-center gap-2">
+          <span>2. Identitas &amp; Legalitas Dokumen</span>
+        </h2>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="sm:col-span-2">
+            <div class="flex items-center justify-between">
+              <label class="block text-sm font-semibold text-gray-700">
+                Judul / Perihal Dokumen <span class="text-red-500">*</span>
+              </label>
+              <span class="text-[11px] text-gray-400">Otomatis terisi dari nama berkas</span>
+            </div>
+            <input type="text" 
+                   x-model="form.title" 
+                   required 
+                   class="mt-1.5 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-maroon focus:ring-maroon font-medium" 
+                   placeholder="Contoh: DOKUMEN STB 2026">
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700">Nomor Surat / Naskah Dinas</label>
+            <input type="text" x-model="form.number" class="mt-1.5 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-maroon focus:ring-maroon font-mono" placeholder="Contoh: 000.1.2/15/BRIDA/I/2026">
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700">Tanggal Penetapan / Surat</label>
+            <input type="date" x-model="form.doc_date" class="mt-1.5 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-maroon focus:ring-maroon">
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700">Kategori Dokumen <span class="text-red-500">*</span></label>
+            <select x-model="form.category" required class="mt-1.5 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-maroon focus:ring-maroon">
+              <option value="">-- Pilih Kategori --</option>
+              <option value="Surat Keputusan">Surat Keputusan (SK)</option>
+              <option value="Laporan">Laporan Kegiatan / Kinerja</option>
+              <option value="Formulir">Formulir / Template</option>
+              <option value="Surat Masuk/Keluar">Surat Masuk / Surat Keluar</option>
+              <option value="Dokumen Teknis">Dokumen Teknis / KAK / Kerangka Acuan</option>
+              <option value="Privasi">Dokumen Rahasia / Personel</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700">Tahun Anggaran / Terbit <span class="text-red-500">*</span></label>
+            <input type="number" x-model="form.year" required class="mt-1.5 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-maroon focus:ring-maroon">
+          </div>
+
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-semibold text-gray-700">Pihak Terkait / Instansi Pengirim / Mitra</label>
+            <input type="text" x-model="form.stakeholder" class="mt-1.5 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-maroon focus:ring-maroon" placeholder="Contoh: Bappeda Kota Makassar, Universitas Hasanuddin">
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- BAGIAN 3: RINGKASAN ISI & TAG PENCARIAN (AUTO-EXTRACT)   -->
+      <!-- ======================================================== -->
+      <div class="space-y-4 pt-3 border-t">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 border-b pb-2 flex items-center gap-2">
+          <span>3. Konteks Pencarian &amp; Metadata Tag</span>
+        </h2>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700">Ringkasan Isi / Catatan Pokok Dokumen</label>
+          <textarea x-model="form.description" rows="3" class="mt-1.5 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-maroon focus:ring-maroon" placeholder="Tuliskan ringkasan inti pokok bahasan naskah dinas..."></textarea>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between">
+            <label class="block text-sm font-semibold text-gray-700">Label / Tag Pencarian (Tekan Enter atau Koma)</label>
+            <span class="text-[11px] text-gray-400">Otomatis diekstrak dari judul</span>
+          </div>
+          <div class="relative mt-1.5">
+            <input type="text" x-model="tagInput" @keydown.enter.prevent="addTag(tagInput)" @keydown.comma.prevent="addTag(tagInput)" placeholder="Ketik kata kunci lalu tekan Enter..." class="w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-maroon focus:ring-maroon">
+            
+            <div x-show="tagSuggestions.length > 0" class="absolute z-20 w-full bg-white border border-gray-200 rounded-lg shadow-xl mt-1 p-2 max-h-36 overflow-y-auto">
+              <div class="text-[10px] uppercase font-bold text-gray-400 px-2 py-1">Pilih dari tag yang sudah ada:</div>
+              <template x-for="s in tagSuggestions" :key="s">
+                <button type="button" @click="addTag(s)" class="block w-full text-left px-2.5 py-1.5 text-xs text-gray-700 hover:bg-maroon/10 hover:text-maroon rounded-md transition" x-text="'# ' + s"></button>
+              </template>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-1.5 mt-2.5">
+            <template x-for="(t, idx) in form.tags" :key="idx">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-maroon/10 text-maroon border border-maroon/20">
+                <span x-text="'#' + t"></span>
+                <button type="button" @click="removeTag(idx)" class="hover:text-red-700 font-bold ml-1">&times;</button>
+              </span>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- BAGIAN 4: KEAMANAN AKSES (3-LEVEL) & LOKASI FISIK       -->
+      <!-- ======================================================== -->
+      <!-- ======================================================== -->
+      <!-- BAGIAN 4: KEAMANAN AKSES & LOKASI FISIK                  -->
+      <!-- ======================================================== -->
+      <div class="space-y-4 pt-3 border-t">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 border-b pb-2 flex items-center gap-2">
+          <span>4. Keamanan Akses &amp; Lokasi Fisik Arsip</span>
+        </h2>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700">
+            Tingkat Kerahasiaan Dokumen (Sensitivitas) <span class="text-red-500">*</span>
+          </label>
+
+          @if($folder)
+            <!-- JIKA DI DALAM FOLDER: Terkunci otomatis mengikuti folder induk -->
+            <div class="mt-2 p-3.5 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <span class="text-lg">
+                  {{ $folder->visibility === 'public' ? '🌐' : ($folder->visibility === 'internal' ? '🏢' : '🔒') }}
+                </span>
+                <div>
+                  <p class="text-xs font-bold text-gray-800">
+                    Otomatis mengikuti folder "{{ $folder->name }}"
+                  </p>
+                  <p class="text-[11px] text-gray-500">
+                    Dokumen ini akan tersimpan dengan status 
+                    <strong class="uppercase font-mono text-gray-700">{{ $folder->visibility }}</strong>.
+                  </p>
+                </div>
+              </div>
+              <span class="px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase
+                {{ $folder->visibility === 'public' ? 'bg-emerald-100 text-emerald-800' : 
+                  ($folder->visibility === 'internal' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800') }}">
+                {{ $folder->visibility === 'public' ? 'Publik' : ($folder->visibility === 'internal' ? 'Internal' : 'Privat') }}
+              </span>
+            </div>
+          @else
+            <!-- JIKA DOKUMEN LEPAS (DI LUAR FOLDER): Pengguna bebas memilih -->
+            <div class="grid sm:grid-cols-3 gap-3 mt-1.5">
+              <!-- 1. Internal BRIDA -->
+              <label class="flex flex-col justify-between p-3.5 rounded-xl border cursor-pointer transition hover:bg-gray-50 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50/50 has-[:checked]:shadow-xs">
+                <div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-base">🏢</span>
+                    <input type="radio" name="sensitivity" value="internal" x-model="form.sensitivity" class="text-blue-600 focus:ring-blue-600">
+                  </div>
+                  <p class="text-xs font-bold text-gray-900 mt-2">Internal BRIDA</p>
+                  <p class="text-[11px] text-gray-500 mt-1 leading-snug">
+                    Hanya dapat dilihat oleh seluruh pegawai yang login di dashboard.
+                  </p>
+                </div>
+                <span class="mt-3 text-[10px] bg-blue-100 text-blue-700 font-extrabold px-1.5 py-0.5 rounded self-start">
+                  Aman &bull; Kantor
+                </span>
+              </label>
+
+              <!-- 2. Publik Terbuka -->
+              <label class="flex flex-col justify-between p-3.5 rounded-xl border cursor-pointer transition hover:bg-gray-50 has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50/50 has-[:checked]:shadow-xs">
+                <div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-base">🌐</span>
+                    <input type="radio" name="sensitivity" value="public" x-model="form.sensitivity" class="text-emerald-600 focus:ring-emerald-600">
+                  </div>
+                  <p class="text-xs font-bold text-gray-900 mt-2">Publik Terbuka</p>
+                  <p class="text-[11px] text-gray-500 mt-1 leading-snug">
+                    Dapat dicari dan diunduh oleh siapa saja di portal publik terbuka.
+                  </p>
+                </div>
+                <span class="mt-3 text-[10px] bg-emerald-100 text-emerald-700 font-extrabold px-1.5 py-0.5 rounded self-start">
+                  Regulasi &bull; SOP
+                </span>
+              </label>
+
+              <!-- 3. Privat / Terkunci -->
+              <label class="flex flex-col justify-between p-3.5 rounded-xl border cursor-pointer transition hover:bg-gray-50 has-[:checked]:border-red-600 has-[:checked]:bg-red-50/50 has-[:checked]:shadow-xs">
+                <div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-base">🔒</span>
+                    <input type="radio" name="sensitivity" value="private" x-model="form.sensitivity" class="text-red-600 focus:ring-red-600">
+                  </div>
+                  <p class="text-xs font-bold text-gray-900 mt-2">Privat / Terkunci</p>
+                  <p class="text-[11px] text-gray-500 mt-1 leading-snug">
+                    Hanya akun Anda yang dapat membuka (bisa di-share via link + sandi).
+                  </p>
+                </div>
+                <span class="mt-3 text-[10px] bg-red-100 text-red-700 font-extrabold px-1.5 py-0.5 rounded self-start">
+                  Keuangan &bull; Rahasia
+                </span>
+              </label>
+            </div>
+          @endif
+        </div>
+
+        <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
+          <div class="flex items-center gap-2 mb-2.5">
+            <span class="text-sm">🗄️</span>
+            <span class="text-xs font-bold uppercase text-gray-700 tracking-wider">Lokasi Fisik Berkas Hardcopy (Opsional)</span>
+          </div>
+          <div class="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-gray-600">Nomor / Nama Rak / Lemari</label>
+              <input type="text" x-model="form.physical_rack" placeholder="Contoh: RAK-02 KEUANGAN" class="mt-1 w-full rounded-lg border border-gray-300 p-2 text-xs focus:border-maroon focus:ring-maroon">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-600">Nomor Ordner / Baris / Boks</label>
+              <input type="text" x-model="form.physical_row" placeholder="Contoh: BOKS-05 / NO. 14" class="mt-1 w-full rounded-lg border border-gray-300 p-2 text-xs focus:border-maroon focus:ring-maroon">
+            </div>
+          </div>
         </div>
       </div>
 
@@ -353,20 +440,48 @@ function uploadManager(availableTags) {
       year: new Date().getFullYear(),
       stakeholder: '',
       description: '',
-      sensitivity: 'public',
+      // Otomatis mengunci visibilitas folder jika di dalam folder, default 'internal' jika berkas lepas
+      sensitivity: '{{ $folder ? $folder->visibility : "internal" }}',
       tags: [],
       physical_rack: '',
       physical_row: '',
-      folder_id: '{{ $folderId ?? '' }}',
+      folder_id: '{{ $folderId ?? "" }}',
       files: []
     },
     tagInput: '',
     allTags: availableTags || [],
     uploadQueue: [],
     isSubmitting: false,
-
-    // Pilihan Tingkat Kompresi
     compressionPercent: '50',
+
+    // Inisialisasi Watcher Alpine
+    init() {
+      // Pantau input judul untuk ekstrak tag otomatis
+      this.$watch('form.title', (newVal) => {
+        this.generateTagsFromTitle(newVal);
+      });
+    },
+
+    // Ekstraksi kata bermakna dari judul menjadi tag
+    generateTagsFromTitle(title) {
+      if (!title || !title.trim()) return;
+
+      const stopWords = [
+        'dan', 'atau', 'di', 'ke', 'dari', 'yang', 'untuk', 'pada', 
+        'tentang', 'oleh', 'dengan', 'atas', 'nomor', 'no', 'tahun', 'thn'
+      ];
+
+      const words = title
+        .split(/[\s,./\-_()]+/)
+        .map(w => w.trim().toUpperCase())
+        .filter(w => w.length >= 2 && !stopWords.includes(w.toLowerCase()));
+
+      words.forEach(word => {
+        if (word && !this.form.tags.includes(word)) {
+          this.form.tags.push(word);
+        }
+      });
+    },
 
     get isAnyProcessing() {
       return this.uploadQueue.some(item => item.status === 'compressing' || item.status === 'uploading');
@@ -387,7 +502,7 @@ function uploadManager(availableTags) {
     },
 
     addTag(tag) {
-      const clean = tag.replace(/,/g, '').trim();
+      const clean = tag.replace(/,/g, '').trim().toUpperCase();
       if (clean && !this.form.tags.includes(clean)) {
         this.form.tags.push(clean);
       }
@@ -406,12 +521,18 @@ function uploadManager(availableTags) {
     async handleFiles(files) {
       if (!files || files.length === 0) return;
 
+      // Tarik nama berkas pertama menjadi judul jika input judul masih kosong
+      const firstFile = files[0];
+      if (!this.form.title || !this.form.title.trim()) {
+        const cleanName = firstFile.name.replace(/\.[^/.]+$/, '').replace(/[_\-+]+/g, ' ').trim();
+        this.form.title = cleanName; // Memicu $watch('form.title') untuk generate tag otomatis
+      }
+
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
         const isImg = file.type.startsWith('image/');
 
-        // Push Objek Mentah (Raw) ke dalam Proxy Array Alpine
         this.uploadQueue.push({
           file: file,
           name: file.name,
@@ -427,25 +548,26 @@ function uploadManager(availableTags) {
           blob: null
         });
 
-        // AMBIL REFERENSI PROXY AGAR REAKTIVITAS UI BERJALAN (INI YANG MEMPERBAIKI MASALAH "STUCK")
         const qIndex = this.uploadQueue.length - 1;
         let processedFile = file;
 
         try {
           if (isPdf) {
-            processedFile = await this.compressPdfAdaptive(file, qIndex);
+            processedFile = await this.compressPdfDirectWithTimeout(file, qIndex);
           } else if (isImg) {
-            processedFile = await this.compressImageAdaptive(file, qIndex);
+            processedFile = await this.compressImageDirect(file, qIndex);
           }
-          
+
           this.uploadQueue[qIndex].compressedSize = processedFile.size;
           this.uploadQueue[qIndex].blob = processedFile;
-          
+
           if (this.uploadQueue[qIndex].origSize > processedFile.size) {
-            this.uploadQueue[qIndex].savingsPercent = Math.round(((this.uploadQueue[qIndex].origSize - processedFile.size) / this.uploadQueue[qIndex].origSize) * 100);
+            this.uploadQueue[qIndex].savingsPercent = Math.round(
+              ((this.uploadQueue[qIndex].origSize - processedFile.size) / this.uploadQueue[qIndex].origSize) * 100
+            );
           }
         } catch (err) {
-          console.error('Kompresi error/dilewati:', err);
+          console.warn('Kompresi dilewati (menggunakan berkas asli):', err);
           processedFile = file;
           this.uploadQueue[qIndex].compressedSize = file.size;
           this.uploadQueue[qIndex].blob = file;
@@ -456,87 +578,99 @@ function uploadManager(availableTags) {
       }
     },
 
-    // 1. ENGINE KOMPRESI PDF BERBASIS GAMBAR (PDF.js + Canvas + PDFLib)
-    async compressPdfAdaptive(currentFile, qIndex) {
-      if (typeof pdfjsLib === 'undefined' || typeof PDFLib === 'undefined') {
-        return currentFile;
-      }
+    // Kompresi PDF mandiri dengan proteksi timeout (maksimal 15 detik)
+    compressPdfDirectWithTimeout(file, qIndex) {
+      return new Promise(async (resolve) => {
+        const timeout = setTimeout(() => {
+          console.warn('Kompresi PDF melebihi batas 15 detik, memproses file asli.');
+          resolve(file);
+        }, 15000);
 
-      let scale = 1.0;
-      let quality = 0.55;
+        try {
+          if (typeof pdfjsLib === 'undefined' || typeof PDFLib === 'undefined') {
+            clearTimeout(timeout);
+            return resolve(file);
+          }
 
-      if (this.compressionPercent === '30') {
-        scale = 1.2;
-        quality = 0.75;
-      } else if (this.compressionPercent === '70') {
-        scale = 0.75;
-        quality = 0.35;
-      }
+          let scale = 1.0;
+          let quality = 0.55;
 
-      const fileBuffer = await currentFile.arrayBuffer();
-      const loadingTask = pdfjsLib.getDocument({ data: fileBuffer });
-      const pdfDoc = await loadingTask.promise;
-      const numPages = pdfDoc.numPages;
+          if (this.compressionPercent === '30') {
+            scale = 1.2;
+            quality = 0.75;
+          } else if (this.compressionPercent === '70') {
+            scale = 0.75;
+            quality = 0.35;
+          }
 
-      if (numPages === 0) return currentFile;
+          this.uploadQueue[qIndex].compressMsg = 'Membaca PDF...';
+          const fileBuffer = await file.arrayBuffer();
+          const loadingTask = pdfjsLib.getDocument({ data: fileBuffer });
+          const pdfDoc = await loadingTask.promise;
+          const numPages = pdfDoc.numPages;
 
-      const newPdfDoc = await PDFLib.PDFDocument.create();
+          if (numPages === 0) {
+            clearTimeout(timeout);
+            return resolve(file);
+          }
 
-      for (let i = 1; i <= numPages; i++) {
-        this.uploadQueue[qIndex].compressMsg = `Mengompresi hal ${i} dari ${numPages}...`;
-        this.uploadQueue[qIndex].compressProgress = Math.round(((i - 1) / numPages) * 100);
+          const newPdfDoc = await PDFLib.PDFDocument.create();
 
-        const page = await pdfDoc.getPage(i);
-        const viewport = page.getViewport({ scale: scale });
+          for (let p = 1; p <= numPages; p++) {
+            this.uploadQueue[qIndex].compressMsg = `Mengompresi hal ${p} dari ${numPages}...`;
+            this.uploadQueue[qIndex].compressProgress = Math.round(((p - 1) / numPages) * 100);
 
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
+            const page = await pdfDoc.getPage(p);
+            const viewport = page.getViewport({ scale: scale });
 
-        await page.render({
-          canvasContext: context,
-          viewport: viewport
-        }).promise;
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
 
-        const dataUrl = canvas.toDataURL('image/jpeg', quality);
-        const imgBytes = this.dataURLtoUint8Array(dataUrl);
+            await page.render({ canvasContext: context, viewport: viewport }).promise;
 
-        const embeddedImg = await newPdfDoc.embedJpg(imgBytes);
-        const newPage = newPdfDoc.addPage([viewport.width, viewport.height]);
+            const dataUrl = canvas.toDataURL('image/jpeg', quality);
+            const imgBytes = this.dataURLtoUint8Array(dataUrl);
 
-        newPage.drawImage(embeddedImg, {
-          x: 0,
-          y: 0,
-          width: viewport.width,
-          height: viewport.height
-        });
+            const embeddedImg = await newPdfDoc.embedJpg(imgBytes);
+            const newPage = newPdfDoc.addPage([viewport.width, viewport.height]);
 
-        // Bersihkan memori canvas
-        canvas.width = 0;
-        canvas.height = 0;
-      }
+            newPage.drawImage(embeddedImg, {
+              x: 0,
+              y: 0,
+              width: viewport.width,
+              height: viewport.height
+            });
 
-      this.uploadQueue[qIndex].compressMsg = 'Menyusun hasil PDF...';
-      this.uploadQueue[qIndex].compressProgress = 95;
+            canvas.width = 0;
+            canvas.height = 0;
+          }
 
-      const compressedPdfBytes = await newPdfDoc.save();
-      const finalBlob = new Blob([compressedPdfBytes], { type: 'application/pdf' });
+          this.uploadQueue[qIndex].compressMsg = 'Menyusun berkas PDF...';
+          this.uploadQueue[qIndex].compressProgress = 95;
 
-      this.uploadQueue[qIndex].compressProgress = 100;
+          const compressedPdfBytes = await newPdfDoc.save();
+          const finalBlob = new Blob([compressedPdfBytes], { type: 'application/pdf' });
 
-      if (finalBlob.size < currentFile.size) {
-        return new File([finalBlob], currentFile.name, {
-          type: 'application/pdf',
-          lastModified: Date.now()
-        });
-      }
+          this.uploadQueue[qIndex].compressProgress = 100;
+          clearTimeout(timeout);
 
-      return currentFile;
+          if (finalBlob.size < file.size) {
+            resolve(new File([finalBlob], file.name, { type: 'application/pdf', lastModified: Date.now() }));
+          } else {
+            resolve(file);
+          }
+        } catch (e) {
+          clearTimeout(timeout);
+          console.warn('Kompresi PDF dilewati:', e);
+          resolve(file);
+        }
+      });
     },
 
-    // 2. ENGINE KOMPRESI GAMBAR
-    compressImageAdaptive(file, qIndex) {
+    // Kompresi gambar via canvas HTML5
+    compressImageDirect(file, qIndex) {
       return new Promise((resolve) => {
         this.uploadQueue[qIndex].compressMsg = 'Mengompres gambar...';
         this.uploadQueue[qIndex].compressProgress = 50;
@@ -603,7 +737,7 @@ function uploadManager(availableTags) {
       return u8arr;
     },
 
-    // 3. Upload Asinkron per-file dengan XHR
+    // Upload asinkron via XMLHttpRequest untuk progress bar akurat
     uploadWithXHR(file, qIndex) {
       return new Promise((resolve) => {
         const xhr = new XMLHttpRequest();
@@ -644,7 +778,7 @@ function uploadManager(availableTags) {
           resolve();
         };
 
-        xhr.open('POST', '{{ route('sigap-dokumen.temp-upload') }}', true);
+        xhr.open('POST', '{{ route("sigap-dokumen.temp-upload") }}', true);
         xhr.send(formData);
       });
     },
@@ -660,21 +794,22 @@ function uploadManager(availableTags) {
       this.form.files.splice(idx, 1);
     },
 
+    // Pengiriman final form payload
     async submitForm() {
       if (this.form.files.length === 0) {
-        Swal.fire({ 
-          icon: 'warning', 
-          title: 'Lampiran Kosong', 
-          text: 'Harap pilih dan unggah minimal satu berkas dokumen.' 
+        Swal.fire({
+          icon: 'warning',
+          title: 'Lampiran Kosong',
+          text: 'Harap pilih dan unggah minimal satu berkas dokumen.'
         });
         return;
       }
 
       if (this.isAnyProcessing) {
-        Swal.fire({ 
-          icon: 'info', 
-          title: 'Berkas Masih Diproses', 
-          text: 'Harap tunggu hingga seluruh berkas selesai dikompresi dan diunggah.' 
+        Swal.fire({
+          icon: 'info',
+          title: 'Berkas Masih Diproses',
+          text: 'Harap tunggu hingga seluruh berkas selesai dikompresi dan diunggah.'
         });
         return;
       }
@@ -683,7 +818,7 @@ function uploadManager(availableTags) {
 
       const hiddenForm = document.createElement('form');
       hiddenForm.method = 'POST';
-      hiddenForm.action = '{{ route('sigap-dokumen.store') }}';
+      hiddenForm.action = '{{ route("sigap-dokumen.store") }}';
 
       const appendInput = (name, val) => {
         if (val !== null && val !== undefined) {
@@ -707,13 +842,9 @@ function uploadManager(availableTags) {
       appendInput('tags', this.form.tags.join(','));
       appendInput('physical_rack', this.form.physical_rack);
       appendInput('physical_row', this.form.physical_row);
-      if (this.form.folder_id) {
-        appendInput('folder_id', this.form.folder_id);
-      } else {
-        appendInput('folder_id', '');
-      }
+      appendInput('folder_id', this.form.folder_id || '');
 
-      this.form.files.forEach(f => {
+      this.form.files.forEach((f) => {
         appendInput('files[]', f);
       });
 

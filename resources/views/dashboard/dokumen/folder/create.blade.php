@@ -5,7 +5,7 @@
   <div class="flex items-center justify-between mb-6">
     <div>
       <h1 class="text-2xl font-bold text-gray-900">Buat Folder Baru</h1>
-      <p class="text-sm text-gray-600 mt-1">Konfigurasi nama, kode Permendagri, warna, dan ikon folder.</p>
+      <p class="text-sm text-gray-600 mt-1">Konfigurasi nama, kode Permendagri, warna, dan izin akses folder.</p>
     </div>
     <a href="{{ $parentId ? route('sigap-dokumen.folder.show', $parentId) : route('sigap-dokumen.saya') }}"
        class="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-50 transition">
@@ -44,7 +44,7 @@
                x-model="folderName"
                required 
                class="mt-1.5 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-maroon focus:ring-maroon" 
-               placeholder="Contoh: 900 - KEUANGAN atau Arsip Surat Masuk 2026">
+               placeholder="Contoh: 900 - KEUANGAN atau Arsip SPJ 2026">
         <input type="hidden" name="classification_code" x-model="classificationCode">
       </div>
 
@@ -79,24 +79,63 @@
         <input type="hidden" name="color" x-model="selectedColor">
       </div>
 
-      <!-- Status Akses Folder -->
+      <!-- 5. TINGKAT AKSES & VISIBILITAS (3-LEVEL) -->
       <div>
-        <label class="block text-sm font-semibold text-gray-700">Status Akses Folder <span class="text-red-500">*</span></label>
-        <div class="grid grid-cols-2 gap-3 mt-1.5">
-          <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition hover:bg-gray-50 has-[:checked]:border-maroon has-[:checked]:bg-maroon/5">
-            <input type="radio" name="visibility" value="public" checked class="text-maroon focus:ring-maroon">
+        <label class="block text-sm font-semibold text-gray-700">
+          Tingkat Kerahasiaan &amp; Visibilitas Folder <span class="text-red-500">*</span>
+        </label>
+        <p class="text-xs text-gray-500 mb-2">Tentukan batasan siapa saja yang berhak melihat isi dokumen di dalam folder ini.</p>
+
+        <div class="grid sm:grid-cols-3 gap-3">
+          <!-- Opsi 1: Internal Pegawai BRIDA (Rekomendasi Default) -->
+          <label class="flex flex-col justify-between p-3.5 rounded-xl border cursor-pointer transition hover:bg-gray-50 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50/50 has-[:checked]:shadow-xs">
             <div>
-              <p class="text-sm font-semibold text-gray-800">Folder Publik</p>
-              <p class="text-[11px] text-gray-500">Tampil di Dokumen Umum & Dokumen Saya.</p>
+              <div class="flex items-center justify-between">
+                <span class="text-base">🏢</span>
+                <input type="radio" name="visibility" value="internal" checked class="text-blue-600 focus:ring-blue-600">
+              </div>
+              <p class="text-xs font-bold text-gray-900 mt-2">Internal BRIDA</p>
+              <p class="text-[11px] text-gray-500 mt-1 leading-snug">
+                Hanya dapat dilihat oleh seluruh pegawai yang login di dashboard. Tidak tampil di portal luar masyarakat.
+              </p>
             </div>
+            <span class="mt-3 text-[10px] bg-blue-100 text-blue-700 font-extrabold px-1.5 py-0.5 rounded self-start">
+              Aman &bull; Kantor
+            </span>
           </label>
 
-          <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition hover:bg-gray-50 has-[:checked]:border-maroon has-[:checked]:bg-maroon/5">
-            <input type="radio" name="visibility" value="private" class="text-maroon focus:ring-maroon">
+          <!-- Opsi 2: Publik Umum (Terbuka Luar) -->
+          <label class="flex flex-col justify-between p-3.5 rounded-xl border cursor-pointer transition hover:bg-gray-50 has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50/50 has-[:checked]:shadow-xs">
             <div>
-              <p class="text-sm font-semibold text-gray-800">Folder Privat</p>
-              <p class="text-[11px] text-gray-500">Hanya tampil di Dokumen Saya (Terkunci).</p>
+              <div class="flex items-center justify-between">
+                <span class="text-base">🌐</span>
+                <input type="radio" name="visibility" value="public" class="text-emerald-600 focus:ring-emerald-600">
+              </div>
+              <p class="text-xs font-bold text-gray-900 mt-2">Publik Terbuka</p>
+              <p class="text-[11px] text-gray-500 mt-1 leading-snug">
+                Dapat dicari dan diunduh oleh siapa saja, termasuk warga/masyarakat di portal web publik.
+              </p>
             </div>
+            <span class="mt-3 text-[10px] bg-emerald-100 text-emerald-700 font-extrabold px-1.5 py-0.5 rounded self-start">
+              Regulasi &bull; SOP
+            </span>
+          </label>
+
+          <!-- Opsi 3: Privat / Terkunci (Bisa Dibagikan via Link ke Auditor) -->
+          <label class="flex flex-col justify-between p-3.5 rounded-xl border cursor-pointer transition hover:bg-gray-50 has-[:checked]:border-red-600 has-[:checked]:bg-red-50/50 has-[:checked]:shadow-xs">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="text-base">🔒</span>
+                <input type="radio" name="visibility" value="private" class="text-red-600 focus:ring-red-600">
+              </div>
+              <p class="text-xs font-bold text-gray-900 mt-2">Privat / Terkunci</p>
+              <p class="text-[11px] text-gray-500 mt-1 leading-snug">
+                Hanya akun Anda yang dapat membuka. Bisa dibagikan ke pihak luar (misal: Inspektorat) via Tautan Sandi.
+              </p>
+            </div>
+            <span class="mt-3 text-[10px] bg-red-100 text-red-700 font-extrabold px-1.5 py-0.5 rounded self-start">
+              Keuangan &bull; Rahasia
+            </span>
           </label>
         </div>
       </div>

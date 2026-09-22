@@ -23,7 +23,7 @@ window.SigapImaUploader = {
                     const canvas = document.createElement('canvas');
                     const MAX_WIDTH = 1600;
                     const MAX_HEIGHT = 1600;
-                    let width = img.width;
+                    let width = img.width;  
                     let height = img.height;
 
                     if (width > height) {

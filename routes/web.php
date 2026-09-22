@@ -177,6 +177,7 @@ Route::prefix('sigap-dokumen')->middleware(['auth', 'role:employee|admin'])->nam
     Route::get('/folder/create', [FolderController::class, 'create'])->name('folder.create');
     Route::post('/folder', [FolderController::class, 'store'])->name('folder.store');
     Route::get('/folder/{folder}', [FolderController::class, 'show'])->name('folder.show');
+    Route::delete('/folder/{folder}', [App\Http\Controllers\FolderController::class, 'destroy'])->name('folder.destroy');
 
     Route::get('/shared-links', [App\Http\Controllers\FolderController::class, 'sharedLinksIndex'])->name('shared-links.index');
     
@@ -522,19 +523,13 @@ Route::post('/sertifikat/store',
 
 });
 
-Route::get('/sertifikat', [SigapSertifikatController::class, 'index'])->name('sigap-sertifikat.index');
-Route::post('/sertifikat/verifikasi', [SigapSertifikatController::class,'verifikasi'])
-->name('sigap-sertifikat.verifikasi');
-Route::post('/sertifikat/import',
-[SertifikatController::class,'importExcel'])
-->name('sertifikat.import');
-Route::get('/sertifikat/template',
-[SertifikatController::class,'downloadTemplate'])
-->name('sertifikat.template');
-Route::get('/sertifikat/view/{id}',
-[SigapSertifikatController::class,'view'])
-->name('sigap-sertifikat.view');
-
+Route::get('/sertifikat', [SigapSertifikatController::class,'index'])->name('sigap-sertifikat.index');
+Route::post('/sertifikat/verifikasi', [SigapSertifikatController::class,'verifikasi'])->name('sigap-sertifikat.verifikasi');
+Route::post('/sertifikat/import',[SertifikatController::class,'importExcel'])->name('sertifikat.import');
+Route::get('/sertifikat/template',[SertifikatController::class,'downloadTemplate'])->name('sertifikat.template');
+Route::get('/sertifikat/view/{id}', [SertifikatController::class, 'viewSertifikat'])->name('sigap-sertifikat.view');
+Route::get('/sertifikat/peserta/{id}/view', [SertifikatController::class, 'viewSertifikat'])->name('sertifikat.view');
+Route::get('/sertifikat/kegiatan/{id}/export-pdf', [SertifikatController::class, 'exportPdf'])->name('sertifikat.exportPdf');
 
 Route::get('/sigap-absensi', function () {
     return view('SigapAbsensi.home.index');

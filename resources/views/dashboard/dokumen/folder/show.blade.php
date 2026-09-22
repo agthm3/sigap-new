@@ -113,8 +113,10 @@
                 @endif
               </td>
               <td class="px-4 py-3">
-                <span class="px-2 py-0.5 rounded text-xs {{ $doc->sensitivity === 'public' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700' }}">
-                  {{ $doc->sensitivity === 'public' ? 'Publik' : 'Privat' }}
+                <span class="px-2 py-0.5 rounded text-xs font-semibold
+                  {{ $doc->sensitivity === 'public' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 
+                    ($doc->sensitivity === 'internal' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-red-50 text-red-700 border border-red-200') }}">
+                  {{ $doc->sensitivity === 'public' ? 'Publik' : ($doc->sensitivity === 'internal' ? 'Internal' : 'Privat') }}
                 </span>
               </td>
               <td class="px-4 py-3 text-right">
