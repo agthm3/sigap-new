@@ -94,4 +94,16 @@ class User extends Authenticatable implements MustVerifyEmail
                     ->withPivot('instansi_asal', 'jurusan', 'status')
                     ->withTimestamps();
     }
+    public function kgbRiwayats()
+    {
+        return $this->hasMany(\App\Models\KgbRiwayat::class, 'user_id');
+    }
+
+    /**
+     * Relasi ke riwayat KGB paling baru
+     */
+    public function kgbTerbaru()
+    {
+        return $this->hasOne(\App\Models\KgbRiwayat::class, 'user_id')->latestOfMany('tmt_baru');
+    }
 }

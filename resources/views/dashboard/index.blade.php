@@ -61,9 +61,78 @@
     </section>
     @endif
 
-    <!-- ================= SMART ALERTS ================= -->
-    @if(!$hasFilledSkp || $pendingPpdCount > 0)
+    <!-- ================= SMART ALERTS & REMINDER ================= -->
+    @if(!$hasFilledSkp || $pendingPpdCount > 0 || (isset($myKgbAlert) && $myKgbAlert) || (isset($adminKgbAlerts) && $adminKgbAlerts->count() > 0))
     <section class="space-y-3">
+
+        {{-- 1. NOTIFIKASI PERSONAL PEGAWAI: JADWAL KGB SUDAH DEKAT --}}
+        @if(isset($myKgbAlert) && $myKgbAlert)
+        @php
+            $sisa = $myKgbAlert->sisa_hari;
+            $isUrgent = $sisa <= 30;
+        @endphp
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border {{ $isUrgent ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50' }} shadow-sm">
+            <div class="flex items-start gap-3">
+                <span class="p-2 rounded-full {{ $isUrgent ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600' }}">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </span>
+                <div>
+                    <h3 class="font-bold {{ $isUrgent ? 'text-red-900' : 'text-amber-900' }}">
+                        Waktunya Pengajuan Kenaikan Gaji Berkala (KGB)!
+                    </h3>
+                    <p class="text-sm {{ $isUrgent ? 'text-red-700' : 'text-amber-800' }} mt-0.5">
+                        TMT KGB Anda berikutnya jatuh pada <b>{{ $myKgbAlert->tmt_baru ? $myKgbAlert->tmt_baru->translatedFormat('d F Y') : '-' }}</b> 
+                        <span class="font-bold">({{ $sisa < 0 ? abs($sisa).' hari terlewat' : ($sisa === 0 ? 'Hari ini!' : $sisa.' hari lagi') }})</span>. 
+                        Estimasi gaji baru: <b>Rp {{ number_format($myKgbAlert->gaji_pokok_baru, 0, ',', '.') }}</b>.
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <a href="{{ route('sigap-kgb.export-pdf', $myKgbAlert->id) }}" target="_blank"
+                   class="px-3.5 py-2 border border-maroon text-maroon hover:bg-maroon hover:text-white text-xs font-semibold rounded-lg transition-colors shadow-2xs">
+                    Cetak Usulan PDF
+                </a>
+                <a href="{{ route('sigap-kgb.saya') }}"
+                   class="px-3.5 py-2 bg-maroon hover:bg-maroon-800 text-white text-xs font-semibold rounded-lg transition-colors shadow-2xs">
+                    Buka KGB Saya
+                </a>
+            </div>
+        </div>
+        @endif
+
+        {{-- 2. NOTIFIKASI REKAP UNTUK ADMIN / PENGELOLA KEPEGAWAIAN --}}
+        @hasanyrole('admin|superadmin|verif_kgb')
+        @if(isset($adminKgbAlerts) && $adminKgbAlerts->count() > 0)
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 shadow-sm">
+            <div class="flex items-start gap-3">
+                <span class="p-2 rounded-full bg-amber-100 text-amber-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                    </svg>
+                </span>
+                <div>
+                    <h3 class="font-bold text-amber-900 flex items-center gap-2">
+                        <span>Peringatan Jatuh Tempo KGB ASN & PPPK</span>
+                        <span class="px-2 py-0.5 rounded-full bg-amber-200 text-amber-800 text-xs font-black">
+                            {{ $adminKgbAlerts->count() }} Pegawai
+                        </span>
+                    </h3>
+                    <p class="text-sm text-amber-800 mt-0.5">
+                        Terdapat <b>{{ $adminKgbAlerts->count() }} pegawai</b> yang telah memasuki masa pengusulan Kenaikan Gaji Berkala (&le; 60 hari menuju TMT). Segera lakukan verifikasi berkas usulan ke BKPSDM.
+                    </p>
+                </div>
+            </div>
+            <a href="{{ route('sigap-kgb.index', ['filter' => 'segera']) }}"
+               class="shrink-0 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm">
+                Lihat Daftar Pegawai &rarr;
+            </a>
+        </div>
+        @endif
+        @endhasanyrole
+
+        {{-- 3. NOTIFIKASI SKP --}}
         @if(!$hasFilledSkp)
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-rose-200 bg-rose-50 shadow-sm">
             <div class="flex items-start gap-3">
@@ -81,6 +150,7 @@
         </div>
         @endif
 
+        {{-- 4. NOTIFIKASI PPD --}}
         @if($pendingPpdCount > 0)
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-amber-200 bg-amber-50 shadow-sm">
             <div class="flex items-start gap-3">
@@ -244,20 +314,16 @@
             {{-- Grid Pegawai Ultah --}}
             <div class="my-2 grid {{ $todayBirthdays->count() > 1 ? 'grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-16' : 'grid-cols-1' }} mt-12 mb-6">
                 @foreach($todayBirthdays as $tb)
-                <!-- PERBAIKAN: pt-20 untuk memberi ruang yang cukup agar nama tidak tertimpa foto -->
                 <div class="pt-24 pb-6 px-4 rounded-3xl bg-gradient-to-b from-white to-amber-50/50 border border-amber-100/50 shadow-xs flex flex-col items-center justify-center relative">
                     
                     {{-- FOTO RAKSASA MELAYANG --}}
-                    <!-- PERBAIKAN: Posisi -top-16 dinaikkan menjadi -top-20 (agar center) -->
                     <div class="absolute -top-20 left-1/2 -translate-x-1/2">
                         <div class="relative">
                             <div class="absolute inset-0 bg-amber-300 rounded-full blur-sm opacity-60 animate-pulse"></div>
-                            <!-- Ukuran Foto Diperbesar Menjadi w-36 h-36 -->
                             <img src="{{ $tb->photo }}" alt="{{ $tb->name }}" class="relative w-36 h-36 rounded-full object-cover ring-4 ring-amber-300 border-4 border-white shadow-xl">
                         </div>
                     </div>
                     
-                    <!-- Nama diletakkan di bawah foto (Aman karena pt-24 di kontainer induk) -->
                     <h2 class="text-xl sm:text-2xl font-black text-gray-900 leading-tight">{{ $tb->name }}</h2>
                     <p class="text-xs text-gray-600 font-bold truncate max-w-[16rem] mt-1">{{ $tb->jabatan }}</p>
                     

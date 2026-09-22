@@ -10,6 +10,7 @@ use App\Models\Inovasi;
 use App\Models\Riset;
 use App\Models\PpdKegiatan;
 use App\Models\PegawaiProfile;
+use App\Models\KgbRiwayat; // <-- TAMBAHKAN MODEL KGB
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -32,10 +33,12 @@ class DashboardController extends Controller
         $totalPpd     = PpdKegiatan::count();
 
         // ==========================================
-        // 2. SMART ALERTS (Khusus Role 'employee')
+        // 2. SMART ALERTS (SKP, PPD, & KGB)
         // ==========================================
         $hasFilledSkp = true;
         $pendingPpdCount = 0;
+        $myKgbAlert = null;       // Alert personal untuk role employee
+        $adminKgbAlerts = collect(); // Alert rekap untuk admin/verifikator
 
         if ($user->hasRole('employee')) {
             $currentMonth = date('Y-m');
@@ -48,6 +51,25 @@ class DashboardController extends Controller
                                 })
                                 ->whereIn('status', ['draft', 'proses'])
                                 ->count();
+
+            // Cek KGB Pribadi Pegawai (Jika sisa hari <= 60 hari & belum berstatus selesai)
+            $latestKgb = KgbRiwayat::where('user_id', $user->id)
+                ->where('status', '!=', 'selesai')
+                ->orderBy('tmt_baru', 'asc')
+                ->first();
+
+            if ($latestKgb && $latestKgb->sisa_hari <= 60) {
+                $myKgbAlert = $latestKgb;
+            }
+        }
+
+        // Cek Rekap KGB untuk Pengelola Kepegawaian (Admin / Superadmin / Verif KGB)
+        if ($user->hasAnyRole(['admin', 'superadmin', 'verif_kgb'])) {
+            $adminKgbAlerts = KgbRiwayat::with('user')
+                ->where('status', '!=', 'selesai')
+                ->whereDate('tmt_baru', '<=', Carbon::now()->addDays(60))
+                ->orderBy('tmt_baru', 'asc')
+                ->get();
         }
 
         // ==========================================
@@ -56,7 +78,6 @@ class DashboardController extends Controller
         $today = Carbon::today();
         $todayMonthDay = $today->format('m-d');
 
-        // Ambil semua pegawai yang punya data tanggal lahir
         $profiles = PegawaiProfile::with('user')
             ->whereNotNull('tanggal_lahir')
             ->get();
@@ -68,22 +89,15 @@ class DashboardController extends Controller
             if (!$profile->tanggal_lahir || !$profile->user) continue;
 
             $birthdate = Carbon::parse($profile->tanggal_lahir);
-            
-            // Hitung tanggal ultah di tahun berjalan
             $birthdayThisYear = Carbon::createFromDate($today->year, $birthdate->month, $birthdate->day)->startOfDay();
 
-            // Jika ultah tahun ini sudah lewat (misal kemarin), hitung ultah tahun depan
             if ($birthdayThisYear->isPast() && !$birthdayThisYear->isToday()) {
                 $birthdayThisYear->addYear();
             }
 
-            // Hitung selisih hari dari hari ini ke tanggal ultah
             $diffDays = (int) $today->diffInDays($birthdayThisYear, false);
-
-            // Hitung umur yang akan/sedang dicapai
             $age = $birthdate->diffInYears($birthdayThisYear);
 
-            // Jika ultah dalam kurun H-0 s.d. H-3 (0, 1, 2, atau 3 hari ke depan)
             if ($diffDays >= 0 && $diffDays <= 3) {
                 $item = (object) [
                     'user_id'       => $profile->user_id,
@@ -94,7 +108,7 @@ class DashboardController extends Controller
                     'tanggal_lahir' => $birthdate->translatedFormat('d F Y'),
                     'birth_day_month' => $birthdate->translatedFormat('d F'),
                     'age'           => $age,
-                    'diff_days'     => $diffDays, // 0 = Hari H, 1 = Besok, dst.
+                    'diff_days'     => $diffDays,
                 ];
 
                 if ($diffDays === 0) {
@@ -105,7 +119,6 @@ class DashboardController extends Controller
             }
         }
 
-        // Urutkan berdasarkan yang paling dekat ulang tahunnya
         $upcomingBirthdays = $upcomingBirthdays->sortBy('diff_days')->values();
 
         // ==========================================
@@ -144,6 +157,7 @@ class DashboardController extends Controller
             'totalPegawai', 'totalDokumen', 'totalSkp', 
             'totalInovasi', 'totalRiset', 'totalPpd',
             'hasFilledSkp', 'pendingPpdCount',
+            'myKgbAlert', 'adminKgbAlerts', // <-- VARIABEL KGB DIOPER KE VIEW
             'trendLabels', 'trendInovasi', 'trendDokumen',
             'stageLabels', 'stageData',
             'upcomingBirthdays', 'todayBirthdays'

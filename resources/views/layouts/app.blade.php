@@ -431,6 +431,68 @@ textarea::placeholder {
         </div>
       @endhasanyrole
 
+      @hasanyrole('admin|superadmin|verif_kgb|employee')
+          <!-- SECTION HEADER: SIGAP KGB -->
+          <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">
+            SIGAP KGB
+          </div>
+
+          <!-- Toggle Button SIGAP KGB -->
+          <button id="kgbToggle"
+                  class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-left transition-colors">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <span class="font-medium">SIGAP KGB</span>
+            <svg id="kgbCaret"
+                class="w-4 h-4 ml-auto transition-transform duration-200"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-width="2" d="M6 9l6 6 6-6"/>
+            </svg>
+          </button>
+
+          <!-- Dropdown Sub-menu KGB -->
+          <div id="kgbMenu" class="ml-3 mt-1 space-y-1 hidden">
+
+            {{-- 1. KGB SAYA (Bisa diakses oleh Pegawai / Employee & Admin) --}}
+            @hasanyrole('employee|admin|superadmin|verif_kgb')
+            <a href="{{ route('sigap-kgb.saya') }}"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+              {{ request()->routeIs('sigap-kgb.saya') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+              </svg>
+              KGB Saya
+            </a>
+            @endhasanyrole
+
+            {{-- 2. MONITORING KGB (Hanya Admin, Superadmin, atau Verifikator KGB) --}}
+            @hasanyrole('admin|superadmin|verif_kgb')
+            <a href="{{ route('sigap-kgb.index') }}"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+              {{ request()->routeIs('sigap-kgb.index*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+              </svg>
+              Monitoring KGB
+            </a>
+            @endhasanyrole
+
+            {{-- 3. TABEL ACUAN GAJI (Hanya Admin, Superadmin, atau Verifikator KGB) --}}
+            @hasanyrole('admin|superadmin|verif_kgb')
+            <a href="{{ route('sigap-kgb.master-gaji.index') }}"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+              {{ request()->routeIs('sigap-kgb.master-gaji*') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="12" cy="12" r="3" stroke-width="2"/>
+                <path stroke-width="2" d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+              </svg>
+              Tabel Acuan Gaji
+            </a>
+            @endhasanyrole
+
+          </div>
+        @endhasanyrole
       @hasanyrole('admin|researcher')
         <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">SIGAP RISET</div>
 
@@ -1433,6 +1495,40 @@ function globalSearch() {
           ]
         },
         @endif
+        // 1. SIGAP SURAT
+        @if($isAdmin || $u->hasAnyRole(['verif_kgb', 'employee']))
+          {
+            id: 'kgb-group',
+            title: 'SIGAP KGB',
+            description: 'Jadwal, Countdown, dan Usulan Kenaikan Gaji Berkala',
+            icon: '💰',
+            isParent: true,
+            subMenus: [
+              @if($isAdmin || $u->hasRole('employee'))
+              { 
+                title: 'KGB Saya', 
+                description: 'Countdown TMT KGB dan cetak berkas usulan pribadi', 
+                url: "{{ route('sigap-kgb.saya') }}", 
+                icon: '👤' 
+              },
+              @endif
+              @if($isAdmin || $u->hasRole('verif_kgb'))
+              { 
+                title: 'Monitoring KGB', 
+                description: 'Pantau jatuh tempo KGB seluruh pegawai BRIDA', 
+                url: "{{ route('sigap-kgb.index') }}", 
+                icon: '📋' 
+              },
+              { 
+                title: 'Tabel Acuan Gaji', 
+                description: 'Master data nominal gaji pokok ASN & PPPK', 
+                url: "{{ route('sigap-kgb.master-gaji.index') }}", 
+                icon: '⚙️' 
+              },
+              @endif
+            ]
+          },
+          @endif
         @if($isAdmin || $u->hasRole('verif_surat'))
         {
           id: 'surat-group',
@@ -1879,6 +1975,27 @@ document.addEventListener("DOMContentLoaded", function () {
     localStorage.setItem(SURAT_KEY, willOpen ? '1' : '0');
   });
 });
+</script>
+<script>
+  const kgbToggle = document.getElementById('kgbToggle');
+const kgbMenu   = document.getElementById('kgbMenu');
+const kgbCaret  = document.getElementById('kgbCaret');
+
+if (kgbToggle) {
+  const KGB_KEY = 'sb_kgb_open';
+  const isKgbOpen = localStorage.getItem(KGB_KEY) === '1' || window.location.pathname.includes('/sigap-kgb');
+  if (isKgbOpen && kgbMenu && kgbCaret) {
+    kgbMenu.classList.remove('hidden');
+    kgbCaret.classList.add('rotate-180');
+  }
+
+  kgbToggle.addEventListener('click', () => {
+    const willOpen = kgbMenu.classList.contains('hidden');
+    kgbMenu.classList.toggle('hidden');
+    kgbCaret.classList.toggle('rotate-180', willOpen);
+    localStorage.setItem(KGB_KEY, willOpen ? '1' : '0');
+  });
+}
 </script>
 </body>
 </html>

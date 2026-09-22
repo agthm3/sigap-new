@@ -11,6 +11,7 @@ use App\Http\Controllers\FolderController;
 use App\Http\Controllers\FormatController;
 use App\Http\Controllers\ImaChunkUploadController;
 use App\Http\Controllers\InovasiReviewController;
+use App\Http\Controllers\KgbMasterGajiController;
 use App\Http\Controllers\MagangController;
 use App\Http\Controllers\page\HomeController;
 use App\Http\Controllers\page\PegawaiPublicController as PagePegawaiPublicController;
@@ -54,7 +55,9 @@ use App\Http\Controllers\Surat\SuratKeluarController;
 use App\Http\Controllers\Surat\SuratMasukController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\KgbController;
 use Rap2hpoutre\LaravelLogViewer\LogViewerController;
+
 
 
 Route::middleware('auth')->group(function () {
@@ -968,6 +971,39 @@ Route::middleware(['auth'])->group(function () {
             Route::get('masuk/{id}/disposisi', [SuratMasukController::class, 'cetakDisposisi'])->name('masuk.disposisi');
             Route::resource('masuk', SuratMasukController::class);
         });
+    });
+
+    Route::prefix('sigap-kgb')->name('sigap-kgb.')->group(function () {
+
+        // 1. Akses Pegawai & Admin (KGB Saya & Export PDF)
+        Route::middleware(['role:employee|admin|superadmin|verif_kgb'])->group(function () {
+            Route::get('/saya', [KgbController::class, 'saya'])->name('saya');
+            Route::get('/export-pdf/{id}', [KgbController::class, 'exportPdf'])->name('export-pdf');
+        });
+
+        // 2. Akses Khusus Pengelola (Admin, Superadmin, Verif KGB)
+        Route::middleware(['role:admin|superadmin|verif_kgb'])->group(function () {
+            Route::get('/', [KgbController::class, 'index'])->name('index');
+            Route::get('/create', [KgbController::class, 'create'])->name('create');
+            Route::post('/', [KgbController::class, 'store'])->name('store');
+
+            // PENTING: Grup master-gaji HARUS diletakkan DI ATAS route /{id}
+        Route::prefix('master-gaji')->name('master-gaji.')->group(function () {
+            Route::get('/', [KgbMasterGajiController::class, 'index'])->name('index');
+            Route::get('/cetak-pdf', [KgbMasterGajiController::class, 'cetakPdf'])->name('cetak-pdf'); // <-- RUTE CETAK LANDSCAPE
+            Route::post('/', [KgbMasterGajiController::class, 'store'])->name('store');
+            Route::put('/{id}', [KgbMasterGajiController::class, 'update'])->name('update');
+            Route::delete('/{id}', [KgbMasterGajiController::class, 'destroy'])->name('destroy');
+        });
+
+            // Route dinamis dengan /{id} WAJIB ditaruh paling bawah
+            Route::get('/{id}', [KgbController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [KgbController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [KgbController::class, 'update'])->name('update');
+            Route::post('/{id}/status', [KgbController::class, 'updateStatus'])->name('status');
+            Route::delete('/{id}', [KgbController::class, 'destroy'])->name('destroy');
+        });
+
     });
 
 });
