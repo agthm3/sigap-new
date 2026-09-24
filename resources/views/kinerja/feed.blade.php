@@ -60,12 +60,13 @@
                 <input type="text" x-model="dateText" @input="debounceRender" class="mt-1 w-full rounded-lg border-gray-300 p-2.5 uppercase font-bold shadow-sm">
             </label>
 
+            <!-- Judul (Max 140 karakter untuk 3 baris fleksibel) -->
             <label class="block">
                 <div class="flex justify-between items-center">
-                    <span class="text-sm font-semibold text-gray-700">Judul Feed (Slide 1)</span>
-                    <span class="text-xs font-semibold text-gray-400" x-text="(selectedTitle || '').length + '/90'"></span>
+                    <span class="text-sm font-semibold text-gray-700">Judul Feed (Slide 1 - Max 3 Baris)</span>
+                    <span class="text-xs font-semibold text-gray-400" x-text="(selectedTitle || '').length + '/140'"></span>
                 </div>
-                <textarea x-model="selectedTitle" @input="debounceRender" rows="2" maxlength="90" class="mt-1 w-full rounded-lg border-gray-300 p-2.5 font-semibold shadow-sm focus:ring-maroon focus:border-maroon"></textarea>
+                <textarea x-model="selectedTitle" @input="debounceRender" rows="3" maxlength="140" class="mt-1 w-full rounded-lg border-gray-300 p-2.5 font-semibold shadow-sm focus:ring-maroon focus:border-maroon" placeholder="Judul kegiatan bisa sampai 3 baris..."></textarea>
             </label>
 
             <label class="block">
@@ -245,9 +246,8 @@ function feedGenerator() {
         coverImage: null,
         extraImages: [], 
         
-        // State Offset Posisi Foto
-        coverOffset: { x: 0, y: -15 }, // Default fokus atas sedikit (-15%)
-        extraOffsets: [], // Array of { x: 0, y: 0 } untuk masing-masing extra image
+        coverOffset: { x: 0, y: -15 },
+        extraOffsets: [],
 
         logoPemkot: null,
         logoBrida: null,
@@ -274,7 +274,6 @@ function feedGenerator() {
             return 1 + Math.ceil(this.extraImages.length / 2);
         },
 
-        // Pergeseran Offset Cover
         shiftCover(deltaX, deltaY) {
             this.coverOffset.x = Math.max(-50, Math.min(50, this.coverOffset.x + deltaX));
             this.coverOffset.y = Math.max(-50, Math.min(50, this.coverOffset.y + deltaY));
@@ -286,7 +285,6 @@ function feedGenerator() {
             this.renderSlide1();
         },
 
-        // Pergeseran Offset Extra Documentation Images
         shiftExtra(idx, deltaX, deltaY) {
             if (!this.extraOffsets[idx]) {
                 this.extraOffsets[idx] = { x: 0, y: 0 };
@@ -294,7 +292,7 @@ function feedGenerator() {
             this.extraOffsets[idx].x = Math.max(-50, Math.min(50, this.extraOffsets[idx].x + deltaX));
             this.extraOffsets[idx].y = Math.max(-50, Math.min(50, this.extraOffsets[idx].y + deltaY));
             
-            const slideIdx = Math.floor(idx / 2) + 1; // Slide ke-N
+            const slideIdx = Math.floor(idx / 2) + 1;
             this.renderExtraSlide(slideIdx);
         },
 
@@ -339,7 +337,7 @@ function feedGenerator() {
                 this.dateText = (selected.date || '').toUpperCase();
                 
                 const rawTitle = selected.title || '';
-                this.selectedTitle = rawTitle.length > 90 ? rawTitle.substring(0, 87) + '...' : rawTitle;
+                this.selectedTitle = rawTitle.length > 140 ? rawTitle.substring(0, 137) + '...' : rawTitle;
 
                 const rawDesc = selected.description || '';
                 this.description = rawDesc.length > 250 ? rawDesc.substring(0, 247) + '...' : rawDesc;
@@ -652,32 +650,39 @@ function feedGenerator() {
             this.drawPattern(ctx, 1);
             this.drawHeaderLogo(ctx, 45);
 
-            // Foto Cover dengan Offset
-            await this.drawPhoto(ctx, this.coverImage, 60, 150, 960, 680, this.coverOffset);
+            // Foto Cover (Tinggi 650px)
+            await this.drawPhoto(ctx, this.coverImage, 60, 145, 960, 650, this.coverOffset);
 
+            // Box Informasi (Tinggi 320px)
             const infoBoxW = 960;
-            const infoBoxH = 290;
+            const infoBoxH = 320;
             const infoBoxX = 60;
-            const infoBoxY = 850;
+            const infoBoxY = 820;
 
             this.drawRoundedRect(ctx, infoBoxX, infoBoxY, infoBoxW, infoBoxH, 26, '#ffffff', 'rgba(0,0,0,0.05)', 15);
 
+            // 1. Badge Tanggal
             const dateStr = this.dateText || 'TANGGAL KEGIATAN';
-            ctx.font = 'bold 19px Arial, Helvetica, sans-serif';
+            ctx.font = 'bold 18px Arial, Helvetica, sans-serif';
             const dateWidth = ctx.measureText(dateStr).width + 32;
-            this.drawRoundedRect(ctx, infoBoxX + 32, infoBoxY + 26, dateWidth, 38, 8, '#7a2222');
+            this.drawRoundedRect(ctx, infoBoxX + 32, infoBoxY + 22, dateWidth, 36, 8, '#7a2222');
             ctx.fillStyle = '#ffffff';
-            ctx.fillText(dateStr, infoBoxX + 48, infoBoxY + 52);
+            ctx.fillText(dateStr, infoBoxX + 48, infoBoxY + 46);
 
+            // 2. Judul Kegiatan (Tidak CAPSLOCK, font 28px, max 3 baris)
             ctx.fillStyle = '#002B4C';
-            ctx.font = '900 30px Arial, Helvetica, sans-serif';
-            const titleStr = (this.selectedTitle || '').trim() || 'JUDUL / NAMA KEGIATAN AKAN TAMPIL DISINI';
-            this.wrapText(ctx, titleStr.toUpperCase(), infoBoxX + 32, infoBoxY + 105, infoBoxW - 64, 38, 2);
+            ctx.font = '900 28px Arial, Helvetica, sans-serif';
+            const titleStr = (this.selectedTitle || '').trim() || 'Judul / Nama Kegiatan Akan Tampil Disini';
+            const titleResult = this.wrapText(ctx, titleStr, infoBoxX + 32, infoBoxY + 95, infoBoxW - 64, 36, 3);
+
+            // 3. Deskripsi Kegiatan (Jarak dinamis adaptif mengikuti jumlah baris judul)
+            const descStartY = titleResult.lastY + 28;
+            const descMaxLines = titleResult.lineCount >= 3 ? 2 : 3;
 
             ctx.fillStyle = '#374151';
             ctx.font = '500 20px Arial, Helvetica, sans-serif';
             const descStr = (this.description || '').trim() || 'Deskripsi kegiatan akan ditampilkan di area ini.';
-            this.wrapText(ctx, descStr, infoBoxX + 32, infoBoxY + 190, infoBoxW - 64, 28, 3);
+            this.wrapText(ctx, descStr, infoBoxX + 32, descStartY, infoBoxW - 64, 26, descMaxLines);
 
             const isLast = (this.extraImages.length === 0);
             this.drawFooter(ctx, 1180, isLast);
@@ -704,10 +709,10 @@ function feedGenerator() {
             const offset2 = this.extraOffsets[imgIndex2] || { x: 0, y: 0 };
 
             if (img1 && !img2) {
-                await this.drawPhoto(ctx, img1, 60, 150, 960, 990, offset1);
+                await this.drawPhoto(ctx, img1, 60, 145, 960, 995, offset1);
             } else if (img1 && img2) {
-                await this.drawPhoto(ctx, img1, 60, 150, 960, 480, offset1);
-                await this.drawPhoto(ctx, img2, 60, 655, 960, 480, offset2);
+                await this.drawPhoto(ctx, img1, 60, 145, 960, 485, offset1);
+                await this.drawPhoto(ctx, img2, 60, 655, 960, 485, offset2);
             }
 
             const totalSlides = this.getTotalSlides();
@@ -740,10 +745,11 @@ function feedGenerator() {
         },
 
         wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines) {
-            if (!text) return;
+            if (!text) return { lastY: y, lineCount: 0 };
             const words = text.split(/\s+/);
             let line = '';
             let currentLine = 1;
+            let currentY = y;
 
             for (let n = 0; n < words.length; n++) {
                 const testLine = line ? (line + ' ' + words[n]) : words[n];
@@ -756,21 +762,23 @@ function feedGenerator() {
                         while (ctx.measureText(truncated + '...').width > maxWidth && truncated.length > 0) {
                             truncated = truncated.slice(0, -1);
                         }
-                        ctx.fillText(truncated + '...', x, y);
-                        return;
+                        ctx.fillText(truncated + '...', x, currentY);
+                        return { lastY: currentY, lineCount: currentLine };
                     }
-                    ctx.fillText(line, x, y);
+                    ctx.fillText(line, x, currentY);
                     line = words[n];
-                    y += lineHeight;
+                    currentY += lineHeight;
                     currentLine++;
                 } else {
                     line = testLine;
                 }
             }
-            if (line) ctx.fillText(line, x, y);
+            if (line) {
+                ctx.fillText(line, x, currentY);
+            }
+            return { lastY: currentY, lineCount: currentLine };
         },
 
-        // MENGGAMBAR FOTO DENGAN KALKULASI OFFSET X DAN Y
         async drawPhoto(ctx, imgUrl, x, y, w, h, offset = { x: 0, y: 0 }) {
             ctx.save();
             this.drawRoundedRect(ctx, x, y, w, h, 24, '#e5e7eb');
@@ -795,7 +803,6 @@ function feedGenerator() {
                         baseOffsetY = y - (renderH - h) / 2;
                     }
 
-                    // Terapkan Offset Geser (x & y dalam persen)
                     const extraShiftX = (offset && offset.x) ? (w * (offset.x / 100)) : 0;
                     const extraShiftY = (offset && offset.y) ? (h * (offset.y / 100)) : 0;
 
@@ -891,4 +898,53 @@ function feedGenerator() {
     }
 }
 </script>
+
+<!-- ========================================================================= -->
+<!-- [START] FITUR SEMENTARA: POPUP SEMANGAT (Hapus blok ini jika sudah tidak dipakai) -->
+<!-- ========================================================================= -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const today = new Date().toISOString().slice(0, 10);
+    const storageKey = 'sigap_feed_cheer_' + today;
+    let accessCount = parseInt(localStorage.getItem(storageKey) || '0', 10);
+
+    // Maksimal muncul 2 kali per hari
+    if (accessCount < 2) {
+        localStorage.setItem(storageKey, (accessCount + 1).toString());
+
+        // Variasi panggilan nama (kadang tanpa nama)
+        const names = ['', 'Dew', 'Dewi', 'Dewinda Djaledje'];
+        const chosenName = names[Math.floor(Math.random() * names.length)];
+
+        // Kumpulan kata-kata penyemangat
+        const messages = [
+            'Semangat wkwk ✨',
+            'Jangan lupa istirahat dan minum air putih yang cukup (ini ai) 🌸',
+            'Kamu hebat dan sudah bekerja luar biasa hari ini, tetap senyum! (ini kata-kata ai) 😊',
+            'Semoga lancar hari ini🌟',
+            'Pelan-pelan tapi pasti, hasil karya dan usahamu selalu membanggakan (ini kata-kata ai) 💪'
+        ];
+        const chosenMessage = messages[Math.floor(Math.random() * messages.length)];
+
+        // Judul Popup
+        const titleText = chosenName ? `Semangat, ${chosenName}! ✨` : 'Semangat Hari Ini! ✨';
+
+        setTimeout(() => {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: titleText,
+                    text: chosenMessage,
+                    icon: 'info',
+                    confirmButtonText: 'Siap, Terima Kasih! (ini tombol ai)',
+                    confirmButtonColor: '#7a2222',
+                    backdrop: `rgba(0,43,76,0.25)`
+                });
+            }
+        }, 600);
+    }
+});
+</script>
+<!-- ========================================================================= -->
+<!-- [END] FITUR SEMENTARA: POPUP SEMANGAT                                      -->
+<!-- ========================================================================= -->
 @endpush
