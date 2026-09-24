@@ -24,10 +24,10 @@
         ⬇️ Download Template Excel
       </a>
 
-      <!-- TOMBOL EXPORT PDF LIST SERTIFIKAT -->
+      <!-- TOMBOL EXPORT PDF -->
       <a href="{{ route('sertifikat.exportPdf', $kegiatan->id) }}"
          target="_blank"
-         class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition">
+         class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100">
         📄 Export List ke PDF
       </a>
 
@@ -35,7 +35,9 @@
             action="{{ route('sertifikat.import') }}"
             enctype="multipart/form-data"
             class="inline">
+
         @csrf
+
         <input type="hidden"
             name="kegiatan_id"
             value="{{ $kegiatan->id }}">
@@ -48,6 +50,7 @@
               class="hidden"
               onchange="this.form.submit()">
         </label>
+
       </form>
     </div>
 
@@ -87,12 +90,12 @@
               {{ $item->nomor_sertifikat }}
             </td>
 
-            <td class="px-4 py-3 font-semibold text-gray-800">
+            <td class="px-4 py-3">
               {{ $item->nama_penerima }}
             </td>
 
             <td class="px-4 py-3">
-              {{ $item->instansi ?? '-' }}
+              {{ $item->instansi }}
             </td>
 
             <td class="px-4 py-3">
@@ -100,7 +103,7 @@
                 {{ $item->status == 'Aktif'
                 ? 'bg-emerald-50 text-emerald-700'
                 : 'bg-gray-100 text-gray-600' }}">
-                {{ $item->status ?? 'Aktif' }}
+                {{ $item->status }}
               </span>
             </td>
 
@@ -109,16 +112,15 @@
                 <!-- TOMBOL VIEW AKTIF -->
                 <a href="{{ route('sertifikat.view', $item->id) }}"
                    target="_blank"
-                   class="px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 transition inline-flex items-center gap-1">
-                   👁️ View
+                   class="px-3 py-1.5 rounded-md border hover:bg-gray-50">
+                  View
                 </a>
               </div>
             </td>
           </tr>
           @empty
           <tr>
-            <td colspan="5"
-                class="px-4 py-6 text-center text-gray-500">
+            <td colspan="5" class="px-4 py-6 text-center text-gray-500">
               Belum ada sertifikat
             </td>
           </tr>

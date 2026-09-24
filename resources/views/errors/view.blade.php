@@ -7,7 +7,7 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 </head>
@@ -44,10 +44,13 @@
 
 <script>
 @php
-    $peran =$sertifikat->kegiatan->peran_peserta ?? 'Peserta';
-    if ($peran === 'Tenaga Ahli') {$kalimatPeran = 'telah menjadi tenaga ahli pada kegiatan';
-    } elseif ($peran === 'Narasumber') {$kalimatPeran = 'telah menjadi narasumber pada kegiatan';
-    } elseif ($peran === 'Panitia') {$kalimatPeran = 'telah menjadi panitia pada kegiatan';
+    $peran = $sertifikat->kegiatan->peran_peserta ?? 'Peserta';
+    if ($peran === 'Tenaga Ahli') {
+        $kalimatPeran = 'telah menjadi tenaga ahli pada kegiatan';
+    } elseif ($peran === 'Narasumber') {
+        $kalimatPeran = 'telah menjadi narasumber pada kegiatan';
+    } elseif ($peran === 'Panitia') {
+        $kalimatPeran = 'telah menjadi panitia pada kegiatan';
     } else {
         $kalimatPeran = 'atas partisipasi dalam kegiatan';
     }
@@ -87,38 +90,25 @@ function loadImage(src) {
     });
 }
 
-// function generateQrCodeDataUrl(text) {
-//     return new Promise((resolve) => {
-//         const qrContainer = document.getElementById('hidden-qr');
-//         qrContainer.innerHTML = '';
-//         new QRCode(qrContainer, {
-//             text: text,
-//             width: 400,
-//             height: 400,
-//             correctLevel: QRCode.CorrectLevel.L
-//         });
-//         setTimeout(() => {
-//             const qrCanvas = qrContainer.querySelector('canvas');
-//             if (qrCanvas) {
-//                 resolve(qrCanvas.toDataURL("image/png"));
-//             } else {
-//                 const qrImg = qrContainer.querySelector('img');
-//                 resolve(qrImg ? qrImg.src : null);
-//             }
-//         }, 100);
-//     });
-// }
-
 function generateQrCodeDataUrl(text) {
     return new Promise((resolve) => {
-        QRCode.toDataURL(text, { width: 400, margin: 1 }, function (err, url) {
-            if (err) {
-                console.error(err);
-                resolve(null);
-            } else {
-                resolve(url);
-            }
+        const qrContainer = document.getElementById('hidden-qr');
+        qrContainer.innerHTML = '';
+        new QRCode(qrContainer, {
+            text: text,
+            width: 400,
+            height: 400,
+            correctLevel: QRCode.CorrectLevel.H
         });
+        setTimeout(() => {
+            const qrCanvas = qrContainer.querySelector('canvas');
+            if (qrCanvas) {
+                resolve(qrCanvas.toDataURL("image/png"));
+            } else {
+                const qrImg = qrContainer.querySelector('img');
+                resolve(qrImg ? qrImg.src : null);
+            }
+        }, 100);
     });
 }
 

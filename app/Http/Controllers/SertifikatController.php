@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\SertifikatImport;
 use Barryvdh\DomPDF\Facade\Pdf;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Illuminate\Support\Str;
 
 class SertifikatController extends Controller
 {
@@ -68,9 +68,7 @@ class SertifikatController extends Controller
         ));
     }
 
-    /**
-     * Tampilkan kanvas Sertifikat Digital per peserta
-     */
+    // 1. Mengaktifkan view kanvas bawaan
     public function viewSertifikat($id)
     {
         $sertifikat = SertifikatPeserta::with('kegiatan')->findOrFail($id);
@@ -78,40 +76,15 @@ class SertifikatController extends Controller
         return view('SigapSertifikat.view', compact('sertifikat'));
     }
 
-    /**
-     * Export Daftar Penerima Sertifikat ke PDF
-     */
+    // 2. Export list sertifikat ke PDF
     public function exportPdf($id)
     {
         $kegiatan = SertifikatKegiatan::with('sertifikat')->findOrFail($id);
 
-        // Path logo Pemkot dan Brida ke Base64 (agar aman di render DomPDF)
-        $logoPemkotPath = public_path('images/sertifikat/logo-pemkot.png');
-        $logoBridaPath  = public_path('images/sertifikat/logo-brida.png');
+        $pdf = Pdf::loadView('dashboard.sertifikat.pdf', compact('kegiatan'))
+                  ->setPaper('letter', 'portrait');
 
-        $logoPemkot = file_exists($logoPemkotPath) 
-            ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPemkotPath)) 
-            : null;
-
-        $logoBrida = file_exists($logoBridaPath) 
-            ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoBridaPath)) 
-            : null;
-
-        // URL Verifikasi & QR Code
-        $verifikasiUrl = route('sertifikat.show', $kegiatan->id);
-        $qrVerifikasi = base64_encode(QrCode::format('png')->size(120)->margin(0)->generate($verifikasiUrl));
-
-        $pdf = Pdf::loadView('dashboard.sertifikat.pdf', compact(
-            'kegiatan',
-            'logoPemkot',
-            'logoBrida',
-            'verifikasiUrl',
-            'qrVerifikasi'
-        ))->setPaper('letter', 'portrait');
-
-        $filename = 'Daftar_Sertifikat_' . \Str::slug($kegiatan->nama_kegiatan) . '.pdf';
-
-        return $pdf->download($filename);
+        return $pdf->download('Daftar_Sertifikat_' . Str::slug($kegiatan->nama_kegiatan) . '.pdf');
     }
 
     public function storeSertifikat(Request $request)
