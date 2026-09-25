@@ -921,6 +921,44 @@ textarea::placeholder {
         @endhasrole
       </div>
       @endhasanyrole
+      @hasanyrole('admin|verif_notulensi|employee')
+        <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">
+          SIGAP NOTULENSI
+        </div>
+
+        <!-- Toggle Button -->
+        <button id="notulensiToggle"
+                class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-left transition-colors">
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+          </svg>
+          <span class="font-medium">SIGAP Notulensi</span>
+          <svg id="notulensiCaret"
+              class="w-4 h-4 ml-auto transition-transform duration-200"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" d="M6 9l6 6 6-6"/>
+          </svg>
+        </button>
+
+        <!-- Dropdown Items -->
+        <div id="notulensiMenu" class="ml-3 mt-1 space-y-1 hidden">
+          <a href="{{ route('sigap-notulensi.index') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm {{ request()->routeIs('sigap-notulensi.index') || request()->routeIs('sigap-notulensi.show') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-width="2" d="M4 6h16M4 10h16M4 14h10M4 18h7"/>
+            </svg>
+            Daftar Notulensi
+          </a>
+
+          <a href="{{ route('sigap-notulensi.create') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm {{ request()->routeIs('sigap-notulensi.create') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Buat Notulensi Baru
+          </a>
+        </div>
+        @endhasanyrole
         <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">PENGATURAN</div>
         @hasrole('admin')
         <a href="{{ route('roles.index') }}"
@@ -1474,7 +1512,19 @@ function globalSearch() {
           $u = auth()->user();
           $isAdmin = $u->hasRole('admin');
         @endphp
-
+        @if($isAdmin || $u->hasAnyRole(['verif_notulensi', 'employee']))
+        {
+          id: 'notulensi-group',
+          title: 'SIGAP Notulensi',
+          description: 'Notula Rapat, Lembar Undangan, Presensi & Dokumentasi Kegiatan',
+          icon: '📝',
+          isParent: true,
+          subMenus: [
+            { title: 'Daftar Notulensi', description: 'Arsip dan status laporan notulensi rapat', url: "{{ route('sigap-notulensi.index') }}", icon: '📋' },
+            { title: 'Buat Notulensi Baru', description: 'Susun laporan notula baru dan export PDF', url: "{{ route('sigap-notulensi.create') }}", icon: '➕' },
+          ]
+        },
+        @endif
         // 1. SIGAP MAGANG
         @if($isAdmin || $u->hasAnyRole(['verif_magang', 'magang']))
         {
@@ -1996,6 +2046,31 @@ if (kgbToggle) {
     localStorage.setItem(KGB_KEY, willOpen ? '1' : '0');
   });
 }
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const notulensiToggle = document.getElementById('notulensiToggle');
+  const notulensiMenu   = document.getElementById('notulensiMenu');
+  const notulensiCaret  = document.getElementById('notulensiCaret');
+
+  if (!notulensiToggle) return;
+
+  const NOTULENSI_KEY = 'sb_notulensi_open';
+  const isOpenSaved   = localStorage.getItem(NOTULENSI_KEY) === '1';
+  const isOnNotulensi = window.location.pathname.includes('/sigap-notulensi');
+
+  if (isOpenSaved || isOnNotulensi) {
+    notulensiMenu?.classList.remove('hidden');
+    notulensiCaret?.classList.add('rotate-180');
+  }
+
+  notulensiToggle.addEventListener('click', () => {
+    const willOpen = notulensiMenu.classList.contains('hidden');
+    notulensiMenu.classList.toggle('hidden');
+    notulensiCaret.classList.toggle('rotate-180', willOpen);
+    localStorage.setItem(NOTULENSI_KEY, willOpen ? '1' : '0');
+  });
+});
 </script>
 </body>
 </html>

@@ -11,8 +11,10 @@ use App\Http\Controllers\FolderController;
 use App\Http\Controllers\FormatController;
 use App\Http\Controllers\ImaChunkUploadController;
 use App\Http\Controllers\InovasiReviewController;
+use App\Http\Controllers\KgbController;
 use App\Http\Controllers\KgbMasterGajiController;
 use App\Http\Controllers\MagangController;
+use App\Http\Controllers\NotulensiController;
 use App\Http\Controllers\page\HomeController;
 use App\Http\Controllers\page\PegawaiPublicController as PagePegawaiPublicController;
 use App\Http\Controllers\PegawaiProfilController;
@@ -55,7 +57,6 @@ use App\Http\Controllers\Surat\SuratKeluarController;
 use App\Http\Controllers\Surat\SuratMasukController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\KgbController;
 use Rap2hpoutre\LaravelLogViewer\LogViewerController;
 
 
@@ -1001,5 +1002,24 @@ Route::middleware(['auth'])->group(function () {
 
     });
 
+    Route::middleware(['auth'])->group(function () {
+        Route::prefix('sigap-notulensi')->name('sigap-notulensi.')->group(function () {
+            Route::group(['middleware' => ['role:admin|verif_notulensi|employee']], function () {
+                Route::get('/', [NotulensiController::class, 'index'])->name('index');
+                Route::get('/create', [NotulensiController::class, 'create'])->name('create');
+                Route::post('/', [NotulensiController::class, 'store'])->name('store');
+                Route::get('/{id}', [NotulensiController::class, 'show'])->name('show');
+                Route::get('/{id}/edit', [NotulensiController::class, 'edit'])->name('edit');
+                Route::put('/{id}', [NotulensiController::class, 'update'])->name('update');
+                Route::get('/{id}/export-pdf', [NotulensiController::class, 'exportPdf'])->name('export-pdf');
+                Route::get('/api/daftar-hadir/{kegiatanId}', [NotulensiController::class, 'getDaftarHadirData'])->name('api.daftar-hadir-data');
+            });
+
+            Route::group(['middleware' => ['role:admin|verif_notulensi']], function () {
+                Route::post('/{id}/status', [NotulensiController::class, 'updateStatus'])->name('status');
+                Route::delete('/{id}', [NotulensiController::class, 'destroy'])->name('destroy');
+            });
+        });
+    });
 });
 
