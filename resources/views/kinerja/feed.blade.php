@@ -899,51 +899,70 @@ function feedGenerator() {
 }
 </script>
 
+
 <!-- ========================================================================= -->
 <!-- [START] FITUR SEMENTARA: POPUP SEMANGAT (Hapus blok ini jika sudah tidak dipakai) -->
 <!-- ========================================================================= -->
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const today = new Date().toISOString().slice(0, 10);
-    const storageKey = 'sigap_feed_cheer_' + today;
-    let accessCount = parseInt(localStorage.getItem(storageKey) || '0', 10);
+@auth
+  @php
+      $currentUser = auth()->user();$canSeeCheer = false;
 
-    // Maksimal muncul 2 kali per hari
-    if (accessCount < 2) {
-        localStorage.setItem(storageKey, (accessCount + 1).toString());
+      // 1. Role Spatie "admin"
+      if (method_exists($currentUser, 'hasRole') && $currentUser->hasRole('admin')) {$canSeeCheer = true;
+      }
+      
+      // 2. Role Spatie "magang" dengan NIP "4523023038"
+      if (method_exists($currentUser, 'hasRole') &&$currentUser->hasRole('magang')) {
+          $nip = (string) ($currentUser->nip ?? $currentUser->nik ?? $currentUser->username ?? '');
+          if ($nip === '4523023038') {$canSeeCheer = true;
+          }
+      }
+  @endphp
 
-        // Variasi panggilan nama (kadang tanpa nama)
-        const names = ['', 'Dew', 'Dewi', 'Dewinda Djaledje'];
-        const chosenName = names[Math.floor(Math.random() * names.length)];
+  @if($canSeeCheer)
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+      const today = new Date().toISOString().slice(0, 10);
+      const userId = "{{ $currentUser->id }}";
+      const storageKey = 'sigap_feed_cheer_' + userId + '_' + today;
+      let accessCount = parseInt(localStorage.getItem(storageKey) || '0', 10);
 
-        // Kumpulan kata-kata penyemangat
-        const messages = [
+      // Maksimal muncul 2 kali per hari
+      if (accessCount < 2) {
+          localStorage.setItem(storageKey, (accessCount + 1).toString());
+
+          // Variasi nama panggilan (kadang tanpa nama)
+          const names = ['', 'Dew', 'Dewi', 'Dewinda Djaledje', 'bro','pegawai brida'];
+          const chosenName = names[Math.floor(Math.random() * names.length)];
+
+         const messages = [
             'Semangat wkwk ✨',
             'Jangan lupa istirahat dan minum air putih yang cukup (ini ai) 🌸',
             'Kamu hebat dan sudah bekerja luar biasa hari ini, tetap senyum! (ini kata-kata ai) 😊',
-            'Semoga lancar hari ini🌟',
+            'Semoga lancar hari ini🌟 ',
             'Pelan-pelan tapi pasti, hasil karya dan usahamu selalu membanggakan (ini kata-kata ai) 💪'
         ];
-        const chosenMessage = messages[Math.floor(Math.random() * messages.length)];
+          const chosenMessage = messages[Math.floor(Math.random() * messages.length)];
 
-        // Judul Popup
-        const titleText = chosenName ? `Semangat, ${chosenName}! ✨` : 'Semangat Hari Ini! ✨';
+          const titleText = chosenName ? `Semangat, ${chosenName}! ✨` : 'Semangat Hari Ini! ✨';
 
-        setTimeout(() => {
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: titleText,
-                    text: chosenMessage,
-                    icon: 'info',
-                    confirmButtonText: 'Siap, Terima Kasih! (ini tombol ai)',
-                    confirmButtonColor: '#7a2222',
-                    backdrop: `rgba(0,43,76,0.25)`
-                });
-            }
-        }, 600);
-    }
-});
-</script>
+          setTimeout(() => {
+              if (typeof Swal !== 'undefined') {
+                  Swal.fire({
+                      title: titleText,
+                      text: chosenMessage,
+                      icon: 'info',
+                      confirmButtonText: 'Siap, Terima Kasih bos',
+                      confirmButtonColor: '#7a2222',
+                      backdrop: `rgba(0,43,76,0.25)`
+                  });
+              }
+          }, 600);
+      }
+  });
+  </script>
+  @endif
+@endauth
 <!-- ========================================================================= -->
 <!-- [END] FITUR SEMENTARA: POPUP SEMANGAT                                      -->
 <!-- ========================================================================= -->
