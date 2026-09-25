@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Laporan Notulensi Rapat</title>
+    <title>Laporan Notula Rapat - {{ $notulensi->judul_acara }}</title>
     <style>
         @page {
             size: letter;
@@ -20,15 +20,141 @@
             page-break-after: always;
         }
 
-        /* Container per halaman agar posisi absolut terkunci di halaman bersangkutan */
         .page-container {
             position: relative;
-            min-height: 940px;
+            min-height: 870px;
             height: 100%;
             width: 100%;
         }
 
-        /* ---- KOP UMUM ---- */
+        /* ========================================================= */
+        /* STYLING COVER / SAMPUL DEPAN (PAS 1 HALAMAN)              */
+        /* ========================================================= */
+        .cover-container {
+            width: 100%;
+            height: 870px;
+            box-sizing: border-box;
+            border: 3px solid #7a2222;
+            padding: 6px;
+            background-color: #ffffff;
+            position: relative;
+        }
+        .cover-inner-frame {
+            border: 1.5px solid #0284c7;
+            height: 854px;
+            padding: 18px 16px 14px 16px;
+            box-sizing: border-box;
+            text-align: center;
+            position: relative;
+        }
+        .cover-logos {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+        }
+        .cover-logos td {
+            vertical-align: middle;
+        }
+        .cover-badge-sistem {
+            display: inline-block;
+            background: #e0f2fe;
+            border: 1px solid #7dd3fc;
+            color: #0369a1;
+            font-size: 8px;
+            font-weight: bold;
+            padding: 2px 10px;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        .cover-instansi {
+            font-size: 10px;
+            font-weight: bold;
+            color: #475569;
+            letter-spacing: 1px;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+        }
+        .cover-subinstansi {
+            font-size: 12.5px;
+            font-weight: 800;
+            color: #7a2222;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+        .cover-divider {
+            width: 100px;
+            height: 2.5px;
+            background-color: #7a2222;
+            margin: 0 auto 16px auto;
+        }
+        .cover-main-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: 2px;
+            margin-bottom: 4px;
+        }
+        .cover-doc-badge {
+            font-size: 10px;
+            font-weight: bold;
+            color: #0284c7;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 18px;
+        }
+        .cover-agenda-box {
+            background-color: #f8fafc;
+            border-left: 4px solid #7a2222;
+            border-right: 1px solid #e2e8f0;
+            border-top: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 12px 16px;
+            margin: 0 auto 15px auto;
+            max-width: 480px;
+            text-align: left;
+            border-radius: 4px;
+        }
+        .cover-agenda-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #1e293b;
+            line-height: 1.4;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .cover-meta-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9px;
+            line-height: 1.5;
+        }
+        .cover-meta-table td {
+            vertical-align: top;
+            padding: 1.5px 0;
+        }
+
+        .cover-footer-box {
+            position: absolute;
+            bottom: 14px;
+            left: 16px;
+            right: 16px;
+            border-top: 1px solid #cbd5e1;
+            padding-top: 10px;
+        }
+        .cover-footer-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .cover-footer-table td {
+            vertical-align: middle;
+        }
+
+        /* ========================================================= */
+        /* STYLING KOP & DOKUMEN ISI                                 */
+        /* ========================================================= */
         .kop-table {
             width: 100%;
             border-collapse: collapse;
@@ -42,7 +168,6 @@
         .subjudul-kop { font-size: 10px; margin-top: 2px; }
         .line-kop     { border-top: 2px solid #000; border-bottom: 1px solid #000; height: 2px; margin-top: 6px; margin-bottom: 12px; }
 
-        /* ---- FORMAT NOTULA RATA KIRI ---- */
         .notula-wrapper {
             text-align: left !important;
             direction: ltr !important;
@@ -60,7 +185,6 @@
             word-wrap: break-word;
         }
 
-        /* ---- TABEL DATA PRESENSI ---- */
         table.data-presensi { 
             width: 100%; 
             border-collapse: collapse; 
@@ -79,7 +203,6 @@
         }
         .ttd-img { width: 75px; height: 32px; object-fit: contain; }
 
-        /* ---- AREA PENANDATANGAN KANAN ---- */
         .ttd-pejabat-section {
             margin-top: 15px;
             width: 100%;
@@ -100,7 +223,6 @@
             margin-bottom: 4px;
             font-weight: bold;
         }
-        
         .ttd-kaban-img {
             width: 170px;
             height: 75px;
@@ -110,7 +232,6 @@
             margin-bottom: -6px;
             margin-left: -10px;
         }
-        
         .ttd-notulis-img {
             width: 130px;
             height: 55px;
@@ -118,7 +239,6 @@
             display: block;
             margin: 0;
         }
-
         .ttd-pejabat-box .nama-pejabat {
             font-weight: bold;
             font-size: 10.5px;
@@ -133,7 +253,6 @@
         }
         .clearfix::after { content: ""; display: table; clear: both; }
 
-        /* ---- FOOTER WATERMARK STICKY BAWAH KERTAS ---- */
         .footer-watermark-fixed {
             position: absolute;
             bottom: 0;
@@ -167,10 +286,33 @@
             margin-bottom: 3px;
         }
 
-        /* ---- DOKUMENTASI GRID ---- */
-        .grid-foto { width: 100%; margin-top: 12px; }
-        .foto-item { width: 48%; float: left; margin: 1%; text-align: center; }
-        .foto-item img { width: 100%; height: 260px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
+        .table-dokumentasi {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 12px;
+            table-layout: fixed;
+            margin-top: 8px;
+        }
+        .table-dokumentasi td {
+            width: 50%;
+            vertical-align: top;
+            text-align: center;
+            padding: 0;
+        }
+        .foto-container {
+            width: 100%;
+            height: 250px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #f9fafb;
+        }
+        .foto-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -181,7 +323,106 @@
     @endphp
 
     <!-- ======================================================== -->
-    <!-- HALAMAN 1: SURAT PENGANTAR / UNDANGAN KEGIATAN            -->
+    <!-- HALAMAN 1: SAMPUL RESMI (COVER NOTULA)                   -->
+    <!-- ======================================================== -->
+    <div class="cover-container">
+        <div class="cover-inner-frame">
+            
+            <table class="cover-logos">
+                <tr>
+                    <td width="20%" align="left">
+                        @if($logoPemkot)
+                            <img src="{{ $logoPemkot }}" style="width: 65px; height: auto;">
+                        @endif
+                    </td>
+                    <td width="60%" align="center">
+                        <div class="cover-badge-sistem">Sistem Informasi & Pengelolaan Administrasi</div>
+                        <div class="cover-instansi">Pemerintah Kota Makassar</div>
+                        <div class="cover-subinstansi">Badan Riset dan Inovasi Daerah</div>
+                    </td>
+                    <td width="20%" align="right">
+                        @if($logoBrida)
+                            <img src="{{ $logoBrida }}" style="width: 130px; height: auto;">
+                        @endif
+                    </td>
+                </tr>
+            </table>
+
+            <div class="cover-divider"></div>
+
+            <div class="cover-main-title">NOTULA RAPAT</div>
+            <div class="cover-doc-badge">DOKUMEN LAPORAN RESMI KEDINASAN</div>
+
+            <div class="cover-agenda-box">
+                <div class="cover-agenda-title">
+                    "{{ strtoupper($notulensi->judul_acara) }}"
+                </div>
+                <table class="cover-meta-table">
+                    <tr>
+                        <td width="115" style="color: #64748b; font-weight: bold;">Hari / Tanggal</td>
+                        <td width="10">:</td>
+                        <td style="font-weight: bold; color: #0f172a;">{{ $notulensi->hari_tanggal }}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #64748b; font-weight: bold;">Waktu</td>
+                        <td>:</td>
+                        <td style="color: #1e293b;">{{ $notulensi->waktu }}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #64748b; font-weight: bold;">Tempat</td>
+                        <td>:</td>
+                        <td style="color: #1e293b;">{{ $notulensi->tempat }}</td>
+                    </tr>
+                    @if($notulensi->nomor_surat)
+                    <tr>
+                        <td style="color: #64748b; font-weight: bold;">No. Undangan</td>
+                        <td>:</td>
+                        <td style="color: #1e293b;">{{ $notulensi->nomor_surat }}</td>
+                    </tr>
+                    @endif
+                    <tr>
+                        <td style="color: #64748b; font-weight: bold;">Pimpinan Rapat</td>
+                        <td>:</td>
+                        <td style="color: #1e293b;">{{ $notulensi->pimpinan_rapat ?: $namaKaban }}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #64748b; font-weight: bold;">Notulis</td>
+                        <td>:</td>
+                        <td style="color: #1e293b;">{{ $notulensi->notulis_nama ?: ($notulensi->creator->name ?? 'Staf') }}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="cover-footer-box">
+                <table class="cover-footer-table">
+                    <tr>
+                        <td width="78%" align="left">
+                            <div style="display: inline-block; background: #fdf2f2; border: 1px solid #fecaca; color: #991b1b; font-size: 8px; font-weight: bold; padding: 2px 7px; border-radius: 4px; margin-bottom: 4px;">
+                                🔒 VERIFIKASI DIGITAL SIGAP NOTULENSI
+                            </div>
+                            <div style="font-size: 8.5px; color: #334155; line-height: 1.4;">
+                                Dokumen ini di-generate, dikelola, dan diarsipkan secara terpusat melalui modul <strong>SIGAP NOTULENSI</strong> BRIDA Kota Makassar.
+                            </div>
+                            <div style="font-size: 7.5px; color: #64748b; margin-top: 3px;">
+                                Scan QR code di samping untuk melihat & mengunduh berkas laporan sah ini secara langsung.
+                            </div>
+                        </td>
+                        <td width="22%" align="right">
+                            @if(!empty($qrVerifikasi))
+                                <img src="data:image/svg+xml;base64,{{ $qrVerifikasi }}" style="width: 58px; height: 58px; border: 1px solid #cbd5e1; padding: 2px; border-radius: 4px; background: #fff;" alt="QR Link PDF">
+                            @endif
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- ======================================================== -->
+    <!-- HALAMAN 2: SURAT PENGANTAR / UNDANGAN KEGIATAN            -->
     <!-- ======================================================== -->
     <table class="kop-table">
         <tr>
@@ -258,7 +499,7 @@
         <p style="margin-top: 15px;">Demikian surat ini disampaikan untuk menjadi perhatian dan dapat dipergunakan sebagaimana mestinya.</p>
     </div>
 
-    <!-- Tanda Tangan Kaban (Halaman 1) -->
+    <!-- Tanda Tangan Kaban (Halaman Surat) -->
     <div class="ttd-pejabat-section clearfix" style="margin-top: 25px;">
         <div class="ttd-pejabat-box">
             <div class="ttd-jabatan">{{ strtoupper($jabatanKaban) }},</div>
@@ -282,7 +523,7 @@
     <div class="page-break"></div>
 
     <!-- ======================================================== -->
-    <!-- HALAMAN 2: LEMBAR NOTULA RAPAT (DENGAN FOOTER STICKY)     -->
+    <!-- HALAMAN 3: LEMBAR NOTULA RAPAT (DENGAN FOOTER STICKY)     -->
     <!-- ======================================================== -->
     <div class="page-container">
         
@@ -341,7 +582,7 @@
             </div>
         </div>
 
-        <!-- Tanda Tangan Notulis (Halaman 2) -->
+        <!-- Tanda Tangan Notulis (Halaman Notula) -->
         <div class="ttd-pejabat-section clearfix" style="margin-top: 25px;">
             <div class="ttd-pejabat-box">
                 <div class="ttd-tempat">Makassar, {{ optional($notulensi->tanggal_surat)->translatedFormat('d F Y') ?: date('d F Y') }}</div>
@@ -358,7 +599,7 @@
             </div>
         </div>
 
-        <!-- FOOTER WATERMARK RESMI STICKY DI BAWAH KERTAS -->
+        <!-- FOOTER WATERMARK STICKY DI BAWAH KERTAS (HALAMAN NOTULA) -->
         <div class="footer-watermark-fixed">
             <table class="footer-inner">
                 <tr>
@@ -387,7 +628,7 @@
     <div class="page-break"></div>
 
     <!-- ======================================================== -->
-    <!-- HALAMAN 3: LEMBAR DAFTAR HADIR (PERSIS FORMAT ASLI)       -->
+    <!-- HALAMAN 4: LEMBAR DAFTAR HADIR (PERSIS FORMAT ASLI)       -->
     <!-- ======================================================== -->
     <table class="kop-table">
         <tr>
@@ -453,7 +694,7 @@
         </tbody>
     </table>
 
-    <!-- Tanda Tangan Kaban (Halaman 3) -->
+    <!-- Tanda Tangan Kaban (Halaman Presensi) -->
     <div class="ttd-pejabat-section clearfix">
         <div class="ttd-pejabat-box">
             <div class="ttd-tempat">Makassar, {{ optional($notulensi->tanggal_surat)->translatedFormat('d F Y') ?: date('d F Y') }}</div>
@@ -475,7 +716,7 @@
         </div>
     </div>
 
-    <!-- Footer Watermark SIGAP -->
+    <!-- Footer Watermark SIGAP (Halaman Presensi) -->
     <div class="footer-watermark">
         <table class="footer-inner">
             <tr>
@@ -498,30 +739,78 @@
     <div class="page-break"></div>
 
     <!-- ======================================================== -->
-    <!-- HALAMAN 4: DOKUMENTASI FOTO RAPAT                         -->
+    <!-- HALAMAN 5: DOKUMENTASI FOTO RAPAT (DENGAN FOOTER STICKY)  -->
     <!-- ======================================================== -->
-    <div style="text-align: center; margin-bottom: 20px;">
-        <div style="font-size: 13px; font-weight: bold; text-decoration: underline;">DOKUMENTASI KEGIATAN</div>
-        <div style="font-size: 10.5px; font-weight: bold; margin-top: 3px;">{{ strtoupper($notulensi->judul_acara) }}</div>
-    </div>
+    <div class="page-container">
+        
+        <div style="text-align: center; margin-bottom: 12px;">
+            <div style="font-size: 13px; font-weight: bold; text-decoration: underline;">DOKUMENTASI KEGIATAN</div>
+            <div style="font-size: 10.5px; font-weight: bold; margin-top: 3px;">{{ strtoupper($notulensi->judul_acara) }}</div>
+        </div>
 
-    <div class="grid-foto clearfix">
-        @if(!empty($notulensi->dokumentasi_foto))
-            @foreach($notulensi->dokumentasi_foto as $foto)
-                @php
-                    $fotoPath = storage_path('app/public/' . $foto);
-                @endphp
-                @if(file_exists($fotoPath))
-                    <div class="foto-item">
-                        <img src="data:image/jpeg;base64,{{ base64_encode(file_get_contents($fotoPath)) }}">
-                    </div>
-                @endif
-            @endforeach
+        @php
+            $fotos = collect($notulensi->dokumentasi_foto ?? [])
+                ->filter(function($p) {
+                    return file_exists(storage_path('app/public/' . $p));
+                })
+                ->take(4)
+                ->values();
+
+            $fotoRows = $fotos->chunk(2);
+        @endphp
+
+        @if($fotos->isNotEmpty())
+            <table class="table-dokumentasi">
+                @foreach($fotoRows as $row)
+                    <tr>
+                        @foreach($row as $foto)
+                            @php
+                                $fotoPath = storage_path('app/public/' . $foto);
+                                $b64Foto  = base64_encode(file_get_contents($fotoPath));
+                            @endphp
+                            <td>
+                                <div class="foto-container">
+                                    <img src="data:image/jpeg;base64,{{ $b64Foto }}">
+                                </div>
+                            </td>
+                        @endforeach
+
+                        @if($row->count() === 1)
+                            <td></td>
+                        @endif
+                    </tr>
+                @endforeach
+            </table>
         @else
-            <div style="text-align: center; color: #999; padding-top: 80px;">
+            <div style="text-align: center; color: #999; padding-top: 120px; font-style: italic;">
                 Belum ada foto dokumentasi yang dilampirkan.
             </div>
         @endif
+
+        <!-- FOOTER WATERMARK RESMI STICKY DI BAWAH KERTAS (HALAMAN DOKUMENTASI) -->
+        <div class="footer-watermark-fixed">
+            <table class="footer-inner">
+                <tr>
+                    <td width="80%">
+                        <div class="sigap-badge">✔ SIGAP NOTULENSI — DOKUMEN RESMI</div>
+                        <div class="watermark-text">
+                            <strong>Dokumentasi kegiatan ini merupakan lampiran sah dari notula rapat dinas terkait.</strong><br>
+                            Sistem Informasi dan Pengelolaan Administrasi – BRIDA Kota Makassar.<br>
+                            Diarsipkan secara digital untuk kebutuhan pertanggungjawaban kinerja dan pemeriksaan berkala.
+                        </div>
+                        <div class="watermark-text" style="margin-top: 3px; font-size: 7.5px; color: #9ca3af;">
+                            ID Dokumen: NOT-{{ str_pad($notulensi->id, 5, '0', STR_PAD_LEFT) }} • Dicetak pada: {{ date('d/m/Y H:i') }} WITA
+                        </div>
+                    </td>
+                    <td width="20%" align="right">
+                        @if(!empty($qrVerifikasi))
+                            <img src="data:image/svg+xml;base64,{{ $qrVerifikasi }}" style="width: 48px; height: 48px;" alt="QR Validasi">
+                        @endif
+                    </td>
+                </tr>
+            </table>
+        </div>
+
     </div>
 
 </body>
