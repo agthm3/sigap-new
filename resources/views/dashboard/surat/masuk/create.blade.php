@@ -35,10 +35,10 @@
         <div>
           <label class="block text-xs font-semibold text-gray-700 mb-1">Tingkat / Sifat Surat *</label>
           <select name="tingkat_surat" class="w-full rounded-xl px-3.5 py-2.5 text-sm" required>
-            <option value="Biasa">Biasa</option>
+            <option value="Biasa" selected>Biasa</option>
             <option value="Penting">Penting</option>
             <option value="Segera">Segera</option>
-            <option value="Penting / Segera" selected>Penting / Segera</option>
+            <option value="Penting / Segera" >Penting / Segera</option>
             <option value="Rahasia">Rahasia</option>
           </select>
         </div>
