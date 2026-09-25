@@ -132,4 +132,39 @@ class SertifikatController extends Controller
             ->route('sigap-sertifikat.dashboard')
             ->with('success', 'Kegiatan sertifikat beserta seluruh data terkait berhasil dihapus.');
     }
+
+    /**
+     * Update data sertifikat peserta
+     */
+    public function updateSertifikat(Request $request, $id)
+    {
+        $peserta = SertifikatPeserta::findOrFail($id);
+
+        $request->validate([
+            'nomor_sertifikat' => 'required|unique:sertifikat_pesertas,nomor_sertifikat,' . $peserta->id,
+            'nama_penerima'    => 'required',
+            'status'           => 'nullable|in:Aktif,Nonaktif'
+        ]);
+
+        $peserta->update([
+            'nomor_sertifikat' => $request->nomor_sertifikat,
+            'nama_penerima'    => $request->nama_penerima,
+            'instansi'         => $request->instansi,
+            'keterangan'       => $request->keterangan,
+            'status'           => $request->status ?? $peserta->status,
+        ]);
+
+        return back()->with('success', 'Data sertifikat peserta berhasil diperbarui.');
+    }
+
+    /**
+     * Hapus satu data sertifikat peserta
+     */
+    public function destroySertifikat($id)
+    {
+        $peserta = SertifikatPeserta::findOrFail($id);
+        $peserta->delete();
+
+        return back()->with('success', 'Data sertifikat berhasil dihapus.');
+    }
 }

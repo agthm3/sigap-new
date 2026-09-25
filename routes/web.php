@@ -514,13 +514,11 @@ Route::get('/clear-route-cache', function () {
 
 Route::middleware('auth')->group(function(){
 
-Route::get('/sertifikat-kegiatan/{id}',
-[SertifikatController::class,'show'])
-->name('sertifikat.show');
+    Route::get('/sertifikat-kegiatan/{id}',[SertifikatController::class,'show'])->name('sertifikat.show');
 
-Route::post('/sertifikat/store',
-[SertifikatController::class,'storeSertifikat'])
-->name('sertifikat.store');
+    Route::post('/sertifikat/store',[SertifikatController::class,'storeSertifikat'])->name('sertifikat.store');
+    Route::put('/sertifikat/peserta/{id}', [SertifikatController::class, 'updateSertifikat'])->name('sertifikat.update');
+    Route::delete('/sertifikat/peserta/{id}', [SertifikatController::class, 'destroySertifikat'])->name('sertifikat.destroy');
 
 });
 
