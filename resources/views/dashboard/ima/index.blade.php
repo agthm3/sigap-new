@@ -26,6 +26,10 @@
             @php
                 $isVerifikator = auth()->user()->hasAnyRole(['admin', 'superadmin', 'verif_inovasi']);
                 $isAdmin = auth()->user()->hasAnyRole(['admin', 'superadmin']);
+                
+                // Cek agar HANYA tampil jika user memiliki persis 1 role saja dan role tersebut adalah 'inovator'
+                $userRoles = auth()->user()->getRoleNames();
+                $isOnlyInovator = ($userRoles->count() === 1 && $userRoles->first() === 'inovator');
             @endphp
 
             @if($isVerifikator)
@@ -193,6 +197,79 @@
                         @endif
                     </div>
                 @endforeach
+            </div>
+        </div>
+    @endif
+
+    <!-- SECTION BANTUAN & KONSULTASI (HANYA MUNCUL JIKA USER HANYA MEMILIKI 1 ROLE YAITU INOVATOR) -->
+    @if($isOnlyInovator)
+        <div class="bg-gradient-to-br from-amber-50/90 via-white to-orange-50/70 border border-amber-200/80 rounded-3xl p-5 sm:p-6 shadow-sm relative overflow-hidden">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                
+                <!-- Sisi Kiri: Deskripsi -->
+                <div class="max-w-xl">
+                    <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-[11px] font-extrabold uppercase tracking-wide mb-2">
+                        💬 Layanan Bantuan & Asistensi IMA
+                    </div>
+                    <h3 class="text-base sm:text-lg font-extrabold text-gray-900 leading-snug">
+                        Butuh Bimbingan Pengisian atau Mengalami Kendala Teknis?
+                    </h3>
+                    <p class="text-xs sm:text-[13px] text-gray-600 mt-1 leading-relaxed">
+                        Jika ada hal yang ingin ditanyakan seputar substansi indikator dan inputan IMA, silakan berkonsultasi dengan <strong>Fasilitator Inovasi</strong>. Jika mengalami kendala akun, error, atau kendala sistem, hubungi <strong>Bantuan Teknis</strong>.
+                    </p>
+                </div>
+
+                <!-- Sisi Kanan: Daftar Kontak WhatsApp -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 shrink-0 lg:w-[480px]">
+                    <!-- Fasilitator 1: Pak Ikrom -->
+                    <a href="https://wa.me/6285255245231?text=Halo%20Pak%20Ikrom,%20saya%20peserta%20IMA%20ingin%20berkonsultasi%20mengenai%20inputan%20inovasi." target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 p-2.5 rounded-2xl bg-white border border-gray-200/80 hover:border-amber-400 hover:shadow-md transition group">
+                        <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 group-hover:bg-amber-500 group-hover:text-white flex items-center justify-center font-bold text-xs shrink-0 transition-colors">
+                            PI
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-xs font-bold text-gray-900 group-hover:text-amber-800 transition truncate">Pak Ikrom</p>
+                            <p class="text-[10px] text-gray-500 truncate">Fasilitator Inovasi</p>
+                            <p class="text-[11px] font-semibold text-emerald-700 mt-0.5">0852-5524-5231</p>
+                        </div>
+                    </a>
+
+                    <!-- Fasilitator 2: Pak Budi -->
+                    <a href="https://wa.me/6282343447786?text=Halo%20Pak%20Budi,%20saya%20peserta%20IMA%20ingin%20berkonsultasi%20mengenai%20inputan%20inovasi." target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 p-2.5 rounded-2xl bg-white border border-gray-200/80 hover:border-amber-400 hover:shadow-md transition group">
+                        <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 group-hover:bg-amber-500 group-hover:text-white flex items-center justify-center font-bold text-xs shrink-0 transition-colors">
+                            PB
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-xs font-bold text-gray-900 group-hover:text-amber-800 transition truncate">Pak Budi</p>
+                            <p class="text-[10px] text-gray-500 truncate">Fasilitator Inovasi</p>
+                            <p class="text-[11px] font-semibold text-emerald-700 mt-0.5">0823-4344-7786</p>
+                        </div>
+                    </a>
+
+                    <!-- Fasilitator 3: Bu Isma -->
+                    <a href="https://wa.me/6282351592950?text=Halo%20Bu%20Isma,%20saya%20peserta%20IMA%20ingin%20berkonsultasi%20mengenai%20inputan%20inovasi." target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 p-2.5 rounded-2xl bg-white border border-gray-200/80 hover:border-amber-400 hover:shadow-md transition group">
+                        <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 group-hover:bg-amber-500 group-hover:text-white flex items-center justify-center font-bold text-xs shrink-0 transition-colors">
+                            BI
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-xs font-bold text-gray-900 group-hover:text-amber-800 transition truncate">Bu Isma</p>
+                            <p class="text-[10px] text-gray-500 truncate">Fasilitator Inovasi</p>
+                            <p class="text-[11px] font-semibold text-emerald-700 mt-0.5">0823-5159-2950</p>
+                        </div>
+                    </a>
+
+                    <!-- Kendala Teknis: Halil -->
+                    <a href="https://wa.me/6282396768528?text=Halo%20Halil,%20saya%20peserta%20IMA%20mengalami%20kendala%20teknis/akun%20pada%20website%20SIGAP." target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 p-2.5 rounded-2xl bg-orange-50/80 border border-orange-200/90 hover:border-orange-400 hover:shadow-md transition group">
+                        <div class="w-9 h-9 rounded-xl bg-orange-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                            ⚙️
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-xs font-bold text-gray-900 group-hover:text-orange-900 transition truncate">Halil</p>
+                            <p class="text-[10px] text-orange-700 font-semibold truncate">Kendala Akun & Teknis</p>
+                            <p class="text-[11px] font-semibold text-emerald-700 mt-0.5">0823-9676-8528</p>
+                        </div>
+                    </a>
+                </div>
+
             </div>
         </div>
     @endif
