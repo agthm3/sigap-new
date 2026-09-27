@@ -93,7 +93,7 @@
             <div class="grid sm:grid-cols-2 gap-4">
               <label class="block">
                 <span class="text-sm font-semibold text-gray-700">Nama Lengkap</span>
-                <input required name="name" id="nama" type="text" required class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Nama sesuai identitas">
+                <input required name="name" id="nama" type="text" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Nama sesuai identitas">
               </label>
               <label class="block">
                 <span class="text-sm font-semibold text-gray-700">NIP <span class="text-red-500 font-normal">*</span></span>
@@ -104,31 +104,31 @@
             <div class="grid sm:grid-cols-2 gap-4">
               <label class="block">
                 <span class="text-sm font-semibold text-gray-700">Email / Username</span>
-                <input required name="email" id="email" type="email" required class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="nama@brida.mks.go.id">
+                <input required name="email" id="email" type="email" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="nama@brida.mks.go.id">
               </label>
               <label class="block">
                 <span class="text-sm font-semibold text-gray-700">Unit/Bagian</span>
-                <input required name="unit" id="unit" type="text" required class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Kepegawaian / Bidang X">
+                <input required name="unit" id="unit" type="text" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Kepegawaian / Bidang X">
               </label>
             </div>
 
             <div class="grid sm:grid-cols-2 gap-4">
               <label class="block">
                 <span class="text-sm font-semibold text-gray-700">Nomor Whatsapp</span>
-                <input required name="nomor_hp" id="nomor_hp" type="text" required class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Nomor Whatsapp">
+                <input required name="nomor_hp" id="nomor_hp" type="text" class="mt-1.5 w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon" placeholder="Nomor Whatsapp">
               </label>
               <div class="grid grid-cols-2 gap-4">
                 <label class="block col-span-2 sm:col-span-1">
                   <span class="text-sm font-semibold text-gray-700">Kata Sandi</span>
                   <div class="relative mt-1.5">
-                    <input required id="pwd" name="password" type="password" required minlength="8" class="w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon pr-10" placeholder="Min. 8 karakter">
+                    <input required id="pwd" name="password" type="password" minlength="8" class="w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon pr-10" placeholder="Min. 8 karakter">
                     <button type="button" class="absolute inset-y-0 right-0 px-3 text-gray-500" onclick="togglePwd('pwd')">👁️</button>
                   </div>
                 </label>
                 <label class="block col-span-2 sm:col-span-1">
                   <span class="text-sm font-semibold text-gray-700">Konfirmasi</span>
                   <div class="relative mt-1.5">
-                    <input required id="pwd2" name="password_confirmation" type="password" required minlength="8" class="w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon pr-10" placeholder="Ulangi kata sandi">
+                    <input required id="pwd2" name="password_confirmation" type="password" minlength="8" class="w-full rounded-lg border p-2 border-gray-300 focus:border-maroon focus:ring-maroon pr-10" placeholder="Ulangi kata sandi">
                     <button type="button" class="absolute inset-y-0 right-0 px-3 text-gray-500" onclick="togglePwd('pwd2')">👁️</button>
                   </div>
                 </label>
@@ -180,9 +180,107 @@
   <!-- Footer -->
   <footer class="border-t border-gray-200">
     <div class="max-w-7xl mx-auto px-4 py-8 text-sm text-gray-600">
-      © 2025 SIGAP BRIDA • BRIDA Kota Makassar
+      © 2026 SIGAP BRIDA • BRIDA Kota Makassar
     </div>
   </footer>
+
+  <!-- ======================================================== -->
+  <!-- START: MODAL KHUSUS PESERTA IMA 2026                     -->
+  <!-- (Hapus dari sini sampai komentar END jika lomba selesai)  -->
+  <!-- ======================================================== -->
+  <div id="imaModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-gray-900/75 backdrop-blur-xs transition-opacity duration-300">
+    <div class="relative w-full max-w-lg max-h-[92dvh] flex flex-col bg-white rounded-2xl shadow-2xl border border-amber-200 overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Modal Header (Pinned / Tetap di Atas) -->
+      <div class="bg-gradient-to-r from-amber-500 via-amber-600 to-maroon px-4 py-3.5 sm:px-5 sm:py-4 text-white flex items-center justify-between shrink-0 shadow-xs">
+        <div class="flex items-center gap-2.5 sm:gap-3 min-w-0 pr-2">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+            <span class="text-lg sm:text-xl">🏆</span>
+          </div>
+          <div class="min-w-0">
+            <span class="inline-block text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full mb-0.5">Pemberitahuan Khusus</span>
+            <h3 class="font-extrabold text-sm sm:text-base leading-tight truncate">Peserta Innovative Mayor Award (IMA) 2026</h3>
+          </div>
+        </div>
+        <button type="button" onclick="closeImaModal()" class="text-white/80 hover:text-white rounded-lg p-1.5 hover:bg-white/10 transition-colors shrink-0" title="Tutup">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Modal Body (Bisa Discroll jika di Layar HP Kecil) -->
+      <div class="p-4 sm:p-6 space-y-3 sm:space-y-4 text-xs sm:text-sm text-gray-700 leading-relaxed overflow-y-auto flex-1">
+        <div class="p-3 sm:p-3.5 bg-rose-50 border-l-4 border-rose-500 rounded-r-lg text-rose-900">
+          <p class="font-bold flex items-center gap-1.5 text-xs sm:text-sm">
+            <span>⚠️</span> DILARANG MEMBUAT AKUN SENDIRI DI HALAMAN INI
+          </p>
+          <p class="text-[11px] sm:text-xs text-rose-700 mt-1 leading-normal">
+            Akun peserta IMA <strong>dibuatkan dan disiapkan oleh panitia/admin</strong>. Akun yang didaftarkan mandiri secara manual tidak akan terhubung ke sistem penilaian IMA.
+          </p>
+        </div>
+
+        <div class="space-y-2.5">
+          <p class="font-semibold text-gray-800 text-xs sm:text-sm">Ikuti langkah resmi keikutsertaan berikut:</p>
+          
+          <div class="flex items-start gap-2.5 p-2.5 sm:p-3 rounded-xl bg-gray-50 border border-gray-100">
+            <span class="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">1</span>
+            <div class="flex-1 min-w-0">
+              <p class="font-medium text-gray-800">Isi Form Pendaftaran Resmi:</p>
+              <a href="https://bit.ly/pendaftaranima2026" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 font-bold text-maroon hover:underline break-all mt-0.5 text-xs sm:text-sm">
+                https://bit.ly/pendaftaranima2026
+                <svg class="w-3.5 h-3.5 inline shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+              </a>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-2.5 p-2.5 sm:p-3 rounded-xl bg-gray-50 border border-gray-100">
+            <span class="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">2</span>
+            <div class="flex-1 min-w-0">
+              <p class="font-medium text-gray-800">Cek Akun yang Disediakan:</p>
+              <p class="text-[11px] sm:text-xs text-gray-600 mt-0.5">Setelah mengisi form di atas, daftar akun dapat dilihat di tautan akhir formulir:</p>
+              <a href="https://bit.ly/akunima2026" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 font-bold text-maroon hover:underline break-all mt-1 text-xs sm:text-sm">
+                https://bit.ly/akunima2026
+                <svg class="w-3.5 h-3.5 inline shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+              </a>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-2.5 p-2.5 sm:p-3 rounded-xl bg-emerald-50/70 border border-emerald-200">
+            <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">3</span>
+            <div class="flex-1 min-w-0">
+              <p class="font-medium text-emerald-950">Akun Tidak Ditemukan?</p>
+              <p class="text-[11px] sm:text-xs text-emerald-800 mt-0.5">Jika nama/instansi Anda belum terdaftar di tautan akun di atas, segera hubungi admin via WhatsApp:</p>
+              <a href="https://wa.me/6282396768528?text=Halo%20Admin%20SIGAP%20BRIDA,%20saya%20peserta%20IMA%202026%20ingin%20konfirmasi%20akun." target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 font-bold text-emerald-700 hover:text-emerald-900 mt-1.5 bg-white border border-emerald-300 px-3 py-1.5 rounded-lg text-xs shadow-2xs">
+                <span>💬 Chat WA Admin: 0823-9676-8528</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer (Pinned / Tetap di Bawah) -->
+      <div class="p-3 sm:p-4 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row gap-2 shrink-0">
+        <a href="https://bit.ly/pendaftaranima2026" target="_blank" rel="noopener noreferrer" class="w-full sm:flex-1 py-2.5 px-4 text-center rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md transition-colors">
+          Buka Pendaftaran IMA ↗
+        </a>
+        <button type="button" onclick="closeImaModal()" class="w-full sm:w-auto py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-100 text-gray-700 font-semibold text-xs transition-colors text-center">
+          Lanjut Registrasi Normal (Bukan Peserta IMA)
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    function closeImaModal() {
+      const modal = document.getElementById('imaModal');
+      if (modal) {
+        modal.classList.add('hidden');
+      }
+    }
+  </script>
+  <!-- ======================================================== -->
+  <!-- END: MODAL KHUSUS PESERTA IMA 2026                       -->
+  <!-- ======================================================== -->
 
   <!-- Success Modal (demo) -->
   <div id="successModal" class="fixed inset-0 z-50 hidden">
@@ -203,149 +301,146 @@
       </div>
     </div>
   </div>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<!-- Tangkap session error dari backend -->
-@if (session('sweet_error'))
-<script>
-  document.addEventListener("DOMContentLoaded", function() {
-    // Ambil detik dari session backend
-    let waitSeconds = {{ session('retry_after', 60) }};
-    let timerInterval;
 
-    Swal.fire({
-      icon: 'warning',
-      title: 'Akses Dibatasi',
-      // Gunakan tag <b> untuk tempat angka berhitung mundur
-      html: '{{ session('sweet_error') }}<br><br>Silakan coba lagi dalam <b></b> detik.',
-      timer: waitSeconds * 1000, // Konversi ke milidetik
-      timerProgressBar: true,
-      confirmButtonColor: '#7a2222',
-      confirmButtonText: 'Tutup',
-      allowOutsideClick: false, // Cegah user menutup popup sembarangan
-      
-      didOpen: () => {
-        // Ambil elemen <b> di dalam SweetAlert
-        const b = Swal.getHtmlContainer().querySelector('b');
-        timerInterval = setInterval(() => {
-          // Update angka setiap milidetik menjadi hitungan detik
-          b.textContent = Math.ceil(Swal.getTimerLeft() / 1000);
-        }, 100);
-      },
-      willClose: () => {
-        clearInterval(timerInterval);
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- Tangkap session error dari backend -->
+  @if (session('sweet_error'))
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      let waitSeconds = {{ session('retry_after', 60) }};
+      let timerInterval;
+
+      Swal.fire({
+        icon: 'warning',
+        title: 'Akses Dibatasi',
+        html: '{{ session('sweet_error') }}<br><br>Silakan coba lagi dalam <b></b> detik.',
+        timer: waitSeconds * 1000,
+        timerProgressBar: true,
+        confirmButtonColor: '#7a2222',
+        confirmButtonText: 'Tutup',
+        allowOutsideClick: false,
+        
+        didOpen: () => {
+          const b = Swal.getHtmlContainer().querySelector('b');
+          timerInterval = setInterval(() => {
+            b.textContent = Math.ceil(Swal.getTimerLeft() / 1000);
+          }, 100);
+        },
+        willClose: () => {
+          clearInterval(timerInterval);
+        }
+      });
+    });
+  </script>
+  @endif
+
+  <script>
+    // Show/Hide password
+    function togglePwd(id){
+      const el = document.getElementById(id);
+      el.type = el.type === 'password' ? 'text' : 'password';
+    }
+
+    // Password strength (sederhana)
+    const pwd = document.getElementById('pwd');
+    const pwdBar = document.getElementById('pwdBar');
+    const pwdLabel = document.getElementById('pwdLabel');
+    function scorePassword(p){
+      let s = 0;
+      if(!p) return 0;
+      if(p.length >= 8) s += 1;
+      if(/[A-Z]/.test(p)) s += 1;
+      if(/[a-z]/.test(p)) s += 1;
+      if(/[0-9]/.test(p)) s += 1;
+      return s; // 0..4
+    }
+    function renderStrength(){
+      const s = scorePassword(pwd.value);
+      const pct = (s/4)*100;
+      pwdBar.style.width = pct + '%';
+      let label = '-', col = 'bg-gray-300';
+      if(s<=1){ label='Lemah'; col='bg-rose-500'; }
+      else if(s===2){ label='Sedang'; col='bg-amber-500'; }
+      else if(s>=3){ label='Kuat'; col='bg-emerald-600'; }
+      pwdBar.className = 'h-full transition-all ' + col;
+      pwdLabel.textContent = label;
+    }
+    pwd.addEventListener('input', renderStrength);
+    renderStrength();
+
+    // Submit register (demo)
+    function submitRegister(){
+      const err = document.getElementById('formError');
+      err.classList.add('hidden');
+      err.textContent = '';
+
+      const nama = document.getElementById('nama').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const unit = document.getElementById('unit').value.trim();
+      const role = document.getElementById('role').value;
+      const p1 = document.getElementById('pwd').value;
+      const p2 = document.getElementById('pwd2').value;
+      const agree = document.getElementById('agree').checked;
+
+      // Validasi dasar
+      if(!nama || !email || !unit || !role || !p1 || !p2){
+        showError('Mohon lengkapi semua field wajib.');
+        return;
+      }
+      if(p1 !== p2){
+        showError('Konfirmasi kata sandi tidak sama.');
+        return;
+      }
+      if(scorePassword(p1) < 2){
+        showError('Kata sandi terlalu lemah. Gunakan huruf besar, kecil, dan angka.');
+        return;
+      }
+      if(!agree){
+        showError('Anda harus menyetujui Kebijakan & Syarat.');
+        return;
+      }
+
+      const users = JSON.parse(localStorage.getItem('sb_users') || '[]');
+      if(users.some(u => u.email === email)){
+        showError('Email/username sudah terdaftar.');
+        return;
+      }
+      users.push({ nama, email, unit, role, createdAt: new Date().toISOString() });
+      localStorage.setItem('sb_users', JSON.stringify(users));
+
+      localStorage.setItem('sb_auth', 'false');
+      localStorage.setItem('sb_user', email);
+
+      openSuccess();
+    }
+
+    function showError(msg){
+      const err = document.getElementById('formError');
+      err.textContent = msg;
+      err.classList.remove('hidden');
+    }
+
+    function openSuccess(){
+      document.getElementById('successModal').classList.remove('hidden');
+    }
+    function closeSuccess(){
+      document.getElementById('successModal').classList.add('hidden');
+    }
+
+    // Esc untuk tutup modal sukses & modal IMA
+    window.addEventListener('keydown', (e)=> {
+      if(e.key === 'Escape'){
+        closeSuccess();
+        closeImaModal();
       }
     });
-  });
-</script>
-@endif
-<script>
-  // Show/Hide password
-  function togglePwd(id){
-    const el = document.getElementById(id);
-    el.type = el.type === 'password' ? 'text' : 'password';
-  }
+  </script>
 
-  // Password strength (sederhana)
-  const pwd = document.getElementById('pwd');
-  const pwdBar = document.getElementById('pwdBar');
-  const pwdLabel = document.getElementById('pwdLabel');
-  function scorePassword(p){
-    let s = 0;
-    if(!p) return 0;
-    if(p.length >= 8) s += 1;
-    if(/[A-Z]/.test(p)) s += 1;
-    if(/[a-z]/.test(p)) s += 1;
-    if(/[0-9]/.test(p)) s += 1;
-    return s; // 0..4
-  }
-  function renderStrength(){
-    const s = scorePassword(pwd.value);
-    const pct = (s/4)*100;
-    pwdBar.style.width = pct + '%';
-    let label = '-', col = 'bg-gray-300';
-    if(s<=1){ label='Lemah'; col='bg-rose-500'; }
-    else if(s===2){ label='Sedang'; col='bg-amber-500'; }
-    else if(s>=3){ label='Kuat'; col='bg-emerald-600'; }
-    pwdBar.className = 'h-full transition-all ' + col;
-    pwdLabel.textContent = label;
-  }
-  pwd.addEventListener('input', renderStrength);
-  renderStrength();
-
-  // Submit register (demo)
-  function submitRegister(){
-    const err = document.getElementById('formError');
-    err.classList.add('hidden');
-    err.textContent = '';
-
-    const nama = document.getElementById('nama').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const unit = document.getElementById('unit').value.trim();
-    const role = document.getElementById('role').value;
-    const p1 = document.getElementById('pwd').value;
-    const p2 = document.getElementById('pwd2').value;
-    const agree = document.getElementById('agree').checked;
-
-    // Validasi dasar
-    if(!nama || !email || !unit || !role || !p1 || !p2){
-      showError('Mohon lengkapi semua field wajib.');
-      return;
-    }
-    if(p1 !== p2){
-      showError('Konfirmasi kata sandi tidak sama.');
-      return;
-    }
-    if(scorePassword(p1) < 2){
-      showError('Kata sandi terlalu lemah. Gunakan huruf besar, kecil, dan angka.');
-      return;
-    }
-    if(!agree){
-      showError('Anda harus menyetujui Kebijakan & Syarat.');
-      return;
-    }
-
-    // DEMO: simpan ke localStorage (di produksi: kirim ke API)
-    const users = JSON.parse(localStorage.getItem('sb_users') || '[]');
-    if(users.some(u => u.email === email)){
-      showError('Email/username sudah terdaftar.');
-      return;
-    }
-    users.push({ nama, email, unit, role, createdAt: new Date().toISOString() });
-    localStorage.setItem('sb_users', JSON.stringify(users));
-
-    // Tandai sudah punya akun (opsional)
-    localStorage.setItem('sb_auth', 'false');
-    localStorage.setItem('sb_user', email);
-
-    openSuccess();
-  }
-
-  function showError(msg){
-    const err = document.getElementById('formError');
-    err.textContent = msg;
-    err.classList.remove('hidden');
-  }
-
-  function openSuccess(){
-    document.getElementById('successModal').classList.remove('hidden');
-  }
-  function closeSuccess(){
-    document.getElementById('successModal').classList.add('hidden');
-  }
-
-  // Esc untuk tutup modal sukses
-  window.addEventListener('keydown', (e)=> {
-    if(e.key === 'Escape'){
-      closeSuccess();
-    }
-  });
-</script>
-
-<noscript>
-  <div class="max-w-7xl mx-auto px-4 py-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md mt-4">
-    JavaScript dinonaktifkan. Registrasi memerlukan JavaScript untuk validasi.
-  </div>
-</noscript>
+  <noscript>
+    <div class="max-w-7xl mx-auto px-4 py-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md mt-4">
+      JavaScript dinonaktifkan. Registrasi memerlukan JavaScript untuk validasi.
+    </div>
+  </noscript>
 
 </body>
 </html>
