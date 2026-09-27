@@ -179,6 +179,7 @@ Route::prefix('sigap-dokumen')->middleware(['auth', 'role:employee|admin'])->nam
     Route::post('/folder', [FolderController::class, 'store'])->name('folder.store');
     Route::get('/folder/{folder}', [FolderController::class, 'show'])->name('folder.show');
     Route::delete('/folder/{folder}', [App\Http\Controllers\FolderController::class, 'destroy'])->name('folder.destroy');
+    Route::post('/dokumen/folder/{id}/move', [SigapDokumenController::class, 'moveFolder'])->name('folder.move');
 
     Route::get('/shared-links', [App\Http\Controllers\FolderController::class, 'sharedLinksIndex'])->name('shared-links.index');
     

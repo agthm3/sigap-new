@@ -44,10 +44,10 @@
       <!-- Input Pencarian -->
       <div class="lg:col-span-2">
         <div class="flex items-center justify-between">
-          <label class="text-xs font-bold uppercase tracking-wider text-gray-600">Pencarian Cerdas &amp; Komprehensif</label>
+          <label class="text-xs font-bold uppercase tracking-wider text-gray-600">Pencarian Cerdas (Judul, Tag, Dll)</label>
           <span class="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            Live auto-filter
+            Deep Search
           </span>
         </div>
         <div class="relative mt-1">
@@ -61,7 +61,7 @@
                  type="search" 
                  @input.debounce.450ms="submitSearch()"
                  class="w-full rounded-lg border border-gray-300 pl-9 pr-3 p-2 text-sm focus:border-maroon focus:ring-maroon" 
-                 placeholder="Ketik judul, no. surat, instansi/mitra, tagar (#), atau rak..." 
+                 placeholder="Ketik judul, instansi/mitra, tagar (#), atau rak..." 
                  value="{{ request('q') }}">
         </div>
       </div>
@@ -97,12 +97,12 @@
       <!-- Action Button Status -->
       <div class="lg:col-span-4 flex items-center justify-between pt-1 border-t border-gray-100">
         <p class="text-[11px] text-gray-400">
-          *Mengetik kata kunci atau mengubah filter akan otomatis memfilter folder dan berkas.
+          *Pencarian otomatis difilter berdasarkan hak akses privasi Anda saat ini.
         </p>
         <div class="flex items-center gap-2">
           @if(request('q') || request('category') || request('year'))
             <a href="{{ route('sigap-dokumen.index') }}" class="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-xs font-semibold text-gray-600 transition">
-              Reset Filter x
+              Reset Filter
             </a>
           @endif
           <button type="submit" class="px-4 py-1.5 rounded-lg bg-maroon text-white hover:bg-maroon-800 transition text-xs font-semibold shadow-2xs">
@@ -114,7 +114,7 @@
   </div>
 </section>
 
-<!-- Section Folder Publik dengan Toggle Tampilan (Grid Card vs List Row) -->
+<!-- Section Folder Publik -->
 <section class="max-w-7xl mx-auto px-4 pb-6" 
          x-data="{ 
            folderView: localStorage.getItem('sigap_folder_view') || 'grid',
@@ -195,30 +195,30 @@
             @if($item->user_id === auth()->id() || auth()->user()->hasRole('admin'))
               <a href="{{ route('sigap-dokumen.folder.edit', $item) }}" 
                  class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 hover:text-maroon transition">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                </svg>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                 Edit Folder
               </a>
 
               <a href="{{ route('sigap-dokumen.folder.share', $item) }}" 
                  class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 hover:text-maroon transition">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                </svg>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
                 Bagikan Tautan
               </a>
+
+              <button type="button" 
+                      onclick="openMoveFolderModal({{ $item->id }}, '{{ addslashes($item->name) }}', '{{$item->visibility }}')"
+                      class="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 hover:text-maroon transition text-left">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+                Pindahkan Folder
+              </button>
             @endif
 
             <a href="{{ route('sigap-dokumen.folder.download-zip', $item) }}" 
                class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 hover:text-maroon transition">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
               Download ZIP
             </a>
 
-            <!-- Tombol Hapus Folder Grid di Dalam Dropdown -->
             @if($item->user_id === auth()->id() || auth()->user()->hasRole('admin'))
               <div class="border-t border-gray-100 my-1"></div>
               <form action="{{ route('sigap-dokumen.folder.destroy', $item) }}" method="POST" onsubmit="return confirm('PERINGATAN: Menghapus folder ini akan menghapus permanen seluruh subfolder dan berkas dokumen di dalamnya! Lanjutkan?');">
@@ -296,30 +296,30 @@
                 @if($item->user_id === auth()->id() || auth()->user()->hasRole('admin'))
                   <a href="{{ route('sigap-dokumen.folder.edit', $item) }}" 
                      class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 hover:text-maroon transition">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                     Edit Folder
                   </a>
 
                   <a href="{{ route('sigap-dokumen.folder.share', $item) }}" 
                      class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 hover:text-maroon transition">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                    </svg>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
                     Bagikan Tautan
                   </a>
+
+                  <button type="button" 
+                          onclick="openMoveFolderModal({{ $item->id }}, '{{ addslashes($item->name) }}', '{{$item->visibility }}')"
+                          class="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 hover:text-maroon transition text-left">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+                    Pindahkan Folder
+                  </button>
                 @endif
 
                 <a href="{{ route('sigap-dokumen.folder.download-zip', $item) }}" 
                    class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 hover:text-maroon transition">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                   Download ZIP
                 </a>
 
-                <!-- Tombol Hapus Folder List di Dalam Dropdown -->
                 @if($item->user_id === auth()->id() || auth()->user()->hasRole('admin'))
                   <div class="border-t border-gray-100 my-1"></div>
                   <form action="{{ route('sigap-dokumen.folder.destroy', $item) }}" method="POST" onsubmit="return confirm('PERINGATAN: Menghapus folder ini akan menghapus permanen seluruh subfolder dan berkas dokumen di dalamnya! Lanjutkan?');">
@@ -344,11 +344,11 @@
   </div>
 </section>
 
-<!-- Table Dokumen Lepas (Publik) -->
+<!-- Table Dokumen -->
 <section class="max-w-7xl mx-auto px-4 py-6">
   <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-2xs">
     <div class="px-4 py-3 bg-gray-50 border-b flex items-center justify-between text-xs font-bold text-gray-500 uppercase tracking-wider">
-      <span>Berkas Publik Lepas (Tanpa Folder)</span>
+      <span>{{ !empty($hasFilter) ? 'Hasil Pencarian Dokumen (Termasuk Dalam Folder)' : 'Berkas Lepas (Tanpa Folder)' }}</span>
       <span>Total: {{ $docs->total() }}</span>
     </div>
 
@@ -357,11 +357,12 @@
         <thead>
           <tr class="text-left border-b bg-gray-50 text-gray-600">
             <th class="px-4 py-3">Dokumen</th>
-            <th class="px-4 py-3">Alias</th>
+            <!-- Lebar Kolom Alias / No Dikunci agar tidak mendesak nama dokumen -->
+            <th class="px-4 py-3 w-32 sm:w-40">Alias / No</th>
             <th class="px-4 py-3">Kategori</th>
             <th class="px-4 py-3">Tahun</th>
             <th class="px-4 py-3">Lokasi Fisik</th>
-            <th class="px-4 py-3">Aksi</th>
+            <th class="px-4 py-3 text-right">Aksi</th>
           </tr>
         </thead>
         <tbody class="divide-y text-gray-700">
@@ -371,53 +372,64 @@
                 <td class="px-4 py-3">
                   <div class="flex items-center gap-3">
                     @if (!empty($item->thumb_path))
-                      <img class="w-11 h-11 rounded-lg object-cover ring-1 ring-gray-200" src="{{ asset('storage/'.$item->thumb_path) }}" alt="">
+                      <img class="w-11 h-11 rounded-lg object-cover ring-1 ring-gray-200 shrink-0" src="{{ asset('storage/'.$item->thumb_path) }}" alt="">
                     @else
-                      <div class="w-11 h-11 rounded-lg bg-maroon/10 text-maroon font-bold flex items-center justify-center text-xs shrink-0">
-                        PDF
-                      </div>
+                      <div class="w-11 h-11 rounded-lg bg-maroon/10 text-maroon font-bold flex items-center justify-center text-xs shrink-0">PDF</div>
                     @endif
-                    <div>
-                      <a href="{{ route('sigap-dokumen.show', $item) }}" class="font-medium text-gray-900 hover:text-maroon">
-                        {{ $item->title }}
-                      </a>
-                      <p class="text-xs text-gray-500 line-clamp-1">{{ Str::limit($item->description, 40) }}</p>
+                    <div class="min-w-0">
+                      <div class="flex items-center gap-1.5 flex-wrap">
+                        <a href="{{ route('sigap-dokumen.show', $item) }}" class="font-medium text-gray-900 hover:text-maroon">
+                          {{ $item->title }}
+                        </a>
+                        <!-- Chip Folder jika dokumen tersimpan di dalam folder -->
+                        @if($item->folder)
+                          <a href="{{ route('sigap-dokumen.folder.show', $item->folder) }}" 
+                             class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition"
+                             title="Tersimpan di dalam folder {{ $item->folder->name }}">
+                            <span>{{ $item->folder->icon ?? '📁' }}</span>
+                            <span class="font-medium truncate max-w-[120px]">{{ $item->folder->name }}</span>
+                          </a>
+                        @endif
+                      </div>
+
+                      <p class="text-[11px] text-gray-500 mt-0.5 line-clamp-1" title="{{ $item->description }}">{{ Str::limit($item->description, 50) }}</p>
                       @if(!empty($item->tags))
                         <?php $tagList = is_array($item->tags) ? $item->tags : explode(',',$item->tags); ?>
-                        <div class="flex flex-wrap gap-1 mt-1">
+                        <div class="flex flex-wrap gap-1 mt-1.5">
                           <?php foreach ($tagList as$t): ?>
-                            <span class="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.2 rounded font-medium">#{{ trim($t) }}</span>
+                            <span class="text-[9px] font-bold bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">#{{ trim($t) }}</span>
                           <?php endforeach; ?>
                         </div>
                       @endif
                     </div>
                   </div>
                 </td>
-                <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ $item->alias }}</td>
+                
+                <!-- Alias & Nomor Naskah Dinas Terproteksi Truncate -->
+                <td class="px-4 py-3 text-xs text-gray-600 w-32 sm:w-40 align-top">
+                  <span class="block font-mono truncate max-w-[120px] sm:max-w-[150px]" title="{{ $item->alias }}">{{ $item->alias ?: '-' }}</span>
+                  <span class="block mt-1 text-[10px] text-gray-400 truncate max-w-[120px] sm:max-w-[150px]" title="{{ $item->number }}">{{ $item->number ?: '' }}</span>
+                </td>
+                
                 <td class="px-4 py-3 text-xs">{{ $item->category }}</td>
                 <td class="px-4 py-3 text-xs">{{ $item->year }}</td>
                 <td class="px-4 py-3 text-xs">
-                  @if(filled($item->physical_rack) or filled($item->physical_row))
-                    Rak {{ $item->physical_rack ?? '-' }}, No. {{ $item->physical_row ?? '-' }}
+                  @if(filled($item->physical_rack) || filled($item->physical_row))
+                    R: {{ $item->physical_rack ?? '-' }}<br>B: {{ $item->physical_row ?? '-' }}
                   @else
                     <span class="text-gray-400">-</span>
                   @endif
                 </td>
-                <td class="px-4 py-3">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <a href="{{ route('sigap-dokumen.show', $item) }}" target="_blank" class="px-3 py-1.5 rounded-md border border-maroon text-maroon hover:bg-maroon hover:text-white transition text-xs font-semibold">View</a>
-                    <a href="{{ route('sigap-dokumen.download', $item) }}" target="_blank" class="px-3 py-1.5 rounded-md bg-maroon text-white hover:bg-maroon-800 transition text-xs font-semibold">Download</a>
+                <td class="px-4 py-3 text-right">
+                  <div class="flex flex-wrap items-center justify-end gap-2">
+                    <a href="{{ route('sigap-dokumen.show', $item) }}" class="px-2.5 py-1.5 rounded border border-maroon text-maroon hover:bg-maroon hover:text-white transition text-xs font-semibold">View</a>
+                    <a href="{{ route('sigap-dokumen.download', $item) }}" class="px-2.5 py-1.5 rounded bg-maroon text-white hover:bg-maroon-800 transition text-xs font-semibold">Unduh</a>
                     
                     @if($item->created_by === auth()->id() || auth()->user()->hasRole('admin'))
-                    <a href="{{ route('sigap-dokumen.edit', $item->id) }}" class="px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-50 text-xs">Edit</a>
-                    <button type="button"
-                            class="px-3 py-1.5 rounded-md border border-red-200 text-red-700 hover:bg-red-50 text-xs"
-                            onclick="confirmHapus({{ $item->id }}, @js($item->title))">
-                      Hapus
-                    </button>
+                    <a href="{{ route('sigap-dokumen.edit', $item->id) }}" class="px-2.5 py-1.5 rounded border border-gray-300 hover:bg-gray-50 text-xs">Edit</a>
+                    <button type="button" class="px-2.5 py-1.5 rounded border border-red-200 text-red-700 hover:bg-red-50 text-xs" onclick="confirmHapus({{ $item->id }}, @js($item->title))">Hapus</button>
                     <form id="form-delete-{{ $item->id }}" action="{{ route('sigap-dokumen.destroy', $item->id) }}" method="POST" class="hidden">
-                      @csrf
-                      @method('DELETE')
+                      @csrf @method('DELETE')
                     </form>
                     @endif
                   </div>
@@ -427,7 +439,7 @@
           @else
             <tr>
               <td colspan="6" class="px-4 py-12 text-center text-gray-500">
-                Tidak ada dokumen lepas ditemukan.
+                Tidak ada dokumen yang sesuai dengan pencarian Anda.
               </td>
             </tr>
           @endif
@@ -445,6 +457,98 @@
 
 @push('scripts')
 <script>
+const globalFolders = @json($allFolders);
+
+function openMoveFolderModal(folderId, folderName, currentVis) {
+  let options = `<option value="">-- Letakkan di Luar Folder (Root Utama) --</option>`;
+  
+  globalFolders.forEach(f => {
+    if (f.id !== folderId) {
+      options += `<option value="${f.id}" data-vis="${f.visibility}">
+                    ${f.name} (Akses: ${f.visibility.toUpperCase()})
+                  </option>`;
+    }
+  });
+
+  Swal.fire({
+    title: 'Pindahkan Folder',
+    html: `
+      <div class="text-left space-y-3 mt-3">
+        <p class="text-sm text-gray-600 mb-2">Pilih lokasi tujuan untuk <strong>${folderName}</strong>:</p>
+        <select id="destFolderSelect" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:border-maroon focus:ring-maroon" onchange="checkVisibilityMismatch(this, '${currentVis}')">
+          ${options}
+        </select>
+        
+        <div id="visWarningBox" class="hidden mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs">
+          <p class="font-bold text-amber-800 mb-1">⚠️ Perbedaan Privasi Terdeteksi</p>
+          <p class="text-amber-700 mb-3 leading-relaxed">Folder tujuan memiliki level hak akses yang berbeda dengan folder ini. Sesuaikan hak akses agar selaras?</p>
+          
+          <div class="space-y-2">
+            <label class="flex items-start gap-2 cursor-pointer p-2 rounded hover:bg-amber-100/50 transition">
+              <input type="radio" name="vis_action" value="adapt" checked class="mt-0.5 text-maroon focus:ring-maroon">
+              <div>
+                <span class="font-bold text-gray-800 block">Selaraskan (Sangat Disarankan)</span>
+                <span class="text-gray-500 text-[10px]">Folder ini (dan isinya) akan mengikuti hak akses folder induk yang baru.</span>
+              </div>
+            </label>
+            <label class="flex items-start gap-2 cursor-pointer p-2 rounded hover:bg-amber-100/50 transition">
+              <input type="radio" name="vis_action" value="keep" class="mt-0.5 text-maroon focus:ring-maroon">
+              <div>
+                <span class="font-bold text-gray-800 block">Biarkan Berbeda</span>
+                <span class="text-gray-500 text-[10px]">Folder ini akan mempertahankan hak akses lamanya.</span>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+    `,
+    showCancelButton: true,
+    confirmButtonText: 'Simpan Pemindahan',
+    cancelButtonText: 'Batal',
+    confirmButtonColor: '#7a2222',
+    preConfirm: () => {
+      return {
+        dest_id: document.getElementById('destFolderSelect').value,
+        vis_action: document.querySelector('input[name="vis_action"]:checked')?.value || 'keep'
+      }
+    }
+  }).then((result) => {
+    if (result.isConfirmed) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      let actionUrl = "{{ route('sigap-dokumen.folder.move', ':id') }}";
+      form.action = actionUrl.replace(':id', folderId);
+      
+      const csrf = document.createElement('input');
+      csrf.type = 'hidden'; csrf.name = '_token'; csrf.value = '{{ csrf_token() }}';
+      form.appendChild(csrf);
+
+      const destInput = document.createElement('input');
+      destInput.type = 'hidden'; destInput.name = 'dest_id'; destInput.value = result.value.dest_id;
+      form.appendChild(destInput);
+
+      const actionInput = document.createElement('input');
+      actionInput.type = 'hidden'; actionInput.name = 'vis_action'; actionInput.value = result.value.vis_action;
+      form.appendChild(actionInput);
+
+      document.body.appendChild(form);
+      form.submit();
+    }
+  });
+}
+
+function checkVisibilityMismatch(selectElement, currentVisibility) {
+  const selectedOpt = selectElement.options[selectElement.selectedIndex];
+  const destVis = selectedOpt.getAttribute('data-vis');
+  const warningBox = document.getElementById('visWarningBox');
+  
+  if (destVis && destVis !== currentVisibility) {
+    warningBox.classList.remove('hidden');
+  } else {
+    warningBox.classList.add('hidden');
+  }
+}
+
 function confirmHapus(id, title) {
   Swal.fire({
     title: 'Hapus Dokumen?',

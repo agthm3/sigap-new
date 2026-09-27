@@ -21,40 +21,90 @@ class SigapDokumenController extends Controller
     /**
      * Tampilan 1: DOKUMEN UMUM (Katalog Terbuka & Internal Pegawai)
      */
+   /**
+     * Tampilan 1: DOKUMEN UMUM (Katalog Terbuka & Internal Pegawai)
+     */
     public function index(Request $request)
     {
         $filters = $request->only(['q', 'category', 'year']);
+        $hasFilter = !empty($filters['q']) || !empty($filters['category']) || !empty($filters['year']);
 
-        // Ambil folder root dengan status public dan internal
-        $foldersQuery = Folder::whereIn('visibility', ['public', 'internal'])
+        // Hak akses visibilitas: Tamu hanya 'public', Pegawai & Admin bisa 'public' + 'internal'
+        $allowedVisibilities = (Auth::check() && Auth::user()->hasAnyRole(['employee', 'admin'])) 
+            ? ['public', 'internal'] 
+            : ['public'];
+
+        // 1. QUERY FOLDER ROOT (Hanya kolom yang ada di tabel folders)
+        $foldersQuery = Folder::whereIn('visibility', $allowedVisibilities)
             ->whereNull('parent_id')
             ->withCount([
-                'documents' => function ($q) {
-                    $q->whereIn('sensitivity', ['public', 'internal']);
+                'documents' => function ($q) use ($allowedVisibilities) {
+                    $q->whereIn('sensitivity', $allowedVisibilities);
                 },
-                'subfolders' => function ($q) {
-                    $q->whereIn('visibility', ['public', 'internal']);
+                'subfolders' => function ($q) use ($allowedVisibilities) {
+                    $q->whereIn('visibility', $allowedVisibilities);
                 }
             ]);
 
         if (!empty($filters['q'])) {
             $kw = trim($filters['q']);
-            $foldersQuery->where(function ($q) use ($kw) {
+            $cleanKw = ltrim($kw, '#');
+
+            $foldersQuery->where(function ($q) use ($kw, $cleanKw) {
                 $q->where('name', 'like', "%{$kw}%")
+                  ->orWhere('name', 'like', "%{$cleanKw}%")
                   ->orWhere('classification_code', 'like', "%{$kw}%");
             });
         }
 
         $folders = $foldersQuery->latest()->get();
 
-        // Dokumen lepas (root) berstatus public & internal
-        $docs = $this->repo->paginate(
-            filters: array_merge($filters, ['root_only' => true]),
-            perPage: 10,
-            mode: 'public'
-        );
+        // 2. QUERY DOKUMEN
+        // Jika ada filter/pencarian, telusuri SEMUA dokumen (termasuk di dalam subfolder terdalam)
+        // Jika tanpa filter, tampilkan dokumen lepas saja (whereNull folder_id)
+        $docsQuery = ModelsDocument::with('folder')
+            ->whereIn('sensitivity', $allowedVisibilities);
 
-        return view('dashboard.dokumen.index', compact('folders', 'docs'));
+        if (!$hasFilter) {
+            $docsQuery->whereNull('folder_id');
+        }
+
+        if (!empty($filters['q'])) {
+            $rawKw = trim($filters['q']);
+            $cleanKw = ltrim($rawKw, '#');
+
+            $docsQuery->where(function ($q) use ($rawKw, $cleanKw) {
+                $q->where('title', 'like', "%{$rawKw}%")
+                  ->orWhere('title', 'like', "%{$cleanKw}%")
+                  ->orWhere('alias', 'like', "%{$rawKw}%")
+                  ->orWhere('number', 'like', "%{$rawKw}%")
+                  ->orWhere('description', 'like', "%{$rawKw}%")
+                  ->orWhere('stakeholder', 'like', "%{$rawKw}%")
+                  // Pencarian Tag (String match & MySQL JSON Array Contains)
+                  ->orWhere('tags', 'like', "%{$cleanKw}%")
+                  ->orWhereJsonContains('tags', $cleanKw)
+                  ->orWhereJsonContains('tags', strtoupper($cleanKw))
+                  ->orWhereJsonContains('tags', strtolower($cleanKw))
+                  ->orWhereJsonContains('tags', ucfirst(strtolower($cleanKw)));
+            });
+        }
+
+        if (!empty($filters['category'])) {
+            $docsQuery->where('category', $filters['category']);
+        }
+
+        if (!empty($filters['year'])) {
+            $docsQuery->where('year', $filters['year']);
+        }
+
+        $docs = $docsQuery->latest()->paginate(10)->withQueryString();
+
+        // 3. DAFTAR FOLDER UNTUK MODAL "PINDAHKAN FOLDER"
+        $allFolders = Folder::whereIn('visibility', $allowedVisibilities)
+            ->select('id', 'name', 'visibility')
+            ->get();
+
+        return view('dashboard.dokumen.index', compact('folders', 'docs', 'allFolders', 'hasFilter'));
     }
 
     /**
@@ -63,23 +113,190 @@ class SigapDokumenController extends Controller
     public function saya(Request $request)
     {
         $user = Auth::user();
+        $filters = $request->only(['q', 'category', 'year']);
+        $hasFilter = !empty($filters['q']) || !empty($filters['category']) || !empty($filters['year']);
 
-        // Ambil folder tingkat atas milik user yang sedang login
-        $folders = Folder::where('user_id', $user->id)
+        // 1. QUERY FOLDER MILIK USER LOGIN
+        $foldersQuery = Folder::where('user_id', $user->id)
             ->whereNull('parent_id')
-            ->withCount('documents', 'subfolders')
-            ->latest()
+            ->withCount('documents', 'subfolders');
+
+        if (!empty($filters['q'])) {
+            $kw = trim($filters['q']);
+            $cleanKw = ltrim($kw, '#');
+
+            $foldersQuery->where(function ($q) use ($kw, $cleanKw) {
+                $q->where('name', 'like', "%{$kw}%")
+                  ->orWhere('name', 'like', "%{$cleanKw}%")
+                  ->orWhere('classification_code', 'like', "%{$kw}%");
+            });
+        }
+
+        $folders = $foldersQuery->latest()->get();
+
+        // 2. QUERY DOKUMEN MILIK USER LOGIN
+        // Jika ada filter/pencarian, telusuri SEMUA dokumen milik user (termasuk di dalam subfolder)
+        $docsQuery = ModelsDocument::with('folder')
+            ->where('created_by', $user->id);
+
+        if (!$hasFilter) {
+            $docsQuery->whereNull('folder_id');
+        }
+
+        if (!empty($filters['q'])) {
+            $rawKw = trim($filters['q']);
+            $cleanKw = ltrim($rawKw, '#');
+
+            $docsQuery->where(function ($q) use ($rawKw, $cleanKw) {
+                $q->where('title', 'like', "%{$rawKw}%")
+                  ->orWhere('title', 'like', "%{$cleanKw}%")
+                  ->orWhere('alias', 'like', "%{$rawKw}%")
+                  ->orWhere('number', 'like', "%{$rawKw}%")
+                  ->orWhere('description', 'like', "%{$rawKw}%")
+                  ->orWhere('stakeholder', 'like', "%{$rawKw}%")
+                  // Pencarian Tag (String match & MySQL JSON Array Contains)
+                  ->orWhere('tags', 'like', "%{$cleanKw}%")
+                  ->orWhereJsonContains('tags', $cleanKw)
+                  ->orWhereJsonContains('tags', strtoupper($cleanKw))
+                  ->orWhereJsonContains('tags', strtolower($cleanKw))
+                  ->orWhereJsonContains('tags', ucfirst(strtolower($cleanKw)));
+            });
+        }
+
+        if (!empty($filters['category'])) {
+            $docsQuery->where('category', $filters['category']);
+        }
+
+        if (!empty($filters['year'])) {
+            $docsQuery->where('year', $filters['year']);
+        }
+
+        $docs = $docsQuery->latest()->paginate(12)->withQueryString();
+
+        // 3. DAFTAR FOLDER TUJUAN MILIK USER
+        $allFolders = Folder::where('user_id', $user->id)
+            ->select('id', 'name', 'visibility')
             ->get();
 
-        // Dokumen milik user yang belum masuk ke folder mana pun
-        $docs = $this->repo->paginate(
-            filters: array_merge($request->only(['q', 'category', 'year']), ['root_only' => true]),
-            perPage: 12,
-            userId: $user->id,
-            mode: 'saya'
-        );
+        return view('dashboard.dokumen.saya', compact('folders', 'docs', 'allFolders', 'hasFilter'));
+    }
 
-        return view('dashboard.dokumen.saya', compact('folders', 'docs'));
+    /**
+     * FITUR BARU: Endpoint Pindahkan Folder
+     */
+    /**
+     * FITUR: Endpoint Pindahkan Folder (Kebal Circular Dependency & Rekursif Penuh)
+     */
+    public function moveFolder(Request $request, int $id)
+    {
+        $folder = Folder::findOrFail($id);
+
+        // 1. Validasi Hak Akses Pemilik
+        if ($folder->user_id !== Auth::id() && !Auth::user()->hasRole('admin')) {
+            abort(403, 'Anda tidak memiliki hak akses untuk memindahkan folder ini.');
+        }
+
+        $destId = $request->input('dest_id');
+        $visAction = $request->input('vis_action'); // 'adapt' atau 'keep'
+
+        // 2. KASUS 1: Pindah ke Root (Luar Folder)
+        if (empty($destId)) {
+            $folder->parent_id = null;
+            $folder->save();
+            return back()->with('success', "Folder '{$folder->name}' berhasil dipindahkan ke direktori utama.");
+        }
+
+        // 3. KASUS 2: Pindah ke dalam Folder Tujuan
+        $destFolder = Folder::findOrFail($destId);
+
+        // Mencegah Folder Masuk ke Dirinya Sendiri
+        if ($destFolder->id === $folder->id) {
+            return back()->with('error', 'Gagal: Folder tidak dapat dipindahkan ke dalam dirinya sendiri.');
+        }
+
+        // Mencegah Circular Dependency: Folder Tujuan tidak boleh merupakan turunan/anak dari Folder ini
+        if ($this->isDescendantOf($destFolder->id, $folder->id)) {
+            return back()->with('error', 'Gagal: Folder tidak dapat dipindahkan ke dalam subfoldernya sendiri.');
+        }
+
+        // Update relasi induk
+        $folder->parent_id = $destFolder->id;
+
+        // 4. Sinkronisasi Hak Akses Rekursif (Seluruh Subfolder & Dokumen di dalamnya)
+        if ($visAction === 'adapt' && $folder->visibility !== $destFolder->visibility) {
+            $newVisibility = $destFolder->visibility;
+            $this->cascadeVisibilityChange($folder, $newVisibility);
+        } else {
+            $folder->save();
+        }
+
+        return back()->with('success', "Folder '{$folder->name}' berhasil dipindahkan ke folder '{$destFolder->name}'.");
+    }
+
+    /**
+     * Helper: Cek apakah folder tujuan merupakan turunan (subfolder) dari folder saat ini
+     */
+    private function isDescendantOf(int $destId, int $folderId): bool
+    {
+        $current = Folder::find($destId);
+        while ($current && $current->parent_id) {
+            if ($current->parent_id === $folderId) {
+                return true;
+            }
+            $current = Folder::find($current->parent_id);
+        }
+        return false;
+    }
+
+   /**
+     * Helper: Ubah hak akses folder dan seluruh keturunannya, 
+     * SEKALIGUS memindahkan file fisiknya antar-disk storage (public <-> private)
+     */
+    private function cascadeVisibilityChange(Folder $folder, string $newVisibility): void
+    {
+        // 1. Kumpulkan semua ID folder dan subfolder di bawahnya secara rekursif
+        $folderIds = [$folder->id];
+        $queue = [$folder->id];
+
+        while (!empty($queue)) {
+            $currentId = array_shift($queue);
+            $childIds = Folder::where('parent_id', $currentId)->pluck('id')->toArray();
+            if (!empty($childIds)) {
+                $folderIds = array_merge($folderIds, $childIds);
+                $queue = array_merge($queue, $childIds);
+            }
+        }
+
+        // 2. Update visibility semua folder terkait di database
+        Folder::whereIn('id', $folderIds)->update(['visibility' => $newVisibility]);
+
+        // 3. Pindahkan berkas fisik sesuai aturan keamanan:
+        //    - 'public'  => disk 'public'
+        //    - 'internal' / 'private' => disk 'private' (brankas terlindungi)
+        $docs = ModelsDocument::whereIn('folder_id', $folderIds)->get();
+        $targetDisk = ($newVisibility === 'public') ? 'public' : 'private';
+
+        foreach ($docs as $doc) {
+            if (!empty($doc->file_path)) {
+                // Tentukan disk sumber saat ini
+                $currentDisk = Storage::disk('private')->exists($doc->file_path) ? 'private' : 'public';
+
+                // Pindahkan fisik file jika berada di disk yang salah
+                if ($currentDisk !== $targetDisk && Storage::disk($currentDisk)->exists($doc->file_path)) {
+                    try {
+                        $fileContent = Storage::disk($currentDisk)->get($doc->file_path);
+                        Storage::disk($targetDisk)->put($doc->file_path, $fileContent);
+                        Storage::disk($currentDisk)->delete($doc->file_path);
+                    } catch (\Throwable $e) {
+                        \Log::warning("Gagal memindahkan file fisik dokumen ID {$doc->id}: " . $e->getMessage());
+                    }
+                }
+            }
+
+            // Perbarui status sensitivitas dokumen di database
+            $doc->sensitivity = $newVisibility;
+            $doc->save();
+        }
     }
 
     /**
@@ -92,7 +309,6 @@ class SigapDokumenController extends Controller
 
         if ($folderId) {
             $folderQuery = Folder::where('id', $folderId);
-            // Jika bukan admin, pastikan user hanya bisa memilih folder miliknya atau folder non-private
             if (!Auth::user()->hasRole('admin')) {
                 $folderQuery->where(function ($q) {
                     $q->where('user_id', Auth::id())
@@ -103,24 +319,19 @@ class SigapDokumenController extends Controller
         }
 
         $existingTags = $this->repo->getExistingTags();
-
         return view('dashboard.dokumen.upload', compact('folder', 'folderId', 'existingTags'));
     }
 
-    /**
-     * Endpoint Asinkron Temporary Upload
-     */
     public function tempUpload(Request $request)
     {
         $request->validate([
-            'file' => ['required', 'file', 'max:20480'], // Maksimal 20MB
+            'file' => ['required', 'file', 'max:20480'],
         ]);
 
         $file = $request->file('file');
         $extension = $file->getClientOriginalExtension() ?: 'bin';
         $filename = 'tmp_' . Str::random(25) . '.' . $extension;
 
-        // Simpan sementara di storage
         $path = $file->storeAs('temp_uploads', $filename, 'public');
 
         return response()->json([
@@ -131,9 +342,6 @@ class SigapDokumenController extends Controller
         ]);
     }
 
-    /**
-     * Simpan Dokumen Permanen via Form Payload
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -159,7 +367,6 @@ class SigapDokumenController extends Controller
         $validated['created_by'] = $validated['updated_by'] = $userId;
         $validated['folder_id'] = $validated['folder_id'] ?? null;
 
-        // ATURAN REVISI 1: Jika di dalam folder, sensitivity MUTLAK mengikuti visibility folder
         if (!empty($validated['folder_id'])) {
             $parentFolder = Folder::find($validated['folder_id']);
             if ($parentFolder) {
@@ -167,31 +374,27 @@ class SigapDokumenController extends Controller
             }
         }
 
-        // Simpan dokumen jika melalui antarmuka multi-upload asinkron
         if (!empty($validated['files']) && is_array($validated['files'])) {
             $createdCount = 0;
             foreach ($validated['files'] as $index => $tempFilePath) {
                 $docData = $validated;
                 $docData['temp_file_path'] = $tempFilePath;
 
-                if ($index > 0) {
-                    $docData['title'] = $validated['title'] . ' (Bagian ' . ($index + 1) . ')';
-                    $docData['alias'] = null;
+                if ($index > 0 && empty($validated['tags'])) {
+                    $docData['alias'] = null; 
                 }
 
                 $this->repo->create($docData);
                 $createdCount++;
             }
 
-            // Arahkan kembali ke halaman folder terkait jika ada, atau ke katalog sesuai statusnya
             $redirectRoute = !empty($validated['folder_id'])
                 ? route('sigap-dokumen.folder.show', $validated['folder_id'])
                 : ($validated['sensitivity'] === 'private' ? route('sigap-dokumen.saya') : route('sigap-dokumen.index'));
 
-            return redirect($redirectRoute)->with('success', "{$createdCount} Dokumen berhasil diunggah dan diindeks!");
+            return redirect($redirectRoute)->with('success', "{$createdCount} Dokumen berhasil diunggah!");
         }
 
-        // Fallback untuk single upload reguler
         $doc = $this->repo->create(
             $validated,
             $request->file('file'),
@@ -205,18 +408,11 @@ class SigapDokumenController extends Controller
         return redirect($target)->with('success', "Dokumen '{$doc->title}' berhasil disimpan!");
     }
 
-    /**
-     * Pratinjau & Detail Dokumen
-     */
     public function show(ModelsDocument $document)
     {
         $this->authorizeDocumentAccess($document);
 
-        ActivityLogger::log(
-            module: 'dokumen',
-            action: 'view',
-            object: $document
-        );
+        ActivityLogger::log('dokumen', 'view', $document);
 
         $fileUrl = route('sigap-dokumen.preview', $document);
         $thumbUrl = $document->thumb_path ? asset('storage/' . $document->thumb_path) : null;
@@ -234,21 +430,13 @@ class SigapDokumenController extends Controller
         return view('dashboard.dokumen.show', compact('document', 'fileUrl', 'thumbUrl', 'isPdf', 'isImage', 'logs'));
     }
 
-    /**
-     * Streaming inline preview (PDF / Foto)
-     */
     public function preview(ModelsDocument $document)
     {
         $this->authorizeDocumentAccess($document);
 
-        // Cari letak disk penyimpanan berkas (private storage vault vs public storage)
-        $disk = 'public';
-        if (Storage::disk('private')->exists($document->file_path)) {
-            $disk = 'private';
-        }
-
+        $disk = Storage::disk('private')->exists($document->file_path) ? 'private' : 'public';
         if (!Storage::disk($disk)->exists($document->file_path)) {
-            abort(404, 'Berkas fisik tidak ditemukan di penyimpanan server.');
+            abort(404, 'Berkas fisik tidak ditemukan.');
         }
 
         $content = Storage::disk($disk)->get($document->file_path);
@@ -259,28 +447,16 @@ class SigapDokumenController extends Controller
             ->header('Content-Disposition', 'inline; filename="' . ($document->alias ?? $document->title) . '"');
     }
 
-    /**
-     * Unduh Berkas
-     */
     public function download(ModelsDocument $document)
     {
         $this->authorizeDocumentAccess($document);
 
-        $disk = 'public';
-        if (Storage::disk('private')->exists($document->file_path)) {
-            $disk = 'private';
-        }
-
+        $disk = Storage::disk('private')->exists($document->file_path) ? 'private' : 'public';
         if (!Storage::disk($disk)->exists($document->file_path)) {
-            ActivityLogger::log('dokumen', 'access_denied', $document, [
-                'success' => false,
-                'reason' => 'file_missing',
-            ]);
             abort(404, 'Berkas fisik tidak ditemukan.');
         }
 
         ActivityLogger::log('dokumen', 'download', $document);
-
         $ext = pathinfo($document->file_path, PATHINFO_EXTENSION);
         $filename = ($document->alias ?? $document->title) . '.' . $ext;
 
@@ -338,33 +514,20 @@ class SigapDokumenController extends Controller
 
         $validated['updated_by'] = Auth::id() ?? 1;
 
-        $updated = $this->repo->update(
-            $id,
-            $validated,
-            $request->file('file'),
-            $request->file('thumb')
-        );
+        $updated = $this->repo->update($id, $validated, $request->file('file'), $request->file('thumb'));
 
-        return redirect()
-            ->route('sigap-dokumen.edit', $updated->id)
-            ->with('success', "Dokumen '{$updated->title}' berhasil diperbarui!");
+        return redirect()->route('sigap-dokumen.edit', $updated->id)->with('success', "Dokumen '{$updated->title}' berhasil diperbarui!");
     }
 
-    /**
-     * Helper proteksi akses dokumen berdasarkan 3 Level Sensitivitas
-     */
     private function authorizeDocumentAccess(ModelsDocument $document): void
     {
         $user = Auth::user();
 
-        // 1. Dokumen PRIVATE: Hanya pemilik dan admin
         if ($document->sensitivity === 'private') {
             if (!$user || ($document->created_by !== $user->id && !$user->hasRole('admin'))) {
                 abort(403, 'Akses Ditolak: Dokumen ini berstatus PRIVAT.');
             }
         }
-
-        // 2. Dokumen INTERNAL: Wajib memiliki role employee atau admin
         if ($document->sensitivity === 'internal') {
             if (!$user || !$user->hasAnyRole(['employee', 'admin'])) {
                 abort(403, 'Akses Terbatas: Dokumen ini hanya diperuntukkan bagi internal pegawai BRIDA.');
