@@ -331,7 +331,7 @@
         </a>
         @endhasrole
 
-        @hasanyrole('admin|inovator')
+        @hasanyrole('admin|inovator|verif_inovasi')
         <!-- SIGAP INOVASI -->
         <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">SIGAP INOVASI</div>
 
