@@ -393,6 +393,9 @@ Route::middleware('auth','role:user|admin|verificator')->group(function () {
     Route::post('/sigap-agenda/delete', [SigapAgendaController::class, 'delete'])->name('sigap-agenda.delete');
 
 });
+Route::get('/sigap-skp/laporan/{slug}', [SkpController::class, 'publicShow'])->name('sigap-skp.public-show');
+Route::get('/sigap-skp/kumpulan/lihat/{slug}', [SkpController::class, 'publicShowKumpulan'])->name('sigap-skp.kumpulan.public-show');
+    
 
 Route::middleware('auth')
     ->get('/api/users/search', [UserSearchController::class, 'search'])
@@ -785,10 +788,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('admin/logs', [LogViewerController::class, 'index'])->name('admin.logs');
     });
 
-   
-    Route::get('/sigap-skp/laporan/{slug}', [SkpController::class, 'publicShow'])->name('sigap-skp.public-show');
-    Route::get('/sigap-skp/kumpulan/lihat/{slug}', [SkpController::class, 'publicShowKumpulan'])->name('sigap-skp.kumpulan.public-show');
-
     // =========================================================================
     // ROUTE PRIVATE / AUTHENTICATED
     // =========================================================================
@@ -827,6 +826,8 @@ Route::middleware(['auth'])->group(function () {
         });
 
     });
+    
+ 
     Route::middleware(['auth'])->prefix('dashboard/magang')->name('magang.')->group(function () {
 
         // 1. Dashboard Utama & Detail Batch (Akses Semua Role Magang/Verif/Admin)
