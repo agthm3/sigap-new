@@ -294,7 +294,7 @@
             <div class="flex items-center justify-between border-b pb-3 mb-6">
                 <div>
                     <h2 class="text-xl font-bold text-gray-900">3. Uraian Deskripsi Inovasi</h2>
-                    <p class="text-xs text-gray-500 mt-0.5">Uraikan rancang bangun (300 – 500 kata), tujuan, manfaat, dan hasil secara rapi.</p>
+                    <p class="text-xs text-gray-500 mt-0.5">Uraikan rancang bangun (300 – 800 kata), tujuan, manfaat, dan hasil secara rapi.</p>
                 </div>
                 <span class="text-xs font-bold bg-amber-50 text-amber-700 px-3 py-1 rounded-full border border-amber-200">Langkah 3 dari 5</span>
             </div>
@@ -303,7 +303,7 @@
                 <!-- Rancang Bangun (300 - 500 Kata) -->
                 <div>
                     <label class="block text-sm font-bold text-gray-800 mb-1">
-                        Rancang Bangun Inovasi (300 – 500 KATA) <span class="text-red-500">*</span>
+                        Rancang Bangun Inovasi (300 – 800 KATA) <span class="text-red-500">*</span>
                     </label>
                     <div id="editor-rancang" class="rounded-xl border border-gray-300"></div>
                     <div class="flex justify-between items-center text-[11px] mt-1.5 px-1">
@@ -873,12 +873,12 @@
                     else if (!this.formData.tahap_inovasi) { valid = false; msg = 'Tahapan Inovasi wajib dipilih.'; }
                     else if (!this.formData.koordinat.trim()) { valid = false; msg = 'Koordinat Lokasi penerapan wajib diisi.'; }
                 } 
-                // VALIDASI LANGKAH 3 (300 - 500 KATA)
+                // VALIDASI LANGKAH 3 (300 - 800 KATA)
                 else if (this.step === 3) {
                     if (this.rancangWordCount < 300) {
                         valid = false; msg = `Rancang Bangun Inovasi wajib minimal 300 KATA. Saat ini baru ${this.rancangWordCount} kata.`;
-                    } else if (this.rancangWordCount > 500) {
-                        valid = false; msg = `Rancang Bangun Inovasi maksimal 500 KATA. Saat ini melebihi batas: ${this.rancangWordCount} kata.`;
+                    } else if (this.rancangWordCount > 800) {
+                        valid = false; msg = `Rancang Bangun Inovasi maksimal 800 KATA. Saat ini melebihi batas: ${this.rancangWordCount} kata.`;
                     } else if (quillTujuan.getText().trim().length === 0) {
                         valid = false; msg = 'Tujuan Inovasi Daerah wajib diisi.';
                     } else if (quillManfaat.getText().trim().length === 0) {

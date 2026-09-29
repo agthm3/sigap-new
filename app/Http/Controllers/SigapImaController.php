@@ -130,7 +130,7 @@ class SigapImaController extends Controller
                     $plainText = trim(strip_tags($value));
                     $wordCount = !empty($plainText) ? count(preg_split('/\s+/u', $plainText, -1, PREG_SPLIT_NO_EMPTY)) : 0;
                     if ($wordCount < 300) $fail("Rancang Bangun Inovasi minimal harus 300 kata (saat ini: {$wordCount} kata).");
-                    if ($wordCount > 500) $fail("Rancang Bangun Inovasi maksimal 500 kata (saat ini: {$wordCount} kata).");
+                    if ($wordCount > 800) $fail("Rancang Bangun Inovasi maksimal 800 kata (saat ini: {$wordCount} kata).");
                 },
             ],
             'tujuan'            => 'required|string',
