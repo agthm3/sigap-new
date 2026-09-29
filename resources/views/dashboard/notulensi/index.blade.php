@@ -1,6 +1,20 @@
 @extends('layouts.app')
 
 @section('content')
+@if(session('swal_error_html'))
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        Swal.fire({
+            icon: 'error',
+            title: 'Gagal Menggabungkan PDF',
+            html: `{!! session('swal_error_html') !!}`,
+            confirmButtonText: 'Saya Mengerti',
+            confirmButtonColor: '#7a2222',
+            allowOutsideClick: false
+        });
+    });
+</script>
+@endif
 <!-- Header & Action -->
 <section class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
   <div>

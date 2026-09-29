@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use iio\libmergepdf\Merger;
 
 class NotulensiController extends Controller
 {
@@ -112,59 +113,102 @@ class NotulensiController extends Controller
      */
     public function store(Request $request)
     {
+        // 1. Validasi input: Cukup judul_acara yang wajib agar notulis dapat langsung menyimpan draft cepat di lokasi
         $request->validate([
-            'judul_acara'  => ['required', 'string', 'max:500'],
-            'hari_tanggal' => ['nullable', 'string', 'max:255'],
-            'waktu'        => ['nullable', 'string', 'max:255'],
-            'tempat'       => ['nullable', 'string', 'max:255'],
+            'judul_acara'        => ['required', 'string', 'max:500'],
+            'hari_tanggal'       => ['nullable', 'string', 'max:255'],
+            'waktu'              => ['nullable', 'string', 'max:255'],
+            'tempat'             => ['nullable', 'string', 'max:255'],
+            'tanggal_notula'     => ['nullable', 'date'],
+            'tanggal_surat'      => ['nullable', 'date'],
+            'undangan_pdf'       => ['nullable', 'file', 'mimes:pdf', 'max:5120'], // Maks 5MB
+            'daftar_hadir_pdf'   => ['nullable', 'file', 'mimes:pdf', 'max:5120'], // Maks 5MB
+            'pimpinan_ttd'       => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'dokumentasi.*'      => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
         ]);
 
-        $data = $request->except(['peserta', 'dokumentasi', 'kinerja_photos', 'notulis_ttd_base64']);
+        // Ambil input form selain field array dan file khusus
+        $data = $request->except([
+            'peserta', 
+            'dokumentasi', 
+            'kinerja_photos', 
+            'notulis_ttd_base64', 
+            'undangan_pdf', 
+            'daftar_hadir_pdf', 
+            'pimpinan_ttd'
+        ]);
+
         $data['user_id'] = Auth::id();
         $data['status']  = $request->input('status', 'draft');
 
-        // 1. Tanda Tangan Notulis (Canvas / Lengket ke Akun)
+        // 2. Simpan Lampiran File PDF Surat Undangan (jika diunggah)
+        if ($request->hasFile('undangan_pdf')) {
+            $data['undangan_file_path'] = $request->file('undangan_pdf')->store('notulensi/undangan', 'public');
+        }
+
+        // 3. Simpan Lampiran File PDF Daftar Hadir Fisik (jika diunggah manual)
+        if ($request->hasFile('daftar_hadir_pdf')) {
+            $data['daftar_hadir_file_path'] = $request->file('daftar_hadir_pdf')->store('notulensi/daftar-hadir', 'public');
+        }
+
+        // 4. Penanganan Tanda Tangan Digital Notulis (Canvas / Lengket ke Profil User)
         if ($request->filled('notulis_ttd_base64')) {
             $base64 = $request->notulis_ttd_base64;
+
+            // Jika tanda tangan merupakan goresan canvas baru (Base64 Data URL)
             if (str_starts_with($base64, 'data:image')) {
                 $image = preg_replace('/^data:image\/\w+;base64,/', '', $base64);
                 $image = str_replace(' ', '+', $image);
                 $fileName = 'signatures/user_' . Auth::id() . '_' . time() . '.png';
 
                 Storage::disk('public')->put($fileName, base64_decode($image));
+                
+                // Simpan ke record notulensi ini
                 $data['notulis_ttd_image'] = $fileName;
 
-                Auth::user()->update(['signature_pad' => $fileName]);
+                // Simpan permanen ke akun profil pegawai yang sedang login
+                Auth::user()->update([
+                    'signature_pad' => $fileName
+                ]);
             } else {
+                // Jika memakai path TTD yang tersimpan sebelumnya
                 $data['notulis_ttd_image'] = Auth::user()->signature_pad;
             }
         } elseif (Auth::user()->signature_pad) {
+            // Fallback: Jika tidak diubah, gunakan TTD profil yang sudah ada
             $data['notulis_ttd_image'] = Auth::user()->signature_pad;
         }
 
-        // 2. Upload Stempel & TTD Pimpinan jika ada
+        // 5. Simpan Scan TTD / Stempel Pimpinan (jika ada file pengganti custom)
         if ($request->hasFile('pimpinan_ttd')) {
             $data['pimpinan_ttd_image'] = $request->file('pimpinan_ttd')->store('notulensi/ttd-pimpinan', 'public');
         }
 
-        // 3. Gabungan Dokumentasi Foto: Kinerja + Manual
+        // 6. Penanganan Foto Dokumentasi: Gabungan dari Pilihan SIGAP Kinerja + Upload Manual
         $semuaFoto = [];
+
+        // Ambil foto yang dipilih dari galeri SIGAP Bukti Kinerja (berupa JSON array path)
         if ($request->filled('kinerja_photos')) {
             $kinerjaPaths = json_decode($request->kinerja_photos, true);
             if (is_array($kinerjaPaths)) {
                 $semuaFoto = array_merge($semuaFoto, $kinerjaPaths);
             }
         }
+
+        // Ambil foto hasil upload manual dari perangkat
         if ($request->hasFile('dokumentasi')) {
             foreach ($request->file('dokumentasi') as $photo) {
                 $semuaFoto[] = $photo->store('notulensi/dokumentasi', 'public');
             }
         }
+
+        // Simpan array path foto (maksimal array unik) ke kolom JSON dokumentasi_foto
         $data['dokumentasi_foto'] = !empty($semuaFoto) ? array_values(array_unique($semuaFoto)) : null;
 
+        // 7. Simpan Dokumen Notulensi ke Database
         $notulensi = Notulensi::create($data);
 
-        // 4. Simpan Peserta Daftar Hadir
+        // 8. Simpan Rincian Peserta Presensi (baik hasil kloning yang diedit maupun input manual)
         if ($request->has('peserta') && is_array($request->peserta)) {
             foreach ($request->peserta as $p) {
                 if (!empty($p['nama'])) {
@@ -180,7 +224,9 @@ class NotulensiController extends Controller
             }
         }
 
-        return redirect()->route('sigap-notulensi.index')->with('success', 'Dokumen notulensi berhasil disimpan!');
+        return redirect()
+            ->route('sigap-notulensi.show', $notulensi->id)
+            ->with('success', 'Dokumen notulensi berhasil disimpan.');
     }
 
     /**
@@ -367,33 +413,35 @@ class NotulensiController extends Controller
         $logoPemkot = $this->loadLogoBase64('logo-pemkot.png');
         $logoBrida  = $this->loadLogoBase64('logo-brida.png');
 
-        // 2. Muat Tanda Tangan & Stempel Resmi Kaban
-        // Prioritas 1: Gambar yang di-upload khusus di notulensi ini
-        // Prioritas 2: Aset resmi bawaan dari SIGAP Sertifikat ('images/sertifikat/ttd-kaban.png')
+        // 2. Muat TTD & Stempel Resmi Kaban
         $ttdKabanBase64 = null;
         if ($notulensi->pimpinan_ttd_image && Storage::disk('public')->exists($notulensi->pimpinan_ttd_image)) {
             $path = storage_path('app/public/' . $notulensi->pimpinan_ttd_image);
             $ttdKabanBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($path));
         } else {
-            // Muat dari file aset ttd-kaban.png milik sertifikat
             $ttdKabanBase64 = $this->loadAsetBase64('images/sertifikat/ttd-kaban.png');
         }
 
-        // 3. Tanda Tangan Notulis (Base64)
+        // 3. Muat TTD Digital Notulis
         $ttdNotulisBase64 = null;
         if ($notulensi->notulis_ttd_image && Storage::disk('public')->exists($notulensi->notulis_ttd_image)) {
             $path = storage_path('app/public/' . $notulensi->notulis_ttd_image);
             $ttdNotulisBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($path));
         }
 
-        // 4. Generate QR Verifikasi Digital
-        $verifikasiUrl = route('sigap-notulensi.show', $notulensi->id);
+        // 4. Generate QR Verifikasi Digital yang Mengarah ke Link Export PDF Ini
+        $verifikasiUrl = route('sigap-notulensi.export-pdf', $notulensi->id);
         $qrVerifikasi = base64_encode(
-            QrCode::format('svg')->size(100)->margin(1)->generate($verifikasiUrl)
+            QrCode::format('svg')->size(110)->margin(1)->generate($verifikasiUrl)
         );
 
-        // 5. Render View PDF
-        $pdf = Pdf::loadView('dashboard.notulensi.pdf', [
+        // 5. Cek Ketersediaan File PDF Eksternal yang Diunggah Pengguna
+        $hasCustomUndanganPdf = !empty($notulensi->undangan_file_path) && Storage::disk('public')->exists($notulensi->undangan_file_path);
+        $hasCustomDaftarHadirPdf = !empty($notulensi->daftar_hadir_file_path) && Storage::disk('public')->exists($notulensi->daftar_hadir_file_path);
+
+        $filename = 'Notula_' . Str::slug($notulensi->judul_acara) . '_' . date('Ymd') . '.pdf';
+
+        $sharedData = [
             'notulensi'        => $notulensi,
             'logoPemkot'       => $logoPemkot,
             'logoBrida'        => $logoBrida,
@@ -401,37 +449,88 @@ class NotulensiController extends Controller
             'ttdNotulisBase64' => $ttdNotulisBase64,
             'qrVerifikasi'     => $qrVerifikasi,
             'verifikasiUrl'    => $verifikasiUrl,
-        ])->setPaper('letter', 'portrait');
-
-        $filename = 'Notula_' . Str::slug($notulensi->judul_acara) . '_' . date('Ymd') . '.pdf';
-
-        return $pdf->stream($filename);
-    }
-
-    /**
-     * Helper muat file aset lokal publik ke base64 (Aman untuk dompdf)
-     */
-    private function loadAsetBase64(string $relativePath): ?string
-    {
-        $candidates = [
-            public_path($relativePath),
-            base_path('../public_html/' . $relativePath),
-            '/home/sigap/public_html/' . $relativePath,
         ];
 
-        foreach ($candidates as $path) {
-            if (file_exists($path) && is_readable($path)) {
-                $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-                $mime = ($ext === 'jpg' || $ext === 'jpeg') ? 'image/jpeg' : 'image/png';
-                return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($path));
-            }
+        // SKENARIO A: Tidak ada satupun file PDF yang diunggah (murni render template default HTML)
+        if (!$hasCustomUndanganPdf && !$hasCustomDaftarHadirPdf) {
+            $pdf = Pdf::loadView('dashboard.notulensi.pdf', array_merge($sharedData, [
+                'renderSection' => 'all'
+            ]))->setPaper('letter', 'portrait');
+
+            return $pdf->stream($filename);
         }
 
-        return null;
+        // SKENARIO B: Menggabungkan PDF sesuai posisi urutan dokumen resmi
+        try {
+            $merger = new \iio\libmergepdf\Merger();
+
+            // 1. URUTAN 1: SAMPUL RESMI (COVER)
+            $pdfCover = Pdf::loadView('dashboard.notulensi.pdf', array_merge($sharedData, [
+                'renderSection' => 'cover'
+            ]))->setPaper('letter', 'portrait')->output();
+            $merger->addRaw($pdfCover);
+
+            // 2. URUTAN 2: SURAT PENGANTAR / UNDANGAN
+            if ($hasCustomUndanganPdf) {
+                $merger->addFile(storage_path('app/public/' . $notulensi->undangan_file_path));
+            } else {
+                $pdfUndangan = Pdf::loadView('dashboard.notulensi.pdf', array_merge($sharedData, [
+                    'renderSection' => 'undangan'
+                ]))->setPaper('letter', 'portrait')->output();
+                $merger->addRaw($pdfUndangan);
+            }
+
+            // 3. URUTAN 3: LEMBAR NOTULA RAPAT
+            $pdfNotula = Pdf::loadView('dashboard.notulensi.pdf', array_merge($sharedData, [
+                'renderSection' => 'notula'
+            ]))->setPaper('letter', 'portrait')->output();
+            $merger->addRaw($pdfNotula);
+
+            // 4. URUTAN 4: LEMBAR DAFTAR HADIR
+            if ($hasCustomDaftarHadirPdf) {
+                $merger->addFile(storage_path('app/public/' . $notulensi->daftar_hadir_file_path));
+            } else {
+                $pdfDaftarHadir = Pdf::loadView('dashboard.notulensi.pdf', array_merge($sharedData, [
+                    'renderSection' => 'hadir'
+                ]))->setPaper('letter', 'portrait')->output();
+                $merger->addRaw($pdfDaftarHadir);
+            }
+
+            // 5. URUTAN 5: DOKUMENTASI KEGIATAN (FOTO GRID 2X2)
+            $pdfDokumentasi = Pdf::loadView('dashboard.notulensi.pdf', array_merge($sharedData, [
+                'renderSection' => 'dokumentasi'
+            ]))->setPaper('letter', 'portrait')->output();
+            $merger->addRaw($pdfDokumentasi);
+
+            $mergedPdfContent = $merger->merge();
+
+            return response($mergedPdfContent, 200, [
+                'Content-Type'        => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . $filename . '"',
+            ]);
+
+        } catch (\Throwable $e) {
+            // Deteksi jika penyebabnya adalah kompresi objek FPDI atau error struktur berkas PDF
+            $isFpdiCompression = str_contains($e->getMessage(), 'compression technique') 
+                || str_contains($e->getMessage(), 'CrossReference') 
+                || str_contains($e->getMessage(), 'parser shipped with FPDI');
+
+            $pesanHtml = '<strong>Format Kompresi PDF Lampiran Tidak Didukung!</strong><br><br>' .
+                         'Berkas PDF (Surat Undangan atau Daftar Hadir) yang Anda lampirkan menggunakan format kompresi modern (PDF 1.5+). Sistem arsip membutuhkan berkas dengan standar <b>PDF Versi 1.4</b>.<br><br>' .
+                         'Silakan lakukan konversi berkas PDF Anda secara gratis melalui tautan berikut:<br>' .
+                         '<a href="https://www.allfiletools.com/pdf-version-converter/" target="_blank" style="color: #0284c7; text-decoration: underline; font-weight: bold; display: inline-block; margin-top: 8px;">🔗 Buka PDF Version Converter (Pilih Versi 1.4)</a><br><br>' .
+                         '<span style="font-size: 11px; color: #64748b;">Setelah dikonversi ke PDF 1.4, silakan edit dan unggah ulang berkas tersebut.</span>';
+
+            // Catat log untuk kebutuhan debugging teknis
+            \Illuminate\Support\Facades\Log::error('Gagal export PDF Notulensi ID ' . $id . ': ' . $e->getMessage());
+
+            // Arahkan kembali dengan flash message SweetAlert
+            return back()->with('swal_error_html', $pesanHtml);
+        }
     }
 
     /**
-     * Helper untuk memuat logo instansi ke base64 (Aman untuk DOMPDF)
+     * Helper muat logo instansi ke base64 (Aman untuk dompdf)
      */
     private function loadLogoBase64(string $filename): ?string
     {
@@ -454,6 +553,28 @@ class NotulensiController extends Controller
                     };
                     return 'data:' . $mime . ';base64,' . base64_encode($content);
                 }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Helper muat file aset lokal publik ke base64
+     */
+    private function loadAsetBase64(string $relativePath): ?string
+    {
+        $candidates = [
+            public_path($relativePath),
+            base_path('../public_html/' . $relativePath),
+            '/home/sigap/public_html/' . $relativePath,
+        ];
+
+        foreach ($candidates as $path) {
+            if (file_exists($path) && is_readable($path)) {
+                $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+                $mime = ($ext === 'jpg' || $ext === 'jpeg') ? 'image/jpeg' : 'image/png';
+                return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($path));
             }
         }
 

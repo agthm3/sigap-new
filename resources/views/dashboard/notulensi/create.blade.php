@@ -146,19 +146,19 @@
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-gray-700 mb-1">Hari & Tanggal Notulensi</label>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Hari & Tanggal Pelaksanaan Rapat</label>
             <input type="text" name="hari_tanggal" x-model="formData.hari_tanggal" 
                    placeholder="Contoh: Senin, 27 Juli 2026" class="w-full text-xs rounded-xl p-2.5">
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-gray-700 mb-1">Waktu Pelaksanaan Notulensi</label>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Waktu Pelaksanaan</label>
             <input type="text" name="waktu" x-model="formData.waktu" 
                    placeholder="Contoh: 09.00 WITA - Selesai" class="w-full text-xs rounded-xl p-2.5">
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-gray-700 mb-1">Tempat / Ruangan Notulensi</label>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Tempat / Ruangan Pelaksanaan</label>
             <input type="text" name="tempat" x-model="formData.tempat" 
                    placeholder="Contoh: Ruang Rapat BRIDA Kota Makassar" class="w-full text-xs rounded-xl p-2.5">
           </div>
@@ -177,6 +177,16 @@
           <div>
             <label class="block text-xs font-semibold text-gray-700 mb-1">Keterangan Ringkas Peserta</label>
             <input type="text" name="peserta_ringkas" placeholder="Contoh: Seluruh Pejabat Struktural dan Tim Fungsional" class="w-full text-xs rounded-xl p-2.5">
+          </div>
+
+          <!-- REVISI 1: INPUT TANGGAL NOTULA (UNTUK TANGGAL TTD NOTULIS) -->
+          <div>
+            <label class="block text-xs font-semibold text-maroon mb-1">
+              Tanggal Pembuatan / Tanda Tangan Notula
+            </label>
+            <input type="date" name="tanggal_notula" x-model="formData.tanggal_notula" 
+                   class="w-full text-xs rounded-xl p-2.5 border-maroon focus:ring-maroon bg-maroon-50/20">
+            <p class="text-[10px] text-gray-500 mt-1">*Tanggal ini akan tercetak persis di atas tanda tangan notulis pada berkas PDF.</p>
           </div>
         </div>
       </div>
@@ -268,8 +278,23 @@
     <!-- TAB 2: SURAT PENGANTAR / UNDANGAN                                   -->
     <!-- =================================================================== -->
     <div x-show="activeTab === 'undangan'" class="space-y-5 pt-4" style="display: none;">
+      
+      <!-- REVISI 2: INPUT LAMPIRAN FILE SURAT UNDANGAN (PDF) -->
+      <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs space-y-3">
+        <div class="flex items-center justify-between border-b pb-2">
+          <h2 class="text-sm font-bold text-gray-800">Lampiran File PDF Undangan (Opsional)</h2>
+          <span class="text-[11px] text-gray-400">Format: PDF (Maks 5MB)</span>
+        </div>
+        <p class="text-xs text-gray-500">
+          Jika Anda sudah memiliki file PDF surat undangan resmi yang sudah ditandatangani/distempel, Anda dapat mengunggahnya di sini.
+        </p>
+        <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 bg-gray-50/50 hover:border-maroon transition">
+          <input type="file" name="undangan_pdf" accept="application/pdf" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-maroon file:text-white hover:file:bg-maroon-800">
+        </div>
+      </div>
+
       <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs space-y-4">
-        <h2 class="text-sm font-bold text-gray-800 border-b pb-2">Informasi Surat Pengantar / Undangan Resmi</h2>
+        <h2 class="text-sm font-bold text-gray-800 border-b pb-2">Atau Ketik Informasi Surat Pengantar / Undangan Resmi</h2>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
@@ -299,11 +324,11 @@
         <div class="border-t pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="block text-xs font-semibold text-gray-700 mb-1">Nama Pimpinan Penandatangan</label>
-            <input type="text" name="pimpinan_nama" x-model="formData.pimpinan_nama" placeholder="H. ANDI RAMA, S.Sos., M.Si." class="w-full text-xs rounded-xl p-2.5">
+            <input type="text" name="pimpinan_nama" x-model="formData.pimpinan_nama" placeholder="Haidil Adha, S.Sos., M.M." class="w-full text-xs rounded-xl p-2.5">
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-700 mb-1">Jabatan Pimpinan</label>
-            <input type="text" name="pimpinan_jabatan" x-model="formData.pimpinan_jabatan" placeholder="KEPALA BADAN RISET DAN INOVASI DAERAH" class="w-full text-xs rounded-xl p-2.5">
+            <input type="text" name="pimpinan_jabatan" x-model="formData.pimpinan_jabatan" placeholder="Kepala Badan Riset dan Inovasi Daerah Kota Makassar" class="w-full text-xs rounded-xl p-2.5">
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-700 mb-1">Pangkat / Golongan</label>
@@ -314,7 +339,7 @@
             <input type="text" name="pimpinan_nip" x-model="formData.pimpinan_nip" placeholder="19700216 199803 1 004" class="w-full text-xs rounded-xl p-2.5">
           </div>
           <div class="md:col-span-2">
-            <label class="block text-xs font-semibold text-gray-700 mb-1">Scan Stempel & TTD Pimpinan (PNG transparan disarankan)</label>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Scan Stempel & TTD Pimpinan (Opsional - default otomatis menggunakan TTD & stempel resmi Kaban)</label>
             <input type="file" name="pimpinan_ttd" accept="image/*" class="w-full text-xs rounded-xl p-2 border">
           </div>
         </div>
@@ -326,13 +351,26 @@
     <!-- =================================================================== -->
     <div x-show="activeTab === 'hadir'" class="space-y-5 pt-4" style="display: none;">
       
-      <!-- Custom Header Setting untuk PDF Presensi Notulensi ini -->
+      <!-- REVISI 3: INPUT LAMPIRAN FILE PDF DAFTAR HADIR FISIK -->
+      <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs space-y-3">
+        <div class="flex items-center justify-between border-b pb-2">
+          <h2 class="text-sm font-bold text-gray-800">Lampirkan Scan File PDF Daftar Hadir Fisik (Opsional)</h2>
+          <span class="text-[11px] text-gray-400">Format: PDF (Maks 5MB)</span>
+        </div>
+        <p class="text-xs text-gray-500">
+          Jika kegiatan tidak menggunakan presensi digital SIGAP DAFTAR HADIR dan Anda memiliki berkas daftar hadir fisik (tanda tangan basah) yang dipindai ke PDF, lampirkan berkasnya di sini.
+        </p>
+        <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 bg-gray-50/50 hover:border-maroon transition">
+          <input type="file" name="daftar_hadir_pdf" accept="application/pdf" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-maroon file:text-white hover:file:bg-maroon-800">
+        </div>
+      </div>
+
       <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900">
         <p class="font-bold flex items-center gap-1.5">
           <span>⚙️ Pengaturan Tampilan Lembar Presensi Notulensi</span>
         </p>
         <p class="text-[11px] text-amber-800 mt-1">
-          Tata letak dan kop di bawah ini akan dicetak <strong>SAMA PERSIS</strong> dengan template PDF SIGAP DAFTAR KEGIATAN. Anda bebas menyesuaikan judul atau waktu di atas tanpa mengubah rekaman kegiatan presensi aslinya.
+          Jika tabel di bawah ini terisi, sistem akan mencetak lembar presensi sesuai data tabel. Anda bebas menyesuaikan judul, waktu, dan peserta tanpa mengubah rekaman kegiatan aslinya.
         </p>
       </div>
 
@@ -355,7 +393,7 @@
                 <th class="py-2.5 px-3 text-left">Nama Peserta</th>
                 <th class="py-2.5 px-3 text-left">Instansi / Unit Kerja</th>
                 <th class="py-2.5 px-3 text-center w-14">Gender</th>
-                <th class="py-2.5 px-3 text-left">No. HP</th>
+                <th class="py-2.5 px-3 text-left">No. HP / NIP</th>
                 <th class="py-2.5 px-3 text-left">Email</th>
                 <th class="py-2.5 px-3 text-center w-24">Paraf / TTD</th>
                 <th class="py-2.5 px-3 text-center w-12">Aksi</th>
@@ -378,7 +416,7 @@
                     </select>
                   </td>
                   <td class="py-2 px-3">
-                    <input type="text" :name="'peserta['+index+'][no_hp]'" x-model="p.no_hp" placeholder="No HP" class="w-full text-xs rounded-lg p-1.5 border-gray-300">
+                    <input type="text" :name="'peserta['+index+'][nip_nohp]'" x-model="p.nip_nohp" placeholder="No HP" class="w-full text-xs rounded-lg p-1.5 border-gray-300">
                   </td>
                   <td class="py-2 px-3">
                     <input type="email" :name="'peserta['+index+'][email]'" x-model="p.email" placeholder="Email" class="w-full text-xs rounded-lg p-1.5 border-gray-300">
@@ -400,7 +438,7 @@
               <template x-if="pesertas.length === 0">
                 <tr>
                   <td colspan="8" class="py-8 text-center text-gray-400">
-                    Belum ada baris peserta. Gunakan dropdown penarik di atas atau tambahkan baris manual.
+                    Belum ada baris peserta. Gunakan dropdown penarik di atas, tambahkan baris manual, atau lampirkan file PDF di atas.
                   </td>
                 </tr>
               </template>
@@ -463,7 +501,6 @@
   <!-- =================================================================== -->
   <div x-show="openKinerjaModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
     <div @click.away="openKinerjaModal = false" class="bg-white rounded-3xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
-      <!-- Modal Header -->
       <div class="px-6 py-4 bg-maroon text-white flex items-center justify-between">
         <div>
           <h3 class="font-bold text-base">Pencarian & Seleksi Bukti Kinerja</h3>
@@ -472,7 +509,6 @@
         <button type="button" @click="openKinerjaModal = false" class="text-white/70 hover:text-white font-bold text-xl">✕</button>
       </div>
 
-      <!-- Filter Pencarian Komprehensif -->
       <div class="p-4 bg-gray-50 border-b grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div class="sm:col-span-2">
           <label class="block text-[11px] font-bold text-gray-600 mb-1">Cari Nama Kegiatan / Uraian</label>
@@ -490,14 +526,13 @@
         </div>
       </div>
 
-      <!-- Modal Body (Grid Foto) -->
       <div class="p-6 overflow-y-auto space-y-5 flex-1">
         <template x-for="kinerja in filteredKinerjaList" :key="kinerja.id">
           <div class="border border-gray-200 rounded-2xl p-4 space-y-3 bg-white shadow-2xs">
             <div class="flex items-center justify-between border-b pb-2">
               <div>
                 <h4 class="text-xs font-bold text-gray-900" x-text="kinerja.title"></h4>
-                <p class="text-[10px] text-gray-500" x-text="'Tanggal Kegiatan: ' + (kinerja.date || '-')"></p>
+                <p class="text-[10px] text-gray-500" x-text="'Tanggal: ' + (kinerja.date || '-')"></p>
               </div>
               <span class="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-semibold" 
                     x-text="kinerja.images.length + ' Foto'"></span>
@@ -522,24 +557,18 @@
 
         <template x-if="filteredKinerjaList.length === 0">
           <div class="text-center py-12 text-gray-400 text-xs">
-            Tidak ada bukti kinerja yang sesuai dengan pencarian / filter bulan tersebut.
+            Tidak ada bukti kinerja yang sesuai dengan pencarian tersebut.
           </div>
         </template>
       </div>
 
-      <!-- Modal Footer -->
       <div class="p-4 bg-gray-50 border-t flex items-center justify-between">
         <span class="text-xs text-gray-600">
           Total Foto Terpilih: <strong class="text-maroon font-bold" x-text="selectedKinerjaPhotos.length"></strong>
         </span>
-        <div class="flex gap-2">
-          <button type="button" @click="selectedKinerjaPhotos = []" class="px-3 py-2 rounded-xl border border-gray-300 text-xs hover:bg-gray-100 font-semibold text-gray-600">
-            Reset Pilihan
-          </button>
-          <button type="button" @click="openKinerjaModal = false" class="px-5 py-2 rounded-xl bg-maroon text-white text-xs font-bold hover:bg-maroon-800 transition">
-            Gunakan Foto Terpilih
-          </button>
-        </div>
+        <button type="button" @click="openKinerjaModal = false" class="px-5 py-2 rounded-xl bg-maroon text-white text-xs font-bold hover:bg-maroon-800 transition">
+          Gunakan Foto Terpilih
+        </button>
       </div>
     </div>
   </div>
@@ -558,14 +587,14 @@ function notulensiCreate() {
     searchDHQuery: '',
     selectedDaftarHadirId: '',
     selectedDHLabel: '',
-    rawDaftarHadirList: @json($kegiatanDaftarHadir),
+    rawDaftarHadirList: @json($kegiatanDaftarHadir ?? []),
 
     // State BUKTI KINERJA Searchable
     openKinerjaModal: false,
     searchKinerjaText: '',
     searchKinerjaMonth: '',
     selectedKinerjaPhotos: [],
-    rawKinerjaList: @json($buktiKinerjaList),
+    rawKinerjaList: @json($buktiKinerjaList ?? []),
 
     formData: {
       judul: '',
@@ -574,9 +603,10 @@ function notulensiCreate() {
       waktu: '',
       nomor_surat: '',
       pimpinan_rapat: '',
-      pimpinan_nama: '',
-      pimpinan_jabatan: '',
-      pimpinan_pangkat: '',
+      tanggal_notula: new Date().toISOString().split('T')[0], // Default tanggal hari ini
+      pimpinan_nama: 'Haidil Adha, S.Sos., M.M.',
+      pimpinan_jabatan: 'Kepala Badan Riset dan Inovasi Daerah Kota Makassar',
+      pimpinan_pangkat: 'Pembina Utama Muda',
       pimpinan_nip: ''
     },
     pesertas: [],
@@ -630,7 +660,7 @@ function notulensiCreate() {
               nama: p.nama,
               instansi: p.instansi,
               gender: p.gender || 'L',
-              no_hp: p.nip_nohp || '',
+              nip_nohp: p.nip_nohp || '',
               email: p.email || '',
               paraf_image: p.paraf_image || null
             }));
@@ -724,7 +754,7 @@ function notulensiCreate() {
   }
 }
 
-// Canvas Tanda Tangan Notulis
+// Canvas Tanda Tangan Digital Notulis
 function signatureCanvas(userSignature) {
   return {
     savedSignatureUrl: userSignature ? (userSignature.startsWith('data:') ? userSignature : `/storage/${userSignature}`) : null,
