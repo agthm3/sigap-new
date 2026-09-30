@@ -39,6 +39,41 @@
       </p>
     @endif
 
+    {{-- KARTU STATUS SOUVENIR (Hanya tampil jika kegiatan ada fasilitas souvenir) --}}
+    @if($kegiatan->ada_souvenir)
+      @php
+        $statusSouvenir = session('terima_souvenir', 0);
+      @endphp
+      <div class="mb-6 p-4 rounded-2xl border text-left flex items-center justify-between {{ $statusSouvenir == 1 ? 'bg-emerald-50 border-emerald-200' : 'bg-gray-50 border-gray-200' }}">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider block {{ $statusSouvenir == 1 ? 'text-emerald-700' : 'text-gray-500' }}">
+            Status Souvenir
+          </span>
+          <p class="text-sm font-semibold {{ $statusSouvenir == 1 ? 'text-emerald-900' : 'text-gray-800' }}">
+            {{ $statusSouvenir == 1 ? 'Menerima Souvenir' : 'Tidak Menerima Souvenir' }}
+          </p>
+          <span class="text-[11px] text-gray-500 block mt-0.5">
+            Perlihatkan layar ini ke panitia di meja registrasi / souvenir.
+          </span>
+        </div>
+
+        <div class="text-right">
+          @if($statusSouvenir == 1)
+            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-600 text-white shadow-sm">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+              </svg>
+              DAPAT
+            </span>
+          @else
+            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-gray-400 text-white">
+              TIDAK
+            </span>
+          @endif
+        </div>
+      </div>
+    @endif
+
     <!-- DETAIL INFORMASI KEGIATAN -->
     <div class="bg-gray-50 border border-gray-100 rounded-2xl p-4 text-left mb-6 space-y-2">
       <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Kegiatan</div>

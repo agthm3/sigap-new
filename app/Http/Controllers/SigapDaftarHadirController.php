@@ -28,7 +28,7 @@ class SigapDaftarHadirController extends Controller
             $base->where('created_by', $user->id);
         }
 
-        // Pencarian multi-kolom (Nama Kegiatan, Hari/Tanggal, dan Tempat)
+        // Pencarian multi-kolom
         if ($request->filled('q')) {
             $keyword = trim($request->get('q'));
             $base->where(function ($query) use ($keyword) {
@@ -38,13 +38,11 @@ class SigapDaftarHadirController extends Controller
             });
         }
 
-        // Filter Status Kegiatan
         if ($request->filled('status')) {
             $status = $request->get('status');
             $base->where('status', $status);
         }
 
-        // Filter Kategori Peran
         if ($request->filled('kategori')) {
             $kategori = $request->get('kategori');
             $base->where('kategori_peran', $kategori);
@@ -82,25 +80,20 @@ class SigapDaftarHadirController extends Controller
             'hari_tanggal'         => ['required', 'string', 'max:255'],
             'tempat'               => ['required', 'string', 'max:255'],
             'waktu'                => ['required', 'string', 'max:255'],
-            'kategori_peran' => ['required', 'in:Peserta,Tenaga Ahli,Narasumber,Panitia'],
+            'kategori_peran'       => ['required', 'in:Peserta,Tenaga Ahli,Narasumber,Panitia'],
             'undangan_pdf'  => [
                 'nullable', 
                 'file', 
                 'mimes:pdf', 
-                'max:5120', // Max 5MB
+                'max:5120',
                 function ($attribute, $value, $fail) {
-                    // Buka file PDF dan baca 15 karakter pertama di baris paling atas
                     $handle = fopen($value->getRealPath(), 'r');
                     $firstLine = fgets($handle, 15);
                     fclose($handle);
 
-                    // Baris pertama PDF selalu berisi versinya, contoh: %PDF-1.4 atau %PDF-1.7
                     preg_match('/%PDF-(\d\.\d)/', $firstLine, $matches);
-                    
                     if (isset($matches[1])) {
                         $version = (float) $matches[1];
-                        
-                        // Jika versi PDF di atas 1.4 (Canva/iLovePDF biasanya 1.5 - 1.7)
                         if ($version > 1.4) {
                             $fail('File PDF ditolak (Terdeteksi versi PDF ' . $version . '). Sistem hanya mendukung PDF versi 1.4 kebawah. Silakan buka file tersebut di browser (Chrome/Edge), tekan Ctrl+P, lalu pilih "Save as PDF" sebelum mengunggahnya kembali.');
                         }
@@ -108,6 +101,7 @@ class SigapDaftarHadirController extends Controller
                 }
             ],
             'buat_sertifikat'      => ['nullable'],  
+            'ada_souvenir'         => ['nullable'], // Validasi souvenir
             'pejabat.nama_lengkap' => ['nullable', 'string', 'max:255'],
             'pejabat.jabatan'      => ['nullable', 'string', 'max:255'],
             'pejabat.pangkat'      => ['nullable', 'string', 'max:255'],
@@ -147,6 +141,7 @@ class SigapDaftarHadirController extends Controller
                 'created_by'      => Auth::id(),
                 'undangan_path'   => $undanganPath,
                 'buat_sertifikat' => $request->has('buat_sertifikat') ? 1 : 0,
+                'ada_souvenir'    => $request->has('ada_souvenir') ? 1 : 0, // Simpan status souvenir
                 'nomor_surat'     => $request->input('nomor_surat'),
                 'kategori_peran'  => $request->input('kategori_peran'),
             ]);
@@ -194,27 +189,24 @@ class SigapDaftarHadirController extends Controller
         return view('dashboard.daftar_hadir.edit', compact('kegiatan'));
     }
 
-public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
+    public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
     {
         $user = Auth::user();
 
-        // 1. Validasi Hak Akses (Hanya Admin, Verifikator, atau Pembuat Kegiatan)
         if (!$user->hasAnyRole(['admin', 'verif_daftarhadir'])) {
             abort_unless((int) $kegiatan->created_by === (int) $user->id, 403, 'Anda tidak memiliki akses ke kegiatan ini.');
         }
 
-        // 2. Validasi Input Data Form
         $request->validate([
-            'nama_kegiatan'         => ['required', 'string', 'max:500'],
-            'hari_tanggal'          => ['required', 'string', 'max:255'],
-            'tempat'                => ['required', 'string', 'max:255'],
-            'waktu'                 => ['required', 'string', 'max:255'],
-            'buat_sertifikat'       => ['nullable'],
-            'hapus_undangan'        => ['nullable', 'in:1'],
-            'kategori_peran' => ['required', 'in:Peserta,Tenaga Ahli,Narasumber,Panitia'],
-            
-            // VALIDASI FILE: Hanya menerima versi PDF 1.4 ke bawah (Anti-Crash Merger)
-            'undangan_pdf'          => [
+            'nama_kegiatan'           => ['required', 'string', 'max:500'],
+            'hari_tanggal'            => ['required', 'string', 'max:255'],
+            'tempat'                  => ['required', 'string', 'max:255'],
+            'waktu'                   => ['required', 'string', 'max:255'],
+            'buat_sertifikat'         => ['nullable'],
+            'ada_souvenir'            => ['nullable'], // Validasi souvenir
+            'hapus_undangan'          => ['nullable', 'in:1'],
+            'kategori_peran'          => ['required', 'in:Peserta,Tenaga Ahli,Narasumber,Panitia'],
+            'undangan_pdf'            => [
                 'nullable', 
                 'file', 
                 'mimes:pdf', 
@@ -233,9 +225,7 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
                     }
                 }
             ],
-
-            // VALIDASI ANTISIPASI DUPLIKAT NOMOR SURAT
-            'nomor_surat'           => [
+            'nomor_surat'             => [
                 'nullable', 
                 'string', 
                 'max:255',
@@ -250,56 +240,48 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
                     }
                 }
             ],
-            
-            // Validasi baris data peserta (jika ada)
-            'peserta'               => ['sometimes', 'array'],
-            'peserta.*.nama'        => ['required_with:peserta', 'string', 'max:255'],
-            'peserta.*.instansi'    => ['required_with:peserta', 'string', 'max:255'],
-            'peserta.*.gender'      => ['required_with:peserta', 'in:L,P'],
-            'peserta.*.no_hp'       => ['required_with:peserta', 'string', 'max:30'],
-            'peserta.*.email'       => ['nullable', 'email', 'max:255'],
-            'peserta.*.urutan_absen'=> ['required_with:peserta', 'integer', 'min:1'],
-            
-            // Validasi data penandatangan (opsional)
-            'pejabat.nama_lengkap'  => ['nullable', 'string', 'max:255'],
-            'pejabat.jabatan'       => ['nullable', 'string', 'max:255'],
-            'pejabat.pangkat'       => ['nullable', 'string', 'max:255'],
-            'pejabat.golongan'      => ['nullable', 'string', 'max:20'],
-            'pejabat.nip'           => ['nullable', 'string', 'max:30'],
-            'pejabat.tempat_ttd'    => ['nullable', 'string', 'max:255'],
-            'pejabat.tanggal_ttd'   => ['nullable', 'string', 'max:255'],
+            'peserta'                 => ['sometimes', 'array'],
+            'peserta.*.nama'          => ['required_with:peserta', 'string', 'max:255'],
+            'peserta.*.instansi'      => ['required_with:peserta', 'string', 'max:255'],
+            'peserta.*.gender'        => ['required_with:peserta', 'in:L,P'],
+            'peserta.*.no_hp'         => ['required_with:peserta', 'string', 'max:30'],
+            'peserta.*.email'         => ['nullable', 'email', 'max:255'],
+            'peserta.*.urutan_absen'  => ['required_with:peserta', 'integer', 'min:1'],
+            'peserta.*.terima_souvenir'=> ['nullable', 'in:0,1'], // Validasi edit souvenir peserta
+            'pejabat.nama_lengkap'    => ['nullable', 'string', 'max:255'],
+            'pejabat.jabatan'         => ['nullable', 'string', 'max:255'],
+            'pejabat.pangkat'         => ['nullable', 'string', 'max:255'],
+            'pejabat.golongan'        => ['nullable', 'string', 'max:20'],
+            'pejabat.nip'             => ['nullable', 'string', 'max:30'],
+            'pejabat.tempat_ttd'      => ['nullable', 'string', 'max:255'],
+            'pejabat.tanggal_ttd'     => ['nullable', 'string', 'max:255'],
         ]);
 
         DB::transaction(function () use ($request, $kegiatan) {
-            
-            // 3. Logika Penanganan File Undangan (Simpan / Ganti / Hapus)
             if ($request->has('hapus_undangan') && $request->hapus_undangan == '1') {
-                // Proses Hapus: Musnahkan file dari storage dan set null di database
                 if ($kegiatan->undangan_path && Storage::disk('public')->exists($kegiatan->undangan_path)) {
                     Storage::disk('public')->delete($kegiatan->undangan_path);
                 }
                 $kegiatan->undangan_path = null;
             } elseif ($request->hasFile('undangan_pdf')) {
-                // Proses Ganti: Hapus yang lama, simpan yang baru
                 if ($kegiatan->undangan_path && Storage::disk('public')->exists($kegiatan->undangan_path)) {
                     Storage::disk('public')->delete($kegiatan->undangan_path);
                 }
                 $kegiatan->undangan_path = $request->file('undangan_pdf')->store('sigap/daftar-hadir/undangan', 'public');
             }
 
-            // 4. Set Nilai Mutasi Checkbox Sertifikat
             $kegiatan->buat_sertifikat = $request->has('buat_sertifikat') ? 1 : 0;
+            $kegiatan->ada_souvenir    = $request->has('ada_souvenir') ? 1 : 0; // Update status souvenir kegiatan
 
-            // 5. Jalankan Perbaruan Informasi Utama Kegiatan
             $kegiatan->update([
-                'nama_kegiatan' => $request->nama_kegiatan,
-                'hari_tanggal'  => $request->hari_tanggal,
-                'tempat'        => $request->tempat,
-                'waktu'         => $request->waktu,
-                'nomor_surat'   => $request->input('nomor_surat'),
+                'nama_kegiatan'  => $request->nama_kegiatan,
+                'hari_tanggal'   => $request->hari_tanggal,
+                'tempat'         => $request->tempat,
+                'waktu'          => $request->waktu,
+                'nomor_surat'    => $request->input('nomor_surat'),
+                'kategori_peran' => $request->input('kategori_peran'),
             ]);
 
-            // 6. Proses Update Data Massal Peserta Kegiatan
             $pesertaInput = collect($request->input('peserta', []));
             foreach ($pesertaInput as $id => $row) {
                 $peserta = SigapDaftarHadirPeserta::where('kegiatan_id', $kegiatan->id)
@@ -307,24 +289,23 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
                     ->firstOrFail();
 
                 $peserta->update([
-                    'nama'         => $row['nama'],
-                    'instansi'     => $row['instansi'],
-                    'gender'       => $row['gender'],
-                    'no_hp'        => $row['no_hp'],
-                    'email'        => $row['email'] ?? null,
-                    'urutan_absen' => (int) $row['urutan_absen'],
+                    'nama'            => $row['nama'],
+                    'instansi'        => $row['instansi'],
+                    'gender'          => $row['gender'],
+                    'no_hp'           => $row['no_hp'],
+                    'email'           => $row['email'] ?? null,
+                    'urutan_absen'    => (int) $row['urutan_absen'],
+                    'terima_souvenir' => isset($row['terima_souvenir']) ? (int) $row['terima_souvenir'] : 0, // Update status per peserta
                     'kategori_peran'  => $request->kategori_peran,  
                 ]);
             }
 
-            // 7. Normalisasi / Re-order Urutan Nomor Absen Peserta
             $sorted = $kegiatan->peserta()->orderBy('urutan_absen')->orderBy('created_at')->get();
             $urut = 1;
             foreach ($sorted as $item) {
                 $item->update(['urutan_absen' => $urut++]);
             }
 
-            // 8. Logika Perbaruan / Pembersihan Data Pejabat Penandatangan
             $pejabatInput = $request->input('pejabat', []);
             if (!empty($pejabatInput['nama_lengkap'])) {
                 $this->upsertPenandatangan($kegiatan, $pejabatInput);
@@ -352,14 +333,11 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
 
         $kegiatan->update(['status' => $request->status]);
 
-        // JIKA STATUS SELESAI DAN MINTA DIBUATKAN SERTIFIKAT -> GENERATE & SINKRONISASI KE TABEL SERTIFIKAT
         if ($request->status === 'selesai' && $kegiatan->buat_sertifikat == 1) {
-            
-            // 1. Buat / Perbarui master kegiatan di tabel sertifikat_kegiatans
             $sertifKegiatan = SertifikatKegiatan::updateOrCreate(
                 [
                     'nama_kegiatan' => $kegiatan->nama_kegiatan,
-                    'tanggal'       => $kegiatan->hari_tanggal, // Mengambil data Hari/Tanggal daftar hadir
+                    'tanggal'       => $kegiatan->hari_tanggal,
                 ],
                 [
                     'tempat'        => $kegiatan->tempat,
@@ -370,36 +348,29 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
                 ]
             );
 
-            // Array untuk menampung nama-nama peserta yang aktif/masih ada
             $namaPesertaValid = [];
 
-            // 2. Looping seluruh peserta daftar hadir untuk ditambah/diperbarui
             foreach ($kegiatan->peserta as $p) {
-                // Masukkan nama peserta ke daftar valid
                 $namaPesertaValid[] = $p->nama;
 
-                // Cek apakah peserta ini sudah punya data sertifikat di kegiatan ini
                 $sertifPeserta = SertifikatPeserta::where('kegiatan_id', $sertifKegiatan->id)
                     ->where('nama_penerima', $p->nama)
                     ->first();
 
                 if ($sertifPeserta) {
-                    // PESERTA LAMA: Cukup update instansi tanpa menyentuh nomor sertifikatnya
                     $sertifPeserta->update([
                         'instansi' => $p->instansi,
                     ]);
                 } else {
-                    // PESERTA BARU: Cari nomor sertifikat unik yang belum pernah terpakai
                     $urutanTarget = $p->urutan_absen;
                     do {
                         $nomorDinamis = $this->formatNomorSertifikat($kegiatan->nomor_surat, $urutanTarget, $kegiatan->id);
                         $exists = SertifikatPeserta::where('nomor_sertifikat', $nomorDinamis)->exists();
                         if ($exists) {
-                            $urutanTarget++; // Lompat ke nomor urut berikutnya jika sudah terpakai
+                            $urutanTarget++;
                         }
                     } while ($exists);
 
-                    // Simpan sertifikat baru
                     SertifikatPeserta::create([
                         'kegiatan_id'      => $sertifKegiatan->id,
                         'nama_penerima'    => $p->nama,
@@ -410,15 +381,11 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
                 }
             }
 
-            // 3. SINKRONISASI PENGHAPUSAN (CLEANUP)
-            // Hapus sertifikat yang nama penerimanya sudah tidak ada di $namaPesertaValid
             if (!empty($namaPesertaValid)) {
                 SertifikatPeserta::where('kegiatan_id', $sertifKegiatan->id)
                     ->whereNotIn('nama_penerima', $namaPesertaValid)
                     ->delete();
             } else {
-                // Jika ternyata di daftar hadir SEMUA peserta dihapus hingga kosong 0, 
-                // maka bersihkan juga semua sertifikat di kegiatan ini.
                 SertifikatPeserta::where('kegiatan_id', $sertifKegiatan->id)->delete();
             }
         }
@@ -450,10 +417,6 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
         return redirect()->route('sigap-daftar-hadir.index')->with('success', 'Kegiatan berhasil dihapus.');
     }
 
-    // =========================================================================
-    // RIWAYAT PESERTA
-    // =========================================================================
-
     public function riwayatPeserta(Request $request)
     {
         $q       = trim((string) $request->get('q', ''));
@@ -483,18 +446,14 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
         return view('dashboard.daftar_hadir.riwayat-peserta-detail', compact('nama', 'pesertaList'));
     }
 
-    // =========================================================================
-    // PUBLIC FORM — PESERTA
-    // =========================================================================
-
     public function publicForm(SigapDaftarHadirKegiatan $kegiatan)
     {
         $kegiatan->loadCount('peserta');
         return view('dashboard.daftar_hadir.public-form', compact('kegiatan'));
     }
+
     public function publicStatus(SigapDaftarHadirKegiatan $kegiatan)
     {
-        // Cegah akses langsung tanpa sesi status
         if (!session()->has('status_type')) {
             return redirect()->route('sigap-daftar-hadir.public', $kegiatan->uuid);
         }
@@ -543,19 +502,21 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
             'email'             => ['nullable', 'email', 'max:255'],
             'ttd_data'          => ['nullable', 'string'],
             'existing_ttd_path' => ['nullable', 'string'],
+            'terima_souvenir'   => ['nullable', 'in:0,1'],
         ]);
 
         $nama = trim($request->nama);
-        $duplicate = SigapDaftarHadirPeserta::where('kegiatan_id', $kegiatan->id)
+        $pesertaLama = SigapDaftarHadirPeserta::where('kegiatan_id', $kegiatan->id)
             ->whereRaw('LOWER(nama) = ?', [Str::lower($nama)])
-            ->exists();
+            ->first();
 
-        // JIKA NAMA SUDAH TERDAFTAR: Jangan pakai kata Gagal, pindahkan ke halaman status info
-        if ($duplicate) {
+        // JIKA NAMA SUDAH TERDAFTAR: Ambil status souvenir yang lama untuk ditampilkan di public-status
+        if ($pesertaLama) {
             return redirect()
                 ->route('sigap-daftar-hadir.public-status', $kegiatan->uuid)
                 ->with('status_type', 'already_registered')
-                ->with('peserta_nama', $nama);
+                ->with('peserta_nama', $nama)
+                ->with('terima_souvenir', (int) $pesertaLama->terima_souvenir);
         }
 
         $ttdPath = null;
@@ -567,23 +528,27 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
 
         $nextOrder = (int) (SigapDaftarHadirPeserta::where('kegiatan_id', $kegiatan->id)->max('urutan_absen') ?? 0) + 1;
 
+        // Tangkap nilai terima_souvenir (hanya aktif bernilai 1 jika kegiatan ada_souvenir = 1 dan peserta memilih dapat)
+        $terimaSouvenir = ($kegiatan->ada_souvenir == 1 && $request->input('terima_souvenir') == '1') ? 1 : 0;
+
         SigapDaftarHadirPeserta::create([
-            'kegiatan_id'  => $kegiatan->id,
-            'nama'         => $nama,
-            'instansi'     => $request->instansi,
-            'gender'       => $request->gender,
-            'no_hp'        => $request->no_hp,
-            'email'        => $request->email,
-            'ttd_path'     => $ttdPath,
-            'urutan_absen' => $nextOrder,
-            'created_by'   => null,
+            'kegiatan_id'    => $kegiatan->id,
+            'nama'           => $nama,
+            'instansi'       => $request->instansi,
+            'gender'         => $request->gender,
+            'no_hp'          => $request->no_hp,
+            'email'          => $request->email,
+            'ttd_path'       => $ttdPath,
+            'urutan_absen'   => $nextOrder,
+            'terima_souvenir'=> $terimaSouvenir,
+            'created_by'     => null,
         ]);
 
-        // JIKA BERHASIL: Redirect ke blade konfirmasi status berhasil
         return redirect()
             ->route('sigap-daftar-hadir.public-status', $kegiatan->uuid)
             ->with('status_type', 'success')
-            ->with('peserta_nama', $nama);
+            ->with('peserta_nama', $nama)
+            ->with('terima_souvenir', $terimaSouvenir); // Teruskan status ke view konfirmasi
     }
 
     public function publicFormPejabat(SigapDaftarHadirPenandatangan $penandatangan)
@@ -706,31 +671,40 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
             
             $merger->addRaw($pdfUtama->output());
 
+            // 1. LAMPIRAN PENERIMA SOUVENIR (Jika ada_souvenir = 1)
+            if ($kegiatan->ada_souvenir == 1) {
+                $pdfSouvenir = Pdf::loadView('dashboard.daftar_hadir.pdf_lampiran_souvenir', [
+                    'kegiatan'   => $kegiatan,
+                    'logoPemkot' => $logoPemkot,
+                    'logoBrida'  => $logoBrida,
+                ])->setPaper('letter', 'portrait');
+
+                $merger->addRaw($pdfSouvenir->output());
+            }
+
+            // 2. LAMPIRAN SERTIFIKAT (Jika buat_sertifikat = 1)
             if ($kegiatan->buat_sertifikat == 1) {
                 $portalSertifikatUrl = 'https://sigap.brida.makassarkota.go.id/sertifikat';
                 $qrSertifikatSvg = base64_encode(
                     QrCode::format('svg')->size(70)->margin(0)->generate($portalSertifikatUrl)
                 );
 
-                // Cari data master kegiatan sertifikat
                 $sertifKegiatan = SertifikatKegiatan::where('nama_kegiatan', $kegiatan->nama_kegiatan)
                     ->where('tanggal', $kegiatan->hari_tanggal)
                     ->first();
 
-                // Mapping mengambil nomor sertifikat sah asli dan ID yang tersimpan di database
                 $kegiatan->peserta->transform(function ($p) use ($sertifKegiatan, $kegiatan) {
                     $nomorSah = null;
-                    $sertifikatId = null; // Menampung ID untuk link clickable
+                    $sertifikatId = null;
 
                     if ($sertifKegiatan) {
-                        // Cari data sertifikat berdasarkan kegiatan & nama
                         $sertifPeserta = SertifikatPeserta::where('kegiatan_id', $sertifKegiatan->id)
                             ->where('nama_penerima', $p->nama)
                             ->first();
 
                         if ($sertifPeserta) {
                             $nomorSah = $sertifPeserta->nomor_sertifikat;
-                            $sertifikatId = $sertifPeserta->id; // Ambil ID (contoh: 574)
+                            $sertifikatId = $sertifPeserta->id;
                         }
                     }
 
@@ -739,7 +713,7 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
                     }
                     
                     $p->nomor_sertifikat_dinamis = $nomorSah;
-                    $p->sertifikat_id = $sertifikatId; // Simpan ke object peserta agar bisa dipanggil di view
+                    $p->sertifikat_id = $sertifikatId;
                     return $p;
                 });
 
@@ -886,6 +860,7 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
 
         return $nomorSurat . '/SERTIF-' . $paddedUrutan . ($kegiatanId > 0 ? '-KG' . $kegiatanId : '');
     }
+
     private function loadLogoBase64(string $filename): ?string
     {
         $candidates = [
@@ -919,7 +894,6 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
 
     public function livePreview(SigapDaftarHadirKegiatan $kegiatan)
     {
-        // Memastikan hanya pembuat atau admin yang bisa mengakses
         $user = Auth::user();
         if (!$user->hasAnyRole(['admin', 'verif_daftarhadir'])) {
             abort_unless((int) $kegiatan->created_by === (int) $user->id, 403, 'Anda tidak memiliki akses.');
@@ -930,7 +904,6 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
 
     public function liveData(SigapDaftarHadirKegiatan $kegiatan)
     {
-        // Mengambil data peserta secara realtime untuk di-fetch via AJAX
         $peserta = $kegiatan->peserta()
             ->orderByDesc('created_at')
             ->get()
@@ -938,7 +911,7 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
                 return [
                     'nama'     => $p->nama,
                     'instansi' => $p->instansi,
-                    'gender'   => $p->gender, // L atau P
+                    'gender'   => $p->gender,
                 ];
             });
 
@@ -949,7 +922,7 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
     // PUBLIC RIWAYAT PESERTA
     // =========================================================================
 
-  public function publicRiwayatPeserta(Request $request)
+    public function publicRiwayatPeserta(Request $request)
     {
         $q       = trim((string) $request->get('q', ''));
         $results = collect();
@@ -965,7 +938,6 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
         $totalPesertaTerdaftar = SigapDaftarHadirPeserta::distinct('nama')->count('nama');
         $totalPartisipasi      = SigapDaftarHadirPeserta::count();
 
-        // DIPERBARUI: Diarahkan ke folder publik SigapDaftarHadir/riwayat/
         return view('SigapDaftarHadir.riwayat.index', compact(
             'q', 
             'results', 
@@ -984,13 +956,11 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
             ->orderByDesc('created_at')
             ->get();
 
-        // DIPERBARUI: Diarahkan ke folder publik SigapDaftarHadir/riwayat/
         return view('SigapDaftarHadir.riwayat.detail', compact('nama', 'pesertaList'));
     }
 
     public function publicExportPdf(SigapDaftarHadirKegiatan $kegiatan)
     {
-        // Keamanan: Hanya kegiatan yang sudah SELESAI yang boleh diunduh publik
         abort_unless($kegiatan->status === 'selesai', 403, 'Dokumen daftar hadir hanya dapat diunduh jika kegiatan telah selesai.');
 
         $kegiatan->load([
@@ -1023,6 +993,18 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
             
             $merger->addRaw($pdfUtama->output());
 
+            // 1. LAMPIRAN PENERIMA SOUVENIR (Jika ada_souvenir = 1)
+            if ($kegiatan->ada_souvenir == 1) {
+                $pdfSouvenir = Pdf::loadView('dashboard.daftar_hadir.pdf_lampiran_souvenir', [
+                    'kegiatan'   => $kegiatan,
+                    'logoPemkot' => $logoPemkot,
+                    'logoBrida'  => $logoBrida,
+                ])->setPaper('letter', 'portrait');
+
+                $merger->addRaw($pdfSouvenir->output());
+            }
+
+            // 2. LAMPIRAN SERTIFIKAT (Jika buat_sertifikat = 1)
             if ($kegiatan->buat_sertifikat == 1) {
                 $portalSertifikatUrl = 'https://sigap.brida.makassarkota.go.id/sertifikat';
                 $qrSertifikatSvg = base64_encode(
@@ -1033,20 +1015,18 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
                     ->where('tanggal', $kegiatan->hari_tanggal)
                     ->first();
 
-                // Mapping mengambil nomor sertifikat sah asli dan ID yang tersimpan di database
                 $kegiatan->peserta->transform(function ($p) use ($sertifKegiatan, $kegiatan) {
                     $nomorSah = null;
-                    $sertifikatId = null; // Menampung ID untuk link clickable
+                    $sertifikatId = null;
 
                     if ($sertifKegiatan) {
-                        // Cari data sertifikat berdasarkan kegiatan & nama
                         $sertifPeserta = SertifikatPeserta::where('kegiatan_id', $sertifKegiatan->id)
                             ->where('nama_penerima', $p->nama)
                             ->first();
 
                         if ($sertifPeserta) {
                             $nomorSah = $sertifPeserta->nomor_sertifikat;
-                            $sertifikatId = $sertifPeserta->id; // Ambil ID (contoh: 574)
+                            $sertifikatId = $sertifPeserta->id;
                         }
                     }
 
@@ -1055,7 +1035,7 @@ public function update(Request $request, SigapDaftarHadirKegiatan $kegiatan)
                     }
                     
                     $p->nomor_sertifikat_dinamis = $nomorSah;
-                    $p->sertifikat_id = $sertifikatId; // Simpan ke object peserta agar bisa dipanggil di view
+                    $p->sertifikat_id = $sertifikatId;
                     return $p;
                 });
 

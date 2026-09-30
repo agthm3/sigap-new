@@ -90,13 +90,24 @@
         @error('undangan_pdf') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
       </div>
 
-      <div class="flex items-center md:mt-6">
-        <input type="checkbox" name="buat_sertifikat" value="1" id="buat_sertifikat"
-               {{ old('buat_sertifikat', $kegiatan->buat_sertifikat) ? 'checked' : '' }}
-               class="h-5 w-5 rounded border-gray-300 text-maroon focus:ring-maroon cursor-pointer">
-        <label for="buat_sertifikat" class="ml-2 block text-sm font-medium text-gray-900 cursor-pointer">
-          Buatkan Sertifikat
-        </label>
+    <div class="flex flex-col gap-2 md:mt-6">
+        <div class="flex items-center">
+          <input type="checkbox" name="buat_sertifikat" value="1" id="buat_sertifikat"
+                 {{ old('buat_sertifikat', $kegiatan->buat_sertifikat) ? 'checked' : '' }}
+                 class="h-5 w-5 rounded border-gray-300 text-maroon focus:ring-maroon cursor-pointer">
+          <label for="buat_sertifikat" class="ml-2 block text-sm font-medium text-gray-900 cursor-pointer">
+            Buatkan Sertifikat
+          </label>
+        </div>
+
+        <div class="flex items-center">
+          <input type="checkbox" name="ada_souvenir" value="1" id="ada_souvenir"
+                 {{ old('ada_souvenir', $kegiatan->ada_souvenir) ? 'checked' : '' }}
+                 class="h-5 w-5 rounded border-gray-300 text-maroon focus:ring-maroon cursor-pointer">
+          <label for="ada_souvenir" class="ml-2 block text-sm font-medium text-gray-900 cursor-pointer">
+            Apakah kegiatan ini ada souvenirnya?
+          </label>
+        </div>
       </div>
     </div>
 
@@ -110,13 +121,14 @@
       <div class="overflow-x-auto">
         <table class="min-w-full text-sm">
           <thead class="bg-gray-50 text-xs uppercase text-gray-600">
-            <tr>
+          <tr>
               <th class="px-3 py-2 text-left">Urut</th>
               <th class="px-3 py-2 text-left">Nama</th>
               <th class="px-3 py-2 text-left">Instansi</th>
               <th class="px-3 py-2 text-left">Gender</th>
               <th class="px-3 py-2 text-left">No HP</th>
               <th class="px-3 py-2 text-left">Email</th>
+              <th class="px-3 py-2 text-left">Souvenir</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
@@ -158,6 +170,13 @@
                          name="peserta[{{ $p->id }}][email]"
                          value="{{ old("peserta.$p->id.email", $p->email) }}"
                          class="w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon">
+                </td>
+                <td class="px-3 py-2">
+                  <select name="peserta[{{ $p->id }}][terima_souvenir]"
+                          class="w-full rounded-lg border-gray-300 focus:border-maroon focus:ring-maroon text-xs">
+                    <option value="1" @selected(old("peserta.$p->id.terima_souvenir", $p->terima_souvenir) == 1)>Dapat</option>
+                    <option value="0" @selected(old("peserta.$p->id.terima_souvenir", $p->terima_souvenir) == 0)>Tidak</option>
+                  </select>
                 </td>
               </tr>
             @endforeach

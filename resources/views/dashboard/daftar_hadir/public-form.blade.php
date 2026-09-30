@@ -21,7 +21,7 @@
   @else
     <form id="absen-form" action="{{ route('sigap-daftar-hadir.store-public', $kegiatan->uuid) }}" method="POST" class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
       @csrf
-
+      <input type="hidden" id="terima_souvenir" name="terima_souvenir" value="0">
       <div class="relative">
         <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
         <small>Disarankan menggunakan nama lengkap sesuai dengan identitas resmi + Gelar</small>
@@ -109,7 +109,7 @@
       </div>
 
       <div class="flex items-center gap-3">
-        <button type="submit" class="px-4 py-2 rounded-xl bg-maroon text-white font-semibold hover:bg-maroon-800">
+        <button type="button" onclick="eksekusiSimpan()" class="px-4 py-2 rounded-xl bg-maroon text-white font-semibold hover:bg-maroon-800 cursor-pointer">
           Save
         </button>
       </div>
@@ -120,9 +120,79 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+let signaturePad = null;
+
+// Fungsi utama yang dipanggil saat tombol Save diklik
+function eksekusiSimpan() {
   const form = document.getElementById('absen-form');
+  const existingTtdInput = document.getElementById('existing_ttd_path');
+  const ttdDataInput = document.getElementById('ttd_data');
+  const inputTerimaSouvenir = document.getElementById('terima_souvenir');
+
+  // 1. Cek validasi isian wajib (Nama, Instansi, Gender, No HP)
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
+
+  // 2. Cek & Ambil Tanda Tangan
+  const hasExistingTtd = (existingTtdInput?.value || '').trim() !== '';
+  const hasCanvasSignature = signaturePad ? !signaturePad.isEmpty() : false;
+
+  if (hasCanvasSignature) {
+    ttdDataInput.value = signaturePad.toDataURL('image/png');
+  }
+
+  if (!hasCanvasSignature && !hasExistingTtd) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'TTD belum ada',
+      text: 'Silakan bubuhkan tanda tangan terlebih dahulu atau pilih data peserta lama.',
+      confirmButtonColor: '#7a2222'
+    });
+    return;
+  }
+
+  // 3. Evaluasi Souvenir
+  const adaSouvenir = {{ !empty($kegiatan->ada_souvenir) && (int)$kegiatan->ada_souvenir === 1 ? 'true' : 'false' }};
+
+  if (adaSouvenir) {
+    Swal.fire({
+      title: 'Konfirmasi Souvenir',
+      text: 'Apakah Anda menerima paket souvenir kegiatan pada saat mengisi daftar hadir ini?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Ya, Menerima Souvenir',
+      cancelButtonText: 'Tidak Menerima',
+      confirmButtonColor: '#059669', // Emerald / Hijau
+      cancelButtonColor: '#6b7280',  // Abu-abu
+      reverseButtons: false,
+      allowOutsideClick: false
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Pilihan: Ya, Menerima
+        if (inputTerimaSouvenir) {
+          inputTerimaSouvenir.value = '1';
+        }
+        form.submit();
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        // Pilihan: Tidak Menerima
+        if (inputTerimaSouvenir) {
+          inputTerimaSouvenir.value = '0';
+        }
+        form.submit();
+      }
+    });
+  } else {
+    // Jika kegiatan tidak menyediakan souvenir, langsung submit
+    form.submit();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
   const canvas = document.getElementById('signature-pad');
   const clearBtn = document.getElementById('clear-signature');
   const gantiBtn = document.getElementById('ganti-signature');
@@ -139,9 +209,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const preview = document.getElementById('ttd-preview');
   const emptyPreview = document.getElementById('ttd-empty');
 
-  const storageBase = @json(asset('storage'));
-
-  let signaturePad = null;
   let resizeTimer = null;
   let debounceTimer = null;
   let lastItems = [];
@@ -154,17 +221,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function resizeCanvas() {
     if (!signaturePad || !canvas) return;
-
     const data = signaturePad.isEmpty() ? null : signaturePad.toData();
-
     const ratio = Math.max(window.devicePixelRatio || 1, 1);
     canvas.width = canvas.offsetWidth * ratio;
     canvas.height = canvas.offsetHeight * ratio;
     canvas.getContext('2d').scale(ratio, ratio);
-
-    if (data) {
-      signaturePad.fromData(data);
-    }
+    if (data) signaturePad.fromData(data);
   }
 
   function hideSuggestions() {
@@ -176,7 +238,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function showPreview(url) {
     if (!preview || !emptyPreview) return;
-
     if (url) {
       preview.src = url;
       preview.classList.remove('hidden');
@@ -188,21 +249,17 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  // Fungsi untuk mengaktifkan/mereset kembali canvas TTD
   function enableCanvas() {
     if (signaturePad) {
       signaturePad.on();
       signaturePad.clear();
     }
-    
     if (canvasOverlay) {
       canvasOverlay.classList.remove('flex');
       canvasOverlay.classList.add('hidden');
     }
-    
     if (gantiBtn) gantiBtn.classList.add('hidden');
     if (clearBtn) clearBtn.classList.remove('hidden');
-
     existingTtdInput.value = '';
     showPreview('');
   }
@@ -214,17 +271,12 @@ document.addEventListener('DOMContentLoaded', function () {
     noHp.value = item.no_hp || '';
     email.value = item.email || '';
     existingTtdInput.value = item.ttd_path || '';
-
     showPreview(item.ttd_path || '');
 
     if (signaturePad) {
       signaturePad.clear();
-      
       if (item.ttd_path) {
-        // Matikan fungsi gambar pada canvas
         signaturePad.off(); 
-        
-        // Munculkan overlay dan tombol "Ganti TTD Baru"
         if (canvasOverlay) {
           canvasOverlay.classList.remove('hidden');
           canvasOverlay.classList.add('flex');
@@ -232,31 +284,21 @@ document.addEventListener('DOMContentLoaded', function () {
         if (gantiBtn) gantiBtn.classList.remove('hidden');
         if (clearBtn) clearBtn.classList.add('hidden');
       } else {
-        enableCanvas(); // Kalau ternyata data lamanya gak punya TTD
+        enableCanvas();
       }
     }
-
     ttdDataInput.value = '';
   }
 
   function renderSuggestions(items) {
     lastItems = items || [];
-
     if (!suggestionBox) return;
-
-    if (!items.length) {
-      hideSuggestions();
-      return;
-    }
+    if (!items.length) { hideSuggestions(); return; }
 
     suggestionBox.innerHTML = items.map((item, index) => `
-      <button type="button"
-              data-index="${index}"
-              class="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0">
+      <button type="button" data-index="${index}" class="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0">
         <div class="font-medium text-gray-900">${item.nama ?? '-'}</div>
-        <div class="text-xs text-gray-500">
-          ${item.instansi ?? '-'} • ${item.no_hp ?? '-'}
-        </div>
+        <div class="text-xs text-gray-500">${item.instansi ?? '-'} • ${item.no_hp ?? '-'}</div>
       </button>
     `).join('');
 
@@ -265,18 +307,17 @@ document.addEventListener('DOMContentLoaded', function () {
     suggestionBox.querySelectorAll('button[data-index]').forEach(btn => {
       btn.addEventListener('click', function () {
         const item = lastItems[parseInt(this.dataset.index, 10)];
-
         Swal.fire({
           icon: 'question',
           title: 'Pakai data peserta lama?',
           text: 'Anda tercatat pernah mengikuti kegiatan BRIDA. Mau isi otomatis?',
           showCancelButton: true,
           confirmButtonText: 'Ya, isi otomatis',
-          cancelButtonText: 'Tidak'
+          cancelButtonText: 'Tidak',
+          confirmButtonColor: '#7a2222',
+          cancelButtonColor: '#6b7280'
         }).then((result) => {
-          if (result.isConfirmed) {
-            fillFields(item);
-          }
+          if (result.isConfirmed) fillFields(item);
           hideSuggestions();
         });
       });
@@ -285,58 +326,35 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (canvas) {
     resizeCanvas();
-
     window.addEventListener('resize', function () {
       clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => {
-        resizeCanvas();
-      }, 150);
+      resizeTimer = setTimeout(resizeCanvas, 150);
     });
   }
 
   if (clearBtn) {
     clearBtn.addEventListener('click', function () {
-      if (signaturePad) {
-        signaturePad.clear();
-      }
+      if (signaturePad) signaturePad.clear();
       ttdDataInput.value = '';
     });
   }
 
   if (gantiBtn) {
-    gantiBtn.addEventListener('click', function() {
-      enableCanvas();
-    });
+    gantiBtn.addEventListener('click', enableCanvas);
   }
 
   if (namaInput) {
     namaInput.addEventListener('input', function () {
       const q = this.value.trim();
-
-      // Setiap kali diketik ulang, canvas harus selalu hidup kembali
       enableCanvas();
-
       if (debounceTimer) clearTimeout(debounceTimer);
-
-      if (q.length < 2) {
-        hideSuggestions();
-        return;
-      }
+      if (q.length < 2) { hideSuggestions(); return; }
 
       debounceTimer = setTimeout(async () => {
         try {
           const url = `{{ route('sigap-daftar-hadir.search-peserta') }}?q=${encodeURIComponent(q)}`;
-          const res = await fetch(url, {
-            headers: {
-              'X-Requested-With': 'XMLHttpRequest'
-            }
-          });
-
-          if (!res.ok) {
-            hideSuggestions();
-            return;
-          }
-
+          const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+          if (!res.ok) { hideSuggestions(); return; }
           const items = await res.json();
           renderSuggestions(items);
         } catch (error) {
@@ -348,31 +366,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
   document.addEventListener('click', function (e) {
     if (!suggestionBox || !namaInput) return;
-
     if (!suggestionBox.contains(e.target) && e.target !== namaInput) {
       hideSuggestions();
     }
   });
-
-  if (form) {
-    form.addEventListener('submit', function (e) {
-      const hasExistingTtd = (existingTtdInput?.value || '').trim() !== '';
-      const hasCanvasSignature = signaturePad ? !signaturePad.isEmpty() : false;
-
-      if (hasCanvasSignature) {
-        ttdDataInput.value = signaturePad.toDataURL('image/png');
-      }
-
-      if (!hasCanvasSignature && !hasExistingTtd) {
-        e.preventDefault();
-        Swal.fire({
-          icon: 'warning',
-          title: 'TTD belum ada',
-          text: 'Silakan gambar tanda tangan terlebih dahulu atau pilih peserta lama.'
-        });
-      }
-    });
-  }
 });
 </script>
 @endpush

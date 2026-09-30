@@ -22,7 +22,8 @@ class SigapDaftarHadirKegiatan extends Model
         'undangan_path',
         'buat_sertifikat',
         'nomor_surat',
-        'kategori_peran'
+        'kategori_peran',
+        'ada_souvenir',
     ];
 
     public function getRouteKeyName(): string

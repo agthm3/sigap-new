@@ -19,6 +19,7 @@ class SigapDaftarHadirPeserta extends Model
         'ttd_path', 
         'urutan_absen',
         'created_by',
+        'terima_souvenir',
     ];
 
     public function kegiatan(): BelongsTo

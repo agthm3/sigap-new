@@ -174,6 +174,9 @@
             <th class="px-3 py-2 text-left">Gender</th>
             <th class="px-3 py-2 text-left">No HP</th>
             <th class="px-3 py-2 text-left">Email</th>
+            @if($kegiatan->ada_souvenir)
+              <th class="px-3 py-2 text-center">Souvenir</th>
+            @endif
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
@@ -185,10 +188,23 @@
               <td class="px-3 py-2">{{ $p->gender }}</td>
               <td class="px-3 py-2">{{ $p->no_hp }}</td>
               <td class="px-3 py-2">{{ $p->email ?: '-' }}</td>
+              @if($kegiatan->ada_souvenir)
+                <td class="px-3 py-2 text-center">
+                  @if($p->terima_souvenir == 1)
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+                      Dapat
+                    </span>
+                  @else
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
+                      Tidak
+                    </span>
+                  @endif
+                </td>
+              @endif
             </tr>
           @empty
             <tr>
-              <td colspan="6" class="px-3 py-6 text-center text-gray-500">Belum ada peserta.</td>
+              <td colspan="{{ $kegiatan->ada_souvenir ? 7 : 6 }}" class="px-3 py-6 text-center text-gray-500">Belum ada peserta.</td>
             </tr>
           @endforelse
         </tbody>

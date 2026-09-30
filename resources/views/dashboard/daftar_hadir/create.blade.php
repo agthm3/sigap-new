@@ -84,14 +84,25 @@
             @error('nomor_surat') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
         </div>
 
-        <!-- Checkbox Buatkan Sertifikat -->
-        <div class="flex items-center mt-6">
-            <input type="checkbox" name="buat_sertifikat" value="1" id="buat_sertifikat"
-                   {{ old('buat_sertifikat', $kegiatan->buat_sertifikat ?? 0) ? 'checked' : '' }}
-                   class="h-5 w-5 rounded border-gray-300 text-maroon focus:ring-maroon cursor-pointer">
-            <label for="buat_sertifikat" class="ml-2 block text-sm font-medium text-gray-900 cursor-pointer">
-                Buatkan Sertifikat Kegiatan
-            </label>
+        <!-- Checkbox Buatkan Sertifikat & Souvenir -->
+        <div class="flex flex-col gap-2 mt-4 md:mt-6">
+            <div class="flex items-center">
+                <input type="checkbox" name="buat_sertifikat" value="1" id="buat_sertifikat"
+                       {{ old('buat_sertifikat', $kegiatan->buat_sertifikat ?? 0) ? 'checked' : '' }}
+                       class="h-5 w-5 rounded border-gray-300 text-maroon focus:ring-maroon cursor-pointer">
+                <label for="buat_sertifikat" class="ml-2 block text-sm font-medium text-gray-900 cursor-pointer">
+                    Buatkan Sertifikat Kegiatan
+                </label>
+            </div>
+
+            <div class="flex items-center">
+                <input type="checkbox" name="ada_souvenir" value="1" id="ada_souvenir"
+                       {{ old('ada_souvenir', $kegiatan->ada_souvenir ?? 0) ? 'checked' : '' }}
+                       class="h-5 w-5 rounded border-gray-300 text-maroon focus:ring-maroon cursor-pointer">
+                <label for="ada_souvenir" class="ml-2 block text-sm font-medium text-gray-900 cursor-pointer">
+                    Apakah kegiatan ini ada souvenirnya?
+                </label>
+            </div>
         </div>
     </div>
 
