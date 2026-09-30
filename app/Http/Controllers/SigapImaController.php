@@ -370,6 +370,18 @@ class SigapImaController extends Controller
             'judul'         => 'required|string|max:255',
             'operator_nama' => 'required|string|max:255',
             'operator_wa'   => 'required|string|max:20',
+            'rancang_bangun'=> [
+                'nullable',
+                'string',
+                function ($attribute, $value, $fail) {
+                    if (!empty($value)) {
+                        $plainText = trim(strip_tags($value));
+                        $wordCount = !empty($plainText) ? count(preg_split('/\s+/u', $plainText, -1, PREG_SPLIT_NO_EMPTY)) : 0;
+                        if ($wordCount < 300) $fail("Rancang Bangun Inovasi minimal harus 300 kata (saat ini: {$wordCount} kata).");
+                        if ($wordCount > 800) $fail("Rancang Bangun Inovasi maksimal 800 kata (saat ini: {$wordCount} kata).");
+                    }
+                },
+            ],
         ]);
 
         $data = $request->except(['_token', '_method', 'sampul_file', 'anggaran_file', 'profil_bisnis_file', 'haki_file', 'penghargaan_file']);

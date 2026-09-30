@@ -247,12 +247,14 @@
                         </label>
                     </div>
 
-                    <!-- EDITOR TEKS (QUILL) SAAT MODE EDIT -->
+                    <!-- EDITOR TEKS (QUILL) SAAT MODE EDIT - 300 HINGGA 800 KATA -->
                     <div class="space-y-5 border-t pt-4 border-gray-100">
                         <div>
                             <div class="flex items-center justify-between mb-1">
-                                <span class="text-xs font-semibold text-gray-700">Rancang Bangun Inovasi (300 – 500 Kata) *</span>
-                                <span class="text-[10px] font-bold px-2 py-0.5 rounded" :class="editWordCount < 300 ? 'bg-rose-100 text-rose-700' : (editWordCount > 500 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700')" x-text="`${editWordCount} Kata`"></span>
+                                <span class="text-xs font-semibold text-gray-700">Rancang Bangun Inovasi (300 – 800 Kata) *</span>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded transition" 
+                                      :class="editWordCount < 300 ? 'bg-rose-100 text-rose-700' : (editWordCount > 800 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700')" 
+                                      x-text="`${editWordCount} / 800 Kata (Min. 300)`"></span>
                             </div>
                             <div id="edit-rancang" class="rounded-xl bg-white">{!! $inovasi->rancang_bangun !!}</div>
                         </div>
@@ -809,8 +811,8 @@
                         Swal.fire({ icon: 'warning', title: 'Jumlah Kata Kurang', text: `Rancang bangun minimal 300 kata. Saat ini: ${words} kata.` });
                         return;
                     }
-                    if (words > 500) {
-                        Swal.fire({ icon: 'warning', title: 'Jumlah Kata Melebih Batas', text: `Rancang bangun maksimal 500 kata. Saat ini: ${words} kata.` });
+                    if (words > 800) {
+                        Swal.fire({ icon: 'warning', title: 'Jumlah Kata Melebihi Batas', text: `Rancang bangun maksimal 800 kata. Saat ini: ${words} kata.` });
                         return;
                     }
                     document.getElementById('edit_rancang_bangun').value = qRancang.root.innerHTML;
