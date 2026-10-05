@@ -24,12 +24,13 @@ class Skp extends Model
         'creator_id',
     ];
 
-    protected static function booted()
+protected static function booted()
     {
         static::creating(function ($skp) {
             if (empty($skp->slug)) {
-                // Membuat slug dari judul kegiatan + string acak unik 6 karakter
-                $skp->slug = Str::slug($skp->judul_kegiatan) . '-' . Str::random(6);
+                // Potong slug judul maks 150 karakter agar total panjang slug + random string tidak melebihi varchar(191)
+                $slugTitle = Str::limit(Str::slug($skp->judul_kegiatan), 150, '');
+                $skp->slug = $slugTitle . '-' . Str::random(6);
             }
         });
     }

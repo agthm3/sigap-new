@@ -66,7 +66,7 @@ class SkpController extends Controller
         $request->validate([
             'pegawai_ids'   => 'required|array',
             'pegawai_ids.*' => 'exists:users,id',
-            'judul_kegiatan'=> 'required|string|max:500',
+            'judul_kegiatan'=> 'required|string|max:600',
             'tanggal'       => 'required|date',
             'dokumentasi'   => 'required|array',
             'dokumentasi.*' => 'image|mimes:jpeg,png,jpg,webp|max:20480', // Max 20MB per file sebelum dikompres
@@ -248,7 +248,7 @@ class SkpController extends Controller
         // 1. Validasi Input
         $request->validate([
             'agenda_id'      => 'nullable|exists:sigap_agendas,id',
-            'judul_kegiatan' => 'required|string|max:255',
+            'judul_kegiatan' => 'required|string|max:600',
             'tanggal'        => 'required|date',
             'photo_data'     => 'nullable', // bisa array atau string
             'pegawai_ids'    => 'nullable|array',
@@ -610,7 +610,7 @@ class SkpController extends Controller
 public function storePdf(Request $request)
     {
         $request->validate([
-            'judul_kegiatan' => 'required|string|max:255',
+            'judul_kegiatan' => 'required|string|max:600',
             'tanggal'        => 'required|date',
             'kategori'       => 'nullable|string|max:100',
             'deskripsi'      => 'nullable|string',
