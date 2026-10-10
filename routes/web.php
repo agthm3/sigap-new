@@ -1021,5 +1021,42 @@ Route::middleware(['auth'])->group(function () {
             });
         });
     });
+
+    // ========================================================
+    // 🚀 MODUL SIGAP SIIPID (SISTEM INFORMASI PRESTASI & PENGHARGAAN)
+    // ========================================================
+
+    // 1. Jalur Dashboard Inovator / Peserta (Role inovator, inovator_siipid, admin)
+    Route::middleware(['auth', 'role:inovator|inovator_siipid|admin|superadmin'])
+        ->prefix('sigap-siipid')
+        ->name('sigap-siipid.')
+        ->group(function () {
+            Route::get('/', [\App\Http\Controllers\SiipidController::class, 'index'])->name('index');
+            Route::get('/usulkan', [\App\Http\Controllers\SiipidController::class, 'create'])->name('create');
+            Route::post('/usulkan', [\App\Http\Controllers\SiipidController::class, 'store'])->name('store');
+            Route::get('/detail/{uuid}', [\App\Http\Controllers\SiipidController::class, 'show'])->name('show');
+            Route::get('/edit/{uuid}', [\App\Http\Controllers\SiipidController::class, 'edit'])->name('edit');
+            Route::put('/update/{uuid}', [\App\Http\Controllers\SiipidController::class, 'update'])->name('update');
+            Route::delete('/hapus/{uuid}', [\App\Http\Controllers\SiipidController::class, 'destroy'])->name('destroy');
+        });
+
+    // 2. Jalur Dashboard Reviewer & Verifikator (Role verif_siipid, admin, superadmin)
+    Route::middleware(['auth', 'role:verif_siipid|admin|superadmin'])
+        ->prefix('sigap-siipid/verifikator')
+        ->name('sigap-siipid.verifikator.')
+        ->group(function () {
+            Route::get('/monitoring', [\App\Http\Controllers\SiipidReviewController::class, 'index'])->name('index');
+            Route::get('/review/{uuid}', [\App\Http\Controllers\SiipidReviewController::class, 'show'])->name('review');
+            Route::post('/action/{id}', [\App\Http\Controllers\SiipidReviewController::class, 'submitReview'])->name('action');
+            Route::post('/penetapan-sk/{id}', [\App\Http\Controllers\SiipidReviewController::class, 'penetapanSk'])->name('penetapan-sk');
+        });
+});
+
+// ========================================================
+// 🌐 3. Jalur Portal Publik SIIPID (Tanpa Login / Bebas Akses)
+// ========================================================
+Route::prefix('siipid')->name('public.siipid.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\page\SiipidPublicController::class, 'index'])->name('index');
+    Route::get('/{uuid}', [\App\Http\Controllers\page\SiipidPublicController::class, 'show'])->name('show');
 });
 

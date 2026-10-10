@@ -913,6 +913,57 @@
         </div>
         @endhasanyrole
 
+        {{-- ==================== SIGAP SIIPID (DIBAWAH SIGAP SPJ) ==================== --}}
+        @hasanyrole('admin|superadmin|inovator|inovator_siipid|verif_siipid')
+        <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">
+          SIGAP SIIPID
+        </div>
+
+        <!-- Toggle Button SIIPID -->
+        <button id="siipidToggle"
+                class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-left transition-colors">
+          <svg class="w-4 h-4 shrink-0 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="8" r="7" stroke-width="2"/>
+            <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" stroke-width="2"/>
+          </svg>
+          <span class="font-medium">SIGAP SIIPID</span>
+          <svg id="siipidCaret"
+              class="w-4 h-4 ml-auto transition-transform duration-200"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="2" d="M6 9l6 6 6-6"/>
+          </svg>
+        </button>
+
+        <!-- Dropdown Sub-menu SIIPID -->
+        <div id="siipidMenu" class="ml-3 mt-1 space-y-1 hidden">
+
+          {{-- Submenu Inovator --}}
+          @hasanyrole('admin|superadmin|inovator|inovator_siipid')
+          <a href="{{ route('sigap-siipid.index') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm {{ request()->routeIs('sigap-siipid.index') || request()->routeIs('sigap-siipid.show') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2" stroke-width="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke-width="2"/></svg>
+            Database Prestasi
+          </a>
+
+          <a href="{{ route('sigap-siipid.create') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm {{ request()->routeIs('sigap-siipid.create') ? 'bg-maroon text-white' : 'hover:bg-gray-100' }}">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Usulkan Prestasi
+          </a>
+          @endhasanyrole
+
+          {{-- Submenu Reviewer & Verifikator --}}
+          @hasanyrole('admin|superadmin|verif_siipid')
+          <a href="{{ route('sigap-siipid.verifikator.index') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm {{ request()->routeIs('sigap-siipid.verifikator.*') ? 'bg-purple-800 text-white font-bold' : 'hover:bg-gray-100 text-purple-900 font-medium' }}">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Meja Reviewer
+          </a>
+          @endhasanyrole
+
+        </div>
+        @endhasanyrole
+
         @hasanyrole('admin|verif_notulensi|employee')
         <div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-500 px-3">
           SIGAP NOTULENSI
@@ -1342,6 +1393,32 @@
         spjMenu.classList.toggle('hidden');
         spjCaret.classList.toggle('rotate-180', willOpen);
         localStorage.setItem(SPJ_KEY, willOpen ? '1' : '0');
+      });
+    });
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const siipidToggle = document.getElementById('siipidToggle');
+      const siipidMenu   = document.getElementById('siipidMenu');
+      const siipidCaret  = document.getElementById('siipidCaret');
+
+      if (!siipidToggle) return;
+
+      const SIIPID_KEY   = 'sb_siipid_open';
+      const isOpenSaved  = localStorage.getItem(SIIPID_KEY) === '1';
+      const isOnSiipid   = window.location.pathname.includes('/sigap-siipid');
+
+      if (isOpenSaved || isOnSiipid) {
+        siipidMenu?.classList.remove('hidden');
+        siipidCaret?.classList.add('rotate-180');
+      }
+
+      siipidToggle.addEventListener('click', () => {
+        const willOpen = siipidMenu.classList.contains('hidden');
+        siipidMenu.classList.toggle('hidden');
+        siipidCaret.classList.toggle('rotate-180', willOpen);
+        localStorage.setItem(SIIPID_KEY, willOpen ? '1' : '0');
       });
     });
   </script>
@@ -1802,6 +1879,22 @@
               { title: 'Laporan Sub-Kegiatan', description: 'Kelola draf & berkas SPJ kegiatan', url: "{{ route('sigap-spj.index') }}", icon: '📝' },
               @if($isAdmin)
               { title: 'Struktur Bidang', description: 'Pengaturan bidang & master SPJ', url: "{{ route('sigap-spj.bidang.index') }}", icon: '🏗️' },
+              @endif
+            ]
+          },
+          @endif
+          @if($isAdmin || $u->hasAnyRole(['inovator', 'inovator_siipid', 'verif_siipid']))
+          {
+            id: 'siipid-group',
+            title: 'SIGAP SIIPID',
+            description: 'Database Prestasi, Rekam Jejak Inovator & Meja Reviewer',
+            icon: '🏆',
+            isParent: true,
+            subMenus: [
+              { title: 'Database Prestasi Saya', description: 'Lihat seluruh riwayat capaian prestasi Anda', url: "{{ route('sigap-siipid.index') }}", icon: '📋' },
+              { title: 'Usulkan Prestasi Baru', description: 'Form pengusulan penghargaan inovator', url: "{{ route('sigap-siipid.create') }}", icon: '➕' },
+              @if($isAdmin || $u->hasRole('verif_siipid'))
+              { title: 'Meja Reviewer SIIPID', description: 'Monitoring dan verifikasi usulan masuk', url: "{{ route('sigap-siipid.verifikator.index') }}", icon: '⚖️' },
               @endif
             ]
           },

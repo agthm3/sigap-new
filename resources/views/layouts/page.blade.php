@@ -114,6 +114,10 @@
                 <ul class="space-y-0.5 text-xs text-gray-700">
                   <li><a href="{{ route('sigap-inovasi.home') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Inovasi</a></li>
                   <li><a href="{{ route('sigap-ima.index') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP IMA</a></li>
+                  <li><a href="{{ route('public.siipid.index') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition font-medium flex items-center justify-between">
+                    <span>SIGAP SIIPID</span>
+                    <span class="text-[9px] bg-amber-500/10 text-amber-700 font-bold px-1.5 py-0.5 rounded">Baru</span>
+                  </a></li>
                   <li><a href="{{ route('sigap-riset.index') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Riset</a></li>
                   <li><a href="{{ route('sigap-inkubatorma.index') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP Inkubatorma</a></li>
                   <li><a href="{{ route('sigap-ppd.public') }}" class="block px-3 py-1.5 rounded-md hover:bg-maroon-50 hover:text-maroon transition">SIGAP PPD</a></li>
@@ -258,6 +262,10 @@
             <div class="space-y-1 text-sm bg-white rounded-md p-1 border border-gray-100">
               <a href="{{ route('sigap-inovasi.home') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Inovasi</a>
               <a href="{{ route('sigap-ima.index') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP IMA</a>
+              <a href="{{ route('public.siipid.index') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded font-medium text-maroon flex items-center justify-between">
+                <span>SIGAP SIIPID</span>
+                <span class="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">Baru</span>
+              </a>
               <a href="{{ route('sigap-riset.index') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Riset</a>
               <a href="{{ route('sigap-inkubatorma.index') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP Inkubatorma</a>
               <a href="{{ route('sigap-ppd.public') }}" class="block px-3 py-1.5 hover:bg-gray-50 rounded">SIGAP PPD</a>
